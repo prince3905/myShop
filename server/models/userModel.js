@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+// const bcrypt = require('bcryptjs');
 
 // User Schema
 const userSchema = mongoose.Schema({
@@ -52,6 +53,15 @@ const userSchema = mongoose.Schema({
     type: String,
   },
 });
+
+userSchema.methods.correctPassword = async (
+  candidatePassword,
+  userPassword
+) => {
+  // return await bcrypt.compare(candidatePassword, userPassword);
+  // console.log(candidatePassword,userPassword)
+  console.log("from modals")
+};
 
 const User = mongoose.model('User', userSchema);
 module.exports = User;

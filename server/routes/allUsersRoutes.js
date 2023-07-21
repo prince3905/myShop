@@ -1,7 +1,10 @@
 const express = require("express");
-const router = express.Router();
 
 const userController = require('../controllers/userController')
+const authController =require('../controllers/authController')
+
+const router = express.Router();
+router.use(authController.protect)
 
 // router.use('/', (req, res) => {
 //   res.status(200).send("hello world !").userController;
