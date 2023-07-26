@@ -1,0 +1,33 @@
+<!-- login.component.html -->
+
+<div class="login-container">
+    <mat-card>
+        <mat-card-header>
+            <mat-card-title>Login</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+            <form (ngSubmit)="onSubmit()" #loginForm="ngForm">
+                <mat-form-field appearance="outline" class="form-field">
+                    <mat-label>Email</mat-label>
+                    <input matInput placeholder="Enter your email" [(ngModel)]="email" name="email" required email>
+                    <mat-error
+                        *ngIf="loginForm.controls.email.invalid && (loginForm.controls.email.dirty || loginForm.controls.email.touched)">
+                        Please enter a valid email address.
+                    </mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="form-field">
+                    <mat-label>Password</mat-label>
+                    <input matInput type="password" placeholder="Enter your password" [(ngModel)]="password"
+                        name="password" required>
+                    <mat-error
+                        *ngIf="loginForm.controls.password.invalid && (loginForm.controls.password.dirty || loginForm.controls.password.touched)">
+                        Password is required.
+                    </mat-error>
+                </mat-form-field>
+
+                <button mat-raised-button color="primary" type="submit" [disabled]="loginForm.invalid">Login</button>
+            </form>
+        </mat-card-content>
+    </mat-card>
+</div>

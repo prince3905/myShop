@@ -52,6 +52,7 @@ const userSchema = mongoose.Schema({
   pPhoneNo: {
     type: String,
   },
+  createdAt: { type: Date, default: Date.now } 
 });
 
 userSchema.methods.correctPassword = async (

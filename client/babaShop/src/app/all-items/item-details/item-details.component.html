@@ -1,0 +1,218 @@
+<div class="main-content">
+    <div class="row">
+        <div class="col-md-12">
+            <mat-card class="item-card">
+                <mat-card-header class="card-header">
+                    <mat-card-title class="card-title">Item Details</mat-card-title>
+                </mat-card-header>
+                <form (ngSubmit)="onSubmit()" #addItemForm="ngForm">
+                    <mat-card-content class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <table class="table">
+                                    <tbody>
+                                        <tr>
+                                            <th>Name</th>
+                                        </tr>
+                                        <tr *ngIf="!isEditing">
+                                            <td>{{ item.name }}</td>
+                                        </tr>
+                                        <tr *ngIf="isEditing">
+                                            <mat-form-field class="example-full-width">
+                                                <input matInput placeholder=" Item Name" name="name" [(ngModel)]="name">
+                                            </mat-form-field>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <table class="table">
+                                    <tbody>
+                                        <tr>
+                                            <th>Brand</th>
+                                        </tr>
+                                        <tr *ngIf="!isEditing">
+                                            <td>{{ item?.brand?.name }}</td>
+                                        </tr>
+                                        <tr *ngIf="isEditing">
+                                            <mat-form-field class="example-full-width">
+                                                <mat-label>Brand</mat-label>
+                                                <mat-select name="brand" [(ngModel)]="selectedBrand">
+                                                    <mat-option *ngFor="let brand of Brands" [value]="brand._id">
+                                                        {{ brand.name }}
+                                                    </mat-option>
+                                                </mat-select>
+                                            </mat-form-field>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <table class="table">
+                                    <tbody>
+                                        <tr>
+                                            <th>Category</th>
+                                        </tr>
+                                        <tr *ngIf="!isEditing">
+                                            <td>{{ item?.category?.name }}</td>
+                                        </tr>
+                                        <tr *ngIf="isEditing">
+                                            <mat-form-field class="example-full-width">
+                                                <mat-label>Category</mat-label>
+                                                <mat-select name="category" [(ngModel)]="selectedCategory">
+                                                    <mat-option *ngFor="let category of Categories" [value]="category._id">
+                                                        {{ category.name }}
+                                                    </mat-option>
+                                                </mat-select>
+                                            </mat-form-field>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <table class="table">
+                                    <tbody>
+                                        <tr>
+                                            <th>Quantity</th>
+                                        </tr>
+                                        <tr *ngIf="!isEditing">
+                                            <td>{{ item.quantity }}</td>
+                                        </tr>
+                                        <tr *ngIf="isEditing">
+                                            <mat-form-field class="example-full-width">
+                                                <input matInput placeholder=" Quantity Name" name="quantity" [(ngModel)]="quantity">
+                                            </mat-form-field>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <table class="table">
+                                    <tbody>
+                                        <tr>
+                                            <th>Model</th>
+                                        </tr>
+                                        <tr *ngIf="!isEditing">
+                                            <td>{{ item.model }}</td>
+                                        </tr>
+                                        <tr *ngIf="isEditing">
+                                            <mat-form-field class="example-full-width">
+                                                <input matInput placeholder=" Model Name" name="model" [(ngModel)]="model">
+                                            </mat-form-field>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <table class="table">
+                                    <tbody>
+                                        <tr>
+                                            <th>Color</th>
+                                        </tr>
+                                        <tr *ngIf="!isEditing">
+                                            <td>{{ item.color }}</td>
+                                        </tr>
+                                        <tr *ngIf="isEditing">
+                                            <mat-form-field class="example-full-width">
+                                                <input matInput placeholder=" Color Name" name="color" [(ngModel)]="color">
+                                            </mat-form-field>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <table class="table">
+                                    <tbody>
+                                        <tr>
+                                            <th>P_price</th>
+                                        </tr>
+                                        <tr *ngIf="!isEditing">
+                                            <td>{{ item.p_price }}</td>
+                                        </tr>
+                                        <tr *ngIf="isEditing">
+                                            <mat-form-field class="example-full-width">
+                                                <input matInput placeholder=" Item Price" name="p_price" [(ngModel)]="p_price">
+                                            </mat-form-field>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <table class="table">
+                                    <tbody>
+                                        <tr>
+                                            <th>S_price</th>
+                                        </tr>
+                                        <tr *ngIf="!isEditing">
+                                            <td>{{ item.s_price }}</td>
+                                        </tr>
+                                        <tr *ngIf="isEditing">
+                                            <mat-form-field class="example-full-width">
+                                                <input matInput placeholder="s_price." name="s_price"
+                                                    [(ngModel)]="s_price">
+                                            </mat-form-field>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <table class="table">
+                                    <tbody>
+                                        <tr>
+                                            <th>Size</th>
+                                        </tr>
+                                        <tr *ngIf="!isEditing">
+                                            <td>{{ item.size }}</td>
+                                        </tr>
+                                        <tr *ngIf="isEditing">
+                                            <mat-form-field class="example-full-width">
+                                                <input matInput placeholder=" Size Name" name="size" [(ngModel)]="size">
+                                            </mat-form-field>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <table class="table">
+                                    <tbody>
+                                        <tr>
+                                            <th>Description</th>
+                                        </tr>
+                                        <tr *ngIf="!isEditing">
+                                            <td>{{ item.description }}</td>
+                                        </tr>
+                                        <tr *ngIf="isEditing">
+                                            <mat-form-field class="example-full-width">
+                                                <input matInput placeholder="Description can be in Details ."
+                                                    name="description" [(ngModel)]="description">
+                                            </mat-form-field>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </mat-card-content>
+                    <!-- <mat-card-actions style="display: flex; justify-content: center;">
+                        <button mat-flat-button color="accent" *ngIf="!isEditing" (click)="handleEdit()">Edit</button>
+                        <button mat-flat-button color="primary" *ngIf="isEditing" (click)="saveChanges()">Save</button>
+                        <button mat-flat-button color="warn" (click)="deleteItem()">Delete</button>
+                    </mat-card-actions> -->
+                <mat-card-actions class="actions">
+                  <button mat-flat-button color="accent" *ngIf="!isEditing" (click)="handleEdit()">Edit</button>
+                  <button mat-flat-button color="primary" *ngIf="isEditing" (click)="saveChanges()">Save</button>
+                  <button mat-flat-button color="warn" (click)="deleteItem()">Delete</button>
+                </mat-card-actions>
+                </form>
+            </mat-card>
+
+        </div>
+    </div>
+</div>

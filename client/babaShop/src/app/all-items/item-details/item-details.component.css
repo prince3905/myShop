@@ -1,0 +1,84 @@
+/* Styles for the item card */
+.item-card {
+  background-color: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Styles for the card header */
+.card-header {
+  background: linear-gradient(60deg, #ef5350, #e53935);
+  color: white;
+  border-radius: 10px 10px 0 0;
+  padding: 1rem;
+}
+
+/* Styles for the card title inside the header */
+.card-title {
+  font-size: 20px;
+  font-weight: 400;
+  margin: 0;
+  color: white;
+}
+
+/* Styles for the card body */
+.card-body {
+  padding: 1rem;
+}
+
+/* Styles for the table */
+.table {
+  margin-bottom: 0;
+  width: 100%;
+  border-collapse: collapse;
+}
+
+/* Styles for table headers */
+th {
+  font-weight: bold;
+  padding: 12px 16px;
+}
+
+/* Styles for table cells */
+td {
+  padding: 12px 16px;
+  border-top: 1px solid #f2f2f2;
+  background-color: #f9f9f9;
+}
+
+/* Styles to remove default table border */
+.table {
+  border: none;
+}
+
+th {
+  text-align: center;
+}
+
+td {
+  text-align: center;
+}
+
+.actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px; /* Add top margin for spacing */
+  }
+  
+  /* Style for each button */
+  button {
+    margin: 0 5px; /* Add horizontal margin for spacing between buttons */
+    min-width: 120px; /* Set a minimum width to keep buttons consistent */
+  }
+  
+  /* Responsive styling for smaller screens */
+  @media screen and (max-width: 767px) {
+    .actions {
+      flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
+    }
+  
+    button {
+      margin: 5px; /* Adjust margin for smaller screens */
+      min-width: 100px; /* Adjust minimum width for smaller screens */
+    }
+  }

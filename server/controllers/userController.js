@@ -5,6 +5,8 @@ const User = require("../models/userModel");
 
 exports.createUser = (req, res) => {
   const newUser = new User(req.body);
+  newUser.createdAt = new Date();
+
   newUser
     .save()
     .then((savedUser) => {

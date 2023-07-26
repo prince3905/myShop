@@ -91,7 +91,7 @@ exports.protect = async (req, res, next) => {
         return next("Invalid token. Please provide a valid token.", 401);
       }
       console.error("Error in protect middleware:", error);
-      res.status(500).json({ error: "Please provide a valid token" });
+      res.status(401).json({ error: "Unauthorized" });
   }
 };
 

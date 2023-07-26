@@ -1,0 +1,82 @@
+<div class="main-content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card card-plain">
+                    <div class="card-header card-header-danger">
+                        <h4 class="card-title mt-0">List of Items</h4>
+                        <!-- <p class="card-category"> Here is a subtitle for this table</p> -->
+                        <div class="button-container">
+                            <button mat-raised-button color="primary" (click)="openAddItemModal()">Add Item</button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead class="">
+                                    <th>
+                                        Name
+                                    </th>
+                                    <th>
+                                        Brand
+                                    </th>
+                                    <th>
+                                        Category
+                                    </th>
+                                    <th>
+                                        model
+                                    </th>
+                                    <th>
+                                        Quantity
+                                    </th>
+                                    <th>
+                                        Price
+                                    </th>
+                                    
+                                    <th>
+                                        Action
+                                    </th>
+                                </thead>
+                                <tbody *ngFor="let item of items" (click)="viewItemDetails(item._id)">
+                                    <tr>
+                                        <td>
+                                            {{item.name}}
+                                        </td>
+                                        <td>
+                                            {{item?.brand?.name}}
+                                        </td>
+                                        <td>
+                                            {{item?.category?.name}}
+                                        </td>
+                                        <td>
+                                            {{item.model}}
+                                        </td>
+                                        <td>
+                                            {{item.quantity}}
+                                        </td>
+                                        <td>
+                                            {{item.s_price}}
+                                        </td>
+                                       
+                                        <td>
+                                            <button mat-raised-button type="button" matTooltip="Edit Task"
+                                                [matTooltipPosition]="'above'"
+                                                class="btn btn-primary btn-link btn-sm btn-just-icon">
+                                                <i class="material-icons">edit</i>
+                                            </button>
+                                            <button mat-raised-button type="button" matTooltip="Remove"
+                                                [matTooltipPosition]="'above'"
+                                                class="btn btn-danger btn-link btn-sm btn-just-icon">
+                                                <i class="material-icons">close</i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
