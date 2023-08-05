@@ -19,6 +19,13 @@ import { BrowserModule } from '@angular/platform-browser';
 import { MatInputModule } from '@angular/material/input';
 import { MatCardModule } from '@angular/material/card';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatMenuModule } from '@angular/material/menu';
+import {MatExpansionModule} from '@angular/material/expansion';
+
+
+
+
+
 import { ItemService } from './shared/services/item.service';
 import { CategoryService } from './shared/services/category.service';
 import { BrandService } from './shared/services/brand.service';
@@ -34,23 +41,14 @@ import { BrandService } from './shared/services/brand.service';
     ComponentsModule,
     RouterModule,
     AppRoutingModule,
-    MatButtonModule,
     MatFormFieldModule,
     BrowserModule,
-    BrowserAnimationsModule,
-    FormsModule,
-    ReactiveFormsModule,
     MatInputModule,
     MatButtonModule,
-    MatFormFieldModule,
-    BrowserModule,
-    BrowserAnimationsModule,
-    FormsModule,
-    ReactiveFormsModule,
-    MatButtonModule,
-    MatFormFieldModule,
     MatCardModule,
     MatSnackBarModule,
+    MatMenuModule,
+    MatExpansionModule,
     
   ],
   declarations: [
@@ -58,6 +56,9 @@ import { BrandService } from './shared/services/brand.service';
     AdminLayoutComponent,
     LoginComponent,
 
+  ],
+  exports: [
+    MatMenuModule,
   ],
   providers: [
     {

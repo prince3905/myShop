@@ -7,7 +7,20 @@ const Brand = require("../models/brandModel");
 
 exports.allItem = async (req, res) => {
   try {
-    const items = await Item.find({}).populate("category").populate("brand");
+    console.log(req.body)
+    const { name, category, brand } = req.query;
+    const query = {};
+    console.log(req.query);
+    if (name && name !=="null") {
+      query.name = { $regex: name, $options: 'i' };
+    }
+    if (category && category !== "null") {
+      query.category = category;
+    }
+    if (brand && brand !=="null") {
+      query.brand = brand;
+    }
+    const items = await Item.find(query).populate("category").populate("brand");
     console.log(items);
     res.status(200).json(items);
   } catch (err) {

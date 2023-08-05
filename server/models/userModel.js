@@ -55,14 +55,14 @@ const userSchema = mongoose.Schema({
   createdAt: { type: Date, default: Date.now } 
 });
 
-userSchema.methods.correctPassword = async (
-  candidatePassword,
-  userPassword
-) => {
-  // return await bcrypt.compare(candidatePassword, userPassword);
-  // console.log(candidatePassword,userPassword)
-  console.log("from modals")
-};
+// userSchema.methods.correctPassword = async (
+//   candidatePassword,
+//   userPassword
+// ) => {
+//   return await bcrypt.compare(candidatePassword, userPassword);
+//   console.log(candidatePassword,userPassword)
+//   console.log("from modals")
+// };
 
 const User = mongoose.model('User', userSchema);
 module.exports = User;

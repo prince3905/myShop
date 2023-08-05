@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
+const bcrypt = require("bcryptjs");
 
 const User = require("../models/userModel");
 
@@ -7,35 +8,52 @@ exports.createUser = (req, res) => {
   const newUser = new User(req.body);
   newUser.createdAt = new Date();
 
-  newUser
-    .save()
-    .then((savedUser) => {
-      res.status(201).json(savedUser);
-    })
-    .catch((err) => {
-      console.error("Error saving user:", err);
-      res.status(500).json({ error: "Error saving user" });
-    });
+  console.log(newUser.email);
+  console.log(newUser.password);
+
+  if (!newUser.email || !newUser.password) {
+    return res
+      .status(400)
+      .json({ error: "Email and password are required fields" });
+  }
+
+  // Hash the password before saving it to the database
+  bcrypt.hash(newUser.password, 12, (err, hashedPassword) => {
+    if (err) {
+      console.error("Error hashing password:", err);
+      return res.status(500).json({ error: "Error hashing password" });
+    }
+    newUser.password = hashedPassword;
+
+    newUser
+      .save()
+      .then((savedUser) => {
+        res.status(201).json(savedUser);
+      })
+      .catch((err) => {
+        console.error("Error saving user:", err);
+        res.status(500).json({ error: "Error saving user" });
+      });
+  });
 };
 
 exports.userDetails = (req, res) => {
-    const { id } = req.params;
-  
-    User.findById(id)
-      .then(user => {
-        if (!user) {
-          return res.status(404).json({ error: "User not found" });
-        }
-  
-        console.log("Found user:", user);
-        res.status(200).json(user);
-      })
-      .catch(err => {
-        console.error("Error finding user:", err);
-        res.status(500).json({ error: "Error finding user" });
-      });
-  };
-  
+  const { id } = req.params;
+
+  User.findById(id)
+    .then((user) => {
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      console.log("Found user:", user);
+      res.status(200).json(user);
+    })
+    .catch((err) => {
+      console.error("Error finding user:", err);
+      res.status(500).json({ error: "Error finding user" });
+    });
+};
 
 exports.allUser = async (req, res) => {
   try {

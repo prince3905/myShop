@@ -67,6 +67,7 @@ export const AdminLayoutRoutes: Routes = [
   { path: "item-list", component: ItemsListComponent },
   { path: "add-items", component: AddItemsComponent },
   { path: "item-details/:id", component: ItemDetailsComponent },
+  { path: "item-details/:name/:category/:brand", component: ItemDetailsComponent },
   // { path: 'table-list',     component: TableListComponent },
   // { path: 'typography',     component: TypographyComponent },
   // { path: 'icons',          component: IconsComponent },

@@ -1,4 +1,6 @@
 const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
+const createError = require("http-errors");
 const AdminUser = require("../models/userModel");
 
 const signToken = (id) => {
@@ -36,18 +38,28 @@ const createSendToken = (user, statusCode, req, res) => {
 exports.login = async (req, res, next) => {
   const { email, password } = req.body;
 
-  if (!email || !password) {
-    return next("Please provide email and password", 400);
+  try {
+    if (!email || !password) {
+      throw createError(400, "Please provide email and password");
+    }
+
+    const adminUser = await AdminUser.findOne({ email }).select("+password");
+    console.log(adminUser);
+
+    if (!adminUser) {
+      throw createError(404, "User not registered");
+    }
+
+    // Compare the user's provided password with the hashed password from the database
+    const passwordMatch = await bcrypt.compare(password, adminUser.password);
+    if (!passwordMatch) {
+      throw createError(401, "Incorrect password");
+    }
+
+    createSendToken(adminUser, 200, req, res);
+  } catch (error) {
+    next(error);
   }
-
-  const adminUser = await AdminUser.findOne({ email }).select("+password");
-  console.log(adminUser);
-
-  if (!adminUser) {
-    return next("User not registered", 404);
-  }
-
-  createSendToken(adminUser, 200, req, res);
 };
 
 exports.protect = async (req, res, next) => {
@@ -85,13 +97,13 @@ exports.protect = async (req, res, next) => {
   } catch (error) {
     // Handle the error here
     if (error.name === "TokenExpiredError") {
-        return next("Your session has expired. Please log in again.", 401);
-      }
-      if (error.name === "JsonWebTokenError") {
-        return next("Invalid token. Please provide a valid token.", 401);
-      }
-      console.error("Error in protect middleware:", error);
-      res.status(401).json({ error: "Unauthorized" });
+      return next("Your session has expired. Please log in again.", 401);
+    }
+    if (error.name === "JsonWebTokenError") {
+      return next("Invalid token. Please provide a valid token.", 401);
+    }
+    console.error("Error in protect middleware:", error);
+    res.status(401).json({ error: "Unauthorized" });
   }
 };
 

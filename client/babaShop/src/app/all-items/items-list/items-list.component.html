@@ -1,64 +1,150 @@
 <div class="main-content">
     <div class="container-fluid">
-        <div class="row">
-            <div class="col-md-12">
-                <div class="card card-plain">
-                    <div class="card-header card-header-danger">
-                        <h4 class="card-title mt-0">List of Items</h4>
-                        <!-- <p class="card-category"> Here is a subtitle for this table</p> -->
-                        <div class="button-container">
-                            <button mat-raised-button color="primary" (click)="openAddItemModal()">Add Item</button>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table">
-                                <thead class="">
-                                    <th>
-                                        Name
-                                    </th>
-                                    <th>
-                                        Brand
-                                    </th>
-                                    <th>
-                                        Category
-                                    </th>
-                                    <th>
-                                        model
-                                    </th>
-                                    <th>
-                                        Quantity
-                                    </th>
-                                    <th>
-                                        Price
-                                    </th>
-                                    
-                                    <th>
-                                        Action
-                                    </th>
-                                </thead>
-                                <tbody *ngFor="let item of items" (click)="viewItemDetails(item._id)">
-                                    <tr>
-                                        <td>
-                                            {{item.name}}
-                                        </td>
-                                        <td>
-                                            {{item?.brand?.name}}
-                                        </td>
-                                        <td>
-                                            {{item?.category?.name}}
-                                        </td>
-                                        <td>
-                                            {{item.model}}
-                                        </td>
-                                        <td>
-                                            {{item.quantity}}
-                                        </td>
-                                        <td>
-                                            {{item.s_price}}
-                                        </td>
-                                       
-                                        <td>
+
+        <div class="card card-plain">
+            <div class="card-header " fxLayout="column" fxLayout.lt-sm="row" fxLayoutGap="5px">
+                <div fxLayout="row" fxLayoutAlign="start center">
+                    <mat-form-field class="dropdown">
+                        <mat-label>Filter by</mat-label>
+                        <select matNativeControl [(ngModel)]="selectedOption" required>
+                            <option label="--select something --"></option>
+                            <option value="name">Name</option>
+                            <option value="category">Category</option>
+                            <option value="brand">Brand</option>
+                        </select>
+                    </mat-form-field>
+                </div>
+
+
+                <div *ngIf="selectedOption === 'name'" class="name-filter" fxLayout="row"
+                    fxLayoutAlign.lt-md="start center">
+                    <mat-form-field fxFlex="10%">
+                        <input matInput placeholder="itemName" name="itemName" [(ngModel)]="itemName">
+                    </mat-form-field>
+                    <mat-form-field fxFlex="10%" fxHide.lt-md>
+                        <mat-label>Category</mat-label>
+                        <mat-select [(ngModel)]="selectedCategory">
+                            <mat-option *ngFor="let category of Category" [value]="category._id">
+                                {{ category.name }}
+                            </mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                    <mat-form-field fxFlex="10%" fxHide.lt-md>
+                        <mat-label>Brand</mat-label>
+                        <mat-select [(ngModel)]="selectedBrand">
+                            <mat-option *ngFor="let brand of Brands" [value]="brand._id">
+                                {{ brand.name }}
+                            </mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+
+
+
+                <div *ngIf="selectedOption === 'category'" class="name-filter" fxLayout="row"
+                    fxLayoutAlign.lt-md="start center">
+                    <mat-form-field fxFlex="10%" fxHide.lt-md>
+                        <mat-label>Category</mat-label>
+                        <mat-select [(ngModel)]="selectedCategory">
+                            <mat-option *ngFor="let category of Category" [value]="category._id">
+                                {{ category.name }}
+                            </mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                    <mat-form-field fxFlex="10%" fxHide.lt-md>
+                        <mat-label>Brand</mat-label>
+                        <mat-select [(ngModel)]="selectedBrand">
+                            <mat-option *ngFor="let brand of Brands" [value]="brand._id">
+                                {{ brand.name}}
+                            </mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+
+
+                <div *ngIf="selectedOption === 'brand'" class="name-filter" fxLayout="row"
+                    fxLayoutAlign.lt-md="start center">
+                    <mat-form-field fxFlex="10%" fxHide.lt-md>
+                        <mat-label>Brand</mat-label>
+                        <mat-select [(ngModel)]="selectedBrand">
+                            <mat-option *ngFor="let brand of Brands" [value]="brand._id">
+                                {{ brand.name }}
+                            </mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+                <div class="button-container">
+                    <button mat-raised-button type="submit" class="btn btn-white btn-round btn-just-icon" (click)="onSearch()">
+                        <i class="material-icons">search</i>
+                    </button>
+                    <button mat-raised-button type="submit" class="btn btn-white btn-round btn-just-icon" (click)="onClear()">
+                        <i class="material-icons">clear</i>
+                    </button>
+                    <button class="add" mat-raised-button color="primary" (click)="openAddItemModal()" *ngIf="!selectedOption">
+                        Add Item
+                    </button>
+                </div>
+
+            </div>
+
+        </div>
+
+
+
+
+
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead class="">
+                        <th>
+                            Name
+                        </th>
+                        <th>
+                            Brand
+                        </th>
+                        <th>
+                            Category
+                        </th>
+                        <th>
+                            Model
+                        </th>
+                        <th>
+                            Quantity
+                        </th>
+                        <th>
+                            Price
+                        </th>
+
+                        <th>
+                            Size
+                        </th>
+                    </thead>
+                    <tbody *ngFor="let item of items" (click)="viewItemDetails(item._id)">
+                        <tr>
+                            <td>
+                                {{item.name}}
+                            </td>
+                            <td>
+                                {{item?.brand?.name}}
+                            </td>
+                            <td>
+                                {{item?.category?.name}}
+                            </td>
+                            <td>
+                                {{item.model}}
+                            </td>
+                            <td>
+                                {{item.quantity}}
+                            </td>
+                            <td>
+                                {{item.s_price}}
+                            </td>
+                            <td>
+                                {{item.size}}
+                            </td>
+
+                            <!-- <td>
                                             <button mat-raised-button type="button" matTooltip="Edit Task"
                                                 [matTooltipPosition]="'above'"
                                                 class="btn btn-primary btn-link btn-sm btn-just-icon">
@@ -69,14 +155,12 @@
                                                 class="btn btn-danger btn-link btn-sm btn-just-icon">
                                                 <i class="material-icons">close</i>
                                             </button>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
+                                        </td> -->
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
+
+
     </div>
-</div>

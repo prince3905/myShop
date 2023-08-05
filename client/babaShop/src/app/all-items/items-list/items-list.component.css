@@ -1,10 +1,70 @@
-.card-header-danger {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  background-color: #f44336; /* Red color for the card header */
+  color: #fff; /* Text color for the card header */
+  border-radius: 5px;
+}
+.card-plain{
+  margin-top: -30px;
+}
+
+.card-title {
+  font-size: 24px;
+}
+
+.dropdown {
+  flex: 1;
+  margin-right: 16px;
+}
+
+.name-filter {
+  display: flex;
+  align-items: center;
+}
+
+.name-filter mat-form-field {
+  margin-right: 16px;
+}
+
+.button-container {
+  display: flex;
+  align-items: center;
   
-  .header-container {
-    display: flex;
-    align-items: center;
-  }
+}
+
+.material-icons {
+  font-size: 24px;
+  margin-right: 8px;
+}
+.btn add{
+  margin-left: 10px;
+}
+
+@media (max-width: 412px) {
+  .mat-form-field{
+    width: 78px !important;
+    margin-left: -13px;
+    font-size: 12px;
+    text-align: center;
+    color: white;
+}
+.card-plain .card-header {
+  margin-left: -30px !important;
+  margin-right: 0px !important;
+  width: 119% !important;
+}
+
+.add {
+  height: 35px;
+  margin-left: 2px;
+  margin-right: -13px;
+  width: 73px;
+  font-size: 10px;
+}
+}
+
+
+

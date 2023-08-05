@@ -19,7 +19,8 @@ import { AddUserComponent } from 'app/all-users/add-user/add-user.component';
 import { UserComponent } from 'app/all-users/user/user.component';
 import { ItemDetailsComponent } from 'app/all-items/item-details/item-details.component';
 import { MatInputModule } from '@angular/material/input';
-
+import { MatMenuModule } from '@angular/material/menu';
+import {MatExpansionModule} from '@angular/material/expansion';
 
 @NgModule({
   imports: [
@@ -32,15 +33,12 @@ import { MatInputModule } from '@angular/material/input';
     MatFormFieldModule,
     MatSelectModule,
     MatTooltipModule,
-    MatButtonModule,
-    MatFormFieldModule,
     MatCardModule,
     MatDialogModule,
     MatIconModule,
-    MatSelectModule,
     MatInputModule,
-    
-    
+    MatMenuModule,
+    MatExpansionModule,
   ],
   declarations: [
     DashboardComponent,
@@ -50,9 +48,9 @@ import { MatInputModule } from '@angular/material/input';
     UserComponent,
     AddUserComponent,
     ItemDetailsComponent,
-    
-    
   ]
 })
 
-export class AdminLayoutModule {}
+export class AdminLayoutModule {
+  panelOpenState = false;
+}

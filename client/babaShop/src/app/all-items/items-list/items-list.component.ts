@@ -1,9 +1,15 @@
+import { ComponentsModule } from "./../../components/components.module";
 import { Component, OnInit } from "@angular/core";
 import { MatDialog } from "@angular/material/dialog";
 
 import { AddItemsComponent } from "../add-items/add-items.component";
 import { ItemService } from "app/shared/services/item.service";
-import { Router } from "@angular/router";
+import { ActivatedRoute, NavigationExtras, Router } from "@angular/router";
+import { FormControl, Validators } from "@angular/forms";
+import { BrandService } from "app/shared/services/brand.service";
+import { CategoryService } from "app/shared/services/category.service";
+import { forkJoin } from "rxjs";
+import { query } from "chartist";
 
 @Component({
   selector: "items-list",
@@ -11,20 +17,161 @@ import { Router } from "@angular/router";
   styleUrls: ["./items-list.component.css"],
 })
 export class ItemsListComponent implements OnInit {
+  panelOpenState = false;
+  Category: any = [];
+  Brands: any = [];
   items: any = [];
+  name: string;
+  category: string;
+  brand: string;
+  itemName: string = "";
+
+  selectedOption: string;
+  // categories: string[] = ["Category 1", "Category 2", "Category 3"];
+  // brands: string[] = ["Brand 1", "Brand 2", "Brand 3"];
+
+  selectedCategory: string;
+  selectedBrand: string;
+
+  searchParams = {};
 
   constructor(
     public dialog: MatDialog,
     private item: ItemService,
-    private router: Router
+    private router: Router,
+    private Router: ActivatedRoute,
+    private categoryS: CategoryService,
+    private brandS: BrandService
   ) {}
 
   ngOnInit(): void {
-    this.getAllItems();
+    this.getAllItems("null");
+    this.getCategoryAndBrand();
   }
 
-  getAllItems(): void {
-    this.item.getItem().subscribe(
+  getCategoryAndBrand(): void {
+    forkJoin({
+      categories: this.categoryS.getCategory(),
+      brands: this.brandS.getBrand(),
+    }).subscribe(
+      (response) => {
+        this.Category = response.categories;
+        this.Brands = response.brands;
+        console.log("All Categories:", this.Category);
+        console.log("All Brands:", this.Brands);
+      },
+      (error) => {
+        console.error("Error retrieving data:", error);
+        // Handle error here (e.g., show error message to the user)
+      }
+    );
+  }
+
+  // onSearch() {
+  //   if (this.selectedOption === "name") {
+  //     console.log("Selected Name:", this.itemName);
+  //     console.log("Selected Category:", this.selectedCategory);
+  //     console.log("Selected Brand:", this.selectedBrand);
+  //     this.router.navigate([], {
+  //       relativeTo: this.Router,
+  //       queryParams: {
+  //         name: this.itemName,
+  //         category: this.selectedCategory,
+  //         brand: this.selectedBrand,
+  //       },
+  //       queryParamsHandling: "merge",
+  //     });
+  //   } else if (this.selectedOption === "category") {
+  //     console.log("Selected Category:", this.selectedCategory);
+  //     console.log("Selected Category:", this.selectedBrand);
+  //     this.router.navigate([], {
+  //       relativeTo: this.Router,
+  //       queryParams: {
+  //         name: null,
+  //         category: this.selectedCategory,
+  //         brand: this.selectedBrand,
+  //       },
+  //       queryParamsHandling: "merge",
+  //     });
+  //   } else if (this.selectedOption === "brand") {
+  //     console.log("Selected Brand:", this.selectedBrand);
+  //     this.router.navigate([], {
+  //       relativeTo: this.Router,
+  //       queryParams: {
+  //         name: null,
+  //         category: null,
+  //         brand: this.selectedBrand,
+  //       },
+  //       queryParamsHandling: "merge",
+  //     });
+  //   }
+  // }
+
+onSearch() {
+  let queryParamsObj = {};
+
+  if (this.selectedOption === "name") {
+    console.log("Selected Name:", this.itemName);
+    console.log("Selected Category:", this.selectedCategory);
+    console.log("Selected Brand:", this.selectedBrand);
+
+    queryParamsObj = {
+      name: this.itemName,
+      category: this.selectedCategory,
+      brand: this.selectedBrand,
+    };
+  } else if (this.selectedOption === "category") {
+    console.log("Selected Category:", this.selectedCategory);
+    console.log("Selected Brand:", this.selectedBrand);
+
+    queryParamsObj = {
+      name: null,
+      category: this.selectedCategory,
+      brand: this.selectedBrand,
+    };
+  } else if (this.selectedOption === "brand") {
+    console.log("Selected Brand:", this.selectedBrand);
+
+    queryParamsObj = {
+      name: null,
+      category: null,
+      brand: this.selectedBrand,
+    };
+  }
+
+  console.log("Query Parameters:", queryParamsObj);
+
+  // Now navigate with the queryParamsObj
+  const navigationExtras: NavigationExtras = {
+    relativeTo: this.Router,
+    queryParams: queryParamsObj,
+    queryParamsHandling: "merge",
+  };
+
+  this.router.navigate([], navigationExtras);
+  this.getAllItems(queryParamsObj)
+}
+  
+
+  onClear() {
+    // Reset all query parameters to null before setting new ones
+    this.itemName = null;
+    this.selectedCategory = null;
+    this.selectedBrand = null;
+    this.router.navigate([], {
+      relativeTo: this.Router,
+      queryParams: {
+        name: null,
+        category: null,
+        brand: null,
+      },
+      queryParamsHandling: "merge",
+    });
+  }
+
+  getAllItems(queryParamsObj): void {
+    console.log(queryParamsObj)
+    this.item.getItem(queryParamsObj).subscribe(
       (response) => {
         this.items = response;
         console.log("All items here", this.items);

@@ -14,8 +14,10 @@ export class ItemService {
     return environment.apiBaseURL;
   }
 
-  getItem() {
-    return this.http.get(`${this.baseURL}/api/item`);
+  getItem(data:any) {
+    const params = new HttpParams({ fromObject: data });
+    console.log(params)
+    return this.http.get(`${this.baseURL}/api/item`,{ params: params });
   }
 
   getItemDetails(id: string) {
