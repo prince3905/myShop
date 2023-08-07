@@ -9,7 +9,8 @@ import { FormControl, Validators } from "@angular/forms";
 import { BrandService } from "app/shared/services/brand.service";
 import { CategoryService } from "app/shared/services/category.service";
 import { forkJoin } from "rxjs";
-import { query } from "chartist";
+import { AddCategoryComponent } from "../add-category/add-category.component";
+import { AddBrandComponent } from "../add-brand/add-brand.component";
 
 @Component({
   selector: "items-list",
@@ -197,6 +198,36 @@ onSearch() {
       }
     });
   }
+
+  openAddCategoryModal(): void{
+    const dialogRef = this.dialog.open(AddCategoryComponent, {
+      width: "400px", // Adjust the width as needed
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      // Handle the result after the modal is closed
+      if (result && result.data && result.data.categoryName) {
+        const newCategoryName = result.data.categoryName;
+        // Perform any actions with the new item name here
+      }
+    });
+  }
+
+  openAddBrandModal(): void{
+    const dialogRef = this.dialog.open(AddBrandComponent, {
+      width: "400px", // Adjust the width as needed
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      // Handle the result after the modal is closed
+      if (result && result.data && result.data.brandName) {
+        const newBrandName = result.data.brandName;
+        // Perform any actions with the new item name here
+      }
+    });
+  }
+
+  
 
   viewItemDetails(itemId: string) {
     this.router.navigate(["/item-details", itemId]);

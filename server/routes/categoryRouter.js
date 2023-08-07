@@ -7,9 +7,9 @@ const router = express.Router();
 router.use(authController.protect)
 
 router.get('/', categoryController.allCategory);
-// router.post('/', itemController.addItem);
-// // router.delete('/', userController.deleteUser);
-// // router.put('/', userController.updateUser);
+router.post('/', categoryController.addCategory);
+router.put('/', categoryController.updateCategory);
+router.delete('/:id', categoryController.deleteCategory);
 
 
 

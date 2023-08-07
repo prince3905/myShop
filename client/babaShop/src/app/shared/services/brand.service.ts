@@ -19,4 +19,8 @@ export class BrandService {
     return this.http.get(`${this.baseURL}/api/brand`);
   }
 
+  addBrand(data) {
+    return this.http.post(`${this.baseURL}/api/brand`, data);
+  }
+
 }

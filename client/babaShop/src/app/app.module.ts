@@ -55,7 +55,6 @@ import { BrandService } from './shared/services/brand.service';
     AppComponent,
     AdminLayoutComponent,
     LoginComponent,
-
   ],
   exports: [
     MatMenuModule,

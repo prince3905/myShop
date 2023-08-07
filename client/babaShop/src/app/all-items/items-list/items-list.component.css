@@ -32,7 +32,10 @@
 .button-container {
   display: flex;
   align-items: center;
-  
+}
+
+.button-container button {
+  margin-right: 10px;
 }
 
 .material-icons {
@@ -63,6 +66,10 @@
   margin-right: -13px;
   width: 73px;
   font-size: 10px;
+}
+
+.button-container button {
+  margin-right: 2px;
 }
 }
 

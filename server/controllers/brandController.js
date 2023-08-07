@@ -3,6 +3,55 @@ const Schema = mongoose.Schema;
 
 const Brand = require('../models/brandModel');
 
+exports.addBrand = async (req, res) => {
+  const newCBrandData = req.body;
+  newCBrandData.createdAt = new Date();
+  const newBrand = new Brand(newCBrandData);
+  newBrand
+    .save()
+    .then((savedBrand) => {
+      res.status(201).json({
+        message: "Brand added successfully.",
+        Category: savedBrand,
+      });
+    })
+    .catch((err) => {
+      console.error("Error saving brand:", err);
+      res.status(500).json({ error: "Error saving brand" });
+    });
+};
+
+
+
+exports.updateBrand = async (req, res) => {
+  const brandId = req.body;
+  console.log(brandId);
+  try {
+    const updatedBrandData = {
+      name: req.body.name,
+      description: req.body.description,
+    };
+    const updatedBrand = await Brand.findByIdAndUpdate(
+      brandId,
+      updatedBrandData,
+      {
+        new: true,
+      }
+    );
+    if (!updatedBrand) {
+      return res.status(404).json({ error: "Brand not found" });
+    }
+    res.status(200).json({
+      message: "Brand updated successfully.",
+      category: updatedBrand,
+    });
+  } catch (error) {
+    console.error("Error updating brand:", error);
+    res.status(500).json({ error: "Error updating brand" });
+  }
+};
+
+
 
 
 exports.allBrand = async (req, res) => {
@@ -16,27 +65,22 @@ exports.allBrand = async (req, res) => {
   }
 };
 
-// exports.addItem = async (req, res) => {
-//   const newItemData = {
-//     name: "Classic White",
-//     category: "64bd2640dc8317a0c5d0f970", 
-//     brand: "64bd038bdc8317a0c5d0f953", 
-//     p_price: 30.99,
-//     s_price: 40.99, 
-//     quantity: 100,
-//     model: "ABC123", 
-//     color: "White", 
-//     size: "M",
-//     description: "A classic white T-shirt made from high-quality cotton.",
-//   };
-//   const newItem = new Item(newItemData);
-//   newItem
-//     .save()
-//     .then((savedItem) => {
-//       res.status(201).json(savedItem);
-//     })
-//     .catch((err) => {
-//       console.error("Error saving item:", err);
-//       res.status(500).json({ error: "Error saving item" });
-//     });
-// };
+exports.deleteBrand = (req, res) => {
+  const { id } = req.params;
+  console.log(req.params)
+  Brand.findByIdAndDelete(id)
+    .then((deleteBrand) => {
+      if (!deleteBrand) {
+        return res.status(404).json({ error: "Brand  not found" });
+      }
+
+      console.log("Brand delete:", deleteBrand);
+      res.status(200).json({ message: "Brand deleted successfully" });
+    })
+    .catch((err) => {
+      console.error("Error deleting Brand :", err);
+      res.status(500).json({ error: "Error deleting Brand" });
+    });
+};
+
+

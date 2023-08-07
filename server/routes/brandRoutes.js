@@ -7,9 +7,9 @@ const router = express.Router();
 router.use(authController.protect)
 
 router.get('/', brandController.allBrand);
-// router.post('/', itemController.addItem);
-// // router.delete('/', userController.deleteUser);
-// // router.put('/', userController.updateUser);
+router.post('/', brandController.addBrand);
+router.put('/', brandController.updateBrand);
+router.delete('/:id', brandController.deleteBrand);
 
 
 

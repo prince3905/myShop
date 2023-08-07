@@ -17,4 +17,8 @@ export class CategoryService {
     getCategory() {
     return this.http.get(`${this.baseURL}/api/category`);
   }
+
+  addCategory(data) {
+    return this.http.post(`${this.baseURL}/api/category`, data);
+  }
 }

@@ -113,7 +113,7 @@ exports.deleteItem = (req, res) => {
         return res.status(404).json({ error: "Item not found" });
       }
 
-      console.log("Deleted delete:", DeleteItem);
+      console.log("Item delete:", DeleteItem);
       res.status(200).json({ message: "Item deleted successfully" });
     })
     .catch((err) => {

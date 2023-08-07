@@ -21,6 +21,8 @@ import { ItemDetailsComponent } from 'app/all-items/item-details/item-details.co
 import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
 import {MatExpansionModule} from '@angular/material/expansion';
+import { AddCategoryComponent } from 'app/all-items/add-category/add-category.component';
+import { AddBrandComponent } from 'app/all-items/add-brand/add-brand.component';
 
 @NgModule({
   imports: [
@@ -48,6 +50,9 @@ import {MatExpansionModule} from '@angular/material/expansion';
     UserComponent,
     AddUserComponent,
     ItemDetailsComponent,
+    AddCategoryComponent,
+    AddBrandComponent,
+
   ]
 })
 
