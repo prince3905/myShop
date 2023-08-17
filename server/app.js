@@ -7,6 +7,7 @@ const authRouter = require("./routes/authRoutes");
 const itemRouter = require("./routes/itemsRoutes");
 const categoryRouter = require("./routes/categoryRouter");
 const brandRouter = require("./routes/brandRoutes");
+const purchaseRouter = require("./routes/purchaseRoutes");
 
 //Middleware
 app.use(cors());
@@ -18,5 +19,6 @@ app.use("/api/auth", authRouter);
 app.use("/api/item", itemRouter);
 app.use("/api/category", categoryRouter);
 app.use("/api/brand", brandRouter);
+app.use("/api/purchase", purchaseRouter);
 
 module.exports = app;

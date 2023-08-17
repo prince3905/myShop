@@ -4,11 +4,11 @@
   justify-content: space-between;
   padding: 16px;
   background-color: #f44336; /* Red color for the card header */
-  color: #fff; /* Text color for the card header */
+  color: #fff; 
   border-radius: 5px;
   height: 100px;
 }
-.card-plain{
+.card-plain {
   margin-top: -30px;
 }
 
@@ -51,36 +51,68 @@ mat-autocomplete{
   font-size: 24px;
   margin-right: 8px;
 }
-.btn add{
+.btn add {
   margin-left: 10px;
+}
+.div.mat-content {
+  display: flex !important; 
+  flex: 1 !important;
+  overflow: hidden !important;
+  flex-direction: column !important;
+}
+.mat-content {
+  align-items:center
+}
+.title{
+  margin-top: -20px;
+  margin-bottom: 10px;
+  color: #2c0808;
+  font-size: 15px;
+  font-weight: 500;
+  width: 100%;
+  margin-left: 0%;
+  height: 35px;
+  border-radius: 3px;
+}
+.title2{
+  margin-bottom: 10px;
+  color: #2c0808;
+  font-size: 15px;
+  font-weight: 500;
+  width: 102%;
+  text-decoration-line: underline
 }
 
 @media (max-width: 412px) {
-  .mat-form-field{
+  .mat-form-field {
     width: 78px !important;
     margin-left: -13px;
     font-size: 12px;
     text-align: center;
     color: white;
-}
-.card-plain .card-header {
-  margin-left: -30px !important;
-  margin-right: 0px !important;
-  width: 119% !important;
-}
+  }
+  .card-plain .card-header {
+    margin-left: -30px !important;
+    margin-right: 0px !important;
+    width: 119% !important;
+  }
 
-.add {
-  height: 35px;
-  margin-left: 2px;
-  margin-right: -13px;
-  width: 73px;
-  font-size: 10px;
+  .add {
+    height: 35px;
+    margin-left: 2px;
+    margin-right: -13px;
+    width: 73px;
+    font-size: 10px;
+  }
+
+  .button-container button {
+    margin-right: 2px;
+  }
+  
+
+
+
+
+
+  
 }
-
-.button-container button {
-  margin-right: 2px;
-}
-}
-
-
-

@@ -1,0 +1,17 @@
+.mat-dialog-container {
+    margin-left: 50% !important;
+}
+
+.total{
+    display: flex;
+    flex-wrap: wrap;
+    align-content: stretch;
+    justify-content: space-evenly;
+    margin-left: 10%;
+    font-weight: bolder;
+}
+
+.table > tbody > tr > td, .table > tfoot > tr > td {
+    padding: 2px 8px;
+    vertical-align: middle;
+}

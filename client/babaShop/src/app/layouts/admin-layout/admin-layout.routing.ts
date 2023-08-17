@@ -13,6 +13,8 @@ import { LoginComponent } from "app/login/login.component";
 import { ItemsListComponent } from "app/all-items/items-list/items-list.component";
 import { AddItemsComponent } from "app/all-items/add-items/add-items.component";
 import { ItemDetailsComponent } from "app/all-items/item-details/item-details.component";
+import { AddSalesComponent } from "app/sales/add-sales/add-sales.component";
+import { SalesListComponent } from "app/sales/sales-list/sales-list.component";
 
 export const AdminLayoutRoutes: Routes = [
   // {
@@ -68,6 +70,8 @@ export const AdminLayoutRoutes: Routes = [
   { path: "add-items", component: AddItemsComponent },
   { path: "item-details/:id", component: ItemDetailsComponent },
   { path: "item-details/:name/:category/:brand", component: ItemDetailsComponent },
+  { path: "sale-list", component: SalesListComponent },
+
   // { path: 'table-list',     component: TableListComponent },
   // { path: 'typography',     component: TypographyComponent },
   // { path: 'icons',          component: IconsComponent },

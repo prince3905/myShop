@@ -68,7 +68,8 @@ import { BrandService } from './shared/services/brand.service';
     AuthService,
     ItemService,
     CategoryService,
-    BrandService
+    BrandService,
+    
   ],
   bootstrap: [AppComponent]
 })

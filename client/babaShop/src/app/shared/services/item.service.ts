@@ -1,23 +1,27 @@
-import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import {environment} from '../../../environments/environment'
+import { Injectable } from "@angular/core";
+import { HttpClient, HttpParams } from "@angular/common/http";
+import { Observable } from "rxjs";
+import { environment } from "../../../environments/environment";
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: "root",
 })
 export class ItemService {
-
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
 
   get baseURL(): string {
     return environment.apiBaseURL;
   }
 
-  getItem(data:any) {
+  getItem(data: any) {
     const params = new HttpParams({ fromObject: data });
-    console.log(params)
-    return this.http.get(`${this.baseURL}/api/item`,{ params: params });
+    console.log(params);
+    return this.http.get(`${this.baseURL}/api/item`, { params: params });
+  }
+
+  getItemSuggestion(searchTerm: string) {
+    console.log(searchTerm);
+    return this.http.get(`${this.baseURL}/api/item/item-suggestions?term=${searchTerm}`);
   }
 
   getItemDetails(id: string) {
@@ -32,9 +36,7 @@ export class ItemService {
     return this.http.put(`${this.baseURL}/api/item`, data);
   }
 
-    deleteItem(itemId: string) {
+  deleteItem(itemId: string) {
     return this.http.delete(`${this.baseURL}/api/item/${itemId}`);
   }
-
-
 }

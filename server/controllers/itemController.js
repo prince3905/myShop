@@ -7,26 +7,43 @@ const Brand = require("../models/brandModel");
 
 exports.allItem = async (req, res) => {
   try {
-    console.log(req.body)
-    const { name, category, brand } = req.query;
+    const { name, category, brand, startDate, endDate } = req.query;
     const query = {};
-    console.log(req.query);
-    if (name && name !=="null") {
-      query.name = { $regex: name, $options: 'i' };
+    let startOfDay = null, endOfDay = null; // Declare the variables here
+
+    if (name && name !== "null") {
+      query.name = { $regex: name, $options: "i" };
     }
     if (category && category !== "null") {
       query.category = category;
     }
-    if (brand && brand !=="null") {
+    if (brand && brand !== "null") {
       query.brand = brand;
     }
+
+    if (startDate && endDate && startDate !== "null" && endDate !== "null") {
+      startOfDay = new Date(startDate);
+      startOfDay.setHours(0, 0, 0, 0);
+      endOfDay = new Date(endDate);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      query.createdAt = {
+        $gte: startOfDay,
+        $lte: endOfDay,
+      };
+
+      console.log("Formatted Start Date:", startOfDay.toISOString().split('T')[0]);
+      console.log("Formatted End Date:", endOfDay.toISOString().split('T')[0]);
+    }
+
     const items = await Item.find(query).populate("category").populate("brand");
-    console.log(items);
     res.status(200).json(items);
   } catch (err) {
     console.error("Error retrieving items:", err);
     res.status(500).json({ error: "Error retrieving items" });
   }
+  console.log("Formatted Start Date:", startOfDay.toISOString().split("T")[0]);
+  console.log("Formatted End Date:", endOfDay.toISOString().split("T")[0]);
 };
 
 exports.addItem = async (req, res) => {
@@ -120,4 +137,19 @@ exports.deleteItem = (req, res) => {
       console.error("Error deleting item:", err);
       res.status(500).json({ error: "Error deleting item" });
     });
+};
+
+exports.searchItemNameSuggestions = async (req, res) => {
+  try {
+    console.log(req.query);
+    const searchTerm = req.query.term;
+    const suggestions = await Item.find({
+      name: { $regex: searchTerm, $options: "i" },
+    }).limit(10);
+    res.status(200).json(suggestions.map((item) => item.name));
+    console.log(suggestions.map((item) => item.name));
+  } catch (err) {
+    console.error("Error searching item name suggestions:", err);
+    res.status(500).json({ error: "Error searching item name suggestions" });
+  }
 };

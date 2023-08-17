@@ -8,7 +8,7 @@ import { ActivatedRoute, NavigationExtras, Router } from "@angular/router";
 import { FormControl, Validators } from "@angular/forms";
 import { BrandService } from "app/shared/services/brand.service";
 import { CategoryService } from "app/shared/services/category.service";
-import { forkJoin } from "rxjs";
+import { Subject, forkJoin } from "rxjs";
 import { AddCategoryComponent } from "../add-category/add-category.component";
 import { AddBrandComponent } from "../add-brand/add-brand.component";
 
@@ -26,15 +26,17 @@ export class ItemsListComponent implements OnInit {
   category: string;
   brand: string;
   itemName: string = "";
+  startDate: Date;
+  endDate: Date;
+  searchInput: string;
+  searchInputSubject = new Subject<string>();
 
   selectedOption: string;
-  // categories: string[] = ["Category 1", "Category 2", "Category 3"];
-  // brands: string[] = ["Brand 1", "Brand 2", "Brand 3"];
-
   selectedCategory: string;
   selectedBrand: string;
 
   searchParams = {};
+  suggestions: string[] = [];
 
   constructor(
     public dialog: MatDialog,
@@ -48,6 +50,33 @@ export class ItemsListComponent implements OnInit {
   ngOnInit(): void {
     this.getAllItems("null");
     this.getCategoryAndBrand();
+  }
+
+  fetchSuggestions(): void {
+    this.item.getItemSuggestion(this.itemName).subscribe(
+      (suggestions: any[]) => {
+        this.suggestions = suggestions;
+        console.log(this.suggestions);
+      },
+      (error: any) => {
+        console.error("Error fetching suggestions:", error);
+      }
+    );
+  }
+
+  selectSuggestion(suggestion: string): void {
+    this.itemName = suggestion;
+    this.suggestions = [];
+  }
+
+  onStartDateChange(event: any): void {
+    this.startDate = event.value;
+    console.log("Start Date:", this.startDate);
+  }
+
+  onEndDateChange(event: any): void {
+    this.endDate = event.value;
+    console.log("End Date:", this.endDate);
   }
 
   getCategoryAndBrand(): void {
@@ -68,110 +97,79 @@ export class ItemsListComponent implements OnInit {
     );
   }
 
-  // onSearch() {
-  //   if (this.selectedOption === "name") {
-  //     console.log("Selected Name:", this.itemName);
-  //     console.log("Selected Category:", this.selectedCategory);
-  //     console.log("Selected Brand:", this.selectedBrand);
-  //     this.router.navigate([], {
-  //       relativeTo: this.Router,
-  //       queryParams: {
-  //         name: this.itemName,
-  //         category: this.selectedCategory,
-  //         brand: this.selectedBrand,
-  //       },
-  //       queryParamsHandling: "merge",
-  //     });
-  //   } else if (this.selectedOption === "category") {
-  //     console.log("Selected Category:", this.selectedCategory);
-  //     console.log("Selected Category:", this.selectedBrand);
-  //     this.router.navigate([], {
-  //       relativeTo: this.Router,
-  //       queryParams: {
-  //         name: null,
-  //         category: this.selectedCategory,
-  //         brand: this.selectedBrand,
-  //       },
-  //       queryParamsHandling: "merge",
-  //     });
-  //   } else if (this.selectedOption === "brand") {
-  //     console.log("Selected Brand:", this.selectedBrand);
-  //     this.router.navigate([], {
-  //       relativeTo: this.Router,
-  //       queryParams: {
-  //         name: null,
-  //         category: null,
-  //         brand: this.selectedBrand,
-  //       },
-  //       queryParamsHandling: "merge",
-  //     });
-  //   }
-  // }
+  onSearch() {
+    let queryParamsObj = {};
 
-onSearch() {
-  let queryParamsObj = {};
+    if (this.selectedOption === "name") {
+      console.log("Selected Name:", this.itemName);
+      console.log("Selected Category:", this.selectedCategory);
+      console.log("Selected Brand:", this.selectedBrand);
 
-  if (this.selectedOption === "name") {
-    console.log("Selected Name:", this.itemName);
-    console.log("Selected Category:", this.selectedCategory);
-    console.log("Selected Brand:", this.selectedBrand);
+      queryParamsObj = {
+        name: this.itemName,
+        category: this.selectedCategory,
+        brand: this.selectedBrand,
+      };
+    } else if (this.selectedOption === "category") {
+      console.log("Selected Category:", this.selectedCategory);
+      console.log("Selected Brand:", this.selectedBrand);
 
-    queryParamsObj = {
-      name: this.itemName,
-      category: this.selectedCategory,
-      brand: this.selectedBrand,
+      queryParamsObj = {
+        name: null,
+        category: this.selectedCategory,
+        brand: this.selectedBrand,
+      };
+    } else if (this.selectedOption === "brand") {
+      console.log("Selected Brand:", this.selectedBrand);
+
+      queryParamsObj = {
+        name: null,
+        category: null,
+        brand: this.selectedBrand,
+      };
+    }
+    else if (this.selectedOption === "date") {
+      console.log(this.startDate, this.endDate);
+      queryParamsObj['startDate'] = this.startDate.toISOString().slice(0, 10);
+      queryParamsObj['endDate'] = this.endDate.toISOString().slice(0, 10);
+    }
+
+    console.log("Query Parameters:", queryParamsObj);
+
+    // Now navigate with the queryParamsObj
+    const navigationExtras: NavigationExtras = {
+      relativeTo: this.Router,
+      queryParams: queryParamsObj,
+      queryParamsHandling: "merge",
     };
-  } else if (this.selectedOption === "category") {
-    console.log("Selected Category:", this.selectedCategory);
-    console.log("Selected Brand:", this.selectedBrand);
 
-    queryParamsObj = {
-      name: null,
-      category: this.selectedCategory,
-      brand: this.selectedBrand,
-    };
-  } else if (this.selectedOption === "brand") {
-    console.log("Selected Brand:", this.selectedBrand);
-
-    queryParamsObj = {
-      name: null,
-      category: null,
-      brand: this.selectedBrand,
-    };
+    this.router.navigate([], navigationExtras);
+    this.getAllItems(queryParamsObj);
   }
-
-  console.log("Query Parameters:", queryParamsObj);
-
-  // Now navigate with the queryParamsObj
-  const navigationExtras: NavigationExtras = {
-    relativeTo: this.Router,
-    queryParams: queryParamsObj,
-    queryParamsHandling: "merge",
-  };
-
-  this.router.navigate([], navigationExtras);
-  this.getAllItems(queryParamsObj)
-}
-  
 
   onClear() {
     // Reset all query parameters to null before setting new ones
     this.itemName = null;
     this.selectedCategory = null;
     this.selectedBrand = null;
+    this.startDate = null;
+    this.endDate = null;
     this.router.navigate([], {
       relativeTo: this.Router,
       queryParams: {
         name: null,
         category: null,
         brand: null,
+        startDate: null,
+        endDate: null
       },
       queryParamsHandling: "merge",
     });
+    this.getAllItems(null);
   }
 
   getAllItems(queryParamsObj): void {
-    console.log(queryParamsObj)
+    console.log(queryParamsObj);
     this.item.getItem(queryParamsObj).subscribe(
       (response) => {
         this.items = response;
@@ -199,7 +197,7 @@ onSearch() {
     });
   }
 
-  openAddCategoryModal(): void{
+  openAddCategoryModal(): void {
     const dialogRef = this.dialog.open(AddCategoryComponent, {
       width: "400px", // Adjust the width as needed
     });
@@ -213,7 +211,7 @@ onSearch() {
     });
   }
 
-  openAddBrandModal(): void{
+  openAddBrandModal(): void {
     const dialogRef = this.dialog.open(AddBrandComponent, {
       width: "400px", // Adjust the width as needed
     });
@@ -226,8 +224,6 @@ onSearch() {
       }
     });
   }
-
-  
 
   viewItemDetails(itemId: string) {
     this.router.navigate(["/item-details", itemId]);

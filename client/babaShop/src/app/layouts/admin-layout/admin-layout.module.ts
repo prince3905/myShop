@@ -23,6 +23,11 @@ import { MatMenuModule } from '@angular/material/menu';
 import {MatExpansionModule} from '@angular/material/expansion';
 import { AddCategoryComponent } from 'app/all-items/add-category/add-category.component';
 import { AddBrandComponent } from 'app/all-items/add-brand/add-brand.component';
+import { SalesListComponent } from 'app/sales/sales-list/sales-list.component';
+import { AddSalesComponent } from 'app/sales/add-sales/add-sales.component';
+import {MatDividerModule} from '@angular/material/divider';
+import {MatDatepickerModule} from '@angular/material/datepicker';
+import {MatNativeDateModule} from '@angular/material/core';
 
 @NgModule({
   imports: [
@@ -41,6 +46,9 @@ import { AddBrandComponent } from 'app/all-items/add-brand/add-brand.component';
     MatInputModule,
     MatMenuModule,
     MatExpansionModule,
+    MatDividerModule,
+    MatDatepickerModule,
+    MatNativeDateModule,
   ],
   declarations: [
     DashboardComponent,
@@ -52,6 +60,8 @@ import { AddBrandComponent } from 'app/all-items/add-brand/add-brand.component';
     ItemDetailsComponent,
     AddCategoryComponent,
     AddBrandComponent,
+    SalesListComponent,
+    AddSalesComponent,
 
   ]
 })
