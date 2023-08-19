@@ -7,6 +7,7 @@ const authController =require('../controllers/authController')
 const router = express.Router();
 router.use(authController.protect)
 
+router.get('/customer-suggestions', purchaseController.customerSuggestions);
 router.get('/', purchaseController.allPurchase);
 router.post('/', purchaseController.createPurchase);
 // router.get('/:id', itemController.itemDetails);

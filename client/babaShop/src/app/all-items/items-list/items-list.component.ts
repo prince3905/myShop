@@ -166,6 +166,7 @@ export class ItemsListComponent implements OnInit {
       queryParamsHandling: "merge",
     });
     this.getAllItems(null);
+    this.suggestions = null
   }
 
   getAllItems(queryParamsObj): void {

@@ -38,6 +38,7 @@ export class SalesListComponent implements OnInit {
 
   searchParams = {};
   suggestions: string[] = [];
+  cus_suggestions: string[] = [];
 
   constructor(
     public dialog: MatDialog,
@@ -70,6 +71,24 @@ export class SalesListComponent implements OnInit {
     this.itemName = suggestion;
     this.suggestions = [];
   }
+
+  fetchCusSuggestions(): void {
+    this.Sales.getCustomerSuggestion(this.customer_name).subscribe(
+      (suggestions: any[]) => {
+        this.cus_suggestions = suggestions;
+        console.log(this.cus_suggestions)
+      },
+      (error: any) => {
+        console.error('Error fetching suggestions:', error);
+      }
+    );
+  }
+
+  selectCusSuggestion(suggestion: string): void {
+    this.customer_name = suggestion;
+    this.cus_suggestions = [];
+  }
+
 
   onStartDateChange(event: any): void {
     this.startDate = event.value;;
@@ -146,6 +165,8 @@ export class SalesListComponent implements OnInit {
       queryParamsHandling: "merge",
     });
     this.getAllItems(null);
+    this.suggestions = null;
+    this.cus_suggestions = null
   }
 
 

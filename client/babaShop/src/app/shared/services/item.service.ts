@@ -24,6 +24,16 @@ export class ItemService {
     return this.http.get(`${this.baseURL}/api/item/item-suggestions?term=${searchTerm}`);
   }
 
+  getSizeSuggestion(searchTerm: string) {
+    console.log(searchTerm);
+    return this.http.get(`${this.baseURL}/api/item/size-suggestions?term=${searchTerm}`);
+  }
+
+  getModelSuggestion(searchTerm: string) {
+    console.log(searchTerm);
+    return this.http.get(`${this.baseURL}/api/item/model-suggestions?term=${searchTerm}`);
+  }
+
   getItemDetails(id: string) {
     return this.http.get(`${this.baseURL}/api/item/${id}`);
   }

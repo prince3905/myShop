@@ -21,6 +21,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatMenuModule } from '@angular/material/menu';
 import {MatExpansionModule} from '@angular/material/expansion';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
 
 
 
@@ -49,6 +50,7 @@ import { BrandService } from './shared/services/brand.service';
     MatSnackBarModule,
     MatMenuModule,
     MatExpansionModule,
+    MatAutocompleteModule
     
   ],
   declarations: [

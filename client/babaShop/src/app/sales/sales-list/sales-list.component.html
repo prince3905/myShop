@@ -23,17 +23,25 @@
                         <input matInput placeholder="Item Name" name="itemName" [(ngModel)]="itemName"
                             (input)="fetchSuggestions()">
                     </mat-form-field>
-                    <mat-autocomplete (optionSelected)="selectSuggestion($event)">
-                        <mat-option *ngFor="let suggestion of suggestions" (click)="selectSuggestion(suggestion)">
-                            {{suggestion}}
-                        </mat-option>
-                    </mat-autocomplete>
+                    <div class="suggesion" fxFlex="10%">
+                        <mat-option *ngFor="let suggestion of suggestions" (click)="selectSuggestion(suggestion)"
+                            (optionSelected)="selectSuggestion($event)">
+                                {{suggestion}}
+                            </mat-option>
+                    </div>
+
 
                     <mat-form-field fxFlex="10%">
                         <input matInput placeholder="Customer Name" name="customer_name" [(ngModel)]="customer_name"
-                            >
+                            (input)="fetchCusSuggestions()">
                     </mat-form-field>
-                    
+                    <div class="suggesion" fxFlex="10%">
+                        <mat-option class="option2" *ngFor="let suggestion of cus_suggestions" (click)="selectCusSuggestion(suggestion)"
+                            (optionSelected)="selectCusSuggestion($event)">
+                            {{suggestion}}
+                        </mat-option>
+                    </div>
+
                     <!-- <mat-form-field fxFlex="10%" fxHide.lt-md>
                         <mat-label>Category</mat-label>
                         <mat-select [(ngModel)]="selectedCategory">

@@ -95,3 +95,19 @@ exports.createPurchase = async (req, res) => {
     res.status(500).json({ error: "Error saving Purchase" });
   }
 };
+
+exports.customerSuggestions = async (req, res) => {
+  try {
+    console.log(req.query);
+    const searchTerm = req.query.term;
+    const suggestions = await Purchase.find({
+      customerName: { $regex: searchTerm, $options: "i" },
+    }).limit(10);
+    res.status(200).json(suggestions.map((purchases) => purchases.customerName));
+    console.log(suggestions.map((purchases) => purchases.customerName));
+  } catch (err) {
+    console.error("Error searching customer name suggestions:", err);
+    res.status(500).json({ error: "Error searching customer name suggestions" });
+  }
+};
+

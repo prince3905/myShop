@@ -23,11 +23,14 @@
                         <input matInput placeholder="itemName" name="ItemName" [(ngModel)]="itemName"
                             (input)="fetchSuggestions()">
                     </mat-form-field>
-                    <mat-autocomplete (optionSelected)="selectSuggestion($event)">
-                        <mat-option *ngFor="let suggestion of suggestions" (click)="selectSuggestion(suggestion)">
+                    <div class="suggesion" fxFlex="10%">
+                        <mat-option *ngFor="let suggestion of suggestions" (click)="selectSuggestion(suggestion)"
+                            (optionSelected)="selectSuggestion($event)">
                             {{suggestion}}
                         </mat-option>
-                    </mat-autocomplete>
+                    </div>
+
+
                     <mat-form-field fxFlex="10%" fxHide.lt-md>
                         <mat-label>Category</mat-label>
                         <mat-select [(ngModel)]="selectedCategory">

@@ -7,25 +7,15 @@ import {environment} from '../../../environments/environment'
   providedIn: 'root'
 })
 export class SalesService {
-  private mockData = [
-    { id: 1, name: 'Anddi' },
-    { id: 2, name: 'Bandi' },
-    { id: 3, name: 'Sandi' },
-    { id: 4, name: 'Manjuri ki bb' },
-    { id: 5, name: 'randi chodi' },
-  ];
-
-  searchItems(searchTerm: string): Observable<any[]> {
-    const filteredItems = this.mockData.filter((item) =>
-      item.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    return of(filteredItems);
-  }
 
   constructor(private http: HttpClient) { }
 
   get baseURL(): string {
     return environment.apiBaseURL;
+  }
+  getCustomerSuggestion(searchTerm: string) {
+    console.log(searchTerm);
+    return this.http.get(`${this.baseURL}/api/purchase/customer-suggestions?term=${searchTerm}`);
   }
 
   addSales(data) {

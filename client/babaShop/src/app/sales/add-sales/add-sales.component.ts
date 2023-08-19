@@ -30,6 +30,11 @@ export class AddSalesComponent implements OnInit {
   totalPurchasePrice: number = null;
   totalQuantity: number = null;
 
+  suggestions: string[] = [];
+  cus_suggestions: string[] = [];
+  size_suggestions: string[] = [];
+  model_suggestions: string[] = [];
+
   constructor(
     private category: CategoryService,
     private brand: BrandService,
@@ -41,6 +46,76 @@ export class AddSalesComponent implements OnInit {
 
   ngOnInit(): void {
     this.getCategoryAndBrand();
+  }
+
+  fetchSuggestions(): void {
+    this.item.getItemSuggestion(this.itemName).subscribe(
+      (suggestions: any[]) => {
+        this.suggestions = suggestions;
+        console.log(this.suggestions)
+      },
+      (error: any) => {
+        console.error('Error fetching suggestions:', error);
+      }
+    );
+  }
+
+  selectSuggestion(suggestion: string): void {
+    this.itemName = suggestion;
+    this.suggestions = [];
+  }
+
+  fetchCusSuggestions(): void {
+    this.Sales.getCustomerSuggestion(this.customerName).subscribe(
+      (suggestions: any[]) => {
+        this.cus_suggestions = suggestions;
+        console.log(this.cus_suggestions)
+      },
+      (error: any) => {
+        console.error('Error fetching suggestions:', error);
+      }
+    );
+  }
+
+  selectCusSuggestion(suggestion: string): void {
+    this.customerName = suggestion;
+    this.cus_suggestions = [];
+  }
+
+
+  SizeSuggestions(): void {
+    this.item.getSizeSuggestion(this.size).subscribe(
+      (suggestions: any[]) => {
+        this.size_suggestions = suggestions;
+        console.log(this.size_suggestions)
+      },
+      (error: any) => {
+        console.error('Error fetching suggestions:', error);
+      }
+    );
+  }
+
+  selectSizeSuggestion(suggestion: string): void {
+    this.size = suggestion;
+    this.size_suggestions = [];
+  }
+
+
+  fetchModSuggestions(): void {
+    this.item.getModelSuggestion(this.model).subscribe(
+      (suggestions: any[]) => {
+        this.model_suggestions = suggestions;
+        console.log(this.model_suggestions)
+      },
+      (error: any) => {
+        console.error('Error fetching suggestions:', error);
+      }
+    );
+  }
+
+  selectModSuggestion(suggestion: string): void {
+    this.model = suggestion;
+    this.model_suggestions = [];
   }
 
   getCategoryAndBrand(): void {

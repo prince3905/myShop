@@ -153,3 +153,33 @@ exports.searchItemNameSuggestions = async (req, res) => {
     res.status(500).json({ error: "Error searching item name suggestions" });
   }
 };
+
+exports.sizeSuggestions = async (req, res) => {
+  try {
+    console.log(req.query);
+    const searchTerm = req.query.term;
+    const suggestions = await Item.find({
+      size: { $regex: searchTerm, $options: "i" },
+    }).limit(10);
+    res.status(200).json(suggestions.map((item) => item.size));
+    console.log(suggestions.map((item) => item.size));
+  } catch (err) {
+    console.error("Error searching size suggestions:", err);
+    res.status(500).json({ error: "Error searching size suggestions" });
+  }
+};
+
+exports.modelSuggestions = async (req, res) => {
+  try {
+    console.log(req.query);
+    const searchTerm = req.query.term;
+    const suggestions = await Item.find({
+      model: { $regex: searchTerm, $options: "i" },
+    }).limit(10);
+    res.status(200).json(suggestions.map((item) => item.model));
+    console.log(suggestions.map((item) => item.model));
+  } catch (err) {
+    console.error("Error searching model suggestions:", err);
+    res.status(500).json({ error: "Error searching model suggestions" });
+  }
+};

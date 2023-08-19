@@ -28,6 +28,7 @@ import { AddSalesComponent } from 'app/sales/add-sales/add-sales.component';
 import {MatDividerModule} from '@angular/material/divider';
 import {MatDatepickerModule} from '@angular/material/datepicker';
 import {MatNativeDateModule} from '@angular/material/core';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
 
 @NgModule({
   imports: [
@@ -49,6 +50,7 @@ import {MatNativeDateModule} from '@angular/material/core';
     MatDividerModule,
     MatDatepickerModule,
     MatNativeDateModule,
+    MatAutocompleteModule,
   ],
   declarations: [
     DashboardComponent,
