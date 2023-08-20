@@ -5,6 +5,7 @@ import { BrandService } from "app/shared/services/brand.service";
 import { CategoryService } from "app/shared/services/category.service";
 import { ItemService } from "app/shared/services/item.service";
 import { SalesService } from "app/shared/services/sales.service";
+import { StocksService } from "app/shared/services/stocks.service";
 import { forkJoin } from "rxjs";
 
 @Component({
@@ -41,7 +42,8 @@ export class AddSalesComponent implements OnInit {
     private item: ItemService,
     private snackBar: MatSnackBar,
     public dialogRef: MatDialogRef<any>,
-    private Sales: SalesService
+    private Sales: SalesService,
+    private stock: StocksService,
   ) {}
 
   ngOnInit(): void {
@@ -135,7 +137,42 @@ export class AddSalesComponent implements OnInit {
     );
   }
 
-  onSubmit(): void {
+  async onSubmit(): Promise<void> {
+    
+
+ 
+      try {
+        const stockInfo = await this.stock.getStocks(null).toPromise();
+        const selectedItemKey = Object.keys(stockInfo).find(key => stockInfo[key].itemName === this.itemName);
+        
+        if (!selectedItemKey) {
+          console.warn('Selected item not found in stock information.');
+          this.snackBar.open('Selected item not found in stock information..', 'Close', {
+            duration: 5000,
+            horizontalPosition: 'center',
+            verticalPosition: 'top',
+          });
+          return;
+        }
+        const selectedStock = stockInfo[selectedItemKey];
+    
+        if (this.quantity > selectedStock.remainingQuantity) {
+          console.warn('Requested quantity is greater than available stock.');
+          this.snackBar.open('Requested quantity is greater than available stock.', 'Close', {
+            duration: 5000,
+            horizontalPosition: 'center',
+            verticalPosition: 'top',
+          });
+          return; 
+        }
+  
+      } catch (error) {
+        console.error('Error fetching stock information:', error);
+        // Handle the error
+      }
+    
+    
+    
     let customerSales = this.Sales_added[this.customerName];
 
     if (!customerSales) {

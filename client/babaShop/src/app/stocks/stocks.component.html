@@ -1,0 +1,209 @@
+<div class="main-content">
+    <div class="container-fluid">
+
+        <div class="card card-plain">
+            <div class="card-header " fxLayout="column" fxLayout.lt-sm="row" fxLayoutGap="5px">
+                <div fxLayout="row" fxLayoutAlign="start center">
+                    <mat-form-field class="dropdown">
+                        <mat-label>Filter by</mat-label>
+                        <select matNativeControl [(ngModel)]="selectedOption" required>
+                            <option label="--select something --"></option>
+                            <option value="name">Name</option>
+                            <option value="category">Category</option>
+                            <option value="brand">Brand</option>
+                            <option value="date">By Date</option>
+                        </select>
+                    </mat-form-field>
+                </div>
+
+
+                <div *ngIf="selectedOption === 'name'" class="name-filter" fxLayout="row"
+                    fxLayoutAlign.lt-md="start center">
+                    <mat-form-field fxFlex="10%">
+                        <input matInput placeholder="itemName" name="ItemName" [(ngModel)]="itemName"
+                            (input)="fetchSuggestions()">
+                    </mat-form-field>
+                    <div class="suggesion" fxFlex="10%">
+                        <mat-option *ngFor="let suggestion of suggestions" (click)="selectSuggestion(suggestion)"
+                            (optionSelected)="selectSuggestion($event)">
+                            {{suggestion}}
+                        </mat-option>
+                    </div>
+
+
+                    <mat-form-field fxFlex="10%" fxHide.lt-md>
+                        <mat-label>Category</mat-label>
+                        <mat-select [(ngModel)]="selectedCategory">
+                            <mat-option *ngFor="let category of Category" [value]="category._id">
+                                {{ category.name }}
+                            </mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                    <mat-form-field fxFlex="10%" fxHide.lt-md>
+                        <mat-label>Brand</mat-label>
+                        <mat-select [(ngModel)]="selectedBrand">
+                            <mat-option *ngFor="let brand of Brands" [value]="brand._id">
+                                {{ brand.name}}
+                            </mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+
+
+
+                <div *ngIf="selectedOption === 'category'" class="name-filter" fxLayout="row"
+                    fxLayoutAlign.lt-md="start center">
+                    <mat-form-field fxFlex="10%" fxHide.lt-md>
+                        <mat-label>Category</mat-label>
+                        <mat-select [(ngModel)]="selectedCategory">
+                            <mat-option *ngFor="let category of Category" [value]="category._id">
+                                {{ category.name }}
+                            </mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                    <mat-form-field fxFlex="10%" fxHide.lt-md>
+                        <mat-label>Brand</mat-label>
+                        <mat-select [(ngModel)]="selectedBrand">
+                            <mat-option *ngFor="let brand of Brands" [value]="brand._id">
+                                {{ brand.name}}
+                            </mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+
+
+                <div *ngIf="selectedOption === 'brand'" class="name-filter" fxLayout="row"
+                    fxLayoutAlign.lt-md="start center">
+                    <mat-form-field fxFlex="10%" fxHide.lt-md>
+                        <mat-label>Brand</mat-label>
+                        <mat-select [(ngModel)]="selectedBrand">
+                            <mat-option *ngFor="let brand of Brands" [value]="brand._id">
+                                {{ brand.name }}
+                            </mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+
+                <div *ngIf="selectedOption === 'date'" class="name-filter" fxLayout="row" fxLayoutAlign="start center">
+                    <mat-form-field>
+                        <mat-label>Enter a date range</mat-label>
+                        <mat-date-range-input [rangePicker]="picker">
+                            <input matStartDate placeholder="Start date" (dateChange)="onStartDateChange($event)">
+                            <input matEndDate placeholder="End date" (dateChange)="onEndDateChange($event)">
+                        </mat-date-range-input>
+                        <mat-hint>MM/DD/YYYY – MM/DD/YYYY</mat-hint>
+                        <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+                        <mat-date-range-picker #picker></mat-date-range-picker>
+                    </mat-form-field>
+                </div>
+
+                <div class="button-container">
+                    <div
+                        *ngIf="selectedOption === 'name' || selectedOption === 'category' || selectedOption === 'brand' || selectedOption === 'date'">
+                        <button mat-raised-button type="submit" class="btn btn-white btn-round btn-just-icon"
+                            (click)="onSearch()">
+                            <i class="material-icons">search</i>
+                        </button>
+                        <button mat-raised-button type="submit" class="btn btn-white btn-round btn-just-icon"
+                            (click)="onClear()">
+                            <i class="material-icons">clear</i>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+
+
+
+
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead class="">
+                        <th>
+                            Name
+                        </th>
+                        <th>
+                            Brand
+                        </th>
+                        <th>
+                            Category
+                        </th>
+                        <th>
+                            Model
+                        </th>
+                        <th>
+                            Total-Qty
+                        </th>
+                        <th>
+                            Stock-Qty
+                        </th>
+                        <th>
+                            Price
+                        </th>
+
+                        <th>
+                            Size
+                        </th>
+                        <th>
+                            Stock Value
+                        </th>
+                        <th>
+                            Alert
+                        </th>
+                    </thead>
+                    <tbody *ngFor="let item of stocks" (click)="viewItemDetails(item._id)">
+                        <tr>
+                            <td>
+                                {{item.itemName}}
+                            </td>
+                            <td>
+                                {{item?.brand?.name}}
+                            </td>
+                            <td>
+                                {{item?.category?.name}}
+                            </td>
+                            <td>
+                                {{item.model}}
+                            </td>
+                            <td>
+                                {{item.quantity}}
+                            </td>
+                             <td>
+                                {{item.remainingQuantity}}
+                             </td>
+                            <td>
+                                {{item.s_price}}
+                            </td>
+                            <td>
+                                {{item.size}}
+                            </td>
+                            <td>
+                                {{ item.stockValue }}
+                            </td>
+                            <td [ngClass]="{ 'low-stock': item.isLowStock, 'high-stock': !item.isLowStock }">
+                                {{ item.isLowStock ? 'No' : 'Yes' }}
+                              </td>
+                            <!-- <td>
+                                            <button mat-raised-button type="button" matTooltip="Edit Task"
+                                                [matTooltipPosition]="'above'"
+                                                class="btn btn-primary btn-link btn-sm btn-just-icon">
+                                                <i class="material-icons">edit</i>
+                                            </button>
+                                            <button mat-raised-button type="button" matTooltip="Remove"
+                                                [matTooltipPosition]="'above'"
+                                                class="btn btn-danger btn-link btn-sm btn-just-icon">
+                                                <i class="material-icons">close</i>
+                                            </button>
+                                        </td> -->
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+
+    </div>

@@ -29,6 +29,7 @@ import {MatDividerModule} from '@angular/material/divider';
 import {MatDatepickerModule} from '@angular/material/datepicker';
 import {MatNativeDateModule} from '@angular/material/core';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { StocksComponent } from 'app/stocks/stocks.component';
 
 @NgModule({
   imports: [
@@ -64,6 +65,7 @@ import { MatAutocompleteModule } from '@angular/material/autocomplete';
     AddBrandComponent,
     SalesListComponent,
     AddSalesComponent,
+    StocksComponent,
 
   ]
 })

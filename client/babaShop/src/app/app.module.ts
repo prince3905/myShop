@@ -32,7 +32,6 @@ import { CategoryService } from './shared/services/category.service';
 import { BrandService } from './shared/services/brand.service';
 
 
-
 @NgModule({
   imports: [
     BrowserAnimationsModule,
@@ -57,6 +56,7 @@ import { BrandService } from './shared/services/brand.service';
     AppComponent,
     AdminLayoutComponent,
     LoginComponent,
+  
   ],
   exports: [
     MatMenuModule,
