@@ -101,7 +101,7 @@
                     <div
                         *ngIf="selectedOption === 'name' || selectedOption === 'category' || selectedOption === 'brand' || selectedOption === 'date'">
                         <button mat-raised-button type="submit" class="btn btn-white btn-round btn-just-icon"
-                            (click)="onSearch()">
+                        (click)="onSearch(paginator.pageIndex + 1, paginator.pageSize)">
                             <i class="material-icons">search</i>
                         </button>
                         <button mat-raised-button type="submit" class="btn btn-white btn-round btn-just-icon"
@@ -158,7 +158,7 @@
                             Size
                         </th>
                     </thead>
-                    <tbody *ngFor="let item of items" (click)="viewItemDetails(item._id)">
+                    <tbody *ngFor="let item of paginatedItems" (click)="viewItemDetails(item._id)">
                         <tr>
                             <td>
                                 {{item.name}}
@@ -199,6 +199,10 @@
                 </table>
             </div>
         </div>
+
+        <mat-paginator #paginator [length]="totalItems" [pageSize]="pageSize" [pageSizeOptions]="pageSizeOptions"
+            (page)="onPageChange($event)">
+        </mat-paginator>
 
 
     </div>

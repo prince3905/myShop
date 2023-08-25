@@ -30,6 +30,7 @@ import {MatDatepickerModule} from '@angular/material/datepicker';
 import {MatNativeDateModule} from '@angular/material/core';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { StocksComponent } from 'app/stocks/stocks.component';
+import { MatPaginatorModule } from '@angular/material/paginator';
 
 @NgModule({
   imports: [
@@ -52,6 +53,7 @@ import { StocksComponent } from 'app/stocks/stocks.component';
     MatDatepickerModule,
     MatNativeDateModule,
     MatAutocompleteModule,
+    MatPaginatorModule
   ],
   declarations: [
     DashboardComponent,

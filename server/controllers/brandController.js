@@ -25,7 +25,7 @@ exports.addBrand = async (req, res) => {
 
 exports.updateBrand = async (req, res) => {
   const brandId = req.body;
-  console.log(brandId);
+  // console.log(brandId);
   try {
     const updatedBrandData = {
       name: req.body.name,
@@ -57,7 +57,7 @@ exports.updateBrand = async (req, res) => {
 exports.allBrand = async (req, res) => {
   try {
     const brand = await Brand.find({})
-    console.log(brand);
+    // console.log(brand);
     res.status(200).json(brand);
   } catch (err) {
     console.error("Error retrieving brand:", err);
@@ -67,14 +67,14 @@ exports.allBrand = async (req, res) => {
 
 exports.deleteBrand = (req, res) => {
   const { id } = req.params;
-  console.log(req.params)
+  // console.log(req.params)
   Brand.findByIdAndDelete(id)
     .then((deleteBrand) => {
       if (!deleteBrand) {
         return res.status(404).json({ error: "Brand  not found" });
       }
 
-      console.log("Brand delete:", deleteBrand);
+      // console.log("Brand delete:", deleteBrand);
       res.status(200).json({ message: "Brand deleted successfully" });
     })
     .catch((err) => {

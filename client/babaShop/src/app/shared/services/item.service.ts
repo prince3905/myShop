@@ -15,7 +15,7 @@ export class ItemService {
 
   getItem(data: any) {
     const params = new HttpParams({ fromObject: data });
-    console.log(params);
+    // console.log(params);
     return this.http.get(`${this.baseURL}/api/item`, { params: params });
   }
 

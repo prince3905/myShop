@@ -23,7 +23,7 @@ exports.addCategory = async (req, res) => {
 
 exports.updateCategory = async (req, res) => {
   const categoryId = req.body;
-  console.log(categoryId);
+  // console.log(categoryId);
   try {
     const updatedCategoryData = {
       name: req.body.name,
@@ -52,7 +52,7 @@ exports.updateCategory = async (req, res) => {
 exports.allCategory = async (req, res) => {
   try {
     const category = await Category.find({});
-    console.log(category);
+    // console.log(category);
     res.status(200).json(category);
   } catch (err) {
     console.error("Error retrieving category:", err);
@@ -62,14 +62,14 @@ exports.allCategory = async (req, res) => {
 
 exports.deleteCategory = (req, res) => {
   const { id } = req.params;
-  console.log(req.params)
+  // console.log(req.params)
   Category.findByIdAndDelete(id)
     .then((DeleteCategory) => {
       if (!DeleteCategory) {
         return res.status(404).json({ error: "Category  not found" });
       }
 
-      console.log("Category  delete:", DeleteCategory);
+      // console.log("Category  delete:", DeleteCategory);
       res.status(200).json({ message: "Category deleted successfully" });
     })
     .catch((err) => {

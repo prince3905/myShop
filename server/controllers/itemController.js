@@ -7,10 +7,12 @@ const Brand = require("../models/brandModel");
 
 exports.allItem = async (req, res) => {
   try {
-    const { name, category, brand, startDate, endDate } = req.query;
+    const { name, category, brand, startDate, endDate, page, perPage } =
+      req.query;
     const query = {};
-    let startOfDay = null, endOfDay = null; // Declare the variables here
-
+    console.log("query",req.query);
+    let startOfDay = null,
+      endOfDay = null;
     if (name && name !== "null") {
       query.name = { $regex: name, $options: "i" };
     }
@@ -31,19 +33,43 @@ exports.allItem = async (req, res) => {
         $gte: startOfDay,
         $lte: endOfDay,
       };
-
-      console.log("Formatted Start Date:", startOfDay.toISOString().split('T')[0]);
-      console.log("Formatted End Date:", endOfDay.toISOString().split('T')[0]);
     }
 
-    const items = await Item.find(query).populate("category").populate("brand");
-    res.status(200).json(items);
+    const itemsPerPage = parseInt(perPage) || 10; 
+    const currentPage = parseInt(page) || 1; 
+    const totalItems = await Item.countDocuments(query);
+    const skipItems = (currentPage - 1) * itemsPerPage;
+
+    const items = await Item.find(query)
+      .populate("category")
+      .populate("brand")
+      .skip(skipItems)
+      .limit(itemsPerPage);
+    res.status(200).json({ items, totalItems: totalItems });
+    console.log("Count Items:", totalItems);
+    console.log("Items:", items);
   } catch (err) {
     console.error("Error retrieving items:", err);
     res.status(500).json({ error: "Error retrieving items" });
   }
-  console.log("Formatted Start Date:", startOfDay.toISOString().split("T")[0]);
-  console.log("Formatted End Date:", endOfDay.toISOString().split("T")[0]);
+};
+
+exports.addItem = async (req, res) => {
+  const newItemData = req.body;
+  newItemData.createdAt = new Date();
+  const newItem = new Item(newItemData);
+  newItem
+    .save()
+    .then((savedItem) => {
+      res.status(201).json({
+        message: "Item added successfully.",
+        item: savedItem,
+      });
+    })
+    .catch((err) => {
+      console.error("Error saving item:", err);
+      res.status(500).json({ error: "Error saving item" });
+    });
 };
 
 exports.addItem = async (req, res) => {
