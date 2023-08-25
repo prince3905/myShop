@@ -4,7 +4,7 @@ const Purchase = require("../models/purchaseModel");
 exports.getStockReport = async (req, res) => {
   try {
     const lowStockThreshold = 5; // Define low stock threshold
-    const { name, category, brand } = req.query;
+    const { name, category, brand ,page, perPage} = req.query;
     const query = {};
 
     // console.log(req.query);
@@ -19,14 +19,21 @@ exports.getStockReport = async (req, res) => {
       query.brand = brand;
     }
 
-    const items = await Item.find(query);
+    const itemsPerPage = parseInt(perPage) || 10; 
+    const currentPage = parseInt(page) || 1; 
+    const totalItems = await Item.countDocuments(query);
+    const skipItems = (currentPage - 1) * itemsPerPage;
+
+    const items = await Item.find(query)
+    .skip(skipItems)
+    .limit(itemsPerPage);
     const stockReport = [];
 
     for (const item of items) {
       const populatedItem = await Item.findById(item._id)
         .populate("brand")
-        .populate("category");
-
+        .populate("category")
+        
       const purchasedQuantity = await Purchase.aggregate([
         { $unwind: "$items" },
         { $match: { "items.itemName": populatedItem.name } },
@@ -55,7 +62,9 @@ exports.getStockReport = async (req, res) => {
         stockValue, // Add stock value information
       });
     }
-    res.status(200).json(stockReport);
+    res.status(200).json({stockReport,totalItems: totalItems});
+    console.log("Count Items:", totalItems);
+    console.log("Items:", items);
   } catch (error) {
     console.error("Error retrieving stock report:", error);
     res.status(500).json({ error: "Error retrieving stock report" });

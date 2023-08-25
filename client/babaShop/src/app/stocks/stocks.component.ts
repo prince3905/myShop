@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
 import { MatDialog } from "@angular/material/dialog";
 
 import { ActivatedRoute, NavigationExtras, Router } from "@angular/router";
@@ -8,6 +8,7 @@ import { CategoryService } from "app/shared/services/category.service";
 import { Subject, forkJoin } from "rxjs";
 import { StocksService } from 'app/shared/services/stocks.service';
 import { ItemService } from 'app/shared/services/item.service';
+import { MatPaginator, PageEvent } from '@angular/material/paginator';
 
 
 @Component({
@@ -36,6 +37,13 @@ export class StocksComponent implements OnInit {
   searchParams = {};
   suggestions: string[] = [];
 
+  pageSize = 10; // Number of items per page
+  pageSizeOptions: number[] = [5, 10, 25, 50];
+  paginatedItems: any[] = [];
+  totalItems: number;
+
+  @ViewChild(MatPaginator) paginator: MatPaginator;
+
   constructor(
     public dialog: MatDialog,
     private stock: StocksService,
@@ -44,12 +52,60 @@ export class StocksComponent implements OnInit {
     private categoryS: CategoryService,
     private brandS: BrandService,
     private item: ItemService,
+    private cdr: ChangeDetectorRef
   ) { }
 
   ngOnInit(): void {
     this.getStocks(null)
     this.getCategoryAndBrand();
+    this.updatePaginatedItems();
   }
+
+  ngAfterViewInit(): void {
+    this.paginator.page.subscribe(() => this.updatePaginatedItems());
+    // console.log(this.paginator)
+    this.updatePaginatedItems();
+    // console.log(this.updatePaginatedItems)
+  }
+
+  getQueryParams(): any {
+    let queryParamsObj: any = {
+      page: this.paginator.pageIndex + 1,
+      perPage: this.pageSize,
+    };
+    if (this.selectedOption === "name") {
+      queryParamsObj.name = this.itemName;
+      queryParamsObj.category = this.selectedCategory;
+      queryParamsObj.brand = this.selectedBrand;
+    } else if (this.selectedOption === "category") {
+      queryParamsObj.category = this.selectedCategory;
+      queryParamsObj.brand = this.selectedBrand;
+    } else if (this.selectedOption === "brand") {
+      queryParamsObj.brand = this.selectedBrand;
+    } else if (this.selectedOption === "date") {
+      queryParamsObj.startDate = this.startDate.toISOString().slice(0, 10);
+      queryParamsObj.endDate = this.endDate.toISOString().slice(0, 10);
+    }
+    return queryParamsObj;
+  }
+
+  onPageChange(event: PageEvent): void {
+    // console.log(event)
+    this.pageSize = event.pageSize;
+    const queryParamsObj = this.getQueryParams();
+    this.getStocks(queryParamsObj);
+    const navigationExtras: NavigationExtras = {
+      relativeTo: this.Router,
+      queryParams: queryParamsObj,
+      queryParamsHandling: "merge",
+    };
+    this.router.navigate([], navigationExtras);
+    this.paginatedItems = this.stocks.slice(
+      event.pageIndex * this.pageSize,
+      event.pageIndex * this.pageSize + this.pageSize
+    );
+  }
+
 
   fetchSuggestions(): void {
     this.item.getItemSuggestion(this.itemName).subscribe(
@@ -86,15 +142,21 @@ export class StocksComponent implements OnInit {
     this.suggestions = [];
   }
 
-  onSearch() {
-    let queryParamsObj = {};
+  onSearch(page: number, perPage: number) {
+    this.paginator.pageIndex = 0;
+    let queryParamsObj: any = {
+      page: 1,
+      perPage: perPage,
+    };
+
 
     if (this.selectedOption === "name") {
-      console.log("Selected Name:", this.itemName);
-      console.log("Selected Category:", this.selectedCategory);
-      console.log("Selected Brand:", this.selectedBrand);
+      // console.log("Selected Name:", this.itemName);
+      // console.log("Selected Category:", this.selectedCategory);
+      // console.log("Selected Brand:", this.selectedBrand);
 
       queryParamsObj = {
+        ...queryParamsObj,
         name: this.itemName,
         category: this.selectedCategory,
         brand: this.selectedBrand,
@@ -104,6 +166,7 @@ export class StocksComponent implements OnInit {
       console.log("Selected Brand:", this.selectedBrand);
 
       queryParamsObj = {
+        ...queryParamsObj,
         name: null,
         category: this.selectedCategory,
         brand: this.selectedBrand,
@@ -112,6 +175,7 @@ export class StocksComponent implements OnInit {
       console.log("Selected Brand:", this.selectedBrand);
 
       queryParamsObj = {
+        ...queryParamsObj,
         name: null,
         category: null,
         brand: this.selectedBrand,
@@ -152,9 +216,11 @@ export class StocksComponent implements OnInit {
 
   getStocks(queryParamsObj): void {
     this.stock.getStocks(queryParamsObj).subscribe(
-      (response) => {
-        this.stocks = response;
+      (response: any) => {
+        this.stocks = response.stockReport;
         console.log("All items here", this.stocks);
+        this.totalItems = response.totalItems;
+        this.paginatedItems = this.stocks.slice(0, this.pageSize);
       },
 
       (error) => {
@@ -163,5 +229,22 @@ export class StocksComponent implements OnInit {
       }
     );
   }
+
+  updatePaginatedItems(): void {
+    if (this.paginator) {
+      const startIndex = this.paginator.pageIndex * this.pageSize;
+      // console.log(startIndex)
+      this.paginatedItems = this.stocks.slice(
+        startIndex,
+        startIndex + this.pageSize
+      );
+      // console.log("if",this.paginatedItems)
+      this.cdr.detectChanges();
+    } else {
+      this.paginatedItems = [];
+      // console.log("else",this.paginatedItems)
+    }
+  }
+
 
 }
