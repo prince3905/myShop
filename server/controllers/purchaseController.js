@@ -5,12 +5,12 @@ const Purchase = require("../models/purchaseModel");
 exports.allPurchase = async (req, res) => {
   try {
     console.log(req.body);
-    const { customerName, itemName, category, brand, startDate, endDate } =
+    const { customerName, itemName, category, brand, startDate, endDate,page, perPage } =
       req.query;
     const query = {};
+    console.log("query",req.query);
     let startOfDay = null,
-      endOfDay = null; // Declare the variables here
-    console.log(req.query);
+      endOfDay = null;
     if (customerName && customerName !== "null") {
       query.customerName = { $regex: customerName, $options: "i" };
     }
@@ -45,18 +45,18 @@ exports.allPurchase = async (req, res) => {
         $gte: startOfDay,
         $lte: endOfDay,
       };
-
-      console.log(
-        "Formatted Start Date:",
-        startOfDay.toISOString().split("T")[0]
-      );
-      console.log("Formatted End Date:", endOfDay.toISOString().split("T")[0]);
     }
+    const itemsPerPage = parseInt(perPage) || 10; 
+    const currentPage = parseInt(page) || 1; 
+    const totalItems = await Purchase.countDocuments(query);
+    const skipItems = (currentPage - 1) * itemsPerPage;
+
     const itemResults = await Purchase.find(query)
       .populate("items.category")
-      .populate("items.brand");
-    console.log(itemResults);
-    res.status(200).json(itemResults);
+      .populate("items.brand")
+      .skip(skipItems)
+      .limit(itemsPerPage);
+    res.status(200).json({itemResults,totalItems: totalItems} );
   } catch (err) {
     console.error("Error retrieving ItemName:", err);
     res.status(500).json({ error: "Error retrieving iItemName" });

@@ -293,4 +293,7 @@
                 </mat-expansion-panel>
             </mat-accordion>
         </div>
+         <mat-paginator #paginator [length]="totalItems" [pageSize]="pageSize" [pageSizeOptions]="pageSizeOptions"
+            (page)="onPageChange($event)">
+        </mat-paginator>
     </div>

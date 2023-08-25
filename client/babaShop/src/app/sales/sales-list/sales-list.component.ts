@@ -1,5 +1,5 @@
 import { ItemService } from 'app/shared/services/item.service';
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { AddSalesComponent } from '../add-sales/add-sales.component';
 import { SalesService } from 'app/shared/services/sales.service';
@@ -10,6 +10,7 @@ import { Subject, forkJoin } from "rxjs";
 import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import { DatePipe } from '@angular/common';
+import { MatPaginator, PageEvent } from '@angular/material/paginator';
 
 @Component({
   selector: 'sales-list',
@@ -40,6 +41,13 @@ export class SalesListComponent implements OnInit {
   suggestions: string[] = [];
   cus_suggestions: string[] = [];
 
+  pageSize = 10; // Number of items per page
+  pageSizeOptions: number[] = [5, 10, 25, 50];
+  paginatedItems: any[] = [];
+  totalItems: number;
+
+  @ViewChild(MatPaginator) paginator: MatPaginator;
+
   constructor(
     public dialog: MatDialog,
     private Sales: SalesService,
@@ -47,12 +55,60 @@ export class SalesListComponent implements OnInit {
     private Router: ActivatedRoute,
     private categoryS: CategoryService,
     private brandS: BrandService,
-    private Item: ItemService
+    private Item: ItemService,
+    private cdr: ChangeDetectorRef
   ) { }
 
   ngOnInit(): void {
     this.getAllItems("null");
     this.getCategoryAndBrand();
+    this.updatePaginatedItems();
+  }
+
+
+  ngAfterViewInit(): void {
+    this.paginator.page.subscribe(() => this.updatePaginatedItems());
+    // console.log(this.paginator)
+    this.updatePaginatedItems();
+    // console.log(this.updatePaginatedItems)
+  }
+
+  getQueryParams(): any {
+    let queryParamsObj: any = {
+      page: this.paginator.pageIndex + 1,
+      perPage: this.pageSize,
+    };
+    if (this.selectedOption === "name") {
+      queryParamsObj.name = this.itemName;
+      queryParamsObj.category = this.selectedCategory;
+      queryParamsObj.brand = this.selectedBrand;
+    } else if (this.selectedOption === "category") {
+      queryParamsObj.category = this.selectedCategory;
+      queryParamsObj.brand = this.selectedBrand;
+    } else if (this.selectedOption === "brand") {
+      queryParamsObj.brand = this.selectedBrand;
+    } else if (this.selectedOption === "date") {
+      queryParamsObj.startDate = this.startDate.toISOString().slice(0, 10);
+      queryParamsObj.endDate = this.endDate.toISOString().slice(0, 10);
+    }
+    return queryParamsObj;
+  }
+
+  onPageChange(event: PageEvent): void {
+    // console.log(event)
+    this.pageSize = event.pageSize;
+    const queryParamsObj = this.getQueryParams();
+    this.getAllItems(queryParamsObj);
+    const navigationExtras: NavigationExtras = {
+      relativeTo: this.Router,
+      queryParams: queryParamsObj,
+      queryParamsHandling: "merge",
+    };
+    this.router.navigate([], navigationExtras);
+    this.paginatedItems = this.SalesList.slice(
+      event.pageIndex * this.pageSize,
+      event.pageIndex * this.pageSize + this.pageSize
+    );
   }
 
   fetchSuggestions(): void {
@@ -100,14 +156,19 @@ export class SalesListComponent implements OnInit {
     console.log('End Date:', this.endDate);
   }
 
-  onSearch() {
-    let queryParamsObj = {};
+  onSearch(page: number, perPage: number) {
+    this.paginator.pageIndex = 0;
+    let queryParamsObj: any = {
+      page: 1,
+      perPage: perPage,
+    };
 
     if (this.selectedOption === "name") {
       console.log("Selected Name:", this.itemName);
       console.log("Selected Cus_num", this.customer_name)
 
       queryParamsObj = {
+        ...queryParamsObj,
         itemName: this.itemName,
         customerName: this.customer_name,
       };
@@ -116,6 +177,7 @@ export class SalesListComponent implements OnInit {
       console.log("Selected Brand:", this.selectedBrand);
 
       queryParamsObj = {
+        ...queryParamsObj,
         itemName: null,
         category: this.selectedCategory,
         brand: this.selectedBrand,
@@ -124,6 +186,7 @@ export class SalesListComponent implements OnInit {
       console.log("Selected Brand:", this.selectedBrand);
 
       queryParamsObj = {
+        ...queryParamsObj,
         itemName: null,
         category: null,
         brand: this.selectedBrand,
@@ -131,8 +194,11 @@ export class SalesListComponent implements OnInit {
     }
     else if (this.selectedOption === "date") {
       console.log(this.startDate, this.endDate);
-      queryParamsObj['startDate'] = this.startDate.toISOString().slice(0, 10);
-      queryParamsObj['endDate'] = this.endDate.toISOString().slice(0, 10);
+      queryParamsObj = {
+        ...queryParamsObj,
+        startDate: this.startDate.toISOString().slice(0, 10),
+        endDate: this.endDate.toISOString().slice(0, 10),
+      };
     }
 
     console.log("Query Parameters:", queryParamsObj);
@@ -173,8 +239,10 @@ export class SalesListComponent implements OnInit {
   getAllItems(queryParamsObj): void {
     // console.log(queryParamsObj)
     this.Sales.getSales(queryParamsObj).subscribe(
-      (response) => {
-        this.SalesList = response;
+      (response: any) => {
+        this.SalesList = response.itemResults;
+        this.totalItems = response.totalItems;
+        this.paginatedItems = this.SalesList.slice(0, this.pageSize);
         console.log("All items here", this.SalesList);
       },
 
@@ -183,6 +251,22 @@ export class SalesListComponent implements OnInit {
         // Handle error here (e.g., show error message to the user)
       }
     );
+  }
+
+  updatePaginatedItems(): void {
+    if (this.paginator) {
+      const startIndex = this.paginator.pageIndex * this.pageSize;
+      // console.log(startIndex)
+      this.paginatedItems = this.SalesList.slice(
+        startIndex,
+        startIndex + this.pageSize
+      );
+      // console.log("if",this.paginatedItems)
+      this.cdr.detectChanges();
+    } else {
+      this.paginatedItems = [];
+      // console.log("else",this.paginatedItems)
+    }
   }
 
 
