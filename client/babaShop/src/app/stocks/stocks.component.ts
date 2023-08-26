@@ -29,6 +29,7 @@ export class StocksComponent implements OnInit {
   endDate: Date;
   searchInput: string;
   searchInputSubject = new Subject<string>();
+  loading: boolean = true;
 
   selectedOption: string;
   selectedCategory: string;
@@ -215,16 +216,21 @@ export class StocksComponent implements OnInit {
   }
 
   getStocks(queryParamsObj): void {
+    this.loading = true;
     this.stock.getStocks(queryParamsObj).subscribe(
       (response: any) => {
         this.stocks = response.stockReport;
         console.log("All items here", this.stocks);
         this.totalItems = response.totalItems;
         this.paginatedItems = this.stocks.slice(0, this.pageSize);
+        this.loading = false;
+        this.cdr.detectChanges();
       },
 
       (error) => {
         console.error("Error retrieving stocks:", error);
+        this.loading = true;
+        this.cdr.detectChanges();
         // Handle error here (e.g., show error message to the user)
       }
     );

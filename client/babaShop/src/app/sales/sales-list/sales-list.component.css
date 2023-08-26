@@ -89,6 +89,12 @@
   text-decoration-line: underline
 }
 
+.loading{
+  margin-left: 36% !important;
+  position: absolute !important;
+  margin-top: 100px;
+}
+
 @media (max-width: 412px) {
   .mat-form-field {
     width: 78px !important;

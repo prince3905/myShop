@@ -43,7 +43,7 @@ export class AddSalesComponent implements OnInit {
     private snackBar: MatSnackBar,
     public dialogRef: MatDialogRef<any>,
     private Sales: SalesService,
-    private stock: StocksService,
+    private stock: StocksService
   ) {}
 
   ngOnInit(): void {
@@ -54,10 +54,10 @@ export class AddSalesComponent implements OnInit {
     this.item.getItemSuggestion(this.itemName).subscribe(
       (suggestions: any[]) => {
         this.suggestions = suggestions;
-        console.log(this.suggestions)
+        console.log(this.suggestions);
       },
       (error: any) => {
-        console.error('Error fetching suggestions:', error);
+        console.error("Error fetching suggestions:", error);
       }
     );
   }
@@ -71,10 +71,10 @@ export class AddSalesComponent implements OnInit {
     this.Sales.getCustomerSuggestion(this.customerName).subscribe(
       (suggestions: any[]) => {
         this.cus_suggestions = suggestions;
-        console.log(this.cus_suggestions)
+        console.log(this.cus_suggestions);
       },
       (error: any) => {
-        console.error('Error fetching suggestions:', error);
+        console.error("Error fetching suggestions:", error);
       }
     );
   }
@@ -84,15 +84,14 @@ export class AddSalesComponent implements OnInit {
     this.cus_suggestions = [];
   }
 
-
   SizeSuggestions(): void {
     this.item.getSizeSuggestion(this.size).subscribe(
       (suggestions: any[]) => {
         this.size_suggestions = suggestions;
-        console.log(this.size_suggestions)
+        console.log(this.size_suggestions);
       },
       (error: any) => {
-        console.error('Error fetching suggestions:', error);
+        console.error("Error fetching suggestions:", error);
       }
     );
   }
@@ -102,15 +101,14 @@ export class AddSalesComponent implements OnInit {
     this.size_suggestions = [];
   }
 
-
   fetchModSuggestions(): void {
     this.item.getModelSuggestion(this.model).subscribe(
       (suggestions: any[]) => {
         this.model_suggestions = suggestions;
-        console.log(this.model_suggestions)
+        console.log(this.model_suggestions);
       },
       (error: any) => {
-        console.error('Error fetching suggestions:', error);
+        console.error("Error fetching suggestions:", error);
       }
     );
   }
@@ -138,41 +136,60 @@ export class AddSalesComponent implements OnInit {
   }
 
   async onSubmit(): Promise<void> {
-    
+    try {
+      const stockInfo: any = await this.stock.getStocks(null).toPromise();
+      console.log(stockInfo);
+      const selectedItemKey = stockInfo.stockReport.find(
+        (stockItem: any) => stockItem.itemName === this.itemName
+      );
+      console.log(selectedItemKey);
 
- 
-      try {
-        const stockInfo = await this.stock.getStocks(null).toPromise();
-        const selectedItemKey = Object.keys(stockInfo).find(key => stockInfo[key].itemName === this.itemName);
-        
-        if (!selectedItemKey) {
-          console.warn('Selected item not found in stock information.');
-          this.snackBar.open('Selected item not found in stock information..', 'Close', {
+      if (!selectedItemKey) {
+        console.warn("Selected item not found in stock information.");
+        this.snackBar.open(
+          "Selected item not found in stock information..",
+          "Close",
+          {
             duration: 5000,
-            horizontalPosition: 'center',
-            verticalPosition: 'top',
-          });
-          return;
-        }
-        const selectedStock = stockInfo[selectedItemKey];
-    
-        if (this.quantity > selectedStock.remainingQuantity) {
-          console.warn('Requested quantity is greater than available stock.');
-          this.snackBar.open('Requested quantity is greater than available stock.', 'Close', {
-            duration: 5000,
-            horizontalPosition: 'center',
-            verticalPosition: 'top',
-          });
-          return; 
-        }
-  
-      } catch (error) {
-        console.error('Error fetching stock information:', error);
-        // Handle the error
+            horizontalPosition: "center",
+            verticalPosition: "top",
+          }
+        );
+        return;
       }
-    
-    
-    
+
+      if (selectedItemKey.remainingQuantity <= 0) {
+        console.warn("Requested quantity is greater than available stock.");
+        this.snackBar.open(
+          "Requested quantity is greater than available stock.",
+          "Close",
+          {
+            duration: 5000,
+            horizontalPosition: "center",
+            verticalPosition: "top",
+          }
+        );
+        return;
+      }
+
+      if (this.quantity > selectedItemKey.remainingQuantity) {
+        console.warn("Requested quantity is greater than available stock.");
+        this.snackBar.open(
+          "Requested quantity is greater than available stock.",
+          "Close",
+          {
+            duration: 5000,
+            horizontalPosition: "center",
+            verticalPosition: "top",
+          }
+        );
+        return;
+      }
+    } catch (error) {
+      console.error("Error fetching stock information:", error);
+      // Handle the error
+    }
+
     let customerSales = this.Sales_added[this.customerName];
 
     if (!customerSales) {
@@ -213,9 +230,9 @@ export class AddSalesComponent implements OnInit {
     };
 
     // Calculate total purchase price and total quantity
-     this.totalPurchasePrice = customerSales.totalPurchasePrice;
-     this.totalQuantity = customerSales.totalQuantity;
-    this.Display_items = this.final_Sales_data.items
+    this.totalPurchasePrice = customerSales.totalPurchasePrice;
+    this.totalQuantity = customerSales.totalQuantity;
+    this.Display_items = this.final_Sales_data.items;
     this.calculateTotals();
 
     console.log("Sales Data to be Submitted:", this.final_Sales_data);
@@ -263,7 +280,7 @@ export class AddSalesComponent implements OnInit {
 
     //     ]
     // }
-    console.log("Submitting Sales Data:", this.final_Sales_data); 
+    console.log("Submitting Sales Data:", this.final_Sales_data);
     this.Sales.addSales(this.final_Sales_data).subscribe(
       (response: any) => {
         console.log(response);

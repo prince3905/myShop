@@ -31,6 +31,8 @@ import {MatNativeDateModule} from '@angular/material/core';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { StocksComponent } from 'app/stocks/stocks.component';
 import { MatPaginatorModule } from '@angular/material/paginator';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+
 
 @NgModule({
   imports: [
@@ -53,7 +55,8 @@ import { MatPaginatorModule } from '@angular/material/paginator';
     MatDatepickerModule,
     MatNativeDateModule,
     MatAutocompleteModule,
-    MatPaginatorModule
+    MatPaginatorModule,
+    MatProgressSpinnerModule,
   ],
   declarations: [
     DashboardComponent,

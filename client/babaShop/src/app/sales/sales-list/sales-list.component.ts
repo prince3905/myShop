@@ -32,6 +32,7 @@ export class SalesListComponent implements OnInit {
   endDate: Date;
   searchInput: string;
   searchInputSubject = new Subject<string>();
+  loading: boolean = true;
 
   selectedOption: string;
   selectedCategory: string;
@@ -238,16 +239,21 @@ export class SalesListComponent implements OnInit {
 
   getAllItems(queryParamsObj): void {
     // console.log(queryParamsObj)
+    this.loading = true;
     this.Sales.getSales(queryParamsObj).subscribe(
       (response: any) => {
         this.SalesList = response.itemResults;
         this.totalItems = response.totalItems;
         this.paginatedItems = this.SalesList.slice(0, this.pageSize);
+        this.loading = false;
+        this.cdr.detectChanges();
         console.log("All items here", this.SalesList);
       },
 
       (error) => {
         console.error("Error retrieving items:", error);
+        this.loading = true;
+        this.cdr.detectChanges();
         // Handle error here (e.g., show error message to the user)
       }
     );

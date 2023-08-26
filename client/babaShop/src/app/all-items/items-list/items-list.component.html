@@ -101,7 +101,7 @@
                     <div
                         *ngIf="selectedOption === 'name' || selectedOption === 'category' || selectedOption === 'brand' || selectedOption === 'date'">
                         <button mat-raised-button type="submit" class="btn btn-white btn-round btn-just-icon"
-                        (click)="onSearch(paginator.pageIndex + 1, paginator.pageSize)">
+                            (click)="onSearch(paginator.pageIndex + 1, paginator.pageSize)">
                             <i class="material-icons">search</i>
                         </button>
                         <button mat-raised-button type="submit" class="btn btn-white btn-round btn-just-icon"
@@ -127,9 +127,9 @@
 
         </div>
 
-
-
-
+        <div class="loading" *ngIf="loading" >
+            <mat-spinner class="loading"  color="primary" mode="indeterminate"></mat-spinner>
+        </div>
 
         <div class="card-body">
             <div class="table-responsive">

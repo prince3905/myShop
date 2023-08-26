@@ -31,6 +31,8 @@ export class ItemsListComponent implements OnInit {
   endDate: Date;
   searchInput: string;
   searchInputSubject = new Subject<string>();
+  loading: boolean = true;
+
 
   selectedOption: string;
   selectedCategory: string;
@@ -230,15 +232,20 @@ export class ItemsListComponent implements OnInit {
   }
 
   getAllItems(queryParamsObj): void {
+    this.loading = true;
     this.item.getItem(queryParamsObj).subscribe(
       (response: any) => {
         this.items = response.items;
         // console.log(response)
         this.totalItems = response.totalItems;
         this.paginatedItems = this.items.slice(0, this.pageSize);
+        this.loading = false;
+      this.cdr.detectChanges();
       },
       (error) => console.error("Error retrieving items:", error)
     );
+    this.loading = true;
+    this.cdr.detectChanges();
   }
 
   updatePaginatedItems(): void {
