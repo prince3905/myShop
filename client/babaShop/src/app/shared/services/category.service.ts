@@ -21,4 +21,18 @@ export class CategoryService {
   addCategory(data) {
     return this.http.post(`${this.baseURL}/api/category`, data);
   }
+  getCategoryOnBrands(Id:any){
+    return this.http.get(`${this.baseURL}/api/category/${Id}/brands`)
+  }
+
+   getCategorySuggestion(searchTerm: string) {
+    console.log(searchTerm);
+    return this.http.get(`${this.baseURL}/api/category/category-suggestions?term=${searchTerm}`);
+   }
+
+   updateOrCreateCategory(categoryData: any): Observable<any> {
+    const url = `${this.baseURL}/api/category`;
+    return this.http.put(url, categoryData);
+  }
+
 }

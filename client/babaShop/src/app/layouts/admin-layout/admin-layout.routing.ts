@@ -16,6 +16,9 @@ import { ItemDetailsComponent } from "app/all-items/item-details/item-details.co
 import { AddSalesComponent } from "app/sales/add-sales/add-sales.component";
 import { SalesListComponent } from "app/sales/sales-list/sales-list.component";
 import { StocksComponent } from "app/stocks/stocks.component";
+import { DistributorsComponent } from "app/all-distributors/distributors/distributors.component";
+import { OrdersComponent } from "app/orders/orders.component";
+import { CustomersComponent } from "app/customers/customers.component";
 
 export const AdminLayoutRoutes: Routes = [
   // {
@@ -73,6 +76,9 @@ export const AdminLayoutRoutes: Routes = [
   { path: "item-details/:name/:category/:brand", component: ItemDetailsComponent },
   { path: "sale-list", component: SalesListComponent },
   { path: "stocks", component: StocksComponent },
+  { path: "distributor", component: DistributorsComponent },
+  { path: "order", component: OrdersComponent },
+  { path: "customer", component: CustomersComponent },
 
   // { path: 'table-list',     component: TableListComponent },
   // { path: 'typography',     component: TypographyComponent },

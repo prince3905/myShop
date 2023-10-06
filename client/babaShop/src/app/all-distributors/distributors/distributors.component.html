@@ -1,0 +1,302 @@
+<div class="main-content">
+    <div class="container-fluid">
+
+        <div class="card card-plain">
+            <div class="card-header " fxLayout="column" fxLayout.lt-sm="row" fxLayoutGap="5px">
+                <div fxLayout="row" fxLayoutAlign="start center">
+                    <mat-form-field class="dropdown">
+                        <mat-label>Filter by</mat-label>
+                        <select matNativeControl [(ngModel)]="selectedOption" required>
+                            <option label="--select something --"></option>
+                            <option value="name">By Name</option>
+                            <option value="category">Category</option>
+                            <option value="brand">Brand</option>
+                            <option value="date">By Date</option>
+                        </select>
+                    </mat-form-field>
+                </div>
+
+
+                <div *ngIf="selectedOption === 'name'" class="name-filter" fxLayout="row"
+                    fxLayoutAlign.lt-md="start center">
+                    <mat-form-field fxFlex="10%">
+                        <input matInput placeholder="Item Name" name="itemName" [(ngModel)]="itemName"
+                            (input)="fetchSuggestions()">
+                    </mat-form-field>
+                    <div class="suggesion" fxFlex="10%">
+                        <mat-option *ngFor="let suggestion of suggestions" (click)="selectSuggestion(suggestion)"
+                            (optionSelected)="selectSuggestion($event)">
+                                {{suggestion}}
+                            </mat-option>
+                    </div>
+
+
+                    <mat-form-field fxFlex="10%">
+                        <input matInput placeholder="Customer Name" name="customer_name" [(ngModel)]="customer_name"
+                            (input)="fetchCusSuggestions()">
+                    </mat-form-field>
+                    <div class="suggesion" fxFlex="10%">
+                        <mat-option class="option2" *ngFor="let suggestion of cus_suggestions" (click)="selectCusSuggestion(suggestion)"
+                            (optionSelected)="selectCusSuggestion($event)">
+                            {{suggestion}}
+                        </mat-option>
+                    </div>
+
+                    <!-- <mat-form-field fxFlex="10%" fxHide.lt-md>
+                        <mat-label>Category</mat-label>
+                        <mat-select [(ngModel)]="selectedCategory">
+                            <mat-option *ngFor="let category of Category" [value]="category._id">
+                                {{ category.name }}
+                            </mat-option>
+                        </mat-select>
+                    </mat-form-field> -->
+                    <!-- <mat-form-field fxFlex="10%" fxHide.lt-md>
+                        <mat-label>Brand</mat-label>
+                        <mat-select [(ngModel)]="selectedBrand">
+                            <mat-option *ngFor="let brand of Brands" [value]="brand._id">
+                                {{ brand.name }}
+                            </mat-option>
+                        </mat-select>
+                    </mat-form-field> -->
+                </div>
+
+
+                <div *ngIf="selectedOption === 'category'" class="name-filter" fxLayout="row"
+                    fxLayoutAlign.lt-md="start center">
+                    <mat-form-field fxFlex="10%" fxHide.lt-md>
+                        <mat-label>Category</mat-label>
+                        <mat-select [(ngModel)]="selectedCategory">
+                            <mat-option *ngFor="let category of Category" [value]="category._id">
+                                {{ category.name }}
+                            </mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                    <mat-form-field fxFlex="10%" fxHide.lt-md>
+                        <mat-label>Brand</mat-label>
+                        <mat-select [(ngModel)]="selectedBrand">
+                            <mat-option *ngFor="let brand of Brands" [value]="brand._id">
+                                {{ brand.name}}
+                            </mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+
+
+                <div *ngIf="selectedOption === 'brand'" class="name-filter" fxLayout="row"
+                    fxLayoutAlign.lt-md="start center">
+                    <mat-form-field fxFlex="10%" fxHide.lt-md>
+                        <mat-label>Brand</mat-label>
+                        <mat-select [(ngModel)]="selectedBrand">
+                            <mat-option *ngFor="let brand of Brands" [value]="brand._id">
+                                {{ brand.name }}
+                            </mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+
+                <div *ngIf="selectedOption === 'date'" class="name-filter" fxLayout="row" fxLayoutAlign="start center">
+                    <mat-form-field>
+                        <mat-label>Enter a date range</mat-label>
+                        <mat-date-range-input [rangePicker]="picker">
+                            <input matStartDate placeholder="Start date" (dateChange)="onStartDateChange($event)">
+                            <input matEndDate placeholder="End date" (dateChange)="onEndDateChange($event)">
+                        </mat-date-range-input>
+                        <mat-hint>MM/DD/YYYY – MM/DD/YYYY</mat-hint>
+                        <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+                        <mat-date-range-picker #picker></mat-date-range-picker>
+                    </mat-form-field>
+                </div>
+
+                <div class="button-container">
+                    <div
+                        *ngIf="selectedOption === 'name'|| selectedOption === 'customer_name' || selectedOption === 'category' || selectedOption === 'brand' || selectedOption === 'date'">
+                        <button mat-raised-button type="submit" class="btn btn-white btn-round btn-just-icon"
+                            (click)="onSearch()">
+                            <i class="material-icons">search</i>
+                        </button>
+                        <button mat-raised-button type="submit" class="btn btn-white btn-round btn-just-icon"
+                            (click)="onClear()">
+                            <i class="material-icons">clear</i>
+                        </button>
+                    </div>
+                    <button class="add" mat-raised-button color="primary" (click)="openAddItemModal()"
+                        *ngIf="!selectedOption">
+                        Add Distributor
+                    </button>
+                    <!-- <button class="add" mat-raised-button color="primary" (click)="openAddCategoryModal()"
+                        *ngIf="!selectedOption">
+                        Add Category
+                    </button> -->
+                    <!-- <button class="add" mat-raised-button color="primary" (click)="openAddBrandModal()">
+                        Add Sales
+                    </button> -->
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- <div class="loading" *ngIf="loading" >
+            <mat-spinner class="loading"  color="primary" mode="indeterminate"></mat-spinner>
+        </div> -->
+
+
+
+
+
+        <div class="card-body">
+            <!-- <div class="table-responsive">
+                <table class="table">
+                    <thead class="">
+                        <th>
+                            Customer Name
+                        </th>
+                        <th>
+                            Price
+                        </th>
+                        <th>
+                            Quantity
+                        </th>
+                        <th>
+                            Sale Date
+                        </th>
+                        <th>
+                            Actions
+                        </th>
+                    </thead>
+                    <tbody *ngFor="let item of SalesList" (click)="viewItemDetails(item._id)">
+                        <tr>
+                            <td>
+                                {{item?.customerName}}
+                            </td>
+                            <td>
+                                {{item?.totalPurchasePrice}}
+                            </td>
+                            <td>
+                                {{item?.totalQuantity}}
+                            </td>
+                            <td>
+                                {{item?.purchaseDate | date:'yyyy-MM-dd' }}
+                            </td>
+                            <td>
+                                <button mat-raised-button type="button" matTooltip="Edit Task"
+                                    [matTooltipPosition]="'above'"
+                                    class="btn btn-primary btn-link btn-sm btn-just-icon">
+                                    <i class="material-icons">edit</i>
+                                </button>
+                                <button mat-raised-button type="button" matTooltip="Remove"
+                                    [matTooltipPosition]="'above'" class="btn btn-danger btn-link btn-sm btn-just-icon">
+                                    <i class="material-icons">close</i>
+                                </button>
+                            </td>
+                        </tr>
+                       
+                    </tbody>
+                </table>
+            </div> -->
+
+
+            <div class="row mat-content title">
+                <div class="col-md-2">
+                    Distributor Name
+                </div>
+                <div class="col-md-2">
+                    Email
+                </div>
+                <div class="col-md-3">
+                    Phone-Num
+                </div>
+                <div class="col-md-3">
+                    Address
+                </div>
+                <div class="col-md-2">
+                    Actions
+                </div>
+            </div>
+
+
+
+            <mat-accordion *ngFor="let items of paginatedItems">
+                <mat-expansion-panel (opened)="panelOpenState = true" (closed)="panelOpenState = false">
+                    <mat-expansion-panel-header>
+                        <div class="row mat-content">
+                            <div class="col-md-2">
+                                {{ items?.customerName }} <br>
+                            </div>
+                            <div class="col-md-3">
+                                {{ items?.totalPurchasePrice }}
+                            </div>
+                            <div class="col-md-3">
+                                {{ items?.totalQuantity }}
+                            </div>
+                            <div class="col-md-2">
+                                {{ items?.purchaseDate | date:'yyyy-MM-dd' }}
+                            </div>
+                            <div class="col-md-2 ">
+                                <button mat-raised-button type="button" matTooltip="Edit Task"
+                                    [matTooltipPosition]="'above'"
+                                    class="btn btn-primary btn-link btn-sm btn-just-icon mx-1">
+                                    <i class="material-icons">edit</i>
+                                </button>
+                                <button mat-raised-button type="button" matTooltip="Remove"
+                                    [matTooltipPosition]="'above'"
+                                    class="btn btn-danger btn-link btn-sm btn-just-icon mx-1">
+                                    <i class="material-icons">close</i>
+                                </button>
+                            </div>
+                        </div>
+                    </mat-expansion-panel-header>
+                    <div class="row mat-content title2">
+                        <div class="col-md-2">
+                            ItemName
+                        </div>
+                        <div class="col-md-2">
+                            Brand
+                        </div>
+                        <div class="col-md-2">
+                            Category
+                        </div>
+                        <div class="col-md-2">
+                            Model
+                        </div>
+                        <div class="col-md-2 ">
+                            Size
+                        </div>
+                        <div class="col-md-1 ">
+                            Quantity
+                        </div>
+                        <div class="col-md-1 ">
+                            Price
+                        </div>
+                    </div>
+                    <div class="row mat-content" *ngFor="let item of items.items">
+                        <div class="col-md-2">
+                            {{ item?.itemName }} <br>
+                        </div>
+                        <div class="col-md-2">
+                            {{ item?.brand?.name }}
+                        </div>
+                        <div class="col-md-2">
+                            {{ item?.category?.name }}
+                        </div>
+                        <div class="col-md-2">
+                            {{ item?.model }}
+                        </div>
+                        <div class="col-md-2 ">
+                            {{item?.size}}
+                        </div>
+                        <div class="col-md-1 ">
+                            {{item?.quantity}}
+                        </div>
+                        <div class="col-md-1 ">
+                            {{item?.purchasePrice}}
+                        </div>
+                    </div>
+                </mat-expansion-panel>
+            </mat-accordion>
+        </div>
+         <mat-paginator #paginator [length]="totalItems" [pageSize]="pageSize" [pageSizeOptions]="pageSizeOptions"
+            (page)="onPageChange($event)">
+        </mat-paginator>
+    </div>

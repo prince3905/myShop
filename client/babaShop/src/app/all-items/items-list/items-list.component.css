@@ -63,6 +63,9 @@
   position: absolute !important;
   margin-top: 100px;
 }
+.modeloption{
+  width: 110px;
+}
 
 @media (max-width: 412px) {
   .mat-form-field {

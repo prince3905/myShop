@@ -3,20 +3,27 @@ const mongoose = require('mongoose');
 const orderSchema = new mongoose.Schema({
   customer: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Customer', // Reference to the Customer model
+    ref: 'Customer', 
     required: true,
   },
-  items: [{
+  items: [{ 
     product: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Item', // Reference to the Item model
+      ref: 'Item', 
       required: true,
     },
     quantity: {
       type: Number,
       required: true,
     },
+    productDetails: {
+      type: mongoose.Schema.Types.Mixed,
+    },
   }],
+  totalQuantity: {
+    type: Number,
+    required: true,
+  },
   totalAmount: {
     type: Number,
     required: true,

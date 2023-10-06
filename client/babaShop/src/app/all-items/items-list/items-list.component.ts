@@ -37,6 +37,11 @@ export class ItemsListComponent implements OnInit {
   selectedOption: string;
   selectedCategory: string;
   selectedBrand: string;
+  selectedVariantQuantity: number;
+  selectedVariantPrice: number;
+  selectedVariant: { [itemId: string]: any } = {};
+  selectedModel: { [itemId: string]: string } = {};
+  selectedOrderNumber: { [itemId: string]: string } = {};
 
   searchParams = {};
   suggestions: string[] = [];
@@ -45,6 +50,10 @@ export class ItemsListComponent implements OnInit {
   pageSizeOptions: number[] = [5, 10, 25, 50];
   paginatedItems: any[] = [];
   totalItems: number;
+
+  isSoldOut(soldOut: boolean): string {
+    return soldOut ? 'Yes' : 'No';
+  } 
 
   @ViewChild(MatPaginator) paginator: MatPaginator;
 
@@ -63,7 +72,54 @@ export class ItemsListComponent implements OnInit {
     this.getAllItems(null);
     this.getCategoryAndBrand();
     this.updatePaginatedItems();
+    for (const item of this.items) {
+      item.selectedModel = '';
+      item.selectedModelVariations = [];
+      item.selectedVariant = null; 
+    }
   }
+
+  onModelChange(item: any): void {
+    // Find the selected model object based on the selectedModel value
+    const selectedModelObject = item.models.find((model) => model.model === item.selectedModel);
+    if (selectedModelObject) {
+      // Update the size property with the size of the selected model
+      item.size = selectedModelObject.size;
+      item.selectedModelVariations = selectedModelObject.variations;
+    } else {
+      // Handle the case when no model is selected (optional)
+      item.size = '';
+      item.selectedModelVariations = [];
+    }
+  
+    // Update selectedModelVariations with the variations for the selected model
+    item.selectedModelVariations = selectedModelObject ? selectedModelObject.variations : [];
+
+    console.log("Selected Model:", item.selectedModel);
+    console.log("Selected Model Variations:", item.selectedModelVariations);
+  }
+
+  updateSelectedVariantInfo(item: any, selectedOrderNumber: string): void {
+    console.log('updateSelectedVariantInfo called for item:', item);
+    console.log('Selected Order Number:', selectedOrderNumber);
+  
+    // Log the selectedModelVariations array to verify its content
+    console.log('Selected Model Variations:', item.selectedModelVariations);
+  
+    const selectedVariant = item.selectedModelVariations.find((variation) => variation.orderNumber === selectedOrderNumber);
+    
+    if (selectedVariant) {
+      this.selectedVariant[item._id] = selectedVariant;
+      this.cdr.detectChanges();
+      console.log('Selected Variant:', selectedVariant);
+    } else {
+      // this.selectedVariant[item._id] = null;
+      this.cdr.detectChanges(); 
+      console.log('Selected Variant not found');
+    }
+  }
+  
+  
 
   ngAfterViewInit(): void {
     this.paginator.page.subscribe(() => this.updatePaginatedItems());
@@ -236,7 +292,7 @@ export class ItemsListComponent implements OnInit {
     this.item.getItem(queryParamsObj).subscribe(
       (response: any) => {
         this.items = response.items;
-        // console.log(response)
+        console.log(response)
         this.totalItems = response.totalItems;
         this.paginatedItems = this.items.slice(0, this.pageSize);
         this.loading = false;
@@ -266,7 +322,7 @@ export class ItemsListComponent implements OnInit {
 
   openAddItemModal(): void {
     const dialogRef = this.dialog.open(AddItemsComponent, {
-      width: "400px",
+      width: "1000px",
     });
 
     dialogRef.afterClosed().subscribe((result) => {

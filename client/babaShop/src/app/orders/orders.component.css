@@ -1,0 +1,131 @@
+.card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px;
+    background-color: #f44336; /* Red color for the card header */
+    color: #fff; 
+    border-radius: 5px;
+    height: 100px;
+  }
+  .card-plain {
+    margin-top: -30px;
+  }
+  
+  .card-title {
+    font-size: 24px;
+  }
+  
+  .dropdown {
+    flex: 1;
+    margin-right: 16px;
+  }
+  
+  .mat-option {
+    background-color: rgb(3 0 0 / 80%) !important;
+    color: white !important;
+    font-size: small !important;
+    height: 38px !important;
+  }
+  .suggesion{
+    position: absolute;
+    margin-top: 35%;
+  }
+  .option2{
+    margin-left: 194px !important;
+  }
+  
+  .name-filter {
+    display: flex;
+    align-items: center;
+  }
+  
+  .name-filter mat-form-field {
+    margin-right: 16px;
+  }
+  
+  .button-container {
+    display: flex;
+    align-items: center;
+  }
+  
+  .button-container button {
+    margin-right: 10px;
+  }
+  
+  .material-icons {
+    font-size: 24px;
+    margin-right: 8px;
+  }
+  .btn add {
+    margin-left: 10px;
+  }
+  .div.mat-content {
+    display: flex !important; 
+    flex: 1 !important;
+    overflow: hidden !important;
+    flex-direction: column !important;
+  }
+  .mat-content {
+    align-items:center
+  }
+  .title{
+    margin-top: -20px;
+    margin-bottom: 10px;
+    color: #2c0808;
+    font-size: 15px;
+    font-weight: 500;
+    width: 100%;
+    margin-left: 0%;
+    height: 35px;
+    border-radius: 3px;
+  }
+  .title2{
+    margin-bottom: 10px;
+    color: #2c0808;
+    font-size: 15px;
+    font-weight: 500;
+    width: 102%;
+    text-decoration-line: underline
+  }
+  
+  .loading{
+    margin-left: 36% !important;
+    position: absolute !important;
+    margin-top: 100px;
+  }
+  
+  @media (max-width: 412px) {
+    .mat-form-field {
+      width: 78px !important;
+      margin-left: -13px;
+      font-size: 12px;
+      text-align: center;
+      color: white;
+    }
+    .card-plain .card-header {
+      margin-left: -30px !important;
+      margin-right: 0px !important;
+      width: 119% !important;
+    }
+  
+    .add {
+      height: 35px;
+      margin-left: 2px;
+      margin-right: -13px;
+      width: 73px;
+      font-size: 10px;
+    }
+  
+    .button-container button {
+      margin-right: 2px;
+    }
+    
+  
+  
+  
+  
+  
+    
+  }
+  

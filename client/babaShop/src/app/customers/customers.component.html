@@ -127,8 +127,8 @@
 
         </div>
 
-        <div class="loading" *ngIf="loading">
-            <mat-spinner class="loading" color="primary" mode="indeterminate"></mat-spinner>
+        <div class="loading" *ngIf="loading" >
+            <mat-spinner class="loading"  color="primary" mode="indeterminate"></mat-spinner>
         </div>
 
         <div class="card-body">
@@ -136,95 +136,33 @@
                 <table class="table">
                     <thead class="">
                         <th>
+                           Customer ID
+                        </th>
+                        <th>
                             Name
                         </th>
                         <th>
-                            Brand
+                            Phone
                         </th>
                         <th>
-                            Category
+                            Email
                         </th>
-                        <th>
-                            Model
-                        </th>
-                        <th>
-                            variations
-                        </th>
-                        <th>
-                            Size
-                        </th>
-                        <th>
-                            Quantity
-                        </th>
-                        <th>
-                            Price
-                        </th>
-                        <th>
-                            SoldOut
-                        </th>
-
+                      
                     </thead>
-                    <tbody *ngFor="let item of paginatedItems">
-
+                    <tbody *ngFor="let item of paginatedItems" (click)="viewItemDetails(item._id)">
                         <tr>
-                            <td (click)="viewItemDetails(item._id)">
+                            <td>
+                                {{item._id}}
+                            </td>
+                            <td>
                                 {{item.name}}
                             </td>
                             <td>
-                                {{item?.brand?.name}}
+                                {{item.phone}}
                             </td>
                             <td>
-                                {{item?.category?.name}}
+                                {{item.email}}
                             </td>
-                            <td>
-                                <ng-container *ngIf="item.models && item.models.length > 0; else displayModel">
-                                    <mat-form-field class="modeloption">
-                                        <mat-label>Select model</mat-label>
-                                        <select matNativeControl [(ngModel)]="item.selectedModel"
-                                            (change)="onModelChange(item)">
-                                            <option label="Select Model"></option>
-                                            <option *ngFor="let model of item.models" [value]="model.model">
-                                                {{ model.model }}
-                                            </option>
-                                        </select>
-                                    </mat-form-field>
-                                </ng-container>
-                                <ng-template #displayModel>
-                                    {{ item.model }}
-                                </ng-template>
-                            </td>
-                            <td>
-                                <mat-form-field class="modeloption">
-                                    <mat-label>Select Variant</mat-label>
-                                    <select matNativeControl [(ngModel)]="selectedOrderNumber"
-                                        (change)="updateSelectedVariantInfo(item, selectedOrderNumber)">
-                                        <option label="Select Variant"></option>
-                                        <option *ngFor="let variation of item.selectedModelVariations"
-                                            [value]="variation.orderNumber">
-                                            {{ variation.orderNumber }}
-                                        </option>
-                                    </select>
-                                </mat-form-field>
-                            </td>
-                            <td>
-                                {{ item.size }}
-                            </td>
-                            <td>
-                                {{ selectedVariant[item._id]?.quantity }}
-                            </td>
-                            <td>
-                                {{ selectedVariant[item._id]?.s_price }}
-                            </td>
-                            <!-- <td>
-                                <span *ngIf="item?.soldOut">Yes</span>
-                                <span *ngIf="!item?.soldOut">No</span>
-                              </td> -->
-                            <td>
-                                <span *ngIf="selectedVariant[item._id]?.soldOut" style="color: red;">Yes</span>
-                                <span *ngIf="!selectedVariant[item._id]?.soldOut" style="color: green;">No</span>
-                            </td>
-
-
                             <!-- <td>
                                             <button mat-raised-button type="button" matTooltip="Edit Task"
                                                 [matTooltipPosition]="'above'"

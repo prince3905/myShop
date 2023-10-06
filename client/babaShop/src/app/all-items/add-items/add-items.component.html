@@ -1,13 +1,24 @@
-<div class="main-content">
+<!-- <div class="main-content">
     <div class="row">
         <div class="col-md-12">
             <div class="card">
                 <div class="card-header card-header-danger">
                     <h4 class="card-title">Add Item</h4>
-                    <!-- <p class="card-category">Complete your profile</p> -->
                 </div>
                 <div class="card-body">
                     <form (ngSubmit)="onSubmit()" #addItemForm="ngForm">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <mat-form-field class="example-full-width">
+                                    <mat-label>Distributor</mat-label>
+                                    <mat-select name="distributor" [(ngModel)]="selectedDistributor">
+                                        <mat-option *ngFor="let Distributor of Distributors" [value]="Distributor._id">
+                                            {{ Distributor.name }}
+                                        </mat-option>
+                                    </mat-select>
+                                </mat-form-field>
+                            </div>
+                        </div>
                         <div class="row">
                             <div class="col-md-12">
                                 <mat-form-field class="example-full-width">
@@ -18,13 +29,13 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <mat-form-field class="example-full-width">
-                                        <mat-label>Category</mat-label>
-                                        <mat-select name="category" [(ngModel)]="selectedCategory">
-                                            <mat-option *ngFor="let category of Category" [value]="category._id">
-                                                {{ category.name }}
-                                            </mat-option>
-                                        </mat-select>
-                                    </mat-form-field>
+                                    <mat-label>Category</mat-label>
+                                    <mat-select name="category" [(ngModel)]="selectedCategory">
+                                        <mat-option *ngFor="let category of Category" [value]="category._id">
+                                            {{ category.name }}
+                                        </mat-option>
+                                    </mat-select>
+                                </mat-form-field>
                             </div>
                             <div class="col-md-6">
                                 <mat-form-field class="example-full-width">
@@ -52,7 +63,8 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <mat-form-field class="example-full-width">
-                                    <input matInput placeholder=" Quantity" name="quantity" [(ngModel)]="quantity" required>
+                                    <input matInput placeholder=" Quantity" name="quantity" [(ngModel)]="quantity"
+                                        required>
                                 </mat-form-field>
                             </div>
                             <div class="col-md-6">
@@ -64,12 +76,14 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <mat-form-field class="example-full-width">
-                                    <input matInput placeholder=" Purchase Price" name="p_price" [(ngModel)]="p_price" required>
+                                    <input matInput placeholder=" Purchase Price" name="p_price" [(ngModel)]="p_price"
+                                        required>
                                 </mat-form-field>
                             </div>
                             <div class="col-md-6">
                                 <mat-form-field class="example-full-width">
-                                    <input matInput placeholder=" Sell Price" name="s_price" [(ngModel)]="s_price" required>
+                                    <input matInput placeholder=" Sell Price" name="s_price" [(ngModel)]="s_price"
+                                        required>
                                 </mat-form-field>
                             </div>
                         </div>
@@ -78,13 +92,198 @@
                             <div class="col-md-12">
                                 <label>About Item Description</label>
                                 <mat-form-field class="example-full-width">
-                                    <textarea matInput placeholder="Description can be in Details ." name="description" [(ngModel)]="description"></textarea>
+                                    <textarea matInput placeholder="Description can be in Details ." name="description"
+                                        [(ngModel)]="description"></textarea>
                                 </mat-form-field>
                             </div>
                         </div>
-                        <button mat-raised-button type="submit" class="btn btn-danger pull-right" [disabled]="!addItemForm.valid">Add Item</button>
+                        <button mat-raised-button type="submit" class="btn btn-danger pull-right"
+                            [disabled]="!addItemForm.valid">Add Item</button>
                         <div class="clearfix"></div>
                     </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> -->
+
+
+
+
+
+
+
+
+<div class="main-content">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header card-header-danger">
+                    <h4 class="card-title">Add Item</h4>
+                </div>
+                <div class="card-body">
+                    <div class="form-container">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <form (ngSubmit)="onSubmit()" #addItemForm="ngForm">
+                                    <!-- Distributor -->
+                                    <div class="row">
+                                        <div class="col-md-12">
+                                            <mat-form-field class="example-full-width">
+                                                <mat-label>Distributor</mat-label>
+                                                <mat-select name="distributor" [(ngModel)]="product.distributor"
+                                                    required>
+                                                    <mat-option *ngFor="let distributor of Distributors"
+                                                        [value]="distributor._id">
+                                                        {{ distributor.name }}
+                                                    </mat-option>
+                                                </mat-select>
+                                            </mat-form-field>
+                                        </div>
+                                    </div>
+
+                                    <!-- Item Name -->
+                                    <div class="row">
+                                        <div class="col-md-12">
+                                            <mat-form-field class="example-full-width">
+                                                <input matInput placeholder="Item Name" name="name"
+                                                    [(ngModel)]="product.name" required>
+                                            </mat-form-field>
+                                        </div>
+                                    </div>
+
+                                    <!-- Category and Brand -->
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <mat-form-field class="example-full-width">
+                                                <mat-label>Category</mat-label>
+                                                <mat-select name="category" [(ngModel)]="product.category" (selectionChange)="onCategoryChange($event)" required>
+                                                    <mat-option *ngFor="let category of Category"
+                                                        [value]="category._id">
+                                                        {{ category.name }}
+                                                    </mat-option>
+                                                </mat-select>
+                                            </mat-form-field>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <mat-form-field class="example-full-width">
+                                                <mat-label>Brand</mat-label>
+                                                <mat-select name="brand" [(ngModel)]="product.brand" required>
+                                                    <mat-option *ngFor="let brand of Brands" [value]="brand._id">
+                                                        {{ brand.name }}
+                                                    </mat-option>
+                                                </mat-select>
+                                            </mat-form-field>
+                                        </div>
+                                        <!-- <div class="col-md-12">
+                                            <label>About Item Description</label>
+                                            <mat-form-field class="example-full-width">
+                                                <textarea matInput placeholder="Description can be in Details."
+                                                    name="description" [(ngModel)]="product.description"></textarea>
+                                            </mat-form-field>
+                                        </div> -->
+                                    </div>
+
+                                    <!-- Models and Variations -->
+                                    <div class="row">
+                                        <div class="col-md-12">
+                                            <h4>Add Model</h4>
+                                            <mat-form-field class="example-full-width">
+                                                <input matInput placeholder="Model" name="model"
+                                                    [(ngModel)]="model.model" required>
+                                            </mat-form-field>
+                                            <mat-form-field class="example-full-width">
+                                                <input matInput placeholder="Color" name="color"
+                                                    [(ngModel)]="model.color" required>
+                                            </mat-form-field>
+                                            <mat-form-field class="example-full-width">
+                                                <input matInput placeholder="Size" name="size" [(ngModel)]="model.size"
+                                                    required>
+                                            </mat-form-field>
+                                            <mat-form-field class="example-full-width">
+                                                <textarea matInput placeholder="Model Description" name="description"
+                                                    [(ngModel)]="model.description"></textarea>
+                                            </mat-form-field>
+                                        </div>
+                                    </div>
+
+
+                                    <div class="row">
+                                        <div class="col-md-12">
+                                            <button mat-raised-button type="button"
+                                                class="btn btn-danger full-width-button" (click)="addModel()"
+                                                [disabled]="!addItemForm.valid">Add Model</button>
+                                        </div>
+                                        <div class="col-md-12">
+                                            <button mat-raised-button type="submit"
+                                                class="btn btn-danger full-width-button">AddItem</button>
+                                        </div>
+                                    </div>
+
+                                </form>
+                            </div>
+                            <div class="col-md-6">
+                                <!-- Models List -->
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <h4>Models</h4>
+                                        <div *ngFor="let model of product.models; let i = index">
+                                            <!-- Display model details -->
+                                            <p style="font-weight: 500;">Model: {{ model.model }}</p>
+                                            <p>Color: {{ model.color }}</p>
+                                            <p>Size: {{ model.size }}</p>
+                                            <p>Description: {{ model.description }}</p>
+                                            <!-- Add Variation Section -->
+                                            <h4>Add Variation</h4>
+                                            <mat-form-field class="example-full-width">
+                                                <input matInput placeholder="Purchase Price" name="p_price"
+                                                    [(ngModel)]="variation.p_price" type="number" required>
+                                            </mat-form-field>
+                                            <mat-form-field class="example-full-width">
+                                                <input matInput placeholder="Sell Price" name="s_price"
+                                                    [(ngModel)]="variation.s_price" type="number" required>
+                                            </mat-form-field>
+                                            <mat-form-field class="example-full-width">
+                                                <input matInput placeholder="Quantity" name="quantity"
+                                                    [(ngModel)]="variation.quantity" type="number" required>
+                                            </mat-form-field>
+                                            <!-- <mat-checkbox name="soldOut" [(ngModel)]="variation.soldOut">Sold
+                                                Out</mat-checkbox> -->
+                                            <div class="col-md-12">
+                                                <button class="full-width-button" mat-raised-button type="button"
+                                                    (click)="addVariation(model)" [disabled]="
+                                            variation.p_price === '' ||
+                                            variation.s_price === '' ||
+                                            variation.quantity === ''
+                                            ">AddVariation</button>
+                                            </div>
+
+                                            <!-- Variations List -->
+                                            <div *ngFor="let variation of model.variations; let j = index">
+                                                <!-- Display variation details -->
+                                                <p style="font-weight: 500;">Variation {{ j + 1 }}</p>
+                                                <p>Purchase Price: {{ variation.p_price }}</p>
+                                                <p>Sell Price: {{ variation.s_price }}</p>
+                                                <p>Quantity: {{ variation.quantity }}</p>
+                                                <p>Sold Out: {{ variation.soldOut ? 'Yes' : 'No' }}</p>
+                                            </div>
+
+                                           
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div *ngIf="showConfirmationDialog" class="confirmation-dialog">
+                        <div class="confirmation-content">
+                            <p>Are you sure you want to send the final product to the database?</p>
+                            <div class="button-container">
+                                <button class="confirm-button" (click)="sendDataToDatabase()">Yes</button>
+                                <button class="cancel-button" (click)="cancelSendToDatabase()">No</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

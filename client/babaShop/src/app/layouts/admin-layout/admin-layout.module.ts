@@ -32,6 +32,10 @@ import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { StocksComponent } from 'app/stocks/stocks.component';
 import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { OrdersComponent } from 'app/orders/orders.component';
+import { CustomersComponent } from 'app/customers/customers.component';
+import { DistributorsComponent } from 'app/all-distributors/distributors/distributors.component';
+import { AddDistributorsComponent } from 'app/all-distributors/add-distributors/add-distributors.component';
 
 
 @NgModule({
@@ -71,6 +75,10 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
     SalesListComponent,
     AddSalesComponent,
     StocksComponent,
+    OrdersComponent,
+    CustomersComponent,
+    AddDistributorsComponent,
+    DistributorsComponent
 
   ]
 })

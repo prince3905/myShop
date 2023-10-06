@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
 const Item = require("../models/itemModel");
+const Distributor = require('../models/distributorModel');
 const Category = require("../models/categoryModel");
 const Brand = require("../models/brandModel");
 
@@ -54,42 +55,133 @@ exports.allItem = async (req, res) => {
   }
 };
 
+// working code==========>
+
+// exports.addItem = async (req, res) => {
+//   const newItemData = req.body;
+//   newItemData.createdAt = new Date();
+//   const newItem = new Item(newItemData);
+//   newItem
+//     .save()
+//     .then((savedItem) => {
+//       res.status(201).json({
+//         message: "Item added successfully.",
+//         item: savedItem,
+//       });
+//     })
+//     .catch((err) => {
+//       console.error("Error saving item:", err);
+//       res.status(500).json({ error: "Error saving item" });
+//     });
+// };
+
+// =====>
+
+// testCode ========>
 exports.addItem = async (req, res) => {
   const newItemData = req.body;
   newItemData.createdAt = new Date();
-  const newItem = new Item(newItemData);
-  newItem
-    .save()
-    .then((savedItem) => {
-      res.status(201).json({
-        message: "Item added successfully.",
-        item: savedItem,
+
+  const distributorId = newItemData.distributor;
+  const itemName = newItemData.name;
+
+  try {
+    let existingItem = await Item.findOne({ distributor: distributorId, name: itemName });
+
+    if (existingItem) {
+      newItemData.models.forEach(newModel => {
+        const existingModel = existingItem.models.find(model => model.model === newModel.model);
+
+        if (existingModel) {
+          // Generate a unique order number for each variation
+          newModel.variations.forEach(variation => {
+            variation.orderNumber = generateOrderNumber();
+            variation.soldOut = false;
+          });
+
+          existingModel.variations.push(...newModel.variations);
+        } else {
+          existingItem.models.push(newModel);
+        }
       });
-    })
-    .catch((err) => {
-      console.error("Error saving item:", err);
-      res.status(500).json({ error: "Error saving item" });
-    });
+
+      const savedExistingItem = await existingItem.save();
+      res.status(201).json({
+        message: 'Variation added to existing item successfully.',
+        item: savedExistingItem,
+      });
+    } else {
+      // Check if the distributor already exists for the new item
+      const existingDistributor = await Distributor.findById(distributorId);
+
+      if (existingDistributor) {
+        // If the distributor exists, create a new item associated with the distributor
+        newItemData.models.forEach(newModel => {
+          // Generate a unique order number for each variation
+          newModel.variations.forEach(variation => {
+            variation.orderNumber = generateOrderNumber();
+            variation.soldOut = false;
+          });
+        });
+
+        const newItem = new Item(newItemData);
+        newItem.models = newItemData.models;
+        const savedNewItem = await newItem.save();
+
+        existingDistributor.items.push(savedNewItem._id);
+        await existingDistributor.save();
+
+        res.status(201).json({
+          message: 'Item added successfully.',
+          item: savedNewItem,
+        });
+      } else {
+        // If the distributor doesn't exist, create a new distributor and associate the item
+        const newDistributor = new Distributor({
+          _id: distributorId,
+          items: [newItemData.models[0]._id], // Assuming each variation is unique
+        });
+        await newDistributor.save();
+
+        newItemData.models.forEach(newModel => {
+          // Generate a unique order number for each variation
+          newModel.variations.forEach(variation => {
+            variation.orderNumber = generateOrderNumber();
+            variation.soldOut = false;
+          });
+        });
+
+        const newItem = new Item(newItemData);
+        newItem.models = newItemData.models;
+        const savedNewItem = await newItem.save();
+
+        res.status(201).json({
+          message: 'Item and Distributor added successfully.',
+          item: savedNewItem,
+        });
+      }
+    }
+  } catch (err) {
+    console.error('Error saving item:', err);
+    res.status(500).json({ error: 'Error saving item' });
+  }
 };
 
-exports.addItem = async (req, res) => {
-  const newItemData = req.body;
-  newItemData.createdAt = new Date();
-  const newItem = new Item(newItemData);
-  newItem
-    .save()
-    .then((savedItem) => {
-      res.status(201).json({
-        message: "Item added successfully.",
-        item: savedItem,
-      });
-    })
-    .catch((err) => {
-      console.error("Error saving item:", err);
-      res.status(500).json({ error: "Error saving item" });
-    });
-};
 
+
+// Function to generate the order number
+function generateOrderNumber() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth() + 1;
+  const day = now.getDate();
+  const randomDigits = Math.floor(Math.random() * 10000);
+
+  return `${year}${month}${day}${randomDigits}`;
+}
+
+
+// =======>
 exports.itemDetails = async (req, res) => {
   const { id } = req.params;
   try {

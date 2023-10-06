@@ -3,11 +3,19 @@ const Customer = require('../models/customerModel');
 const Item = require('../models/itemModel');
 
 exports.getAllOrders = async (req, res) => {
+  const { name, page = 1, perPage = 10 } = req.query;
+  const query = name ? { name: { $regex: name, $options: 'i' } } : {};
+
   try {
-    const orders = await Order.find()
+    const totalItems = await Order.countDocuments(query);
+    const skipItems = (page - 1) * perPage;
+    const orders = await Order.find(query)
+      .skip(skipItems)
+      .limit(perPage)
       .populate('customer')
       .populate('items.product');
-    res.status(200).json(orders);
+
+    res.status(200).json({ orders, totalItems });
   } catch (err) {
     console.error('Error retrieving orders:', err);
     res.status(500).json({ error: 'Error retrieving orders' });
@@ -16,40 +24,41 @@ exports.getAllOrders = async (req, res) => {
 
 exports.createOrder = async (req, res) => {
   const { customerId, items } = req.body;
-  
+
   try {
-    // Fetch the customer
     const customer = await Customer.findById(customerId);
     if (!customer) {
       return res.status(404).json({ error: 'Customer not found' });
     }
 
-    // Validate and fetch items from the database
-    const validatedItems = [];
-    for (const item of items) {
-      const product = await Item.findById(item.product);
-      if (!product) {
-        return res.status(404).json({ error: `Product with ID ${item.product} not found` });
-      }
-      validatedItems.push({ product: item.product, quantity: item.quantity });
-    }
+    let totalAmount = 0;
+    let totalQuantity = 0;
 
-    // Calculate total amount
-    const totalAmount = validatedItems.reduce((total, item) => {
-      const product = items.find(i => i.product === item.product);
-      return total + product.quantity * product.product.s_price;
-    }, 0);
+    const validatedItems = await Promise.all(
+      items.map(async (item) => {
+        const product = await Item.findById(item.product)
+        .populate('brand')
+        .populate('category');
 
-    const newOrder = new Order({
+        if (!product) {
+          return res.status(404).json({ error: `Product with ID ${item.product} not found` });
+        }
+        totalAmount += item.quantity * product.s_price;
+        totalQuantity += item.quantity;
+        return { product: item.product, quantity: item.quantity, productDetails: product.toObject() };
+      })
+    );
+
+    const savedOrder = await Order.create({
       customer: customerId,
       items: validatedItems,
       totalAmount,
+      totalQuantity,
     });
 
-    const savedOrder = await newOrder.save();
     res.status(201).json({
       message: 'Order created successfully.',
-      order: savedOrder,
+      order: savedOrder.toObject(),
     });
   } catch (err) {
     console.error('Error creating order:', err);
@@ -57,5 +66,4 @@ exports.createOrder = async (req, res) => {
   }
 };
 
-// Implement update and delete methods similarly
-// Remember to validate and handle errors appropriately
+

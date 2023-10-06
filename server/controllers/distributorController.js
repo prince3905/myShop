@@ -12,12 +12,22 @@ exports.allDistributors = async (req, res) => {
 };
 
 exports.addDistributor = async (req, res) => {
-  const newDistributorData = req.body;
-  newDistributorData.createdAt = new Date();
-  
   try {
+    console.log(req.body)
+    const newDistributorData = {
+      name: req.body.name,
+      shopName: req.body.shopName,
+      email: req.body.email,
+      phone: req.body.phone,
+      telephone: req.body.telephone,
+      address: req.body.address,
+      items: req.body.items || [],
+      createdAt: new Date(),
+    };
+
     const newDistributor = new Distributor(newDistributorData);
     const savedDistributor = await newDistributor.save();
+    
     res.status(201).json({
       message: 'Distributor added successfully.',
       distributor: savedDistributor,
@@ -27,6 +37,7 @@ exports.addDistributor = async (req, res) => {
     res.status(500).json({ error: 'Error saving distributor' });
   }
 };
+
 
 exports.getDistributorDetails = async (req, res) => {
   const { id } = req.params;
