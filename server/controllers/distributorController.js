@@ -2,14 +2,23 @@ const Distributor = require('../models/distributorModel');
 const Item = require('../models/itemModel');
 
 exports.allDistributors = async (req, res) => {
+  const { page = 1, perPage = 10 } = req.query;
+
   try {
-    const distributors = await Distributor.find().populate('items');
-    res.status(200).json(distributors);
+    const totalItems = await Distributor.countDocuments();
+    const skipItems = (page - 1) * perPage;
+    const distributors = await Distributor.find()
+      .skip(skipItems)
+      .limit(perPage)
+      .populate('items');
+
+    res.status(200).json({ distributors, totalItems });
   } catch (err) {
     console.error('Error retrieving distributors:', err);
     res.status(500).json({ error: 'Error retrieving distributors' });
   }
 };
+
 
 exports.addDistributor = async (req, res) => {
   try {
