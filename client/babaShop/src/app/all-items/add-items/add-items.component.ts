@@ -68,6 +68,28 @@ export class AddItemsComponent implements OnInit {
       });
   }
 
+ 
+
+  getCategoryAndBrand(): void {
+    forkJoin({
+      categories: this.category.getCategory(),
+      // brands: this.brand.getBrand(),
+      distributors: this.distributor.getDistributor(null),
+    }).subscribe(
+      (response: any) => {
+        this.Category = response.categories;
+        // this.Brands = response.brands;
+        this.Distributors = response.distributors.distributors;
+        console.log("All Categories:", this.Category);
+        // console.log("All Brands:", this.Brands);
+        console.log("All Distributors:", this.Distributors);
+      },
+      (error) => {
+        console.error("Error retrieving data:", error);
+      }
+    );
+  }
+
   addModel(): void {
     // Create a new model and reset the model form fields
     const newModel = { ...this.model };
@@ -104,26 +126,6 @@ export class AddItemsComponent implements OnInit {
       quantity: "",
       soldOut: false,
     };
-  }
-
-  getCategoryAndBrand(): void {
-    forkJoin({
-      categories: this.category.getCategory(),
-      // brands: this.brand.getBrand(),
-      distributors: this.distributor.getDistributor(null),
-    }).subscribe(
-      (response) => {
-        this.Category = response.categories;
-        // this.Brands = response.brands;
-        this.Distributors = response.distributors;
-        console.log("All Categories:", this.Category);
-        // console.log("All Brands:", this.Brands);
-        console.log("All Distributors:", this.Distributors);
-      },
-      (error) => {
-        console.error("Error retrieving data:", error);
-      }
-    );
   }
 
   onCategoryChange(event: any) {

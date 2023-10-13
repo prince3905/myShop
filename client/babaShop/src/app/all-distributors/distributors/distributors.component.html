@@ -137,165 +137,83 @@
         </div>
 
 
-        <!-- <div class="loading" *ngIf="loading" >
+        <div class="loading" *ngIf="loading" >
             <mat-spinner class="loading"  color="primary" mode="indeterminate"></mat-spinner>
+        </div>
+
+
+
+
+
+        <!-- <div class="row mat-content title">
+            <div class="col-md-2">
+                Customer Name
+            </div>
+            <div class="col-md-3">
+                Price
+            </div>
+            <div class="col-md-3">
+                Quantity
+            </div>
+            <div class="col-md-2">
+                Sale Date
+            </div>
+            <div class="col-md-2">
+                Actions
+            </div>
         </div> -->
 
-
-
-
-
         <div class="card-body">
-            <!-- <div class="table-responsive">
+            <div class="table-responsive">
                 <table class="table">
                     <thead class="">
                         <th>
-                            Customer Name
+                           Customer ID
                         </th>
                         <th>
-                            Price
+                            Name
                         </th>
                         <th>
-                            Quantity
+                            Phone
                         </th>
                         <th>
-                            Sale Date
+                            Email
                         </th>
-                        <th>
-                            Actions
-                        </th>
+                      
                     </thead>
-                    <tbody *ngFor="let item of SalesList" (click)="viewItemDetails(item._id)">
+                    <tbody *ngFor="let item of Distributors" (click)="viewItemDetails(item._id)">
                         <tr>
                             <td>
-                                {{item?.customerName}}
+                                {{item._id}}
                             </td>
                             <td>
-                                {{item?.totalPurchasePrice}}
+                                {{item.name}}
                             </td>
                             <td>
-                                {{item?.totalQuantity}}
+                                {{item.phone}}
                             </td>
                             <td>
-                                {{item?.purchaseDate | date:'yyyy-MM-dd' }}
+                                {{item.email}}
                             </td>
-                            <td>
-                                <button mat-raised-button type="button" matTooltip="Edit Task"
-                                    [matTooltipPosition]="'above'"
-                                    class="btn btn-primary btn-link btn-sm btn-just-icon">
-                                    <i class="material-icons">edit</i>
-                                </button>
-                                <button mat-raised-button type="button" matTooltip="Remove"
-                                    [matTooltipPosition]="'above'" class="btn btn-danger btn-link btn-sm btn-just-icon">
-                                    <i class="material-icons">close</i>
-                                </button>
-                            </td>
+                            <!-- <td>
+                                            <button mat-raised-button type="button" matTooltip="Edit Task"
+                                                [matTooltipPosition]="'above'"
+                                                class="btn btn-primary btn-link btn-sm btn-just-icon">
+                                                <i class="material-icons">edit</i>
+                                            </button>
+                                            <button mat-raised-button type="button" matTooltip="Remove"
+                                                [matTooltipPosition]="'above'"
+                                                class="btn btn-danger btn-link btn-sm btn-just-icon">
+                                                <i class="material-icons">close</i>
+                                            </button>
+                                        </td> -->
                         </tr>
-                       
                     </tbody>
                 </table>
-            </div> -->
-
-
-            <div class="row mat-content title">
-                <div class="col-md-2">
-                    Distributor Name
-                </div>
-                <div class="col-md-2">
-                    Email
-                </div>
-                <div class="col-md-3">
-                    Phone-Num
-                </div>
-                <div class="col-md-3">
-                    Address
-                </div>
-                <div class="col-md-2">
-                    Actions
-                </div>
             </div>
-
-
-
-            <mat-accordion *ngFor="let items of paginatedItems">
-                <mat-expansion-panel (opened)="panelOpenState = true" (closed)="panelOpenState = false">
-                    <mat-expansion-panel-header>
-                        <div class="row mat-content">
-                            <div class="col-md-2">
-                                {{ items?.customerName }} <br>
-                            </div>
-                            <div class="col-md-3">
-                                {{ items?.totalPurchasePrice }}
-                            </div>
-                            <div class="col-md-3">
-                                {{ items?.totalQuantity }}
-                            </div>
-                            <div class="col-md-2">
-                                {{ items?.purchaseDate | date:'yyyy-MM-dd' }}
-                            </div>
-                            <div class="col-md-2 ">
-                                <button mat-raised-button type="button" matTooltip="Edit Task"
-                                    [matTooltipPosition]="'above'"
-                                    class="btn btn-primary btn-link btn-sm btn-just-icon mx-1">
-                                    <i class="material-icons">edit</i>
-                                </button>
-                                <button mat-raised-button type="button" matTooltip="Remove"
-                                    [matTooltipPosition]="'above'"
-                                    class="btn btn-danger btn-link btn-sm btn-just-icon mx-1">
-                                    <i class="material-icons">close</i>
-                                </button>
-                            </div>
-                        </div>
-                    </mat-expansion-panel-header>
-                    <div class="row mat-content title2">
-                        <div class="col-md-2">
-                            ItemName
-                        </div>
-                        <div class="col-md-2">
-                            Brand
-                        </div>
-                        <div class="col-md-2">
-                            Category
-                        </div>
-                        <div class="col-md-2">
-                            Model
-                        </div>
-                        <div class="col-md-2 ">
-                            Size
-                        </div>
-                        <div class="col-md-1 ">
-                            Quantity
-                        </div>
-                        <div class="col-md-1 ">
-                            Price
-                        </div>
-                    </div>
-                    <div class="row mat-content" *ngFor="let item of items.items">
-                        <div class="col-md-2">
-                            {{ item?.itemName }} <br>
-                        </div>
-                        <div class="col-md-2">
-                            {{ item?.brand?.name }}
-                        </div>
-                        <div class="col-md-2">
-                            {{ item?.category?.name }}
-                        </div>
-                        <div class="col-md-2">
-                            {{ item?.model }}
-                        </div>
-                        <div class="col-md-2 ">
-                            {{item?.size}}
-                        </div>
-                        <div class="col-md-1 ">
-                            {{item?.quantity}}
-                        </div>
-                        <div class="col-md-1 ">
-                            {{item?.purchasePrice}}
-                        </div>
-                    </div>
-                </mat-expansion-panel>
-            </mat-accordion>
         </div>
+
+
          <mat-paginator #paginator [length]="totalItems" [pageSize]="pageSize" [pageSizeOptions]="pageSizeOptions"
             (page)="onPageChange($event)">
         </mat-paginator>

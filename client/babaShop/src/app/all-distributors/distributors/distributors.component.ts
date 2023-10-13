@@ -57,8 +57,9 @@ export class DistributorsComponent implements OnInit {
     this.loading = true;
     this.distributor.getDistributor(queryParamsObj).subscribe(
       (response: any) => {
-        this.distributor = response;
+        this.Distributors = response.distributors        ;
         console.log(response);
+        this.totalItems = response.totalItems;
         this.paginatedItems = this.Distributors.slice(0, this.pageSize);
         this.loading = false;
         this.cdr.detectChanges();

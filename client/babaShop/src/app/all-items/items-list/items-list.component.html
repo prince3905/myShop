@@ -20,7 +20,7 @@
                 <div *ngIf="selectedOption === 'name'" class="name-filter" fxLayout="row"
                     fxLayoutAlign.lt-md="start center">
                     <mat-form-field fxFlex="10%">
-                        <input matInput placeholder="itemName" name="ItemName" [(ngModel)]="itemName"
+                        <input matInput placeholder="Product Name" name="ItemName" [(ngModel)]="itemName"
                             (input)="fetchSuggestions()">
                     </mat-form-field>
                     <div class="suggesion" fxFlex="10%">
@@ -111,7 +111,7 @@
                     </div>
                     <button class="add" mat-raised-button color="primary" (click)="openAddItemModal()"
                         *ngIf="!selectedOption">
-                        Add Item
+                        Add Product
                     </button>
                     <button class="add" mat-raised-button color="primary" (click)="openAddCategoryModal()"
                         *ngIf="!selectedOption">
