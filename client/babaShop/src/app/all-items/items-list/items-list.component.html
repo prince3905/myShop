@@ -154,6 +154,9 @@
                             Size
                         </th>
                         <th>
+                            Color
+                        </th>
+                        <th>
                             Quantity
                         </th>
                         <th>
@@ -207,7 +210,10 @@
                                 </mat-form-field>
                             </td>
                             <td>
-                                {{ item.size }}
+                                {{ selectedVariant[item._id]?.color }}
+                            </td>
+                            <td>
+                                {{ selectedVariant[item._id]?.size }}
                             </td>
                             <td>
                                 {{ selectedVariant[item._id]?.quantity }}

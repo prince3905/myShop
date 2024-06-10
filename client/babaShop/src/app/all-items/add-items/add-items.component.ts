@@ -37,13 +37,13 @@ export class AddItemsComponent implements OnInit {
 
   model: any = {
     model: "",
-    color: "",
-    size: "",
     description: "",
     variations: [],
   };
 
   variation: any = {
+    color: "",
+    size: "",
     p_price: "",
     s_price: "",
     quantity: "",
@@ -112,8 +112,6 @@ export class AddItemsComponent implements OnInit {
   resetModelFields(): void {
     this.model = {
       model: "",
-      color: "",
-      size: "",
       description: "",
       variations: [],
     };
@@ -121,6 +119,8 @@ export class AddItemsComponent implements OnInit {
 
   resetVariationFields(): void {
     this.variation = {
+      color: "",
+      size: "",
       p_price: "",
       s_price: "",
       quantity: "",

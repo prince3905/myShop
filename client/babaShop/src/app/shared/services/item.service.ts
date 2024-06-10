@@ -49,4 +49,9 @@ export class ItemService {
   deleteItem(itemId: string) {
     return this.http.delete(`${this.baseURL}/api/item/${itemId}`);
   }
+
+  getProductsByName(name: string): Observable<any> {
+    const params = new HttpParams().set('name', name);
+    return this.http.get(`${this.baseURL}/api/item/by-product-name`, { params });
+  }
 }

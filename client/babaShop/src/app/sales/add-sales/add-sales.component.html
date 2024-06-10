@@ -15,28 +15,21 @@
                                         <mat-form-field class="example-full-width">
                                             <input matInput placeholder="Customer Name" name="customerName"
                                                 [(ngModel)]="customerName" (input)="fetchCusSuggestions()" required>
-                                                <mat-option *ngFor="let suggestion of cus_suggestions" (click)="selectCusSuggestion(suggestion)" (optionSelected)="selectCusSuggestion($event)">
-                                                    {{suggestion}}
-                                                </mat-option>
+                                            <mat-option *ngFor="let suggestion of cus_suggestions"
+                                                (click)="selectCusSuggestion(suggestion)"
+                                                (optionSelected)="selectCusSuggestion($event)">
+                                                {{suggestion}}
+                                            </mat-option>
                                         </mat-form-field>
                                     </div>
                                 </div>
-                                <div class="row">
-                                    <div class="col-md-12">
-                                        <mat-form-field class="example-full-width">
-                                            <input matInput placeholder="Item Name" name="itemName"
-                                                [(ngModel)]="itemName" (input)="fetchSuggestions()" required>
-                                                <mat-option *ngFor="let suggestion of suggestions" (click)="selectSuggestion(suggestion)" (optionSelected)="selectSuggestion($event)">
-                                                    {{suggestion}}
-                                                </mat-option>
-                                            </mat-form-field>                                   
-                                    </div>
-                                </div>
+                               
                                 <div class="row">
                                     <div class="col-md-6">
                                         <mat-form-field class="example-full-width">
                                             <mat-label>Category</mat-label>
-                                            <mat-select name="category" [(ngModel)]="selectedCategory">
+                                            <mat-select name="category" [(ngModel)]="selectedCategory"
+                                                (selectionChange)="onCategoryChange($event)" required>
                                                 <mat-option *ngFor="let category of Category" [value]="category._id">
                                                     {{ category.name }}
                                                 </mat-option>
@@ -46,7 +39,7 @@
                                     <div class="col-md-6">
                                         <mat-form-field class="example-full-width">
                                             <mat-label>Brand</mat-label>
-                                            <mat-select name="brand" [(ngModel)]="selectedBrand">
+                                            <mat-select name="brand" [(ngModel)]="selectedBrand" required>
                                                 <mat-option *ngFor="let brand of Brands" [value]="brand._id">
                                                     {{ brand.name }}
                                                 </mat-option>
@@ -55,32 +48,52 @@
                                     </div>
                                 </div>
                                 <div class="row">
+                                    <div class="col-md-12">
+                                        <mat-form-field class="example-full-width">
+                                            <input matInput placeholder="Item Name" name="itemName"
+                                                [(ngModel)]="itemName" (input)="fetchSuggestions()" required>
+                                            <mat-option *ngFor="let suggestion of suggestions"
+                                                (click)="selectSuggestion(suggestion)"
+                                                (optionSelected)="selectSuggestion($event)">
+                                                {{suggestion}}
+                                            </mat-option>
+                                        </mat-form-field>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <mat-form-field class="modeloption">
+                                            <mat-label>Models</mat-label>
+                                            <select matNativeControl [(ngModel)]="selectedModel"
+                                                (change)="updateSelectedModelVariations()">
+                                                <option label="Select Model"></option>
+                                                <option *ngFor="let model of selectedItemModels" [value]="model.model">
+                                                    {{ model.model }}
+                                                </option>
+                                            </select>
+                                        </mat-form-field>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <mat-form-field class="modeloption">
+                                            <mat-label>Variants</mat-label>
+                                            <select matNativeControl [(ngModel)]="selectedVariation" (change)="onVariationChange(selectedVariation)">
+                                                <option label="Select Variant"></option>
+                                                <option *ngFor="let variation of selectedModelVariations"
+                                                    [value]="variation.orderNumber">
+                                                    {{ variation.orderNumber }}
+                                                </option>
+                                            </select>
+                                        </mat-form-field>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                   
                                     <div class="col-md-6">
                                         <mat-form-field class="example-full-width">
                                             <input type="number" matInput placeholder=" Quantity" name="quantity"
                                                 [(ngModel)]="quantity" required>
-                                        </mat-form-field>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <mat-form-field class="example-full-width">
-                                            <input matInput placeholder=" Size" name="size" 
-                                            [(ngModel)]="size" (input)="SizeSuggestions()" required>
-                                        </mat-form-field>
-                                        <div class="suggesion" fxFlex="10%">
-                                            <mat-option *ngFor="let suggestion of size_suggestions" (click)="selectSizeSuggestion(suggestion)" (optionSelected)="selectCusSuggestion($event)">
-                                                {{suggestion}}
-                                            </mat-option>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <mat-form-field class="example-full-width">
-                                            <input matInput placeholder=" Model" name="model" [(ngModel)]="model"
-                                            (input)="fetchModSuggestions()"  required>
-                                            <mat-option *ngFor="let suggestion of model_suggestions" (click)="selectModSuggestion(suggestion)" (optionSelected)="selectCusSuggestion($event)">
-                                                {{suggestion}}
-                                            </mat-option>
                                         </mat-form-field>
                                     </div>
                                     <div class="col-md-6">
