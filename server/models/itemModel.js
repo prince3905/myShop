@@ -2,6 +2,8 @@ const { model } = require("mongoose")
 const mongoose = require('mongoose');
 
 const variationSchema = new mongoose.Schema({
+  color: String,
+  size: String,
   p_price: {
     type: Number,
     required: true,
@@ -28,8 +30,6 @@ const modelSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  color: String,
-  size: String,
   description: String,
   variations: [variationSchema],
 });

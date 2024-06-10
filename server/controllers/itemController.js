@@ -11,7 +11,7 @@ exports.allItem = async (req, res) => {
     const { name, category, brand, startDate, endDate, page, perPage } =
       req.query;
     const query = {};
-    console.log("query",req.query);
+    // console.log("query",req.query);
     let startOfDay = null,
       endOfDay = null;
     if (name && name !== "null") {
@@ -47,13 +47,34 @@ exports.allItem = async (req, res) => {
       .skip(skipItems)
       .limit(itemsPerPage);
     res.status(200).json({ items, totalItems: totalItems });
-    console.log("Count Items:", totalItems);
-    console.log("Items:", items);
+    // console.log("Count Items:", totalItems);
+    // console.log("Items:", items);
   } catch (err) {
     console.error("Error retrieving items:", err);
     res.status(500).json({ error: "Error retrieving items" });
   }
 };
+
+exports.findByProductName = async (req, res) => {
+  try {
+    const { name } = req.query;
+
+    if (!name) {
+      return res.status(400).json({ error: 'Product name is required' });
+    }
+
+    // Search for items with an exact case-insensitive match for the provided name
+    const items = await Item.find({ name: { $regex: new RegExp(`^${name}$`, 'i') } })
+      .populate('category')
+      .populate('brand');
+
+    res.status(200).json(items);
+  } catch (err) {
+    console.error('Error finding items by product name:', err);
+    res.status(500).json({ error: 'Error finding items by product name' });
+  }
+};
+
 
 // working code==========>
 
@@ -186,7 +207,7 @@ exports.itemDetails = async (req, res) => {
   const { id } = req.params;
   try {
     const item = await Item.findById(id).populate("category").populate("brand");
-    console.log("Found Item:", item);
+    // console.log("Found Item:", item);
     res.status(200).json(item);
   } catch (err) {
     console.error("Error retrieving items Details:", err);
@@ -265,7 +286,7 @@ exports.searchItemNameSuggestions = async (req, res) => {
       name: { $regex: searchTerm, $options: "i" },
     }).limit(10);
     res.status(200).json(suggestions.map((item) => item.name));
-    console.log(suggestions.map((item) => item.name));
+    // console.log(suggestions.map((item) => item.name));
   } catch (err) {
     console.error("Error searching item name suggestions:", err);
     res.status(500).json({ error: "Error searching item name suggestions" });
@@ -274,13 +295,13 @@ exports.searchItemNameSuggestions = async (req, res) => {
 
 exports.sizeSuggestions = async (req, res) => {
   try {
-    console.log(req.query);
+    // console.log(req.query);
     const searchTerm = req.query.term;
     const suggestions = await Item.find({
       size: { $regex: searchTerm, $options: "i" },
     }).limit(10);
     res.status(200).json(suggestions.map((item) => item.size));
-    console.log(suggestions.map((item) => item.size));
+    // console.log(suggestions.map((item) => item.size));
   } catch (err) {
     console.error("Error searching size suggestions:", err);
     res.status(500).json({ error: "Error searching size suggestions" });
@@ -289,13 +310,13 @@ exports.sizeSuggestions = async (req, res) => {
 
 exports.modelSuggestions = async (req, res) => {
   try {
-    console.log(req.query);
+    // console.log(req.query);
     const searchTerm = req.query.term;
     const suggestions = await Item.find({
       model: { $regex: searchTerm, $options: "i" },
     }).limit(10);
     res.status(200).json(suggestions.map((item) => item.model));
-    console.log(suggestions.map((item) => item.model));
+    // console.log(suggestions.map((item) => item.model));
   } catch (err) {
     console.error("Error searching model suggestions:", err);
     res.status(500).json({ error: "Error searching model suggestions" });

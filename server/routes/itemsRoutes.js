@@ -9,6 +9,7 @@ router.use(authController.protect)
 router.get('/item-suggestions', itemController.searchItemNameSuggestions);
 router.get('/size-suggestions', itemController.sizeSuggestions);
 router.get('/model-suggestions', itemController.modelSuggestions);
+router.get('/by-product-name', itemController.findByProductName);
 router.get('/', itemController.allItem);
 router.post('/', itemController.addItem);
 router.get('/:id', itemController.itemDetails);
