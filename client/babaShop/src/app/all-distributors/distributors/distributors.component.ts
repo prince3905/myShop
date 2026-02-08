@@ -13,26 +13,26 @@ import { AddDistributorsComponent } from "../add-distributors/add-distributors.c
 })
 export class DistributorsComponent implements OnInit {
   panelOpenState = false;
-  Category: any = [];
-  Brands: any = [];
-  items: any[] = [];
+  // Category: any = [];
+  // Brands: any = [];
+  // items: any[] = [];
   name: string;
-  category: string;
-  brand: string;
-  itemName: string = "";
-  startDate: Date;
-  endDate: Date;
+  phone: any;
+  // category: string;
+  // brand: string;
+  // startDate: Date;
+  // endDate: Date;
   searchInput: string;
   searchInputSubject = new Subject<string>();
   loading: boolean = true;
   Distributors: any[] = [];
 
   selectedOption: string;
-  selectedCategory: string;
-  selectedBrand: string;
+  // selectedCategory: string;
+  // selectedBrand: string;
 
   searchParams = {};
-  suggestions: string[] = [];
+  suggestions: any[] = [];
 
   pageSize = 10; // Number of items per page
   pageSizeOptions: number[] = [5, 10, 25, 50];
@@ -76,18 +76,12 @@ export class DistributorsComponent implements OnInit {
       perPage: this.pageSize,
     };
     if (this.selectedOption === "name") {
-      queryParamsObj.name = this.itemName;
-      queryParamsObj.category = this.selectedCategory;
-      queryParamsObj.brand = this.selectedBrand;
-    } else if (this.selectedOption === "category") {
-      queryParamsObj.category = this.selectedCategory;
-      queryParamsObj.brand = this.selectedBrand;
-    } else if (this.selectedOption === "brand") {
-      queryParamsObj.brand = this.selectedBrand;
-    } else if (this.selectedOption === "date") {
-      queryParamsObj.startDate = this.startDate.toISOString().slice(0, 10);
-      queryParamsObj.endDate = this.endDate.toISOString().slice(0, 10);
-    }
+      queryParamsObj.name = this.name;
+      // queryParamsObj.category = this.selectedCategory;
+      // queryParamsObj.brand = this.selectedBrand;
+    } else if (this.selectedOption === "phone") {
+      queryParamsObj.phone = this.phone;
+    } 
     return queryParamsObj;
   }
 
@@ -113,4 +107,111 @@ export class DistributorsComponent implements OnInit {
       width: "400px",
     });
   }
+
+
+  onClear() {
+    // Reset all query parameters to null before setting new ones
+    this.name= null;
+    this.phone = null;
+    this.router.navigate([], {
+      relativeTo: this.Router,
+      queryParams: {
+        name: null,
+        phone: null
+        // category: null,
+        // brand: null,
+      },
+      queryParamsHandling: "merge",
+    });
+    this.getAllDistributors(null);
+    this.suggestions = null
+  }
+
+  selectSuggestion(suggestion: string): void {
+    this.name = suggestion;
+    this.phone = suggestion;
+    this.suggestions = [];
+  }
+
+
+  fetchSuggestionsName(): void {
+    // console.log(this.name)
+    this.distributor.getDistributorSuggestionName(this.name).subscribe(
+      (suggestions: any[]) => {
+        this.suggestions = suggestions;
+        console.log(this.suggestions);
+      },
+      (error: any) => {
+        console.error("Error fetching suggestions:", error);
+      }
+    );
+  }
+
+  fetchSuggestionsPhone(): void {
+    // console.log(this.phone)
+    this.distributor.getDistributorSuggestionPhone(this.phone).subscribe(
+      (suggestions: any[]) => {
+        this.suggestions = suggestions;
+        console.log(this.suggestions);
+      },
+      (error: any) => {
+        console.error("Error fetching suggestions:", error);
+      }
+    );
+  }
+
+  onSearch(page: number, perPage: number) {
+    this.paginator.pageIndex = 0;
+    let queryParamsObj: any = {
+      page: 1,
+      perPage: perPage,
+    };
+
+
+    if (this.selectedOption === "name") {
+      // console.log("Selected Name:", this.itemName);
+      // console.log("Selected Category:", this.selectedCategory);
+      // console.log("Selected Brand:", this.selectedBrand);
+
+      queryParamsObj = {
+        ...queryParamsObj,
+        name: this.name,
+      };
+    } 
+    console.log("Query Parameters:", queryParamsObj);
+
+    // Now navigate with the queryParamsObj
+    const navigationExtras: NavigationExtras = {
+      relativeTo: this.Router,
+      queryParams: queryParamsObj,
+      queryParamsHandling: "merge",
+    };
+
+    this.router.navigate([], navigationExtras);
+  }
+
+
+  
+
+  updatePaginatedItems(): void {
+    if (this.paginator) {
+      const startIndex = this.paginator.pageIndex * this.pageSize;
+      // console.log(startIndex)
+      this.paginatedItems = this.Distributors.slice(
+        startIndex,
+        startIndex + this.pageSize
+      );
+      // console.log("if",this.paginatedItems)
+      this.cdr.detectChanges();
+    } else {
+      this.paginatedItems = [];
+      // console.log("else",this.paginatedItems)
+    }
+  }
+  
+
+  
+
+  
+
 }

@@ -25,5 +25,14 @@ export class DistributorService {
     return this.http.post(`${this.baseURL}/api/distributor`, data);
   }
   
+  getDistributorSuggestionName(searchTerm: string) {
+    console.log(searchTerm);
+    return this.http.get(`${this.baseURL}/api/distributor/distributor-suggestions?term=${searchTerm}`);
+  }
+
+  getDistributorSuggestionPhone(searchTerm: number) {
+    console.log(searchTerm);
+    return this.http.get(`${this.baseURL}/api/distributor/distributor-suggestions?term=${searchTerm}`);
+  }
 
 }

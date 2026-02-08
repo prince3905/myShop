@@ -9,9 +9,9 @@
                         <select matNativeControl [(ngModel)]="selectedOption" required>
                             <option label="--select something --"></option>
                             <option value="name">By Name</option>
-                            <option value="category">Category</option>
-                            <option value="brand">Brand</option>
-                            <option value="date">By Date</option>
+                            <option value="phone">Phone</option>
+                            <!-- <option value="brand">Brand</option>
+                            <option value="date">By Date</option> -->
                         </select>
                     </mat-form-field>
                 </div>
@@ -20,8 +20,8 @@
                 <div *ngIf="selectedOption === 'name'" class="name-filter" fxLayout="row"
                     fxLayoutAlign.lt-md="start center">
                     <mat-form-field fxFlex="10%">
-                        <input matInput placeholder="Item Name" name="itemName" [(ngModel)]="itemName"
-                            (input)="fetchSuggestions()">
+                        <input matInput placeholder="Name" name="name" [(ngModel)]="name"
+                            (input)="fetchSuggestionsName()">
                     </mat-form-field>
                     <div class="suggesion" fxFlex="10%">
                         <mat-option *ngFor="let suggestion of suggestions" (click)="selectSuggestion(suggestion)"
@@ -32,12 +32,12 @@
 
 
                     <mat-form-field fxFlex="10%">
-                        <input matInput placeholder="Customer Name" name="customer_name" [(ngModel)]="customer_name"
-                            (input)="fetchCusSuggestions()">
+                        <input matInput placeholder="Phone" name="phone" [(ngModel)]="phone"
+                            (input)="fetchSuggestionsPhone()">
                     </mat-form-field>
                     <div class="suggesion" fxFlex="10%">
-                        <mat-option class="option2" *ngFor="let suggestion of cus_suggestions" (click)="selectCusSuggestion(suggestion)"
-                            (optionSelected)="selectCusSuggestion($event)">
+                        <mat-option class="option2" *ngFor="let suggestion of dis_suggestions" (click)="selectCusSuggestion(suggestion)"
+                            (optionSelected)="selectCusPhone($event)">
                             {{suggestion}}
                         </mat-option>
                     </div>
@@ -61,28 +61,22 @@
                 </div>
 
 
-                <div *ngIf="selectedOption === 'category'" class="name-filter" fxLayout="row"
+                <div *ngIf="selectedOption === 'phone'" class="name-filter" fxLayout="row"
                     fxLayoutAlign.lt-md="start center">
-                    <mat-form-field fxFlex="10%" fxHide.lt-md>
-                        <mat-label>Category</mat-label>
-                        <mat-select [(ngModel)]="selectedCategory">
-                            <mat-option *ngFor="let category of Category" [value]="category._id">
-                                {{ category.name }}
-                            </mat-option>
-                        </mat-select>
+                    <mat-form-field fxFlex="10%">
+                        <input matInput placeholder="Phone" name="phone" [(ngModel)]="phone"
+                            (input)="fetchCusSuggestions()">
                     </mat-form-field>
-                    <mat-form-field fxFlex="10%" fxHide.lt-md>
-                        <mat-label>Brand</mat-label>
-                        <mat-select [(ngModel)]="selectedBrand">
-                            <mat-option *ngFor="let brand of Brands" [value]="brand._id">
-                                {{ brand.name}}
-                            </mat-option>
-                        </mat-select>
-                    </mat-form-field>
+                    <div class="suggesion" fxFlex="10%">
+                        <mat-option class="option2" *ngFor="let suggestion of cus_suggestions" (click)="selectCusSuggestion(suggestion)"
+                            (optionSelected)="selectCusSuggestion($event)">
+                            {{suggestion}}
+                        </mat-option>
+                    </div>
                 </div>
 
 
-                <div *ngIf="selectedOption === 'brand'" class="name-filter" fxLayout="row"
+                <!-- <div *ngIf="selectedOption === 'brand'" class="name-filter" fxLayout="row"
                     fxLayoutAlign.lt-md="start center">
                     <mat-form-field fxFlex="10%" fxHide.lt-md>
                         <mat-label>Brand</mat-label>
@@ -92,9 +86,9 @@
                             </mat-option>
                         </mat-select>
                     </mat-form-field>
-                </div>
+                </div> -->
 
-                <div *ngIf="selectedOption === 'date'" class="name-filter" fxLayout="row" fxLayoutAlign="start center">
+                <!-- <div *ngIf="selectedOption === 'date'" class="name-filter" fxLayout="row" fxLayoutAlign="start center">
                     <mat-form-field>
                         <mat-label>Enter a date range</mat-label>
                         <mat-date-range-input [rangePicker]="picker">
@@ -105,11 +99,11 @@
                         <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
                         <mat-date-range-picker #picker></mat-date-range-picker>
                     </mat-form-field>
-                </div>
+                </div> -->
 
                 <div class="button-container">
                     <div
-                        *ngIf="selectedOption === 'name'|| selectedOption === 'customer_name' || selectedOption === 'category' || selectedOption === 'brand' || selectedOption === 'date'">
+                        *ngIf="selectedOption === 'name'|| selectedOption === 'phone'">
                         <button mat-raised-button type="submit" class="btn btn-white btn-round btn-just-icon"
                             (click)="onSearch()">
                             <i class="material-icons">search</i>

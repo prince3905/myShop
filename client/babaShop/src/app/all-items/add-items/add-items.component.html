@@ -104,58 +104,63 @@
                                 <!-- Models List -->
                                 <div class="row">
                                     <div class="col-md-12">
-                                        <h4>Models</h4>
+                                        <h4>MODELS</h4>
                                         <div *ngFor="let model of product.models; let i = index">
                                             <!-- Display model details -->
                                             <p style="font-weight: 500;">Model: {{ model.model }}</p>
                                             <!-- <p>Color: {{ model.color }}</p>
                                             <p>Size: {{ model.size }}</p> -->
                                             <p>Description: {{ model.description }}</p>
-                                            <!-- Add Variation Section -->
-                                            <h4>Add Variation</h4>
-                                            <mat-form-field class="example-full-width">
-                                                <input matInput placeholder="Color" name="color"
-                                                    [(ngModel)]="variation.color" required>
-                                            </mat-form-field>
-                                            <mat-form-field class="example-full-width">
-                                                <input matInput placeholder="Size" name="size" [(ngModel)]="variation.size"
-                                                    required>
-                                            </mat-form-field>
-                                            <mat-form-field class="example-full-width">
-                                                <input matInput placeholder="Purchase Price" name="p_price"
-                                                    [(ngModel)]="variation.p_price" type="number" required>
-                                            </mat-form-field>
-                                            <mat-form-field class="example-full-width">
-                                                <input matInput placeholder="Sell Price" name="s_price"
-                                                    [(ngModel)]="variation.s_price" type="number" required>
-                                            </mat-form-field>
-                                            <mat-form-field class="example-full-width">
-                                                <input matInput placeholder="Quantity" name="quantity"
-                                                    [(ngModel)]="variation.quantity" type="number" required>
-                                            </mat-form-field>
-                                            <!-- <mat-checkbox name="soldOut" [(ngModel)]="variation.soldOut">Sold
-                                                Out</mat-checkbox> -->
-                                            <div class="col-md-12">
-                                                <button class="full-width-button" mat-raised-button type="button"
-                                                    (click)="addVariation(model)" [disabled]="
-                                            variation.color === '' ||
-                                            variation.size === '' ||
-                                            variation.p_price === '' ||
-                                            variation.s_price === '' ||
-                                            variation.quantity === ''
-                                            ">AddVariation</button>
-                                            </div>
+
 
                                             <!-- Variations List -->
                                             <div *ngFor="let variation of model.variations; let j = index">
                                                 <!-- Display variation details -->
-                                                <p style="font-weight: 500;">Variation {{ j + 1 }}</p>
+                                                <p style="font-weight: 500;">VARIATION {{ j + 1 }}</p>
                                                 <p>Color: {{ variation.color }}</p>
                                                 <p>Size: {{ variation.size }}</p>
                                                 <p>Purchase Price: {{ variation.p_price }}</p>
                                                 <p>Sell Price: {{ variation.s_price }}</p>
                                                 <p>Quantity: {{ variation.quantity }}</p>
                                                 <p>Sold Out: {{ variation.soldOut ? 'Yes' : 'No' }}</p>
+                                            </div>
+
+
+                                            <!-- Add Variation Section -->
+                                            <div>
+                                                <h4>ADD VARIATIONS</h4>
+                                                <mat-form-field class="example-full-width">
+                                                    <input matInput placeholder="Color" name="color"
+                                                        [(ngModel)]="variation.color" required>
+                                                </mat-form-field>
+                                                <mat-form-field class="example-full-width">
+                                                    <input matInput placeholder="Size" name="size"
+                                                        [(ngModel)]="variation.size" required>
+                                                </mat-form-field>
+                                                <mat-form-field class="example-full-width">
+                                                    <input matInput placeholder="Purchase Price" name="p_price"
+                                                        [(ngModel)]="variation.p_price" type="number" required>
+                                                </mat-form-field>
+                                                <mat-form-field class="example-full-width">
+                                                    <input matInput placeholder="Sell Price" name="s_price"
+                                                        [(ngModel)]="variation.s_price" type="number" required>
+                                                  </mat-form-field>
+                                                <mat-form-field class="example-full-width">
+                                                    <input matInput placeholder="Quantity" name="quantity"
+                                                        [(ngModel)]="variation.quantity" type="number" required>
+                                                </mat-form-field>
+                                                <!-- <mat-checkbox name="soldOut" [(ngModel)]="variation.soldOut">Sold
+                                                Out</mat-checkbox> -->
+                                                <div class="col-md-12">
+                                                    <button class="full-width-button" mat-raised-button type="button"
+                                                        (click)="addVariation(model)" [disabled]="
+                                            variation.color === '' ||
+                                            variation.size === '' ||
+                                            variation.p_price === '' ||
+                                            variation.s_price === '' ||
+                                            variation.quantity === ''
+                                            ">AddVariation</button>
+                                                </div>
                                             </div>
 
 

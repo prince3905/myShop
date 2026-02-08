@@ -1,5 +1,11 @@
 const mongoose = require("mongoose");
 
+const itemSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  stockQuantity: { type: Number, required: true }, // Add stock quantity here
+  // other item fields
+});
+
 const distributorSchema = new mongoose.Schema({
   name: {
     type: String,

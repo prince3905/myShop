@@ -207,6 +207,8 @@
                     </mat-card-actions> -->
                 <mat-card-actions class="actions">
                   <button mat-flat-button color="accent" *ngIf="!isEditing" (click)="handleEdit()">Edit</button>
+                  <button mat-flat-button color="primary" (click)="deleteItem()">Add variant</button> 
+                  <!-- need to change the click function -->
                   <button mat-flat-button color="primary" *ngIf="isEditing" (click)="saveChanges()">Save</button>
                   <button mat-flat-button color="warn" (click)="deleteItem()">Delete</button>
                 </mat-card-actions>

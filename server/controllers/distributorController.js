@@ -2,9 +2,10 @@ const Distributor = require('../models/distributorModel');
 const Item = require('../models/itemModel');
 
 exports.allDistributors = async (req, res) => {
-  const { page = 1, perPage = 10 } = req.query;
-
   try {
+    const { name , phone ,page = 1, perPage = 10 } = req.query;
+    const query = {};
+    console.log("Query  ",req.query)
     const totalItems = await Distributor.countDocuments();
     const skipItems = (page - 1) * perPage;
     const distributors = await Distributor.find()
@@ -99,3 +100,18 @@ exports.deleteDistributor = async (req, res) => {
     res.status(500).json({ error: 'Error deleting distributor' });
   }
 };
+exports.distributorSuggestions = async (req, res) => {
+  // try {
+  //   console.log(req.query);
+  //   const searchTerm = (req.query);
+  //   const suggestions = await Distributor.find({
+  //     name: { $regex: searchTerm, $options: "i" },
+  //   }).limit(10);
+  //   res.status(200).json(suggestions.map((item) => item.model));
+    
+  // } catch (error) {
+  //   console.error("Error searching model suggestions:", err);
+  //   res.status(500).json({ error: "Error searching model suggestions" });
+    
+  // }
+}

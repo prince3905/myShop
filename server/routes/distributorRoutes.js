@@ -6,6 +6,7 @@ const router = express.Router();
 
 router.use(authController.protect);
 
+router.get('/distributor-suggestions', distributorController.distributorSuggestions)
 router.get('/', distributorController.allDistributors);
 router.post('/', distributorController.addDistributor);
 router.get('/:id', distributorController.getDistributorDetails);
