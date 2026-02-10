@@ -31,6 +31,7 @@ import { ItemService } from './shared/services/item.service';
 import { CategoryService } from './shared/services/category.service';
 import { BrandService } from './shared/services/brand.service';
 import { MatDialogModule } from "@angular/material/dialog";
+import { MatIconModule } from '@angular/material/icon';
 
 
 
@@ -52,7 +53,8 @@ import { MatDialogModule } from "@angular/material/dialog";
     MatMenuModule,
     MatExpansionModule,
     MatAutocompleteModule,
-    MatDialogModule
+    MatDialogModule,
+    MatIconModule
 ],
   declarations: [
     AppComponent,

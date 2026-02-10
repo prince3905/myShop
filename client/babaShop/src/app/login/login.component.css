@@ -1,16 +1,176 @@
-.login-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-  }
+/* 1. Background Setup */
+.login-wrapper {
+  height: 100vh;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  /* Background Image (Furniture Theme) */
+  background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.8)), 
+              url('https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?q=80&w=2000&auto=format&fit=crop');
+  background-size: cover;
+  background-position: center;
+}
+
+/* 2. Login Card (DARK & GOLD Theme) */
+.login-card {
+  width: 100%;
+  max-width: 400px;
+  padding: 40px 30px;
+  border-radius: 16px;
   
-  .mat-card {
-    width: 400px;
-    padding: 20px;
-  }
+  /* Black Background taaki Gold chamke */
+  background: rgba(10, 10, 10, 0.95); 
   
-  .form-field {
-    width: 100%;
-    margin-bottom: 20px;
-  }
+  /* Gold Border Glow */
+  border: 1px solid #d4af37; 
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.2); 
+  text-align: center;
+}
+
+/* 3. Logo Circle (Bada Size) */
+.icon-circle {
+  width: 140px;          
+  height: 140px;
+  border-radius: 50%;    
+  overflow: hidden;      
+  margin: -70px auto 20px auto; /* Card ke upar aadha nikalega */
+  background: #000;      
+  border: 4px solid #d4af37; /* Gold Border around Logo */
+  box-shadow: 0 0 15px rgba(212, 175, 55, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Logo Image */
+.brand-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* 4. Golden Typography (Headings) */
+.brand-header h2 {
+  margin: 10px 0 5px 0;
+  font-size: 26px;
+  font-weight: 700;
+  color: #d4af37; /* Metallic Gold */
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  text-shadow: 0px 2px 4px rgba(0,0,0,0.5);
+}
+
+.brand-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+  color: #f1c40f; /* Brighter Gold */
+  letter-spacing: 1px;
+}
+
+.subtitle {
+  margin-top: 5px;
+  font-size: 11px;
+  color: #bfa361; /* Muted Gold */
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+/* 5. Angular Material Inputs ko Gold karna (Bahut Zaroori) */
+.login-form {
+  margin-top: 25px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  text-align: left;
+}
+
+.full-width {
+  width: 100%;
+}
+
+/* Icons (Email/Lock) Gold color */
+::ng-deep .mat-form-field-prefix .mat-icon {
+  color: #d4af37 !important;
+  margin-right: 10px;
+}
+
+/* Input Text Color (Jab type karoge) */
+::ng-deep .mat-input-element {
+  color: #fff !important; /* Type karte waqt white taaki dikhe */
+  caret-color: #d4af37;   /* Cursor Gold */
+}
+
+/* Label (Placeholder) Color */
+::ng-deep .mat-form-field-label {
+  color: #bfa361 !important;
+}
+
+/* Outline Border Color (Normal & Focus) */
+::ng-deep .mat-form-field-appearance-outline .mat-form-field-outline {
+  color: #665c3b !important; /* Dark Gold defaults */
+}
+::ng-deep .mat-form-field.mat-focused .mat-form-field-outline-thick {
+  color: #ffd700 !important; /* Bright Gold on Click */
+}
+
+/* 6. Gold Button */
+.action-container {
+  margin-top: 15px;
+}
+
+.login-btn {
+  width: 100%;
+  height: 50px;
+  font-size: 16px;
+  font-weight: 800;
+  border-radius: 8px;
+  letter-spacing: 1px;
+  
+  /* Solid Gold Gradient Background */
+  background: linear-gradient(45deg, #d4af37, #f1c40f, #d4af37);
+  background-size: 200%;
+  color: #000; /* Text Black rakha hai kyunki Gold pe Black hi dikhta hai */
+  
+  border: none;
+  box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3);
+  transition: all 0.3s ease;
+}
+
+.login-btn:hover {
+  background-position: right center; /* Hover pe chamkega */
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(212, 175, 55, 0.5);
+}
+
+/* Footer */
+.footer-text {
+  margin-top: 20px;
+}
+.footer-text p {
+  font-size: 12px;
+  color: #887848;
+}
+
+
+/* --- AUTOFILL BACKGROUND FIX --- */
+
+/* Ye Chrome, Edge, Safari ke auto-fill background ko overwrite karega */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active {
+    
+    /* 1. Background ko wapas Black/Dark banata hai */
+    -webkit-box-shadow: 0 0 0 50px #0a0a0a inset !important; 
+    
+    /* 2. Text ka color wapas Golden set karta hai */
+    -webkit-text-fill-color: #d4af37 !important;
+    
+    /* 3. Transition trick taaki white flash na ho */
+    transition: background-color 5000s ease-in-out 0s;
+    
+    /* 4. Cursor ka color */
+    caret-color: #d4af37 !important;
+}
