@@ -40,6 +40,22 @@ const distributorSchema = new mongoose.Schema({
   address: String,
   items: [{ type: mongoose.Schema.Types.ObjectId, ref: "Item" }],
   createdAt: { type: Date, default: Date.now },
+
+  city: {
+    type: String,
+    trim: true
+  },
+  state: {
+    type: String,
+    trim: true
+  },
+  
+
+  status: {
+    type: String,
+    enum: ['active','disabled'], // or ['active','inactive'] based on prior code
+    default: 'active'
+  }
 });
 
 const Distributor = mongoose.model("Distributor", distributorSchema);

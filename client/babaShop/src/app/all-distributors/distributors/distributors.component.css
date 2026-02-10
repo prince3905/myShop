@@ -63,6 +63,93 @@
     position: absolute !important;
     margin-top: 100px;
   }
+
+  .button-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+  }
+  
+  button.add {
+    height: 36px;
+  }
+
+  .table tbody tr {
+    cursor: pointer;
+  }
+  
+  .table tbody tr:hover {
+    background-color: #ffffff;
+  }
+
+  .action-col {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  
+  td button {
+    margin: 0;
+  }
+  
+  .disabled-row {
+    opacity: 0.5;
+    background-color: #f7f7f7;
+  }
+  
+  .status-btn {
+    border-radius: 50%;
+    transition: all 0.3s ease;
+  }
+  
+  
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+  }
+  
+  .status-btn {
+    min-width: 90px;
+    height: 32px;
+    padding: 0 10px;
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: 6px;
+    text-transform: capitalize;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  
+  /* 🟢 ACTIVE */
+  .status-btn.active {
+    background-color: #e6f4ea;
+    color: #1e7e34;
+  }
+  
+  /* 🔴 DISABLED */
+  .status-btn.disabled {
+    background-color: #fdecea;
+    color: #c62828;
+  }
+  
+  /* icon size control */
+  .status-btn mat-icon {
+    font-size: 18px;
+  }
+  
+  
+  
+  
+  
+  
   
   @media (max-width: 412px) {
     .mat-form-field {

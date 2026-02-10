@@ -1,5 +1,9 @@
-import { Component, OnInit } from "@angular/core";
-import { MatDialogRef, MatDialog } from "@angular/material/dialog";
+import { Component, Inject, OnInit } from "@angular/core";
+import {
+  MatDialogRef,
+  MatDialog,
+  MAT_DIALOG_DATA,
+} from "@angular/material/dialog";
 import { MatSnackBar } from "@angular/material/snack-bar";
 import { DistributorService } from "app/shared/services/distributor.service";
 import { FormControl, Validators } from "@angular/forms";
@@ -16,15 +20,37 @@ export class AddDistributorsComponent implements OnInit {
   phone: string = "";
   telephone: string = "";
   address: string = "";
+  city: string = "";
+  state: string = "";
+
+  isEditMode = false;
+  distributorId: string;
 
   constructor(
     private snackBar: MatSnackBar,
     private distributors: DistributorService,
     public dialogRef: MatDialogRef<any>,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    @Inject(MAT_DIALOG_DATA) public data: any
   ) {}
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    if (this.data && this.data._id) {
+      this.isEditMode = true;
+      this.distributorId = this.data._id;
+  
+      this.name = this.data.name;
+      this.shopName = this.data.shopName;
+      this.email = this.data.email;
+      this.phone = this.data.phone;
+      this.telephone = this.data.telephone;
+      this.address = this.data.address;
+      this.city = this.data.city;
+      this.state = this.data.state;
+    }
+  }
+
+  
 
   onSubmit() {
     const formData = {
@@ -34,8 +60,47 @@ export class AddDistributorsComponent implements OnInit {
       phone: this.phone,
       telephone: this.telephone,
       address: this.address,
+      city: this.city,
+      state: this.state,
     };
     console.log("Submitted Distributor Data:", formData);
+
+
+
+    if (this.isEditMode) {
+      // 🔥 UPDATE
+      this.distributors.updateDistributor(this.distributorId, formData)
+        .subscribe(
+          (res: any) => {
+            this.snackBar.open('Distributor updated successfully', 'Close', {
+              duration: 3000,
+            });
+            this.dialogRef.close(true);
+          },
+          () => {
+            this.snackBar.open('Update failed', 'Close', { duration: 3000 });
+          }
+        );
+    } else {
+      // ➕ ADD
+      this.distributors.AddDistributor(formData)
+        .subscribe(
+          (res: any) => {
+            this.snackBar.open('Distributor added successfully', 'Close', {
+              duration: 3000,
+            });
+            this.dialogRef.close(true);
+          },
+          () => {
+            this.snackBar.open('Add failed', 'Close', { duration: 3000 });
+          }
+        );
+    }
+
+
+
+
+
     this.distributors.AddDistributor(formData).subscribe(
       (response: any) => {
         console.log(response);

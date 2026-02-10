@@ -1,0 +1,40 @@
+.content {
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+  
+  .details-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px 24px;
+  }
+  
+  .detail-item {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .detail-item label {
+    font-size: 12px;
+    color: #777;
+    margin-bottom: 4px;
+  }
+  
+  .detail-item span {
+    font-size: 14px;
+    font-weight: 500;
+    color: #222;
+  }
+  
+  .status {
+    color: green;
+    font-weight: 600;
+  }
+  
+  /* Mobile responsive */
+  @media (max-width: 768px) {
+    .details-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  

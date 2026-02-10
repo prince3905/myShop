@@ -26,8 +26,8 @@
                     <div class="suggesion" fxFlex="10%">
                         <mat-option *ngFor="let suggestion of suggestions" (click)="selectSuggestion(suggestion)"
                             (optionSelected)="selectSuggestion($event)">
-                                {{suggestion}}
-                            </mat-option>
+                            {{suggestion}}
+                        </mat-option>
                     </div>
 
 
@@ -36,8 +36,8 @@
                             (input)="fetchSuggestionsPhone()">
                     </mat-form-field>
                     <div class="suggesion" fxFlex="10%">
-                        <mat-option class="option2" *ngFor="let suggestion of dis_suggestions" (click)="selectCusSuggestion(suggestion)"
-                            (optionSelected)="selectCusPhone($event)">
+                        <mat-option class="option2" *ngFor="let suggestion of dis_suggestions"
+                            (click)="selectCusSuggestion(suggestion)" (optionSelected)="selectCusPhone($event)">
                             {{suggestion}}
                         </mat-option>
                     </div>
@@ -68,8 +68,8 @@
                             (input)="fetchCusSuggestions()">
                     </mat-form-field>
                     <div class="suggesion" fxFlex="10%">
-                        <mat-option class="option2" *ngFor="let suggestion of cus_suggestions" (click)="selectCusSuggestion(suggestion)"
-                            (optionSelected)="selectCusSuggestion($event)">
+                        <mat-option class="option2" *ngFor="let suggestion of cus_suggestions"
+                            (click)="selectCusSuggestion(suggestion)" (optionSelected)="selectCusSuggestion($event)">
                             {{suggestion}}
                         </mat-option>
                     </div>
@@ -102,28 +102,18 @@
                 </div> -->
 
                 <div class="button-container">
-                    <div
-                        *ngIf="selectedOption === 'name'|| selectedOption === 'phone'">
+                    <div *ngIf="selectedOption === 'name' || selectedOption === 'phone'" fxLayout="row"
+                        fxLayoutAlign="start center" fxLayoutGap="5px">
                         <button mat-raised-button type="submit" class="btn btn-white btn-round btn-just-icon"
-                            (click)="onSearch()">
+                            (click)="onSearch(paginator.pageIndex + 1, paginator.pageSize)">
                             <i class="material-icons">search</i>
                         </button>
+
                         <button mat-raised-button type="submit" class="btn btn-white btn-round btn-just-icon"
                             (click)="onClear()">
                             <i class="material-icons">clear</i>
                         </button>
                     </div>
-                    <button class="add" mat-raised-button color="primary" (click)="openAddItemModal()"
-                        *ngIf="!selectedOption">
-                        Add Distributor
-                    </button>
-                    <!-- <button class="add" mat-raised-button color="primary" (click)="openAddCategoryModal()"
-                        *ngIf="!selectedOption">
-                        Add Category
-                    </button> -->
-                    <!-- <button class="add" mat-raised-button color="primary" (click)="openAddBrandModal()">
-                        Add Sales
-                    </button> -->
                 </div>
 
             </div>
@@ -131,8 +121,8 @@
         </div>
 
 
-        <div class="loading" *ngIf="loading" >
-            <mat-spinner class="loading"  color="primary" mode="indeterminate"></mat-spinner>
+        <div class="loading" *ngIf="loading">
+            <mat-spinner class="loading" color="primary" mode="indeterminate"></mat-spinner>
         </div>
 
 
@@ -162,7 +152,7 @@
                 <table class="table">
                     <thead class="">
                         <th>
-                           Customer ID
+                            Customer ID
                         </th>
                         <th>
                             Name
@@ -173,10 +163,13 @@
                         <th>
                             Email
                         </th>
-                      
+                        <th>
+                            Action
+                        </th>
+
                     </thead>
-                    <tbody *ngFor="let item of Distributors" (click)="viewItemDetails(item._id)">
-                        <tr>
+                    <tbody>
+                        <tr *ngFor="let item of Distributors" (click)="viewItemDetails(item._id)">
                             <td>
                                 {{item._id}}
                             </td>
@@ -189,6 +182,34 @@
                             <td>
                                 {{item.email}}
                             </td>
+                            <td (click)="$event.stopPropagation()" class="action-col">
+
+                                <!-- View -->
+                                <button mat-icon-button color="primary" matTooltip="View"
+                                    (click)="openViewDistributor(item, $event)">
+                                    <mat-icon>visibility</mat-icon>
+                                </button>
+
+                                <!-- Edit -->
+                                <button mat-icon-button color="primary" matTooltip="Edit Distributor"
+                                    (click)="editDistributor(item, $event)">
+                                    <mat-icon>edit</mat-icon>
+                                </button>
+
+                                <!-- Delete / Disable -->
+                                <button mat-button class="status-btn"
+                                    [ngClass]="item.status === 'active' ? 'active' : 'disabled'"
+                                    (click)="toggleStatus(item)">
+                                    <mat-icon>
+                                        {{ item.status === 'active' ? 'check_circle' : 'cancel' }}
+                                    </mat-icon>
+                                    {{ item.status | titlecase }}
+                                </button>
+
+
+
+                            </td>
+
                             <!-- <td>
                                             <button mat-raised-button type="button" matTooltip="Edit Task"
                                                 [matTooltipPosition]="'above'"
@@ -208,7 +229,7 @@
         </div>
 
 
-         <mat-paginator #paginator [length]="totalItems" [pageSize]="pageSize" [pageSizeOptions]="pageSizeOptions"
+        <mat-paginator #paginator [length]="totalItems" [pageSize]="pageSize" [pageSizeOptions]="pageSizeOptions"
             (page)="onPageChange($event)">
         </mat-paginator>
     </div>

@@ -36,6 +36,7 @@ import { OrdersComponent } from 'app/orders/orders.component';
 import { CustomersComponent } from 'app/customers/customers.component';
 import { DistributorsComponent } from 'app/all-distributors/distributors/distributors.component';
 import { AddDistributorsComponent } from 'app/all-distributors/add-distributors/add-distributors.component';
+import { ViewDistributorComponent } from 'app/all-distributors/view-distributor/view-distributor.component';
 
 
 @NgModule({
@@ -78,7 +79,8 @@ import { AddDistributorsComponent } from 'app/all-distributors/add-distributors/
     OrdersComponent,
     CustomersComponent,
     AddDistributorsComponent,
-    DistributorsComponent
+    DistributorsComponent,
+    ViewDistributorComponent
 
   ]
 })

@@ -1,14 +1,12 @@
-import { Injectable } from '@angular/core';
+import { Injectable } from "@angular/core";
 import { HttpClient, HttpParams } from "@angular/common/http";
 import { Observable } from "rxjs";
 import { environment } from "../../../environments/environment";
 
-
 @Injectable({
-  providedIn: 'root'
+  providedIn: "root",
 })
 export class DistributorService {
-
   constructor(private http: HttpClient) {}
 
   get baseURL(): string {
@@ -24,15 +22,36 @@ export class DistributorService {
   AddDistributor(data: any) {
     return this.http.post(`${this.baseURL}/api/distributor`, data);
   }
-  
+
   getDistributorSuggestionName(searchTerm: string) {
     console.log(searchTerm);
-    return this.http.get(`${this.baseURL}/api/distributor/distributor-suggestions?term=${searchTerm}`);
+    return this.http.get(
+      `${this.baseURL}/api/distributor/distributor-suggestions?term=${searchTerm}`,
+    );
   }
 
   getDistributorSuggestionPhone(searchTerm: number) {
     console.log(searchTerm);
-    return this.http.get(`${this.baseURL}/api/distributor/distributor-suggestions?term=${searchTerm}`);
+    return this.http.get(
+      `${this.baseURL}/api/distributor/distributor-suggestions?term=${searchTerm}`,
+    );
   }
 
+  updateDistributorStatus(id: string, status: string) {
+    return this.http.patch<any>(
+      `${this.baseURL}/api/distributor/${id}/status`,
+      { status },
+    );
+  }
+
+  updateDistributor(id: string, data: any) {
+    return this.http.put(`${this.baseURL}/api/distributor/${id}`, data);
+  }
+
+  getItemSuggestion(searchTerm: string) {
+    console.log(searchTerm);
+    return this.http.get(
+      `${this.baseURL}/api/item/item-suggestions?term=${searchTerm}`,
+    );
+  }
 }

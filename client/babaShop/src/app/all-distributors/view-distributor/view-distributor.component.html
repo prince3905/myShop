@@ -1,0 +1,53 @@
+<h2 mat-dialog-title>Distributor Details</h2>
+
+<mat-dialog-content class="content">
+  <div class="details-grid">
+
+    <!-- Left Column -->
+    <div class="detail-item">
+      <label>Customer ID</label>
+      <span>{{ data._id }}</span>
+    </div>
+
+    <div class="detail-item">
+      <label>Name</label>
+      <span>{{ data.name }}</span>
+    </div>
+
+    <div class="detail-item">
+      <label>Phone</label>
+      <span>{{ data.phone }}</span>
+    </div>
+
+    <div class="detail-item">
+      <label>Email</label>
+      <span>{{ data.email }}</span>
+    </div>
+
+    <!-- Right Column -->
+    <div class="detail-item">
+      <label>Address</label>
+      <span>{{ data.address || '-' }}</span>
+    </div>
+
+    <div class="detail-item">
+      <label>City</label>
+      <span>{{ data.city || '-' }}</span>
+    </div>
+
+    <div class="detail-item">
+      <label>State</label>
+      <span>{{ data.state || '-' }}</span>
+    </div>
+
+    <div class="detail-item">
+      <label>Status</label>
+      <span class="status">{{ data.status || 'Active' }}</span>
+    </div>
+
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-stroked-button color="primary" (click)="close()">Close</button>
+</mat-dialog-actions>

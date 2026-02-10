@@ -30,6 +30,7 @@ import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { ItemService } from './shared/services/item.service';
 import { CategoryService } from './shared/services/category.service';
 import { BrandService } from './shared/services/brand.service';
+import { MatDialogModule } from "@angular/material/dialog";
 
 
 
@@ -50,9 +51,9 @@ import { BrandService } from './shared/services/brand.service';
     MatSnackBarModule,
     MatMenuModule,
     MatExpansionModule,
-    MatAutocompleteModule
-    
-  ],
+    MatAutocompleteModule,
+    MatDialogModule
+],
   declarations: [
     AppComponent,
     AdminLayoutComponent,
