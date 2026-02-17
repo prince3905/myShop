@@ -1,4 +1,4 @@
-const Customer = require("../models/customerModel");
+const Customer = require("../models/customer");
 
 exports.getAllCustomers = async (req, res) => {
     const { name ,page, perPage} = req.query;

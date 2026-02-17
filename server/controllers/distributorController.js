@@ -1,5 +1,5 @@
-const Distributor = require("../models/distributorModel");
-const Item = require("../models/itemModel");
+const Distributor = require("../models/distributor");
+const Item = require("../models/item");
 
 exports.allDistributors = async (req, res) => {
   try {
@@ -22,7 +22,7 @@ exports.allDistributors = async (req, res) => {
     const distributors = await Distributor.find(query)
       .skip(skipItems)
       .limit(perPage)
-      .populate("items")
+      // .populate("items")
       .sort({ createdAt: -1 });
 
       // console.log("Distributors  ", distributors);

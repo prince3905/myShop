@@ -4,7 +4,7 @@ const itemController =require('../controllers/itemController')
 const authController =require('../controllers/authController')
 
 const router = express.Router();
-router.use(authController.protect)
+module.exports = authController.protect
 
 router.get('/item-suggestions', itemController.searchItemNameSuggestions);
 router.get('/size-suggestions', itemController.sizeSuggestions);

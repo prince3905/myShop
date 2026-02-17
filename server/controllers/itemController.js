@@ -1,10 +1,10 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
-const Item = require("../models/itemModel");
-const Distributor = require('../models/distributorModel');
-const Category = require("../models/categoryModel");
-const Brand = require("../models/brandModel");
+const Item = require("../models/item");
+const Distributor = require('../models/distributor');
+const Category = require("../models/category");
+const Brand = require("../models/brand");
 
 exports.allItem = async (req, res) => {
   try {

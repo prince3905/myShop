@@ -1,8 +1,8 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
-const Category = require("../models/categoryModel");
-const Brand = require('../models/brandModel');
+const Category = require("../models/category");
+const Brand = require('../models/brand');
 
 exports.addCategory = async (req, res) => {
   const newCategoryData = req.body;

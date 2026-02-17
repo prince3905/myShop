@@ -4,7 +4,7 @@ const orderController = require('../controllers/orderController');
 const authController = require('../controllers/authController');
 
 const router = express.Router();
-router.use(authController.protect);
+module.exports = authController.protect;
 
 router.get('/', orderController.getAllOrders);
 router.post('/', orderController.createOrder);

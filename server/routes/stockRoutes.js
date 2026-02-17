@@ -7,7 +7,7 @@ const stockController =require('../controllers/stockController')
 
 
 const router = express.Router();
-router.use(authController.protect)
+module.exports = authController.protect
 
 
 router.get('/', stockController.getStockReport);

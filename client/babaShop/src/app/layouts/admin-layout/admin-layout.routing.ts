@@ -79,6 +79,7 @@ export const AdminLayoutRoutes: Routes = [
   { path: "distributor", component: DistributorsComponent },
   { path: "order", component: OrdersComponent },
   { path: "customer", component: CustomersComponent },
+  
 
   // { path: 'table-list',     component: TableListComponent },
   // { path: 'typography',     component: TypographyComponent },

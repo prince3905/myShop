@@ -1,20 +1,19 @@
 const express = require("express");
-
-const userController = require('../controllers/userController')
-const authController =require('../controllers/authController')
-
 const router = express.Router();
-router.use(authController.protect)
 
-// router.use('/', (req, res) => {
-//   res.status(200).send("hello world !").userController;
-// });
-router.get('/', userController.allUser);
-router.get('/:id', userController.userDetails);
-router.post('/', userController.createUser);
-router.delete('/', userController.deleteUser);
-router.put('/', userController.updateUser);
+const authController = require("../controllers/authController");
+const userController = require("../controllers/userController");
+const { protect, authorizeRoles } = require("../middleware/authMiddleware");
 
+// LOGIN ROUTE
+router.post("/login", authController.login);
 
+// GET ALL USERS (Protected + Role Based)
+router.get(
+  "/",
+  protect,
+  authorizeRoles("SUPER_ADMIN", "ADMIN"),
+  userController.getAllUsers
+);
 
 module.exports = router;

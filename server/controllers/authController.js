@@ -1,146 +1,83 @@
 const jwt = require("jsonwebtoken");
-const bcrypt = require("bcryptjs");
-const createError = require("http-errors");
-const AdminUser = require("../models/userModel");
+const User = require("../models/User");
 
-const signToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN,
-  });
-};
-
-const createSendToken = (user, statusCode, req, res) => {
+exports.login = async (req, res) => {
   try {
-    const token = signToken(user._id);
-    console.log(token);
+    const { email, password } = req.body;
 
-    const expirationTime = Date.now() + 10 * 24 * 60 * 60 * 1000;
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email and Password required" });
+    }
 
-    res.cookie("jwt", token, {
-      expires: new Date(expirationTime),
-      httpOnly: true,
-      secure: req.secure || req.headers["x-forwarded-proto"] === "https",
-    });
+    const user = await User.findOne({ email }).select("+password");
 
-    // // Remove password from output
-    // user.password = undefined;
+    if (!user) {
+      return res.status(400).json({ message: "User not found" });
+    }
 
-    res.status(statusCode).json({
+    if (!user.isActive) {
+      return res.status(403).json({ message: "User is disabled" });
+    }
+
+    const isMatch = await user.comparePassword(password);
+
+    if (!isMatch) {
+      return res.status(400).json({ message: "Wrong password" });
+    }
+
+    const token = jwt.sign(
+      {
+        id: user._id,
+        role: user.role,
+        shop: user.shop,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    res.status(200).json({
       success: true,
       token,
-      user,
+      user: {
+        id: user._id,
+        email: user.email,
+        role: user.role,
+        shop: user.shop,
+      },
     });
   } catch (error) {
-    console.log(error);
+    console.error(error);
+    res.status(500).json({ message: "Server Error" });
   }
 };
 
-exports.login = async (req, res, next) => {
-  const { email, password } = req.body;
 
+exports.register = async (req, res) => {
   try {
+    const { email, password, phoneNo, role } = req.body;
+
     if (!email || !password) {
-      throw createError(400, "Please provide email and password");
+      return res.status(400).json({ message: "Email and password required" });
     }
 
-    const adminUser = await AdminUser.findOne({ email }).select("+password");
-    console.log(adminUser);
+    const existingUser = await User.findOne({ email });
 
-    if (!adminUser) {
-      throw createError(404, "User not registered");
+    if (existingUser) {
+      return res.status(400).json({ message: "User already exists" });
     }
 
-    // Compare the user's provided password with the hashed password from the database
-    const passwordMatch = await bcrypt.compare(password, adminUser.password);
-    if (!passwordMatch) {
-      throw createError(401, "Incorrect password");
-    }
+    const user = await User.create({
+      email,
+      password,
+      phoneNo,
+      role
+    });
 
-    createSendToken(adminUser, 200, req, res);
+    res.status(201).json({
+      message: "User created successfully"
+    });
+
   } catch (error) {
-    next(error);
+    res.status(500).json({ message: error.message });
   }
-};
-
-exports.protect = async (req, res, next) => {
-  // 1) Getting token and check of it's there
-  try {
-    let token;
-    if (
-      req.headers.authorization &&
-      req.headers.authorization.startsWith("Bearer")
-    ) {
-      token = req.headers.authorization.split(" ")[1];
-    } else if (req.cookies.jwt) {
-      token = req.cookies.jwt;
-    }
-
-    if (!token) {
-      return next("You are not logged in! Please log in to get access.", 401);
-    }
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    const currentUser = await AdminUser.findById(decoded.id);
-
-    if (!currentUser) {
-      return next(
-        "The user belonging to this token does no longer exist.",
-        401
-      );
-    }
-
-    // GRANT ACCESS TO PROTECTED ROUTE
-    req.user = currentUser;
-
-    next();
-  } catch (error) {
-    // Handle the error here
-    if (error.name === "TokenExpiredError") {
-      return next("Your session has expired. Please log in again.", 401);
-    }
-    if (error.name === "JsonWebTokenError") {
-      return next("Invalid token. Please provide a valid token.", 401);
-    }
-    console.error("Error in protect middleware:", error);
-    res.status(401).json({ error: "Unauthorized" });
-  }
-};
-
-exports.checkAuthentication = async (req, res, next) => {
-  let token;
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith("Bearer")
-  ) {
-    token = req.headers.authorization.split(" ")[1];
-  } else if (req.cookies.jwt) {
-    token = req.cookies.jwt;
-  }
-
-  if (!token) {
-    return next("You are not logged in! Please log in to get access.", 401);
-  }
-
-  // 2) Verification token
-  const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-  // 3) Check if user still exists
-  const currentUser = await AdminUser.findById(decoded.id);
-
-  if (!currentUser) {
-    return next("The user belonging to this token does no longer exist.", 401);
-  }
-
-  res.status(200).json({
-    success: true,
-    user: currentUser,
-  });
-};
-
-exports.logout = async (req, res, next) => {
-  res.status(200).json({
-    success: true,
-    message: "You are logged out",
-  });
 };

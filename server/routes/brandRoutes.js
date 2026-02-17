@@ -4,7 +4,7 @@ const brandController =require('../controllers/brandController')
 const authController =require('../controllers/authController')
 
 const router = express.Router();
-router.use(authController.protect)
+module.exports = authController.protect
 
 router.get('/', brandController.allBrand);
 router.post('/', brandController.addBrand);

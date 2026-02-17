@@ -33,6 +33,7 @@ export class NavbarComponent implements OnInit {
          }
      });
     }
+    
 
     sidebarOpen() {
         const toggleButton = this.toggleButton;

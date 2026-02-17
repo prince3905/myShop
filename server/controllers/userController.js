@@ -1,107 +1,69 @@
-const mongoose = require("mongoose");
-const Schema = mongoose.Schema;
+const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 
-const User = require("../models/userModel");
 
-exports.createUser = (req, res) => {
-  const newUser = new User(req.body);
-  newUser.createdAt = new Date();
 
-  console.log(newUser.email);
-  console.log(newUser.password);
-
-  if (!newUser.email || !newUser.password) {
-    return res
-      .status(400)
-      .json({ error: "Email and password are required fields" });
-  }
-
-  // Hash the password before saving it to the database
-  bcrypt.hash(newUser.password, 12, (err, hashedPassword) => {
-    if (err) {
-      console.error("Error hashing password:", err);
-      return res.status(500).json({ error: "Error hashing password" });
-    }
-    newUser.password = hashedPassword;
-
-    newUser
-      .save()
-      .then((savedUser) => {
-        res.status(201).json(savedUser);
-      })
-      .catch((err) => {
-        console.error("Error saving user:", err);
-        res.status(500).json({ error: "Error saving user" });
-      });
-  });
-};
-
-exports.userDetails = (req, res) => {
-  const { id } = req.params;
-
-  User.findById(id)
-    .then((user) => {
-      if (!user) {
-        return res.status(404).json({ error: "User not found" });
-      }
-
-      console.log("Found user:", user);
-      res.status(200).json(user);
-    })
-    .catch((err) => {
-      console.error("Error finding user:", err);
-      res.status(500).json({ error: "Error finding user" });
-    });
-};
-
-exports.allUser = async (req, res) => {
+exports.createUser = async (req, res) => {
   try {
-    const users = await User.find({});
-    console.log(users);
-    res.status(200).json(users);
-  } catch (err) {
-    console.error("Error retrieving users:", err);
-    res.status(500).json({ error: "Error retrieving users" });
+    const { email, password, phoneNo, role, shop } = req.body;
+
+    // STAFF kisi ko create nahi karega
+    if (req.user.role === "STAFF") {
+      return res.status(403).json({
+        message: "STAFF cannot create users"
+      });
+    }
+
+    // SUPER_ADMIN hi ADMIN bana sakta hai
+    if (role === "ADMIN" && req.user.role !== "SUPER_ADMIN") {
+      return res.status(403).json({
+        message: "Only SUPER_ADMIN can create ADMIN"
+      });
+    }
+
+    // ADMIN hi MANAGER bana sakta hai
+    if (role === "MANAGER" && !["SUPER_ADMIN", "ADMIN"].includes(req.user.role)) {
+      return res.status(403).json({
+        message: "Only ADMIN can create MANAGER"
+      });
+    }
+
+    // MANAGER ya ADMIN hi STAFF bana sakta hai
+    if (role === "STAFF" && !["SUPER_ADMIN", "ADMIN", "MANAGER"].includes(req.user.role)) {
+      return res.status(403).json({
+        message: "Only ADMIN or MANAGER can create STAFF"
+      });
+    }
+
+    // ADMIN apne shop ke bahar user create nahi kare
+    if (req.user.role === "ADMIN" || req.user.role === "MANAGER") {
+      if (shop && shop.toString() !== req.user.shop?.toString()) {
+        return res.status(403).json({
+          message: "You can create users only in your own shop"
+        });
+      }
+    }
+
+    const user = await User.create({
+      email,
+      password,
+      phoneNo,
+      role,
+      shop
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "User created successfully",
+      user
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };
 
-exports.deleteUser = (req, res) => {
-  const { id } = req.body;
-
-  User.findByIdAndDelete(id)
-    .then((deletedUser) => {
-      if (!deletedUser) {
-        return res.status(404).json({ error: "User not found" });
-      }
-
-      console.log("Deleted user:", deletedUser);
-      res.status(200).json({ message: "User deleted successfully" });
-    })
-    .catch((err) => {
-      console.error("Error deleting user:", err);
-      res.status(500).json({ error: "Error deleting user" });
-    });
+exports.getAllUsers = async (req, res) => {
+  const users = await User.find();
+  res.json(users);
 };
-
-exports.updateUser = (req, res) => {
-  const { id, email } = req.body;
-
-  User.findByIdAndUpdate(id, { email }, { new: true })
-    .then((updatedUser) => {
-      if (!updatedUser) {
-        return res.status(404).json({ error: "User not found" });
-      }
-
-      console.log("Updated user:", updatedUser);
-      res
-        .status(200)
-        .json({ message: "User updated successfully", user: updatedUser });
-    })
-    .catch((err) => {
-      console.error("Error updating user:", err);
-      res.status(500).json({ error: "Error updating user" });
-    });
-};
-
-// module.exports = { createUser, allUser, deleteUser };

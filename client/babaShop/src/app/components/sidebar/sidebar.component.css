@@ -1,0 +1,125 @@
+/* Font Import */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap");
+
+
+.sidebar-wrapper {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  /* Dark Gradient matched with login card */
+  background: linear-gradient(180deg, #000000c9 0%, #f25c5cc7 100%);
+}
+
+.logo-img img {
+  width: 130px;
+  top: 5px;
+  position: absolute;
+  border-radius: 50%;
+  margin-left: -51px;
+}
+
+.logo {
+  padding: 70px 25px;
+  background: gold;
+  border-radius: 50%;
+  width: 140px;
+  height: 0px;
+  align-items: center;
+  margin-left: 60px;
+  margin-top: 10px;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  border-radius: 10px;
+  color: #b5b5b5; /* Muted light grey for inactive */
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.nav-link p {
+  margin: 0;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: gold;
+}
+
+/* HOVER STATE */
+.nav-link:hover {
+  background: rgba(237, 201, 72, 0.1); /* Subtle gold tint */
+  color: #edc948; /* Gold text */
+}
+
+.nav-link:hover .material-icons {
+  color: #edc948 !important;
+}
+
+/* ACTIVE STATE (The Login Button Look) */
+.nav-link.active {
+  background: linear-gradient(135deg, #edc948 0%, #b69438 100%) !important;
+  color: #000 !important; /* Black text on gold background */
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(237, 201, 72, 0.3);
+}
+
+.nav-link.active .material-icons {
+  color: #000 !important; /* Black icons on active */
+}
+
+.material-icons {
+  margin-right: 14px;
+  font-size: 22px;
+  min-width: 24px;
+  color: #edc948 !important; /* Gold icons by default */
+  transition: color 0.3s;
+}
+
+/* ===== CARET (ARROW) ===== */
+.caret {
+  border-top: 5px solid #edc948;
+  border-right: 5px solid transparent;
+  border-left: 5px solid transparent;
+  transition: transform 0.3s ease;
+}
+
+.nav-link.active .caret {
+  border-top-color: #000;
+}
+
+/* ===== CHILD MENU (SUB-ITEMS) ===== */
+.child-menu {
+  margin: 5px 0 10px 10px;
+  padding: 0;
+  border-left: 1px solid rgba(237, 201, 72, 0.2);
+}
+
+.child-menu .nav-link {
+  padding: 8px 15px;
+  font-size: 13px;
+  color: #888;
+}
+
+.child-menu .nav-link.active {
+  background: transparent !important;
+  color: #edc948 !important;
+  box-shadow: none;
+}
+
+/* Logout Item specific color */
+.logout-item .nav-link:hover {
+  background: rgba(255, 71, 71, 0.1);
+  color: #ff4747;
+}
+.logout-item .nav-link:hover .material-icons {
+  color: #ff4747 !important;
+}

@@ -1,10 +1,10 @@
 // auth.service.ts
 
-import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { tap, catchError, finalize } from 'rxjs/operators';
-import {environment} from '../../../environments/environment'
-import { BehaviorSubject, throwError } from 'rxjs';
+import { Injectable } from "@angular/core";
+import { HttpClient } from "@angular/common/http";
+import { tap, catchError, finalize } from "rxjs/operators";
+import { environment } from "../../../environments/environment";
+import { BehaviorSubject, throwError } from "rxjs";
 
 interface LoginResponse {
   success: boolean;
@@ -18,76 +18,71 @@ interface AuthenticatedResponse {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: "root",
 })
 export class AuthService {
   public showLoader: boolean = false;
-  private TOKEN_KEY: string = 'token';
-  private USER_KEY: string = 'user';
- 
+  private TOKEN_KEY: string = "token";
+  private USER_KEY: string = "user";
+
   constructor(private http: HttpClient) {}
 
   get baseURL(): string {
     return environment.apiBaseURL;
   }
 
-  private saveToken(token:any) {
-    localStorage.setItem(this.TOKEN_KEY, token)
-  }
+ private saveToken(token: string) {
+  localStorage.setItem(this.TOKEN_KEY, token);
+}
+
+isLoggedIn(): boolean {
+  return !!this.getToken();
+}
+
+login(email: string, password: string) {
+  this.showLoader = true;
+
+  return this.http
+    .post<LoginResponse>(`${this.baseURL}/api/auth/login`, {
+      email,
+      password,
+    })
+    .pipe(
+      finalize(() => {
+        this.showLoader = false;
+      }),
+      tap((res) => {
+        if (res.success && res.token && res.user) {
+          this.saveToken(res.token);
+          this.user = res.user;
+        }
+      })
+    );
+}
 
   getToken() {
-    return localStorage.getItem(this.TOKEN_KEY)
+    return localStorage.getItem(this.TOKEN_KEY);
   }
 
   removeToken() {
-    return localStorage.removeItem(this.TOKEN_KEY)
+    return localStorage.removeItem(this.TOKEN_KEY);
   }
 
   removeUser() {
-    return localStorage.removeItem(this.USER_KEY)
+    return localStorage.removeItem(this.USER_KEY);
   }
 
   set user(user) {
     localStorage.setItem(this.USER_KEY, JSON.stringify(user));
   }
 
-  get user() {
-   const user = localStorage.getItem(this.USER_KEY);
-   return user ? JSON.parse(user) : {};
-  }
 
-  login(email: string, password: string) {
-    this.showLoader = true;
+ getUserRole(): string | null {
+  const user = localStorage.getItem('user');
+  return user ? JSON.parse(user).role : null;
+}
 
-    return this.http
-      .post<LoginResponse>(`${this.baseURL}/api/auth/login`, {
-        email,
-        password,
-      })
-      .pipe(
-        finalize(() => {
-          this.showLoader = false;
-        }),
-        tap(({ token, user }) => {
-          this.saveToken(token);
-          this.user = user;
-          // this.loggedin$.next(true);
-        }),
-        catchError((err) => {
-          if (!err.status || err.status === 500) {
-            return throwError({
-              ...err,
-              error: {
-                message: 'Something went wrong',
-                success: false,
-              },
-            });
-          }
-
-          return throwError(err);
-        })
-      );
-  }
+  
 
   authenticated() {
     // this.showLoader = true;
@@ -102,7 +97,7 @@ export class AuthService {
         }),
         catchError((err) => {
           return throwError(err);
-        })
+        }),
       );
   }
 
@@ -111,13 +106,9 @@ export class AuthService {
       finalize(() => {
         this.removeToken();
         this.removeUser();
-      })
+      }),
     );
   }
 
-  isLoggedIn(): boolean {
-    const user = localStorage.getItem('user');
-    return user ? true : false;
-  }
- 
+  
 }

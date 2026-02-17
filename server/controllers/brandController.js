@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
-const Brand = require('../models/brandModel');
+const Brand = require('../models/brand');
 
 exports.addBrand = async (req, res) => {
   const newCBrandData = req.body;

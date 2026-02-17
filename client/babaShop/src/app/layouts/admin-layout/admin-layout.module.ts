@@ -81,6 +81,7 @@ import { ViewDistributorComponent } from 'app/all-distributors/view-distributor/
     AddDistributorsComponent,
     DistributorsComponent,
     ViewDistributorComponent
+    
 
   ]
 })

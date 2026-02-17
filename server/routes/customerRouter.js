@@ -4,7 +4,7 @@ const customerController = require('../controllers/customerController');
 const authController = require('../controllers/authController');
 
 const router = express.Router();
-router.use(authController.protect);
+module.exports = authController.protect;
 
 router.get('/', customerController.getAllCustomers);
 router.post('/', customerController.createCustomer);

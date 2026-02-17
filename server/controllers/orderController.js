@@ -1,6 +1,6 @@
 const Order = require('../models/order');
-const Customer = require('../models/customerModel');
-const Item = require('../models/itemModel');
+const Customer = require('../models/customer');
+const Item = require('../models/item');
 
 exports.getAllOrders = async (req, res) => {
   const { name, page = 1, perPage = 10 } = req.query;

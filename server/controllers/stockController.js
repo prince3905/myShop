@@ -1,5 +1,4 @@
-const Item = require("../models/itemModel");
-const Purchase = require("../models/purchaseModel");
+const Item = require("../models/item");
 
 exports.getStockReport = async (req, res) => {
   try {
@@ -34,19 +33,19 @@ exports.getStockReport = async (req, res) => {
         .populate("brand")
         .populate("category")
         
-      const purchasedQuantity = await Purchase.aggregate([
-        { $unwind: "$items" },
-        { $match: { "items.itemName": populatedItem.name } },
-        { $group: { _id: null, totalQuantity: { $sum: "$items.quantity" } } },
-      ]);
+      // const purchasedQuantity = await Purchase.aggregate([
+      //   { $unwind: "$items" },
+      //   { $match: { "items.itemName": populatedItem.name } },
+      //   { $group: { _id: null, totalQuantity: { $sum: "$items.quantity" } } },
+      // ]);
 
-      const remainingQuantity =
-        populatedItem.quantity -
-        (purchasedQuantity.length > 0 ? purchasedQuantity[0].totalQuantity : 0);
+      // const remainingQuantity =
+      //   populatedItem.quantity -
+      //   (purchasedQuantity.length > 0 ? purchasedQuantity[0].totalQuantity : 0);
 
-      const isLowStock = remainingQuantity <= lowStockThreshold;
+      // const isLowStock = remainingQuantity <= lowStockThreshold;
 
-      const stockValue = remainingQuantity * populatedItem.p_price; // Calculate stock value
+      // const stockValue = remainingQuantity * populatedItem.p_price; // Calculate stock value
 
       stockReport.push({
         itemName: populatedItem.name,
@@ -56,7 +55,6 @@ exports.getStockReport = async (req, res) => {
         s_price: populatedItem.s_price,
         brand: populatedItem.brand,
         category: populatedItem.category,
-        model: populatedItem.model,
         size: populatedItem.size,
         isLowStock,
         stockValue, // Add stock value information

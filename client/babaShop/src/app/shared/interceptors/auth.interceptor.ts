@@ -34,7 +34,7 @@ export class AuthInterceptor implements HttpInterceptor {
         if (err.status === 401) {
           this.authService.removeToken();
           this.authService.removeUser();
-          this.router.navigateByUrl('/authentication/login/simple');
+          this.router.navigateByUrl('/authentication/login');
         }
         return throwError(err);
       })
