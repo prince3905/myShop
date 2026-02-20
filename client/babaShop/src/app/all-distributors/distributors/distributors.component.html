@@ -1,151 +1,80 @@
 <div class="main-content">
     <div class="container-fluid">
 
+        <!-- FILTER CARD -->
         <div class="card card-plain">
-            <div class="card-header " fxLayout="column" fxLayout.lt-sm="row" fxLayoutGap="5px">
-                <div fxLayout="row" fxLayoutAlign="start center">
-                    <mat-form-field class="dropdown">
-                        <mat-label>Filter by</mat-label>
-                        <select matNativeControl [(ngModel)]="selectedOption" required>
-                            <option label="--select something --"></option>
-                            <option value="name">By Name</option>
-                            <option value="phone">Phone</option>
-                            <!-- <option value="brand">Brand</option>
-                            <option value="date">By Date</option> -->
-                        </select>
-                    </mat-form-field>
-                </div>
+            <div class="card-header" fxLayout="row wrap" fxLayoutGap="15px" fxLayoutAlign="start center">
 
+                <!-- FILTER DROPDOWN -->
+                <mat-form-field appearance="outline" style="width:200px">
+                    <mat-label>Filter by</mat-label>
+                    <mat-select [(ngModel)]="selectedOption">
+                        <mat-option value="name">By Name</mat-option>
+                        <mat-option value="phone">By Phone</mat-option>
+                    </mat-select>
+                </mat-form-field>
 
-                <div *ngIf="selectedOption === 'name'" class="name-filter" fxLayout="row"
-                    fxLayoutAlign.lt-md="start center">
-                    <mat-form-field fxFlex="10%">
-                        <input matInput placeholder="Name" name="name" [(ngModel)]="name"
-                            (input)="fetchSuggestionsName()">
-                    </mat-form-field>
-                    <div class="suggesion" fxFlex="10%">
-                        <mat-option *ngFor="let suggestion of suggestions" (click)="selectSuggestion(suggestion)"
-                            (optionSelected)="selectSuggestion($event)">
-                            {{suggestion}}
-                        </mat-option>
-                    </div>
+                <!-- NAME SEARCH -->
+                <ng-container *ngIf="selectedOption === 'name'">
 
+                    <mat-form-field appearance="outline" style="width:250px">
+                        <mat-label>Search Name</mat-label>
+                        <input matInput [(ngModel)]="name" (input)="fetchSuggestionsName()"
+                            [matAutocomplete]="autoName">
 
-                    <mat-form-field fxFlex="10%">
-                        <input matInput placeholder="Phone" name="phone" [(ngModel)]="phone"
-                            (input)="fetchSuggestionsPhone()">
-                    </mat-form-field>
-                    <div class="suggesion" fxFlex="10%">
-                        <mat-option class="option2" *ngFor="let suggestion of dis_suggestions"
-                            (click)="selectCusSuggestion(suggestion)" (optionSelected)="selectCusPhone($event)">
-                            {{suggestion}}
-                        </mat-option>
-                    </div>
-
-                    <!-- <mat-form-field fxFlex="10%" fxHide.lt-md>
-                        <mat-label>Category</mat-label>
-                        <mat-select [(ngModel)]="selectedCategory">
-                            <mat-option *ngFor="let category of Category" [value]="category._id">
-                                {{ category.name }}
+                        <mat-autocomplete #autoName="matAutocomplete"
+                            (optionSelected)="selectSuggestion($event.option.value)">
+                            <mat-option *ngFor="let suggestion of suggestions" [value]="suggestion">
+                                {{ suggestion }}
                             </mat-option>
-                        </mat-select>
-                    </mat-form-field> -->
-                    <!-- <mat-form-field fxFlex="10%" fxHide.lt-md>
-                        <mat-label>Brand</mat-label>
-                        <mat-select [(ngModel)]="selectedBrand">
-                            <mat-option *ngFor="let brand of Brands" [value]="brand._id">
-                                {{ brand.name }}
+                        </mat-autocomplete>
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline" style="width:200px">
+                        <mat-label>Phone</mat-label>
+                        <input matInput [(ngModel)]="phone">
+                    </mat-form-field>
+
+                </ng-container>
+
+                <!-- PHONE SEARCH -->
+                <ng-container *ngIf="selectedOption === 'phone'">
+
+                    <mat-form-field appearance="outline" style="width:250px">
+                        <mat-label>Search Phone</mat-label>
+                        <input matInput [(ngModel)]="phone" (input)="fetchSuggestionsPhone()"
+                            [matAutocomplete]="autoPhone">
+
+                        <mat-autocomplete #autoPhone="matAutocomplete"
+                            (optionSelected)="selectSuggestion($event.option.value)">
+                            <mat-option *ngFor="let suggestion of suggestions" [value]="suggestion">
+                                {{ suggestion }}
                             </mat-option>
-                        </mat-select>
-                    </mat-form-field> -->
-                </div>
-
-
-                <div *ngIf="selectedOption === 'phone'" class="name-filter" fxLayout="row"
-                    fxLayoutAlign.lt-md="start center">
-                    <mat-form-field fxFlex="10%">
-                        <input matInput placeholder="Phone" name="phone" [(ngModel)]="phone"
-                            (input)="fetchCusSuggestions()">
+                        </mat-autocomplete>
                     </mat-form-field>
-                    <div class="suggesion" fxFlex="10%">
-                        <mat-option class="option2" *ngFor="let suggestion of cus_suggestions"
-                            (click)="selectCusSuggestion(suggestion)" (optionSelected)="selectCusSuggestion($event)">
-                            {{suggestion}}
-                        </mat-option>
-                    </div>
-                </div>
 
+                </ng-container>
 
-                <!-- <div *ngIf="selectedOption === 'brand'" class="name-filter" fxLayout="row"
-                    fxLayoutAlign.lt-md="start center">
-                    <mat-form-field fxFlex="10%" fxHide.lt-md>
-                        <mat-label>Brand</mat-label>
-                        <mat-select [(ngModel)]="selectedBrand">
-                            <mat-option *ngFor="let brand of Brands" [value]="brand._id">
-                                {{ brand.name }}
-                            </mat-option>
-                        </mat-select>
-                    </mat-form-field>
-                </div> -->
+                <!-- SEARCH BUTTONS -->
+                <div *ngIf="selectedOption">
+                    <button mat-raised-button color="primary" (click)="onSearch(1, pageSize)">
+                        Search
+                    </button>
 
-                <!-- <div *ngIf="selectedOption === 'date'" class="name-filter" fxLayout="row" fxLayoutAlign="start center">
-                    <mat-form-field>
-                        <mat-label>Enter a date range</mat-label>
-                        <mat-date-range-input [rangePicker]="picker">
-                            <input matStartDate placeholder="Start date" (dateChange)="onStartDateChange($event)">
-                            <input matEndDate placeholder="End date" (dateChange)="onEndDateChange($event)">
-                        </mat-date-range-input>
-                        <mat-hint>MM/DD/YYYY – MM/DD/YYYY</mat-hint>
-                        <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
-                        <mat-date-range-picker #picker></mat-date-range-picker>
-                    </mat-form-field>
-                </div> -->
-
-                <div class="button-container">
-                    <div *ngIf="selectedOption === 'name' || selectedOption === 'phone'" fxLayout="row"
-                        fxLayoutAlign="start center" fxLayoutGap="5px">
-                        <button mat-raised-button type="submit" class="btn btn-white btn-round btn-just-icon"
-                            (click)="onSearch(paginator.pageIndex + 1, paginator.pageSize)">
-                            <i class="material-icons">search</i>
-                        </button>
-
-                        <button mat-raised-button type="submit" class="btn btn-white btn-round btn-just-icon"
-                            (click)="onClear()">
-                            <i class="material-icons">clear</i>
-                        </button>
-                    </div>
+                    <button mat-raised-button color="primary" (click)="onClear()">
+                        Clear
+                    </button>
                 </div>
 
             </div>
-
         </div>
 
-
+        <!-- LOADING -->
         <div class="loading" *ngIf="loading">
-            <mat-spinner class="loading" color="primary" mode="indeterminate"></mat-spinner>
+            <mat-spinner color="primary"></mat-spinner>
         </div>
 
 
-
-
-
-        <!-- <div class="row mat-content title">
-            <div class="col-md-2">
-                Customer Name
-            </div>
-            <div class="col-md-3">
-                Price
-            </div>
-            <div class="col-md-3">
-                Quantity
-            </div>
-            <div class="col-md-2">
-                Sale Date
-            </div>
-            <div class="col-md-2">
-                Actions
-            </div>
-        </div> -->
 
         <div class="card-body">
             <div class="table-responsive">
@@ -209,19 +138,6 @@
 
 
                             </td>
-
-                            <!-- <td>
-                                            <button mat-raised-button type="button" matTooltip="Edit Task"
-                                                [matTooltipPosition]="'above'"
-                                                class="btn btn-primary btn-link btn-sm btn-just-icon">
-                                                <i class="material-icons">edit</i>
-                                            </button>
-                                            <button mat-raised-button type="button" matTooltip="Remove"
-                                                [matTooltipPosition]="'above'"
-                                                class="btn btn-danger btn-link btn-sm btn-just-icon">
-                                                <i class="material-icons">close</i>
-                                            </button>
-                                        </td> -->
                         </tr>
                     </tbody>
                 </table>
@@ -233,3 +149,4 @@
             (page)="onPageChange($event)">
         </mat-paginator>
     </div>
+</div>

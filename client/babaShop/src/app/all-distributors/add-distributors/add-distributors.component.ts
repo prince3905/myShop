@@ -6,7 +6,7 @@ import {
 } from "@angular/material/dialog";
 import { MatSnackBar } from "@angular/material/snack-bar";
 import { DistributorService } from "app/shared/services/distributor.service";
-import { FormControl, Validators } from "@angular/forms";
+import { FormBuilder, FormGroup, Validators } from "@angular/forms";
 
 @Component({
   selector: "add-distributors",
@@ -14,112 +14,86 @@ import { FormControl, Validators } from "@angular/forms";
   styleUrls: ["./add-distributors.component.css"],
 })
 export class AddDistributorsComponent implements OnInit {
-  name: string = "";
-  shopName: string = "";
-  email: string = "";
-  phone: string = "";
-  telephone: string = "";
-  address: string = "";
-  city: string = "";
-  state: string = "";
-
+  distributorForm!: FormGroup; 
   isEditMode = false;
   distributorId: string;
 
   constructor(
+     private fb: FormBuilder, 
     private snackBar: MatSnackBar,
-    private distributors: DistributorService,
+    private distributor: DistributorService,
     public dialogRef: MatDialogRef<any>,
     private dialog: MatDialog,
     @Inject(MAT_DIALOG_DATA) public data: any
   ) {}
 
   ngOnInit(): void {
-    if (this.data && this.data._id) {
-      this.isEditMode = true;
-      this.distributorId = this.data._id;
-  
-      this.name = this.data.name;
-      this.shopName = this.data.shopName;
-      this.email = this.data.email;
-      this.phone = this.data.phone;
-      this.telephone = this.data.telephone;
-      this.address = this.data.address;
-      this.city = this.data.city;
-      this.state = this.data.state;
-    }
+
+  this.distributorForm = this.fb.group({
+    name: ['', Validators.required],
+    phone: ['', Validators.required],
+    telephone: ['', Validators.pattern('[6-9][0-9]{9}')],
+    email: ['', [Validators.email]],
+    gstNumber: [''],
+
+    addressLine1: [''],
+    addressLine2: [''],
+    city: [''],
+    district: [''],
+    state: [''],
+    pincode: ['']
+  });
+
+  // 🔥 EDIT MODE CHECK
+  if (this.data) {
+    this.isEditMode = true;
+    this.distributorId = this.data._id;
+
+    this.distributorForm.patchValue({
+      name: this.data.name,
+      phone: this.data.phone,
+      telephone: this.data.telephone,
+      email: this.data.email,
+      gstNumber: this.data.gstNumber,
+      addressLine1: this.data.address?.addressLine1,
+      addressLine2: this.data.address?.addressLine2,
+      city: this.data.address?.city,
+      district: this.data.address?.district,
+      state: this.data.address?.state,
+      pincode: this.data.address?.pincode,
+    });
   }
+}
 
-  
+onSubmit() {
 
-  onSubmit() {
-    const formData = {
-      name: this.name,
-      shopName: this.shopName,
-      email: this.email,
-      phone: this.phone,
-      telephone: this.telephone,
-      address: this.address,
-      city: this.city,
-      state: this.state,
-    };
-    console.log("Submitted Distributor Data:", formData);
+  if (this.distributorForm.invalid) return;
 
-
-
-    if (this.isEditMode) {
-      // 🔥 UPDATE
-      this.distributors.updateDistributor(this.distributorId, formData)
-        .subscribe(
-          (res: any) => {
-            this.snackBar.open('Distributor updated successfully', 'Close', {
-              duration: 3000,
-            });
-            this.dialogRef.close(true);
-          },
-          () => {
-            this.snackBar.open('Update failed', 'Close', { duration: 3000 });
-          }
-        );
-    } else {
-      // ➕ ADD
-      this.distributors.AddDistributor(formData)
-        .subscribe(
-          (res: any) => {
-            this.snackBar.open('Distributor added successfully', 'Close', {
-              duration: 3000,
-            });
-            this.dialogRef.close(true);
-          },
-          () => {
-            this.snackBar.open('Add failed', 'Close', { duration: 3000 });
-          }
-        );
+  const payload = {
+    name: this.distributorForm.value.name,
+    phone: this.distributorForm.value.phone,
+    telephone: this.distributorForm.value.telephone,
+    gstNumber: this.distributorForm.value.gstNumber,
+    address: {
+      addressLine1: this.distributorForm.value.addressLine1,
+      addressLine2: this.distributorForm.value.addressLine2,
+      city: this.distributorForm.value.city,
+      district: this.distributorForm.value.district,
+      state: this.distributorForm.value.state,
+      pincode: this.distributorForm.value.pincode,
     }
+  };
 
-
-
-
-
-    this.distributors.AddDistributor(formData).subscribe(
-      (response: any) => {
-        console.log(response);
-        this.snackBar.open(response.message, "Close", {
-          duration: 5000,
-          horizontalPosition: "center",
-          verticalPosition: "bottom",
-        });
-        this.dialogRef.close();
-      },
-      (error: any) => {
-        console.error("Error adding Distributor:", error);
-        this.snackBar.open("Failed to add Distributor.", "Close", {
-          duration: 5000,
-          horizontalPosition: "center",
-          verticalPosition: "bottom",
-        });
-        this.dialogRef.close();
-      }
-    );
+  if (this.isEditMode) {
+    this.distributor.updateDistributor(this.distributorId, payload)
+      .subscribe(() => {
+        this.dialogRef.close(true);
+      });
+  } else {
+    this.distributor.AddDistributor(payload)
+      .subscribe(() => {
+        this.dialogRef.close(true);
+      });
   }
+}
 }

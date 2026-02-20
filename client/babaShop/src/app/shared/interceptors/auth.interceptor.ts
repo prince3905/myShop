@@ -19,15 +19,23 @@ export class AuthInterceptor implements HttpInterceptor {
     request: HttpRequest<unknown>,
     next: HttpHandler
   ): Observable<HttpEvent<unknown>> {
-    const authToken = this.authService.getToken();
 
-    const modifiedRequest = authToken
-      ? request.clone({
-          setHeaders: {
-            Authorization: `Bearer ${authToken}`,
-          },
-        })
-      : request;
+    const authToken = this.authService.getToken();
+    const selectedShop = localStorage.getItem('selected_shop');
+
+    let headers: any = {};
+
+    if (authToken) {
+      headers['Authorization'] = `Bearer ${authToken}`;
+    }
+
+    if (selectedShop) {
+      headers['x-shop-id'] = selectedShop;
+    }
+
+    const modifiedRequest = request.clone({
+      setHeaders: headers,
+    });
 
     return next.handle(modifiedRequest).pipe(
       catchError((err: HttpErrorResponse) => {
@@ -36,7 +44,7 @@ export class AuthInterceptor implements HttpInterceptor {
           this.authService.removeUser();
           this.router.navigateByUrl('/authentication/login');
         }
-        return throwError(err);
+        return throwError(() => err);
       })
     );
   }

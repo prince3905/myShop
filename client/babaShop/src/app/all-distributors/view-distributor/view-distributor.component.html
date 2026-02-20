@@ -3,48 +3,174 @@
 <mat-dialog-content class="content">
   <div class="details-grid">
 
-    <!-- Left Column -->
+    <!-- Basic Info -->
+    <div class="section-title">Basic Information</div>
+
     <div class="detail-item">
-      <label>Customer ID</label>
-      <span>{{ data._id }}</span>
+      <label>ID</label>
+      <span>{{ data?._id }}</span>
     </div>
 
     <div class="detail-item">
       <label>Name</label>
-      <span>{{ data.name }}</span>
+      <span>{{ data?.name }}</span>
     </div>
 
     <div class="detail-item">
       <label>Phone</label>
-      <span>{{ data.phone }}</span>
+      <span>{{ data?.phone }}</span>
+    </div>
+
+     <div class="detail-item">
+      <label>Telephone</label>
+      <span>{{ data?.telephone }}</span>
     </div>
 
     <div class="detail-item">
       <label>Email</label>
-      <span>{{ data.email }}</span>
-    </div>
-
-    <!-- Right Column -->
-    <div class="detail-item">
-      <label>Address</label>
-      <span>{{ data.address || '-' }}</span>
+      <span>{{ data?.email || '-' }}</span>
     </div>
 
     <div class="detail-item">
-      <label>City</label>
-      <span>{{ data.city || '-' }}</span>
-    </div>
-
-    <div class="detail-item">
-      <label>State</label>
-      <span>{{ data.state || '-' }}</span>
+      <label>GST Number</label>
+      <span>{{ data?.gstNumber || '-' }}</span>
     </div>
 
     <div class="detail-item">
       <label>Status</label>
-      <span class="status">{{ data.status || 'Active' }}</span>
+      <span class="status">{{ data?.status }}</span>
     </div>
 
+    <!-- Shop Info -->
+    <div class="section-title">Shop Information</div>
+
+    <div class="detail-item">
+      <label>Shop Name</label>
+      <span>{{ data?.shop?.name || '-' }}</span>
+    </div>
+
+    <div class="detail-item">
+      <label>Shop Code</label>
+      <span>{{ data?.shop?.shopCode || '-' }}</span>
+    </div>
+
+    <!-- Address Info -->
+    <div class="section-title">Address Details</div>
+
+    <div class="detail-item full-width">
+      <label>Address</label>
+      <span>
+        {{ data?.address?.addressLine1 }},
+        {{ data?.address?.addressLine2 }}
+      </span>
+    </div>
+
+    <div class="detail-item">
+      <label>City</label>
+      <span>{{ data?.address?.city || '-' }}</span>
+    </div>
+
+    <div class="detail-item">
+      <label>District</label>
+      <span>{{ data?.address?.district || '-' }}</span>
+    </div>
+
+    <div class="detail-item">
+      <label>State</label>
+      <span>{{ data?.address?.state || '-' }}</span>
+    </div>
+
+    <div class="detail-item">
+      <label>Pincode</label>
+      <span>{{ data?.address?.pincode || '-' }}</span>
+    </div>
+
+    <!-- Balance Info -->
+    <div class="section-title">Account Details</div>
+
+    <div class="detail-item">
+      <label>Opening Balance कुल धन राशि</label>
+      <span>₹ {{ data?.openingBalance }}</span>
+    </div>
+
+    <div class="detail-item">
+      <label>Current Balance मौजूदा बकाया राशि</label>
+      <span>₹ {{ data?.currentBalance }}</span>
+    </div>
+
+    <div class="detail-item">
+      <label>Created At</label>
+      <span>{{ data?.createdAt | date:'medium' }}</span>
+    </div>
+
+    <div class="detail-item">
+      <label>Updated At</label>
+      <span>{{ data?.updatedAt | date:'medium' }}</span>
+    </div>
+
+
+
+  </div>
+  <!-- Ledger Section -->
+  <div class="section-title">Ledger History</div>
+
+  <table *ngIf="ledger.length" class="ledger-table">
+
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Type</th>
+        <th>Note</th>
+        <th class="right">Debit</th>
+        <th class="right">Credit</th>
+        <th class="right">Balance</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr *ngFor="let entry of ledger">
+
+        <!-- Date -->
+        <td>
+          {{ entry.transactionDate | date:'dd/MM/yyyy hh:mm a' }}
+        </td>
+
+        <!-- Type -->
+        <td>
+          {{ entry.type | titlecase }}
+        </td>
+
+        <!-- Note -->
+        <td>
+          {{ entry.note || '-' }}
+        </td>
+
+        <!-- Debit -->
+        <td class="right debit">
+          <span *ngIf="entry.type === 'purchase'">
+            ₹ {{ entry.amount }}
+          </span>
+        </td>
+
+        <!-- Credit -->
+        <td class="right credit">
+          <span *ngIf="entry.type === 'payment'">
+            ₹ {{ entry.amount }}
+          </span>
+        </td>
+
+        <!-- Balance -->
+        <td class="right balance">
+          ₹ {{ entry.balanceAfterTransaction }}
+        </td>
+
+      </tr>
+    </tbody>
+
+  </table>
+
+  <div *ngIf="!ledger.length">
+    No ledger entries found.
   </div>
 </mat-dialog-content>
 

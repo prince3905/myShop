@@ -1,6 +1,13 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
+const Shop = require("../models/Shop");
+const rolePermissions = require("../config/permissions");
 
+
+
+/* =========================================
+   PROTECT (JWT VERIFY)
+========================================= */
 exports.protect = async (req, res, next) => {
   try {
     let token;
@@ -24,20 +31,100 @@ exports.protect = async (req, res, next) => {
       return res.status(401).json({ message: "User not found" });
     }
 
-    req.user = user; // VERY IMPORTANT
+    req.user = user; // ✅ attach user
     next();
-  } catch (err) {
-    res.status(401).json({ message: "Invalid token" });
+
+  } catch (error) {
+    return res.status(401).json({ message: "Invalid token" });
   }
 };
 
+
+/* =========================================
+   ROLE BASED ACCESS
+========================================= */
 exports.authorizeRoles = (...roles) => {
   return (req, res, next) => {
     if (!roles.includes(req.user.role)) {
       return res.status(403).json({
-        message: "You are not authorized (role) to access this resource",
+        message: "Access denied (role)",
       });
     }
     next();
   };
+};
+
+
+/* =========================================
+   PERMISSION BASED ACCESS
+========================================= */
+exports.authorizePermission = (permission) => {
+  return (req, res, next) => {
+    const userRole = req.user.role;
+    const permissions = rolePermissions[userRole];
+
+    if (!permissions || !permissions.includes(permission)) {
+      return res.status(403).json({
+        message: "You do not have permission",
+      });
+    }
+
+    next();
+  };
+};
+
+
+/* =========================================
+   ATTACH SHOP (MULTI-TENANT SECURITY)
+========================================= */
+exports.attachShop = async (req, res, next) => {
+  try {
+
+    // SUPER ADMIN
+    if (req.user.role === "SUPER_ADMIN") {
+
+      const selectedShopId = req.headers["x-shop-id"];
+
+      if (!selectedShopId) {
+        return res.status(400).json({
+          message: "Super Admin must select a shop (x-shop-id header missing)",
+        });
+      }
+
+      const shop = await Shop.findById(selectedShopId);
+
+      if (!shop) {
+        return res.status(404).json({
+          message: "Selected shop not found",
+        });
+      }
+
+      req.shop = shop;
+      req.shopId = shop._id;
+      return next();
+    }
+
+    // NORMAL USER
+    const shop = await Shop.findOne({
+      owner: req.user._id,
+      isActive: true,
+    });
+
+    if (!shop) {
+      return res.status(403).json({
+        message: "No active shop associated with this user",
+      });
+    }
+
+    req.shop = shop;
+    req.shopId = shop._id;
+
+    next();
+
+  } catch (error) {
+    console.error("Attach Shop Error:", error);
+    return res.status(500).json({
+      message: "Server error while attaching shop",
+    });
+  }
 };

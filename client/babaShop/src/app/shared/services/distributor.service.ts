@@ -54,4 +54,10 @@ export class DistributorService {
       `${this.baseURL}/api/item/item-suggestions?term=${searchTerm}`,
     );
   }
+
+  getDistributorLedger(distributorId: string): Observable<any> {
+  return this.http.get(
+    `${this.baseURL}/api/distributor-ledger/${distributorId}`
+  );
+}
 }

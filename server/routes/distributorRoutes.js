@@ -4,7 +4,7 @@ const authController = require('../controllers/authController');
 
 const router = express.Router();
 
-module.exports = authController.protect;
+router.use(authController.protect); //Protect all routes
 
 router.get('/distributor-suggestions', distributorController.distributorSuggestions)
 router.get('/', distributorController.allDistributors);

@@ -165,12 +165,12 @@ const itemSchema = new mongoose.Schema({
 ========================= */
 
 // SKU unique per shop
-itemSchema.index(
+ProductSchema.index(
   { shop: 1, "models.variations.sku": 1 },
   { unique: true }
 );
 
 // Fast search
-itemSchema.index({ name: "text" });
+ProductSchema.index({ name: "text" });
 
-module.exports = mongoose.model("Item", itemSchema);
+module.exports = mongoose.model("Product", ProductSchema);

@@ -110,5 +110,11 @@ login(email: string, password: string) {
     );
   }
 
+  isSuperAdmin(): boolean {
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  console.log('User role:', user.role); // Debugging log
+  return user.role === 'SUPER_ADMIN';
+}
+
   
 }

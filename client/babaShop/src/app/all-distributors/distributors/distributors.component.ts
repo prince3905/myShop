@@ -106,17 +106,16 @@ export class DistributorsComponent implements OnInit {
   }
 
   fetchSuggestionsName(): void {
-    // console.log(this.name)
-    this.distributor.getDistributorSuggestionName(this.name).subscribe(
-      (suggestions: any[]) => {
-        this.suggestions = suggestions;
-        console.log(this.suggestions);
-      },
-      (error: any) => {
-        console.error("Error fetching suggestions:", error);
-      },
-    );
+  if (!this.name || this.name.length < 1) {
+    this.suggestions = [];
+    return;
   }
+
+  this.distributor.getDistributorSuggestionName(this.name)
+    .subscribe((res: any[]) => {
+      this.suggestions = [...res];
+    });
+}
 
   selectSuggestion(suggestion: string): void {
     this.name = suggestion;
@@ -135,7 +134,7 @@ export class DistributorsComponent implements OnInit {
   }
 
   openViewDistributor(item: any, event: Event): void {
-    event.stopPropagation(); // row click se bachane ke liye
+    event.stopPropagation();
 
     this.dialog.open(ViewDistributorComponent, {
       width: "70vw",
@@ -221,6 +220,7 @@ export class DistributorsComponent implements OnInit {
           this.getAllDistributors(null);
         }
       });
+      console.log("Editing distributor:", item);
   }
 
   openDistributorModal() {

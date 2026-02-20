@@ -1,7 +1,8 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
-const Item = require("../models/item");
+// const Item = require("../models/item");
+const Product = require("../models/Product");
 const Distributor = require('../models/distributor');
 const Category = require("../models/category");
 const Brand = require("../models/brand");
@@ -47,8 +48,6 @@ exports.allItem = async (req, res) => {
       .skip(skipItems)
       .limit(itemsPerPage);
     res.status(200).json({ items, totalItems: totalItems });
-    // console.log("Count Items:", totalItems);
-    // console.log("Items:", items);
   } catch (err) {
     console.error("Error retrieving items:", err);
     res.status(500).json({ error: "Error retrieving items" });

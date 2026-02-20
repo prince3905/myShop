@@ -65,14 +65,25 @@ const distributorSchema = new mongoose.Schema(
       enum: ["active", "disabled"],
       default: "active",
     },
+    
+     isDeleted: {
+      type: Boolean,
+      default: false,
+    },
+
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
   },
   { timestamps: true },
 );
 
 /* Compound index (same distributor allowed in different shops) */
 distributorSchema.index(
-  { shop: 1, phone: 1, gstNumber: 1 },
+  { shop: 1, phone: 1},
   { unique: true, sparse: true },
 );
+
 
 module.exports = mongoose.model("Distributor", distributorSchema);
