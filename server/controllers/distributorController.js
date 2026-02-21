@@ -190,30 +190,39 @@ exports.updateStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
+
     if (!["active", "disabled", "inactive"].includes(status)) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Invalid status" });
+      return res.status(400).json({
+        success: false,
+        message: "Invalid status",
+      });
     }
 
-    const distributor = await Distributor.findById(id);
+    const distributor = await Distributor.findByIdAndUpdate(
+      id,
+      { status: status },
+      { new: true }
+    );
+
     if (!distributor) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Distributor not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Distributor not found",
+      });
     }
-
-    distributor.status = status;
-    await distributor.save();
 
     return res.json({
       success: true,
-      message: "Status updated",
+      message: "Status updated successfully",
       data: { id: distributor._id, status: distributor.status },
     });
+
   } catch (err) {
     console.error("updateStatus error", err);
-    return res.status(500).json({ success: false, message: "Server error" });
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
   }
 };
 

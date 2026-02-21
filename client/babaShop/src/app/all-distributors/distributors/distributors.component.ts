@@ -2,6 +2,7 @@ import { MatPaginator, PageEvent } from "@angular/material/paginator";
 import { DistributorService } from "../../shared/services/distributor.service";
 import { ChangeDetectorRef, Component, OnInit, ViewChild } from "@angular/core";
 import { ActivatedRoute, NavigationExtras, Router } from "@angular/router";
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { Subject } from "rxjs";
 import { MatDialog } from "@angular/material/dialog";
 import { AddDistributorsComponent } from "../add-distributors/add-distributors.component";
@@ -52,6 +53,7 @@ export class DistributorsComponent implements OnInit {
     private router: Router,
     private Router: ActivatedRoute,
     public dialog: MatDialog,
+     private snackBar: MatSnackBar
   ) {}
 
   ngOnInit(): void {
@@ -106,32 +108,42 @@ export class DistributorsComponent implements OnInit {
   }
 
   fetchSuggestionsName(): void {
-  if (!this.name || this.name.length < 1) {
-    this.suggestions = [];
-    return;
-  }
+    if (!this.name || this.name.length < 1) {
+      this.suggestions = [];
+      return;
+    }
 
-  this.distributor.getDistributorSuggestionName(this.name)
-    .subscribe((res: any[]) => {
-      this.suggestions = [...res];
-    });
-}
+    this.distributor
+      .getDistributorSuggestionName(this.name)
+      .subscribe((res: any[]) => {
+        this.suggestions = [...res];
+      });
+  }
 
   selectSuggestion(suggestion: string): void {
     this.name = suggestion;
     this.suggestions = [];
   }
 
-  openAddItemModal(): void {
-    const dialogRef = this.dialog.open(AddDistributorsComponent, {
-      width: "400px",
-    });
-    dialogRef.afterClosed().subscribe((res) => {
-      if (res === true) {
-        this.getAllDistributors(this.getQueryParams());
-      }
-    });
-  }
+ openAddDistributor() {
+  console.log("Opening Add Distributor Modal");
+
+  this.dialog.open(AddDistributorsComponent, {
+    width: '650px',
+    height: '800px',
+    data: null   // 🔥 MUST BE NULL
+  }).afterClosed().subscribe((res) => {
+
+    console.log("Dialog Closed:", res);
+
+    if (res === true) {
+      this.getAllDistributors(null);
+      this.snackBar.open("Distributor list refreshed", "Close", {
+        duration: 2000
+      });
+    }
+  });
+}
 
   openViewDistributor(item: any, event: Event): void {
     event.stopPropagation();
@@ -188,40 +200,42 @@ export class DistributorsComponent implements OnInit {
 
     this.router.navigate([], navigationExtras);
     this.getAllDistributors(queryParamsObj);
-
-    
-
   }
 
   fetchSuggestionsPhone(): void {
     // console.log(this.phone)
-    this.distributor.getDistributorSuggestionPhone(this.phone || this.phone).subscribe(
-      (suggestions: any[]) => {
-        this.suggestions = suggestions;
-        console.log(this.suggestions);
-      },
-      (error: any) => {
-        console.error("Error fetching suggestions:", error);
-      },
-    );
+    this.distributor
+      .getDistributorSuggestionPhone(this.phone || this.phone)
+      .subscribe(
+        (suggestions: any[]) => {
+          this.suggestions = suggestions;
+          console.log(this.suggestions);
+        },
+        (error: any) => {
+          console.error("Error fetching suggestions:", error);
+        },
+      );
   }
 
-  editDistributor(item: any, event: Event) {
-    event.stopPropagation();
+openEditDistributor(row: any) {
 
-    this.dialog
-      .open(AddDistributorsComponent, {
-        width: "500px",
-        data: item, // 🔥 PURE ITEM PASS
-      })
-      .afterClosed()
-      .subscribe((refresh) => {
-        if (refresh) {
-          this.getAllDistributors(null);
-        }
+  console.log("Editing Distributor:", row);
+
+  this.dialog.open(AddDistributorsComponent, {
+    width: '650px',
+    data: row
+  }).afterClosed().subscribe((res) => {
+
+    console.log("Dialog Closed:", res);
+
+    if (res === true) {
+      this.getAllDistributors('null');
+      this.snackBar.open("Distributor updated successfully", "Close", {
+        duration: 2000
       });
-      console.log("Editing distributor:", item);
-  }
+    }
+  });
+}
 
   openDistributorModal() {
     throw new Error("Method not implemented.");

@@ -19,7 +19,7 @@ export class DistributorService {
     return this.http.get(`${this.baseURL}/api/distributor`, { params: params });
   }
 
-  AddDistributor(data: any) {
+  addDistributor(data: any) {
     return this.http.post(`${this.baseURL}/api/distributor`, data);
   }
 

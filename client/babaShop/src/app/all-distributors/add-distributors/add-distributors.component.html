@@ -22,8 +22,8 @@
                         <div class="row">
                             <div class="col-md-12">
                                 <mat-form-field class="example-full-width">
-                                    <input matInput placeholder="Email" name="email" formControlName="email" type="email"
-                                        required>
+                                    <input matInput placeholder="Email" name="email" formControlName="email"
+                                        type="email" required>
                                 </mat-form-field>
                             </div>
                         </div>
@@ -54,10 +54,11 @@
                             </div>
                         </div>
 
-                         <div class="row">
+                        <div class="row">
                             <div class="col-md-12">
                                 <mat-form-field class="example-full-width">
-                                    <input matInput placeholder="Address Line 2" name="addressLine2" formControlName="addressLine2">
+                                    <input matInput placeholder="Address Line 2" name="addressLine2"
+                                        formControlName="addressLine2">
                                 </mat-form-field>
                             </div>
                         </div>
@@ -78,9 +79,82 @@
                             </div>
                         </div>
 
+                        <div class="row">
+                            <div class="col-md-12">
+                                <mat-form-field class="example-full-width">
+                                    <input matInput placeholder="District" name="district" formControlName="district">
+                                </mat-form-field>
+                            </div>
+                        </div>
+
+
+                        <div class="row">
+                            <div class="col-md-12">
+                                <mat-form-field class="example-full-width">
+                                    <input matInput placeholder="Pincode" name="pincode" formControlName="pincode">
+                                </mat-form-field>
+                            </div>
+                        </div>
+
+
+
+                        <div class="row">
+                            <div class="col-md-12">
+                                <mat-form-field>
+                                    <input matInput placeholder="Distributor GST" name="gstNumber"
+                                        formControlName="gstNumber">
+                                </mat-form-field>
+                            </div>
+                        </div>
+
+                        <div class="row" *ngIf="!isEditMode">
+                            <div class="col-md-12">
+                                <mat-form-field>
+                                    <input matInput placeholder="Opening Balance" name="openingBalance" type="number"
+                                        formControlName="openingBalance">
+                                </mat-form-field>
+                            </div>
+                        </div>
+
+
+                        <div class="row" *ngIf="!isEditMode">
+                            <div class="col-md-12">
+                                <mat-form-field>
+                                    <input matInput placeholder="Credit Limit" name="creditLimit" type="number"
+                                        formControlName="creditLimit">
+                                </mat-form-field>
+                            </div>
+                        </div>
+
+
+                        <div class="row" *ngIf="!isEditMode">
+                            <div class="col-md-12">
+                                <mat-form-field>
+                                    <input matInput placeholder="Payment Terms (Days)" name="paymentTerms" type="number"
+                                        formControlName="paymentTerms">
+                                </mat-form-field>
+                            </div>
+                        </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
                         <!-- Submit Button -->
-                        <button mat-raised-button type="button" class="btn btn-danger pull-right"
-                            [disabled]="!distributorForm.valid" (click)="onSubmit()">
+                        <button mat-raised-button type="submit" class="btn btn-danger pull-right"
+                            [disabled]="distributorForm.invalid || isSubmitting">
+
                             {{ isEditMode ? 'Update Distributor' : 'Add Distributor' }}
                         </button>
 
