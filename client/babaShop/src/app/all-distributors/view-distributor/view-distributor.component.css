@@ -5,7 +5,7 @@
 .details-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 15px;
+  gap: 5px;
 }
 
 .section-title {
@@ -76,4 +76,99 @@ span {
 
 .balance {
   font-weight: 600;
+}
+
+.ledger-action-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 20px 0;
+}
+
+.ledger-action-bar button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+  border-radius: 10px;
+  padding: 6px 16px;
+}
+
+.positive-balance {
+  color: #d32f2f; /* Red = Payable */
+  font-weight: 600;
+}
+
+.zero-balance {
+  color: #388e3c; /* Green = Settled */
+  font-weight: 600;
+}
+
+.negative-balance {
+  color: #1976d2; /* Blue = Advance */
+  font-weight: 600;
+}
+
+.ledger-table th,
+.ledger-table td {
+  padding: 10px 12px;
+}
+
+.debit {
+  color: #d32f2f;
+  font-weight: 500;
+}
+
+.credit {
+  color: #388e3c;
+  font-weight: 500;
+}
+
+/* Mobile responsive */
+@media (max-width: 600px) {
+  .ledger-action-bar {
+    flex-direction: column;
+  }
+
+  .ledger-action-bar button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .ledger-summary {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  .summary-card {
+    flex: 1;
+    min-width: 180px;
+    padding: 16px;
+    border-radius: 10px;
+    background: #ffffff;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+    text-align: center;
+  }
+
+  .summary-card .label {
+    font-size: 13px;
+    color: #777;
+    margin-bottom: 6px;
+  }
+
+  .summary-card .value {
+    font-size: 20px;
+    font-weight: 600;
+  }
+
+  .date-filter {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
 }

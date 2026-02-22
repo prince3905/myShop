@@ -1,0 +1,68 @@
+import { Component, Inject, OnInit } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { DistributorService } from '../../shared/services/distributor.service';
+
+@Component({
+  selector: 'app-ledger-entry',
+  templateUrl: './ledger-entry.component.html',
+  styleUrls: ['./ledger-entry.component.css']
+})
+export class LedgerEntryComponent implements OnInit {
+
+  form!: FormGroup;
+  type!: string;
+  loading = false;
+
+  constructor(
+    private fb: FormBuilder,
+    private distributorService: DistributorService,
+    private dialogRef: MatDialogRef<LedgerEntryComponent>,
+    @Inject(MAT_DIALOG_DATA) public data: any
+  ) {}
+
+  ngOnInit(): void {
+
+    this.type = this.data.type;
+
+    this.form = this.fb.group({
+      amount: [null, [Validators.required, Validators.min(1)]],
+      paymentMode: [''],
+      note: ['']
+    });
+
+    // Payment ke case me paymentMode required
+    if (this.type === 'payment') {
+      this.form.get('paymentMode')?.setValidators([Validators.required]);
+      this.form.get('paymentMode')?.updateValueAndValidity();
+    }
+  }
+
+  submit() {
+
+    if (this.form.invalid) return;
+
+    this.loading = true;
+
+    const payload = {
+      distributorId: this.data.distributorId,
+      type: this.type,
+      amount: this.form.value.amount,
+      paymentMode: this.form.value.paymentMode,
+      note: this.form.value.note
+    };
+
+    this.distributorService.createLedgerEntry(payload)
+      .subscribe({
+        next: () => {
+          this.loading = false;
+          this.dialogRef.close(true); // parent refresh karega
+        },
+        error: (err) => {
+          console.error(err);
+          this.loading = false;
+        }
+      });
+  }
+
+}

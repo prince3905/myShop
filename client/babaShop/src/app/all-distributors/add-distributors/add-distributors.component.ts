@@ -66,10 +66,11 @@ export class AddDistributorsComponent implements OnInit {
         district: this.data.address?.district,
         state: this.data.address?.state,
         pincode: this.data.address?.pincode,
-        openingBalance: this.data("openingBalance")?.disable(),
-        creditLimit: this.data("creditLimit")?.disable(),
-        paymentTerms: this.data("paymentTerms")?.disable(),
       });
+      //  Disable after patch
+      this.distributorForm.get("openingBalance")?.disable();
+      this.distributorForm.get("creditLimit")?.disable();
+      this.distributorForm.get("paymentTerms")?.disable();
     } else {
       console.log("Add Mode Activated");
     }
@@ -99,11 +100,13 @@ export class AddDistributorsComponent implements OnInit {
       email: this.distributorForm.value.email,
       gstNumber: this.distributorForm.value.gstNumber,
       // 🔥 Only include in ADD
-    ...(this.isEditMode ? {} : {
-      openingBalance: this.distributorForm.value.openingBalance,
-      creditLimit: this.distributorForm.value.creditLimit,
-      paymentTerms: this.distributorForm.value.paymentTerms,
-    }),
+      ...(this.isEditMode
+        ? {}
+        : {
+            openingBalance: this.distributorForm.value.openingBalance,
+            creditLimit: this.distributorForm.value.creditLimit,
+            paymentTerms: this.distributorForm.value.paymentTerms,
+          }),
       address: {
         addressLine1: this.distributorForm.value.addressLine1,
         addressLine2: this.distributorForm.value.addressLine2,

@@ -1,0 +1,54 @@
+<h2 mat-dialog-title>
+  {{ type | titlecase }} Entry
+</h2>
+
+<mat-dialog-content>
+
+  <form [formGroup]="form" class="ledger-form">
+
+    <!-- Amount -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Amount</mat-label>
+      <input matInput type="number" formControlName="amount">
+      <mat-error *ngIf="form.get('amount')?.hasError('required')">
+        Amount is required
+      </mat-error>
+    </mat-form-field>
+
+    <!-- Payment Mode (only for payment) -->
+    <mat-form-field *ngIf="type === 'payment'"
+      appearance="outline"
+      class="full-width">
+      <mat-label>Payment Mode</mat-label>
+      <mat-select formControlName="paymentMode">
+        <mat-option value="cash">Cash</mat-option>
+        <mat-option value="online">Online</mat-option>
+        <mat-option value="bank">Bank</mat-option>
+      </mat-select>
+      <mat-error *ngIf="form.get('paymentMode')?.hasError('required')">
+        Payment mode required
+      </mat-error>
+    </mat-form-field>
+
+    <!-- Note -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Note</mat-label>
+      <textarea matInput rows="3" formControlName="note"></textarea>
+    </mat-form-field>
+
+  </form>
+
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close>Cancel</button>
+
+  <button mat-raised-button
+          color="primary"
+          (click)="submit()"
+          [disabled]="form.invalid || loading">
+
+    {{ loading ? 'Saving...' : 'Save' }}
+
+  </button>
+</mat-dialog-actions>

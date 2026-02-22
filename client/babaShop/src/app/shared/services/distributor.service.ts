@@ -60,4 +60,8 @@ export class DistributorService {
     `${this.baseURL}/api/distributor-ledger/${distributorId}`
   );
 }
+
+  createLedgerEntry(payload: any): Observable<any> {
+    return this.http.post(`${this.baseURL}/api/distributor-ledger`, payload);
+  }
 }

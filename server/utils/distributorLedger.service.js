@@ -20,17 +20,46 @@ exports.createDistributorLedgerEntry = async ({
 
   let newBalance = 0;
 
-  if (!lastEntry) {
-    newBalance = amount;
-    console.log("Ledger service called");
-    console.log("Type:", type, "Amount:", amount);
-  } else {
-    if (type === "payment" || type === "purchase_return") {
-      newBalance = lastEntry.balanceAfterTransaction - amount;
-    } else {
-      newBalance = lastEntry.balanceAfterTransaction + amount;
-    }
+  // if (!lastEntry) {
+  //   newBalance = amount;
+  //   console.log("Ledger service called");
+  //   console.log("Type:", type, "Amount:", amount);
+  // } else {
+  //   if (type === "payment" || type === "purchase_return") {
+  //     newBalance = lastEntry.balanceAfterTransaction - amount;
+  //   } else {
+  //     newBalance = lastEntry.balanceAfterTransaction + amount;
+  //   }
+  // }
+
+if (!lastEntry) {
+  if (type !== "opening") {
+    throw new Error("Opening balance must be first transaction");
   }
+  newBalance = amount;
+} else {
+
+  let previousBalance = lastEntry.balanceAfterTransaction;
+
+  switch (type) {
+    case "purchase":
+      newBalance = previousBalance + amount;
+      break;
+
+    case "payment":
+    case "purchase_return":
+      newBalance = previousBalance - amount;
+      break;
+
+    case "adjustment":
+      newBalance = previousBalance + amount; // amount can be + or -
+      break;
+
+    default:
+      throw new Error("Invalid ledger type");
+  }
+}
+
 
   // 2️ Ledger save karo
   const ledger = await DistributorLedger.create({

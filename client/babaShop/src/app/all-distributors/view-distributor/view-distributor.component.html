@@ -2,7 +2,6 @@
 
 <mat-dialog-content class="content">
   <div class="details-grid">
-
     <!-- Basic Info -->
     <div class="section-title">Basic Information</div>
 
@@ -21,19 +20,19 @@
       <span>{{ data?.phone }}</span>
     </div>
 
-     <div class="detail-item">
+    <div class="detail-item">
       <label>Telephone</label>
       <span>{{ data?.telephone }}</span>
     </div>
 
     <div class="detail-item">
       <label>Email</label>
-      <span>{{ data?.email || '-' }}</span>
+      <span>{{ data?.email || "-" }}</span>
     </div>
 
     <div class="detail-item">
       <label>GST Number</label>
-      <span>{{ data?.gstNumber || '-' }}</span>
+      <span>{{ data?.gstNumber || "-" }}</span>
     </div>
 
     <div class="detail-item">
@@ -46,12 +45,12 @@
 
     <div class="detail-item">
       <label>Shop Name</label>
-      <span>{{ data?.shop?.name || '-' }}</span>
+      <span>{{ data?.shop?.name || "-" }}</span>
     </div>
 
     <div class="detail-item">
       <label>Shop Code</label>
-      <span>{{ data?.shop?.shopCode || '-' }}</span>
+      <span>{{ data?.shop?.shopCode || "-" }}</span>
     </div>
 
     <!-- Address Info -->
@@ -67,22 +66,22 @@
 
     <div class="detail-item">
       <label>City</label>
-      <span>{{ data?.address?.city || '-' }}</span>
+      <span>{{ data?.address?.city || "-" }}</span>
     </div>
 
     <div class="detail-item">
       <label>District</label>
-      <span>{{ data?.address?.district || '-' }}</span>
+      <span>{{ data?.address?.district || "-" }}</span>
     </div>
 
     <div class="detail-item">
       <label>State</label>
-      <span>{{ data?.address?.state || '-' }}</span>
+      <span>{{ data?.address?.state || "-" }}</span>
     </div>
 
     <div class="detail-item">
       <label>Pincode</label>
-      <span>{{ data?.address?.pincode || '-' }}</span>
+      <span>{{ data?.address?.pincode || "-" }}</span>
     </div>
 
     <!-- Balance Info -->
@@ -100,22 +99,106 @@
 
     <div class="detail-item">
       <label>Created At</label>
-      <span>{{ data?.createdAt | date:'medium' }}</span>
+      <span>{{ data?.createdAt | date: "medium" }}</span>
     </div>
 
     <div class="detail-item">
       <label>Updated At</label>
-      <span>{{ data?.updatedAt | date:'medium' }}</span>
+      <span>{{ data?.updatedAt | date: "medium" }}</span>
     </div>
-
-
-
   </div>
   <!-- Ledger Section -->
+
+  <div class="ledger-action-bar">
+
+    <button mat-raised-button color="primary" (click)="openLedgerModal('payment')">
+      <mat-icon>payments</mat-icon>
+      Payment
+    </button>
+
+    <button mat-raised-button color="accent" (click)="openLedgerModal('purchase')">
+      <mat-icon>shopping_cart</mat-icon>
+      Purchase
+    </button>
+
+    <button mat-raised-button color="warn" (click)="openLedgerModal('purchase_return')">
+      <mat-icon>assignment_return</mat-icon>
+      Return
+    </button>
+
+    <button mat-stroked-button (click)="openLedgerModal('adjustment')">
+      <mat-icon>tune</mat-icon>
+      Adjustment
+    </button>
+
+  </div>
+
+
+
+  <div class="date-filter">
+  <mat-form-field appearance="outline">
+    <mat-label>From Date</mat-label>
+    <input matInput type="date" [(ngModel)]="fromDate" (change)="applyDateFilter()">
+  </mat-form-field>
+
+  <mat-form-field appearance="outline">
+    <mat-label>To Date</mat-label>
+    <input matInput type="date" [(ngModel)]="toDate" (change)="applyDateFilter()">
+  </mat-form-field>
+
+  <button mat-raised-button color="primary" (click)="applyDateFilter()">
+    Apply
+  </button>
+
+  <button mat-button color="warn" (click)="resetFilter()">
+    Reset
+  </button>
+</div>
+
+
+
+
+  <div class="section-title">Ledger Summary</div>
+  <table *ngIf="ledger.length" class="ledger-table">
+    <thead>
+      <tr>
+        <th class="right">Total Debit</th>
+        <th class="right">Total Credit</th>
+        <th class="right"> Total Balance</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="right debit">
+          ₹ {{ totalDebit | number:'1.2-2' }}
+        </td>
+
+        <td class="right credit">
+          ₹ {{ totalCredit | number:'1.2-2' }}
+        </td>
+
+        <td class="right balance" [ngClass]="{
+              'positive-balance': closingBalance > 0,
+              'zero-balance': closingBalance === 0,
+              'negative-balance': closingBalance < 0
+            }">
+          ₹ {{ closingBalance | number:'1.2-2' }}
+        </td>
+      </tr>
+    </tbody>
+
+
+  </table>
+
+
+
+
+
+
+
   <div class="section-title">Ledger History</div>
 
   <table *ngIf="ledger.length" class="ledger-table">
-
     <thead>
       <tr>
         <th>Date</th>
@@ -129,10 +212,9 @@
 
     <tbody>
       <tr *ngFor="let entry of ledger">
-
         <!-- Date -->
         <td>
-          {{ entry.transactionDate | date:'dd/MM/yyyy hh:mm a' }}
+          {{ entry.transactionDate | date: "dd/MM/yyyy hh:mm a" }}
         </td>
 
         <!-- Type -->
@@ -142,36 +224,50 @@
 
         <!-- Note -->
         <td>
-          {{ entry.note || '-' }}
+          {{ entry.note || "-" }}
         </td>
 
         <!-- Debit -->
         <td class="right debit">
-          <span *ngIf="entry.type === 'purchase'">
-            ₹ {{ entry.amount }}
-          </span>
+          <ng-container *ngIf="
+      entry.type === 'purchase' ||
+      entry.type === 'opening' ||
+      (entry.type === 'adjustment' && entry.amount > 0);
+    else noDebit">
+
+            ₹ {{ entry.amount | number:'1.2-2' }}
+          </ng-container>
+
+          <ng-template #noDebit>—</ng-template>
         </td>
 
         <!-- Credit -->
         <td class="right credit">
-          <span *ngIf="entry.type === 'payment'">
-            ₹ {{ entry.amount }}
-          </span>
+          <ng-container *ngIf="
+      entry.type === 'payment' ||
+      entry.type === 'purchase_return' ||
+      (entry.type === 'adjustment' && entry.amount < 0);
+    else noCredit">
+
+            ₹ {{ entry.amount < 0 ? (entry.amount * -1 | number:'1.2-2') : (entry.amount | number:'1.2-2') }}
+              </ng-container>
+
+              <ng-template #noCredit>—</ng-template>
         </td>
 
         <!-- Balance -->
-        <td class="right balance">
+        <td class="right balance" [ngClass]="{
+    'positive-balance': entry.balanceAfterTransaction > 0,
+    'zero-balance': entry.balanceAfterTransaction === 0,
+    'negative-balance': entry.balanceAfterTransaction < 0
+  }">
           ₹ {{ entry.balanceAfterTransaction }}
         </td>
-
       </tr>
     </tbody>
-
   </table>
 
-  <div *ngIf="!ledger.length">
-    No ledger entries found.
-  </div>
+  <div *ngIf="!ledger.length">No ledger entries found.</div>
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">

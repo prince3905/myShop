@@ -2,7 +2,7 @@ import { MatPaginator, PageEvent } from "@angular/material/paginator";
 import { DistributorService } from "../../shared/services/distributor.service";
 import { ChangeDetectorRef, Component, OnInit, ViewChild } from "@angular/core";
 import { ActivatedRoute, NavigationExtras, Router } from "@angular/router";
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatSnackBar } from "@angular/material/snack-bar";
 import { Subject } from "rxjs";
 import { MatDialog } from "@angular/material/dialog";
 import { AddDistributorsComponent } from "../add-distributors/add-distributors.component";
@@ -53,7 +53,7 @@ export class DistributorsComponent implements OnInit {
     private router: Router,
     private Router: ActivatedRoute,
     public dialog: MatDialog,
-     private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
   ) {}
 
   ngOnInit(): void {
@@ -125,33 +125,34 @@ export class DistributorsComponent implements OnInit {
     this.suggestions = [];
   }
 
- openAddDistributor() {
-  console.log("Opening Add Distributor Modal");
+  openAddDistributor() {
+    console.log("Opening Add Distributor Modal");
 
-  this.dialog.open(AddDistributorsComponent, {
-    width: '650px',
-    height: '800px',
-    data: null   // 🔥 MUST BE NULL
-  }).afterClosed().subscribe((res) => {
+    this.dialog
+      .open(AddDistributorsComponent, {
+        width: "100%",
+        height: "100%",
+        data: null, // 🔥 MUST BE NULL
+      })
+      .afterClosed()
+      .subscribe((res) => {
+        console.log("Dialog Closed:", res);
 
-    console.log("Dialog Closed:", res);
-
-    if (res === true) {
-      this.getAllDistributors(null);
-      this.snackBar.open("Distributor list refreshed", "Close", {
-        duration: 2000
+        if (res === true) {
+          this.getAllDistributors(null);
+          this.snackBar.open("Distributor list refreshed", "Close", {
+            duration: 2000,
+          });
+        }
       });
-    }
-  });
-}
+  }
 
   openViewDistributor(item: any, event: Event): void {
     event.stopPropagation();
 
     this.dialog.open(ViewDistributorComponent, {
-      width: "70vw",
-      maxWidth: "900px",
-      height: "auto",
+      width: "900px",
+      height: "800px",
       data: item,
     });
   }
@@ -217,25 +218,26 @@ export class DistributorsComponent implements OnInit {
       );
   }
 
-openEditDistributor(row: any) {
+  openEditDistributor(row: any) {
+    console.log("Editing Distributor:", row);
 
-  console.log("Editing Distributor:", row);
+    this.dialog
+      .open(AddDistributorsComponent, {
+        width: "650px",
+        data: row,
+      })
+      .afterClosed()
+      .subscribe((res) => {
+        console.log("Dialog Closed:", res);
 
-  this.dialog.open(AddDistributorsComponent, {
-    width: '650px',
-    data: row
-  }).afterClosed().subscribe((res) => {
-
-    console.log("Dialog Closed:", res);
-
-    if (res === true) {
-      this.getAllDistributors('null');
-      this.snackBar.open("Distributor updated successfully", "Close", {
-        duration: 2000
+        if (res === true) {
+          this.getAllDistributors("null");
+          this.snackBar.open("Distributor updated successfully", "Close", {
+            duration: 2000,
+          });
+        }
       });
-    }
-  });
-}
+  }
 
   openDistributorModal() {
     throw new Error("Method not implemented.");
