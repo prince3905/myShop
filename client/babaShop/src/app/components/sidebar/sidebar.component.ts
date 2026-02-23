@@ -11,7 +11,7 @@ declare interface RouteInfo {
   class?: string;
   roles: string[];
   children?: RouteInfo[];
-  expanded?: boolean;   // 🔥 YE LINE ADD KARO
+  expanded?: boolean; // 🔥 YE LINE ADD KARO
 }
 
 export const ROUTES: RouteInfo[] = [
@@ -39,13 +39,13 @@ export const ROUTES: RouteInfo[] = [
         icon: "poll",
         roles: ["SUPER_ADMIN", "ADMIN"],
       },
-       {
+      {
         path: "/purchase",
         title: "Purchase",
         icon: "shopping_cart",
         roles: ["SUPER_ADMIN"],
-      }
-    ]
+      },
+    ],
   },
 
   {
@@ -76,8 +76,8 @@ export const ROUTES: RouteInfo[] = [
         title: "Returns",
         icon: "undo",
         roles: ["SUPER_ADMIN", "ADMIN", "MANAGER"],
-      }
-    ]
+      },
+    ],
   },
 
   {
@@ -96,8 +96,8 @@ export const ROUTES: RouteInfo[] = [
         title: "Distributors",
         icon: "supervisor_account",
         roles: ["SUPER_ADMIN", "ADMIN"],
-      }
-    ]
+      },
+    ],
   },
 
   {
@@ -116,10 +116,9 @@ export const ROUTES: RouteInfo[] = [
         title: "Settings",
         icon: "settings",
         roles: ["SUPER_ADMIN", "ADMIN"],
-      }
-    ]
-  }
-
+      },
+    ],
+  },
 ];
 
 @Component({
@@ -161,30 +160,18 @@ export class SidebarComponent implements OnInit {
     return true;
   }
   logout(): void {
-    // Implement your logout logic here (e.g., clear user session, token, etc.)
-
-    // After logout, redirect to the login page
+    this.auth.removeToken();
+    this.auth.removeUser();
     this.router.navigate(["/login"]);
-    this.auth.logout().subscribe(
-      (response) => {
-        console.log(response);
-        this.router.navigate(["/login"]);
-      },
-      (error) => {
-        console.error("Login failed:", error);
-        // Handle login error here (e.g., show error message to the user)
-      },
-    );
   }
 
   toggleMenu(menuItem: RouteInfo) {
-  this.menuItems.forEach(item => {
-    if (item !== menuItem) {
-      item.expanded = false;
-    }
-  });
+    this.menuItems.forEach((item) => {
+      if (item !== menuItem) {
+        item.expanded = false;
+      }
+    });
 
-  menuItem.expanded = !menuItem.expanded;
-}
-
+    menuItem.expanded = !menuItem.expanded;
+  }
 }

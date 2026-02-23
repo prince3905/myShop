@@ -23,9 +23,9 @@ export class LoginComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    // Agar development ke liye auto-fill karna ho to ye comment hata dena:
-    // this.email = this.credentials.email;
-    // this.password = this.credentials.password;
+   if (this.authService.isLoggedIn()) {
+    this.router.navigate(['/dashboard']);
+  }
   }
 
   onSubmit(): void {

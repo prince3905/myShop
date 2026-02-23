@@ -11,37 +11,30 @@ exports.createDistributorLedgerEntry = async ({
   transactionDate,
   createdBy,
 }) => {
-  // 1️ Last entry
+
+  // Get last ledger entry
   const lastEntry = await DistributorLedger.findOne({
     distributor,
     shop,
     isDeleted: false,
   }).sort({ createdAt: -1 });
 
+  let previousBalance = lastEntry
+    ? lastEntry.balanceAfterTransaction
+    : 0;
+
   let newBalance = 0;
 
-  // if (!lastEntry) {
-  //   newBalance = amount;
-  //   console.log("Ledger service called");
-  //   console.log("Type:", type, "Amount:", amount);
-  // } else {
-  //   if (type === "payment" || type === "purchase_return") {
-  //     newBalance = lastEntry.balanceAfterTransaction - amount;
-  //   } else {
-  //     newBalance = lastEntry.balanceAfterTransaction + amount;
-  //   }
-  // }
-
-if (!lastEntry) {
-  if (type !== "opening") {
-    throw new Error("Opening balance must be first transaction");
-  }
-  newBalance = amount;
-} else {
-
-  let previousBalance = lastEntry.balanceAfterTransaction;
-
+  // Balance calculation logic
   switch (type) {
+
+    case "opening":
+      if (lastEntry) {
+        throw new Error("Opening balance already exists");
+      }
+      newBalance = amount;
+      break;
+
     case "purchase":
       newBalance = previousBalance + amount;
       break;
@@ -52,16 +45,15 @@ if (!lastEntry) {
       break;
 
     case "adjustment":
-      newBalance = previousBalance + amount; // amount can be + or -
+      // adjustment can be + or -
+      newBalance = previousBalance + amount;
       break;
 
     default:
       throw new Error("Invalid ledger type");
   }
-}
 
-
-  // 2️ Ledger save karo
+  // Create ledger entry
   const ledger = await DistributorLedger.create({
     shop,
     distributor,
@@ -74,7 +66,7 @@ if (!lastEntry) {
     createdBy,
   });
 
-  // 3️ Distributor balance update karo
+  // Update distributor current balance
   await Distributor.findByIdAndUpdate(distributor, {
     currentBalance: newBalance,
   });

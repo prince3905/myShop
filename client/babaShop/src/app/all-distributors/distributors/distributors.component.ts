@@ -130,8 +130,8 @@ export class DistributorsComponent implements OnInit {
 
     this.dialog
       .open(AddDistributorsComponent, {
-        width: "100%",
-        height: "100%",
+        width: "40%",
+        height: "80%",
         data: null, // 🔥 MUST BE NULL
       })
       .afterClosed()
@@ -151,8 +151,8 @@ export class DistributorsComponent implements OnInit {
     event.stopPropagation();
 
     this.dialog.open(ViewDistributorComponent, {
-      width: "900px",
-      height: "800px",
+      width: "90%",
+      height: "89%",
       data: item,
     });
   }
