@@ -6,7 +6,7 @@ const imageSchema = new mongoose.Schema({
   isPrimary: { type: Boolean, default: false }
 }, { _id: false });
 
-const productSchema = new mongoose.Schema({
+const productModelSchema = new mongoose.Schema({
 
   shop: {
     type: mongoose.Schema.Types.ObjectId,
@@ -15,30 +15,17 @@ const productSchema = new mongoose.Schema({
     index: true
   },
 
+  product: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Product",
+    required: true,
+    index: true
+  },
+
   name: {
     type: String,
     required: true,
     trim: true
-  },
-
-  slug: {
-    type: String,
-    trim: true,
-    lowercase: true
-  },
-
-  category: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Category",
-    required: true,
-    index: true
-  },
-
-  brand: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Brand",
-    required: true,
-    index: true
   },
 
   description: String,
@@ -52,10 +39,10 @@ const productSchema = new mongoose.Schema({
 
 }, { timestamps: true });
 
-/* Unique product per shop */
-productSchema.index({ shop: 1, name: 1 }, { unique: true });
+/* Unique model per product */
+productModelSchema.index(
+  { shop: 1, product: 1, name: 1 },
+  { unique: true }
+);
 
-/* Text search */
-productSchema.index({ name: "text" });
-
-module.exports = mongoose.model("Product", productSchema);
+module.exports = mongoose.model("ProductModel", productModelSchema);

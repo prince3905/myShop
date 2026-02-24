@@ -10,22 +10,25 @@ const stockSchema = new mongoose.Schema({
     index: true,
   },
 
-  /* ===== PRODUCT ===== */
-  item: {
+  /* ===== PRODUCT RELATION ===== */
+  product: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Item",
+    ref: "Product",
     required: true,
     index: true,
   },
 
-  modelId: {
+  model: {
     type: mongoose.Schema.Types.ObjectId,
+    ref: "ProductModel",
     required: true,
   },
 
-  variationId: {
+  variation: {
     type: mongoose.Schema.Types.ObjectId,
+    ref: "ProductVariation",
     required: true,
+    index: true,
   },
 
   sku: {
@@ -54,10 +57,23 @@ const stockSchema = new mongoose.Schema({
     min: 0,
   },
 
+  lastPurchasePrice: {
+    type: Number,
+    default: 0,
+  },
+
+  reorderLevel: {
+    type: Number,
+    default: 0,
+  }
+
 }, { timestamps: true });
 
-/* ===== UNIQUE STOCK PER SHOP + SKU ===== */
-stockSchema.index({ shop: 1, sku: 1 }, { unique: true });
+/* ===== UNIQUE STOCK PER SHOP + VARIATION ===== */
+stockSchema.index(
+  { shop: 1, variation: 1 },
+  { unique: true }
+);
 
 /* ===== VIRTUAL AVAILABLE STOCK ===== */
 stockSchema.virtual("availableQuantity").get(function () {
@@ -67,7 +83,6 @@ stockSchema.virtual("availableQuantity").get(function () {
   return available < 0 ? 0 : available;
 });
 
-/* Include virtuals in JSON */
 stockSchema.set("toJSON", { virtuals: true });
 stockSchema.set("toObject", { virtuals: true });
 

@@ -1,19 +1,51 @@
 const express = require("express");
-
-const categoryController =require('../controllers/categoryController')
-const authController =require('../controllers/authController')
-
 const router = express.Router();
-module.exports = authController.protect
 
-router.get('/category-suggestions', categoryController.searchCategoryNameSuggestions);
-router.get('/', categoryController.allCategory);
-router.post('/', categoryController.addCategory);
-// router.put('/', categoryController.updateCategory);
-router.put('/', categoryController.updateOrCreateCategory);
-router.delete('/:id', categoryController.deleteCategory);
-router.get('/:categoryId/brands', categoryController.getBrandsByCategory);
+const categoryController = require("../controllers/categoryController");
 
+const { validate } = require("../middleware/validate");
+const {
+  createCategoryValidation,
+  updateCategoryValidation
+} = require("../middleware/categoryValidation");
 
+/* =========================
+   CREATE CATEGORY
+========================= */
+router.post(
+  "/",
+  createCategoryValidation,
+  validate,
+  categoryController.createCategory
+);
+
+/* =========================
+   GET ALL CATEGORIES (SHOP WISE)
+   Example: /api/categories?shop=SHOP_ID
+========================= */
+router.get(
+  "/",
+  categoryController.getCategories
+);
+
+/* =========================
+   UPDATE CATEGORY
+========================= */
+router.put(
+  "/:id",
+  updateCategoryValidation,
+  validate,
+  categoryController.updateCategory
+);
+
+/* =========================
+   DELETE CATEGORY
+========================= */
+router.delete(
+  "/:id",
+  updateCategoryValidation,
+  validate,
+  categoryController.deleteCategory
+);
 
 module.exports = router;

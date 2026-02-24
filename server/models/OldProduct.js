@@ -1,44 +1,47 @@
 const mongoose = require("mongoose");
 
+/* =========================
+   IMAGE SCHEMA
+========================= */
 const imageSchema = new mongoose.Schema({
   url: { type: String, required: true },
   alt: String,
   isPrimary: { type: Boolean, default: false }
 }, { _id: false });
 
+/* =========================
+   PRODUCT (MAIN INFO)
+========================= */
 const productSchema = new mongoose.Schema({
 
   shop: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Shop",
     required: true,
-    index: true
   },
 
   name: {
     type: String,
     required: true,
-    trim: true
+    trim: true,
   },
 
   slug: {
     type: String,
     trim: true,
-    lowercase: true
+    lowercase: true,
   },
 
   category: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Category",
     required: true,
-    index: true
   },
 
   brand: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Brand",
     required: true,
-    index: true
   },
 
   description: String,
@@ -47,15 +50,11 @@ const productSchema = new mongoose.Schema({
 
   isActive: {
     type: Boolean,
-    default: true
+    default: true,
   }
 
 }, { timestamps: true });
 
-/* Unique product per shop */
-productSchema.index({ shop: 1, name: 1 }, { unique: true });
-
-/* Text search */
 productSchema.index({ name: "text" });
 
 module.exports = mongoose.model("Product", productSchema);

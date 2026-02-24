@@ -1,323 +1,169 @@
-const mongoose = require("mongoose");
-const Schema = mongoose.Schema;
-
-// const Item = require("../models/item");
 const Product = require("../models/Product");
-const Distributor = require('../models/distributor');
-const Category = require("../models/category");
-const Brand = require("../models/brand");
 
-exports.allItem = async (req, res) => {
+/* =========================
+   CREATE PRODUCT
+========================= */
+exports.createProduct = async (req, res) => {
   try {
-    const { name, category, brand, startDate, endDate, page, perPage } =
-      req.query;
-    const query = {};
-    // console.log("query",req.query);
-    let startOfDay = null,
-      endOfDay = null;
-    if (name && name !== "null") {
-      query.name = { $regex: name, $options: "i" };
-    }
-    if (category && category !== "null") {
-      query.category = category;
-    }
-    if (brand && brand !== "null") {
-      query.brand = brand;
-    }
+    const { name, slug, category, brand, description, images, shop } = req.body;
 
-    if (startDate && endDate && startDate !== "null" && endDate !== "null") {
-      startOfDay = new Date(startDate);
-      startOfDay.setHours(0, 0, 0, 0);
-      endOfDay = new Date(endDate);
-      endOfDay.setHours(23, 59, 59, 999);
-
-      query.createdAt = {
-        $gte: startOfDay,
-        $lte: endOfDay,
-      };
-    }
-
-    const itemsPerPage = parseInt(perPage) || 10; 
-    const currentPage = parseInt(page) || 1; 
-    const totalItems = await Item.countDocuments(query);
-    const skipItems = (currentPage - 1) * itemsPerPage;
-
-    const items = await Item.find(query)
-      .populate("category")
-      .populate("brand")
-      .skip(skipItems)
-      .limit(itemsPerPage);
-    res.status(200).json({ items, totalItems: totalItems });
-  } catch (err) {
-    console.error("Error retrieving items:", err);
-    res.status(500).json({ error: "Error retrieving items" });
-  }
-};
-
-exports.findByProductName = async (req, res) => {
-  try {
-    const { name } = req.query;
-
-    if (!name) {
-      return res.status(400).json({ error: 'Product name is required' });
-    }
-
-    // Search for items with an exact case-insensitive match for the provided name
-    const items = await Item.find({ name: { $regex: new RegExp(`^${name}$`, 'i') } })
-      .populate('category')
-      .populate('brand');
-
-    res.status(200).json(items);
-  } catch (err) {
-    console.error('Error finding items by product name:', err);
-    res.status(500).json({ error: 'Error finding items by product name' });
-  }
-};
-
-
-// working code==========>
-
-// exports.addItem = async (req, res) => {
-//   const newItemData = req.body;
-//   newItemData.createdAt = new Date();
-//   const newItem = new Item(newItemData);
-//   newItem
-//     .save()
-//     .then((savedItem) => {
-//       res.status(201).json({
-//         message: "Item added successfully.",
-//         item: savedItem,
-//       });
-//     })
-//     .catch((err) => {
-//       console.error("Error saving item:", err);
-//       res.status(500).json({ error: "Error saving item" });
-//     });
-// };
-
-// =====>
-
-// testCode ========>
-exports.addItem = async (req, res) => {
-  const newItemData = req.body;
-  newItemData.createdAt = new Date();
-
-  const distributorId = newItemData.distributor;
-  const itemName = newItemData.name;
-
-  try {
-    let existingItem = await Item.findOne({ distributor: distributorId, name: itemName });
-
-    if (existingItem) {
-      newItemData.models.forEach(newModel => {
-        const existingModel = existingItem.models.find(model => model.model === newModel.model);
-
-        if (existingModel) {
-          // Generate a unique order number for each variation
-          newModel.variations.forEach(variation => {
-            variation.orderNumber = generateOrderNumber();
-            variation.soldOut = false;
-          });
-
-          existingModel.variations.push(...newModel.variations);
-        } else {
-          existingItem.models.push(newModel);
-        }
-      });
-
-      const savedExistingItem = await existingItem.save();
-      res.status(201).json({
-        message: 'Variation added to existing item successfully.',
-        item: savedExistingItem,
-      });
-    } else {
-      // Check if the distributor already exists for the new item
-      const existingDistributor = await Distributor.findById(distributorId);
-
-      if (existingDistributor) {
-        // If the distributor exists, create a new item associated with the distributor
-        newItemData.models.forEach(newModel => {
-          // Generate a unique order number for each variation
-          newModel.variations.forEach(variation => {
-            variation.orderNumber = generateOrderNumber();
-            variation.soldOut = false;
-          });
-        });
-
-        const newItem = new Item(newItemData);
-        newItem.models = newItemData.models;
-        const savedNewItem = await newItem.save();
-
-        existingDistributor.items.push(savedNewItem._id);
-        await existingDistributor.save();
-
-        res.status(201).json({
-          message: 'Item added successfully.',
-          item: savedNewItem,
-        });
-      } else {
-        // If the distributor doesn't exist, create a new distributor and associate the item
-        const newDistributor = new Distributor({
-          _id: distributorId,
-          items: [newItemData.models[0]._id], // Assuming each variation is unique
-        });
-        await newDistributor.save();
-
-        newItemData.models.forEach(newModel => {
-          // Generate a unique order number for each variation
-          newModel.variations.forEach(variation => {
-            variation.orderNumber = generateOrderNumber();
-            variation.soldOut = false;
-          });
-        });
-
-        const newItem = new Item(newItemData);
-        newItem.models = newItemData.models;
-        const savedNewItem = await newItem.save();
-
-        res.status(201).json({
-          message: 'Item and Distributor added successfully.',
-          item: savedNewItem,
-        });
-      }
-    }
-  } catch (err) {
-    console.error('Error saving item:', err);
-    res.status(500).json({ error: 'Error saving item' });
-  }
-};
-
-
-
-// Function to generate the order number
-function generateOrderNumber() {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth() + 1;
-  const day = now.getDate();
-  const randomDigits = Math.floor(Math.random() * 10000);
-
-  return `${year}${month}${day}${randomDigits}`;
-}
-
-
-// =======>
-exports.itemDetails = async (req, res) => {
-  const { id } = req.params;
-  try {
-    const item = await Item.findById(id).populate("category").populate("brand");
-    // console.log("Found Item:", item);
-    res.status(200).json(item);
-  } catch (err) {
-    console.error("Error retrieving items Details:", err);
-    res.status(500).json({ error: "Error retrieving items Details" });
-  }
-};
-
-exports.updateItem = (req, res) => {
-  const {
-    id,
-    name,
-    color,
-    model,
-    description,
-    p_price,
-    quantity,
-    s_price,
-    brand,
-    category,
-    size,
-  } = req.body;
-  // Create an object with the updated fields
-  const updatedItem = {
-    name,
-    color,
-    model,
-    description,
-    p_price,
-    quantity,
-    s_price,
-    brand,
-    category,
-    size,
-  };
-
-  Item.findByIdAndUpdate(id, updatedItem, { new: true })
-    .then((updatedItem) => {
-      if (!updatedItem) {
-        return res.status(404).json({ error: "Item not found" });
-      }
-
-      console.log("Updated Item:", updatedItem);
-      res
-        .status(200)
-        .json({ message: "Item updated successfully", item: updatedItem });
-    })
-    .catch((err) => {
-      console.error("Error updating item:", err);
-      res.status(500).json({ error: "Error updating item" });
+    const product = await Product.create({
+      name,
+      slug,
+      category,
+      brand,
+      description,
+      images,
+      shop
     });
-};
 
-exports.deleteItem = (req, res) => {
-  const { id } = req.params;
-
-  Item.findByIdAndDelete(id)
-    .then((DeleteItem) => {
-      if (!DeleteItem) {
-        return res.status(404).json({ error: "Item not found" });
-      }
-
-      console.log("Item delete:", DeleteItem);
-      res.status(200).json({ message: "Item deleted successfully" });
-    })
-    .catch((err) => {
-      console.error("Error deleting item:", err);
-      res.status(500).json({ error: "Error deleting item" });
+    res.status(201).json({
+      success: true,
+      message: "Product created successfully",
+      data: product
     });
-};
 
-exports.searchItemNameSuggestions = async (req, res) => {
-  try {
-    console.log(req.query);
-    const searchTerm = req.query.term;
-    const suggestions = await Item.find({
-      name: { $regex: searchTerm, $options: "i" },
-    }).limit(10);
-    res.status(200).json(suggestions.map((item) => item.name));
-    // console.log(suggestions.map((item) => item.name));
-  } catch (err) {
-    console.error("Error searching item name suggestions:", err);
-    res.status(500).json({ error: "Error searching item name suggestions" });
+  } catch (error) {
+
+    if (error.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        message: "Product already exists for this shop"
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      message: "Error creating product",
+      error: error.message
+    });
   }
 };
 
-exports.sizeSuggestions = async (req, res) => {
+
+/* =========================
+   GET ALL PRODUCTS (SHOP WISE)
+========================= */
+exports.getProducts = async (req, res) => {
   try {
-    // console.log(req.query);
-    const searchTerm = req.query.term;
-    const suggestions = await Item.find({
-      size: { $regex: searchTerm, $options: "i" },
-    }).limit(10);
-    res.status(200).json(suggestions.map((item) => item.size));
-    // console.log(suggestions.map((item) => item.size));
-  } catch (err) {
-    console.error("Error searching size suggestions:", err);
-    res.status(500).json({ error: "Error searching size suggestions" });
+    const { shop } = req.query;
+
+    if (!shop) {
+      return res.status(400).json({
+        success: false,
+        message: "Shop ID is required"
+      });
+    }
+
+    const products = await Product.find({ shop });
+
+    res.json({
+      success: true,
+      count: products.length,
+      data: products
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error fetching products"
+    });
   }
 };
 
-exports.modelSuggestions = async (req, res) => {
+
+/* =========================
+   GET SINGLE PRODUCT
+========================= */
+exports.getProductById = async (req, res) => {
   try {
-    // console.log(req.query);
-    const searchTerm = req.query.term;
-    const suggestions = await Item.find({
-      model: { $regex: searchTerm, $options: "i" },
-    }).limit(10);
-    res.status(200).json(suggestions.map((item) => item.model));
-    // console.log(suggestions.map((item) => item.model));
-  } catch (err) {
-    console.error("Error searching model suggestions:", err);
-    res.status(500).json({ error: "Error searching model suggestions" });
+    const { id } = req.params;
+
+    const product = await Product.findById(id)
+      .populate("category", "name")
+      .populate("brand", "name");
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found"
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: product
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error fetching product"
+    });
+  }
+};
+
+
+/* =========================
+   UPDATE PRODUCT
+========================= */
+exports.updateProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const product = await Product.findByIdAndUpdate(
+      id,
+      req.body,
+      { new: true }
+    );
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found"
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Product updated successfully",
+      data: product
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error updating product"
+    });
+  }
+};
+
+
+/* =========================
+   DELETE PRODUCT
+========================= */
+exports.deleteProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const product = await Product.findByIdAndDelete(id);
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found"
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Product deleted successfully"
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error deleting product"
+    });
   }
 };

@@ -1,86 +1,126 @@
-const mongoose = require("mongoose");
-const Schema = mongoose.Schema;
+const Brand = require("../models/brand");
 
-const Brand = require('../models/brand');
-
-exports.addBrand = async (req, res) => {
-  const newCBrandData = req.body;
-  newCBrandData.createdAt = new Date();
-  const newBrand = new Brand(newCBrandData);
-  newBrand
-    .save()
-    .then((savedBrand) => {
-      res.status(201).json({
-        message: "Brand added successfully.",
-        Category: savedBrand,
-      });
-    })
-    .catch((err) => {
-      console.error("Error saving brand:", err);
-      res.status(500).json({ error: "Error saving brand" });
-    });
-};
-
-
-
-exports.updateBrand = async (req, res) => {
-  const brandId = req.body;
-  // console.log(brandId);
+/* =========================
+   CREATE BRAND
+========================= */
+exports.createBrand = async (req, res) => {
   try {
-    const updatedBrandData = {
-      name: req.body.name,
-      description: req.body.description,
-    };
-    const updatedBrand = await Brand.findByIdAndUpdate(
-      brandId,
-      updatedBrandData,
-      {
-        new: true,
-      }
-    );
-    if (!updatedBrand) {
-      return res.status(404).json({ error: "Brand not found" });
-    }
-    res.status(200).json({
-      message: "Brand updated successfully.",
-      category: updatedBrand,
+    const { name, description, logo, shop } = req.body;
+
+    const brand = await Brand.create({
+      name,
+      description,
+      logo,
+      shop
     });
+
+    res.status(201).json({
+      success: true,
+      message: "Brand created successfully",
+      data: brand
+    });
+
   } catch (error) {
-    console.error("Error updating brand:", error);
-    res.status(500).json({ error: "Error updating brand" });
-  }
-};
+    if (error.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        message: "Brand already exists for this shop"
+      });
+    }
 
-
-
-
-exports.allBrand = async (req, res) => {
-  try {
-    const brand = await Brand.find({})
-    // console.log(brand);
-    res.status(200).json(brand);
-  } catch (err) {
-    console.error("Error retrieving brand:", err);
-    res.status(500).json({ error: "Error retrieving brand" });
-  }
-};
-
-exports.deleteBrand = (req, res) => {
-  const { id } = req.params;
-  // console.log(req.params)
-  Brand.findByIdAndDelete(id)
-    .then((deleteBrand) => {
-      if (!deleteBrand) {
-        return res.status(404).json({ error: "Brand  not found" });
-      }
-
-      // console.log("Brand delete:", deleteBrand);
-      res.status(200).json({ message: "Brand deleted successfully" });
-    })
-    .catch((err) => {
-      console.error("Error deleting Brand :", err);
-      res.status(500).json({ error: "Error deleting Brand" });
+    res.status(500).json({
+      success: false,
+      message: "Error creating brand",
+      error: error.message
     });
+  }
 };
 
 
+/* =========================
+   GET ALL BRANDS (SHOP WISE)
+========================= */
+exports.getBrands = async (req, res) => {
+  try {
+    const { shop } = req.query;
+
+    const brands = await Brand.find({ shop });
+
+    res.status(200).json({
+      success: true,
+      count: brands.length,
+      data: brands
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error fetching brands"
+    });
+  }
+};
+
+
+/* =========================
+   UPDATE BRAND
+========================= */
+exports.updateBrand = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const brand = await Brand.findByIdAndUpdate(
+      id,
+      req.body,
+      { new: true }
+    );
+
+    if (!brand) {
+      return res.status(404).json({
+        success: false,
+        message: "Brand not found"
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Brand updated successfully",
+      data: brand
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error updating brand"
+    });
+  }
+};
+
+
+/* =========================
+   DELETE BRAND
+========================= */
+exports.deleteBrand = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const brand = await Brand.findByIdAndDelete(id);
+
+    if (!brand) {
+      return res.status(404).json({
+        success: false,
+        message: "Brand not found"
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Brand deleted successfully"
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error deleting brand"
+    });
+  }
+};

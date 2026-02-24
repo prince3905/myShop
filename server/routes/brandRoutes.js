@@ -1,16 +1,51 @@
 const express = require("express");
-
-const brandController =require('../controllers/brandController')
-const authController =require('../controllers/authController')
-
 const router = express.Router();
-module.exports = authController.protect
 
-router.get('/', brandController.allBrand);
-router.post('/', brandController.addBrand);
-router.put('/', brandController.updateBrand);
-router.delete('/:id', brandController.deleteBrand);
+const brandController = require("../controllers/brandController");
 
+const { validate } = require("../middleware/validate");
+const {
+  createBrandValidation,
+  updateBrandValidation
+} = require("../middleware/brandValidation");
 
+/* =========================
+   CREATE BRAND
+========================= */
+router.post(
+  "/",
+  createBrandValidation,
+  validate,
+  brandController.createBrand
+);
+
+/* =========================
+   GET ALL BRANDS (SHOP WISE)
+   Example: /api/brands?shop=SHOP_ID
+========================= */
+router.get(
+  "/",
+  brandController.getBrands
+);
+
+/* =========================
+   UPDATE BRAND
+========================= */
+router.put(
+  "/:id",
+  updateBrandValidation,
+  validate,
+  brandController.updateBrand
+);
+
+/* =========================
+   DELETE BRAND
+========================= */
+router.delete(
+  "/:id",
+  updateBrandValidation,
+  validate,
+  brandController.deleteBrand
+);
 
 module.exports = router;
