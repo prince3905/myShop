@@ -9,18 +9,32 @@ import {environment} from '../../../environments/environment'
 })
 export class BrandService {
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
 
   get baseURL(): string {
     return environment.apiBaseURL;
   }
 
-    getBrand() {
-    return this.http.get(`${this.baseURL}/api/brand`);
+  getAllBrands(): Observable<any> {
+    const shopId = localStorage.getItem("selected_shop");
+    return this.http.get(`${this.baseURL}/api/brands`, {
+      params: { shop: shopId || "" }
+    });
   }
 
-  addBrand(data) {
-    return this.http.post(`${this.baseURL}/api/brand`, data);
+  addBrand(data: any): Observable<any> {
+    const shopId = localStorage.getItem("selected_shop");
+    return this.http.post(`${this.baseURL}/api/brands`, {
+      ...data,
+      shop: shopId
+    });
   }
 
+  updateBrand(id: string, data: any): Observable<any> {
+    return this.http.put(`${this.baseURL}/api/brands/${id}`, data);
+  }
+
+  deleteBrand(id: string): Observable<any> {
+    return this.http.delete(`${this.baseURL}/api/brands/${id}`);
+  }
 }

@@ -1,18 +1,14 @@
-import { ComponentsModule } from "./../../components/components.module";
-import { ChangeDetectorRef, Component, OnInit, ViewChild } from "@angular/core";
+import { Component, OnInit, ViewChild } from "@angular/core";
 import { MatDialog } from "@angular/material/dialog";
 
 import { AddItemsComponent } from "../add-items/add-items.component";
-import { ItemService } from "app/shared/services/item.service";
 import { ActivatedRoute, NavigationExtras, Router } from "@angular/router";
-import { FormControl, Validators } from "@angular/forms";
-import { BrandService } from "app/shared/services/brand.service";
-import { CategoryService } from "app/shared/services/category.service";
 import { Subject, forkJoin } from "rxjs";
 import { AddCategoryComponent } from "../add-category/add-category.component";
 import { AddBrandComponent } from "../add-brand/add-brand.component";
 
 import { MatPaginator, PageEvent } from "@angular/material/paginator";
+import { ProductService } from "app/shared/services/product.service";
 @Component({
   selector: "items-list",
   templateUrl: "./items-list.component.html",
@@ -33,16 +29,12 @@ export class ItemsListComponent implements OnInit {
   searchInputSubject = new Subject<string>();
   loading: boolean = true;
 
+  productId: string;
+  isEditMode = false;
 
   selectedOption: string;
   selectedCategory: string;
   selectedBrand: string;
-  selectedVariantQuantity: number;
-  selectedVariantPrice: number;
-  selectedVariant: { [itemId: string]: any } = {};
-  selectedModel: { [itemId: string]: string } = {};
-  selectedOrderNumber: { [itemId: string]: string } = {};
-
   searchParams = {};
   suggestions: string[] = [];
 
@@ -51,81 +43,48 @@ export class ItemsListComponent implements OnInit {
   paginatedItems: any[] = [];
   totalItems: number;
 
-  isSoldOut(soldOut: boolean): string {
-    return soldOut ? 'Yes' : 'No';
-  } 
-
   @ViewChild(MatPaginator) paginator: MatPaginator;
-
 
   constructor(
     public dialog: MatDialog,
-    private item: ItemService,
+    private productService: ProductService,
     private router: Router,
     private Router: ActivatedRoute,
-    private categoryS: CategoryService,
-    private brandS: BrandService,
-    private cdr: ChangeDetectorRef
   ) {}
 
-  ngOnInit(): void {
-    this.getAllItems(null);
-    this.getCategoryAndBrand();
-    this.updatePaginatedItems();
-    for (const item of this.items) {
-      item.selectedModel = '';
-      item.selectedModelVariations = [];
-      item.selectedVariant = null; 
-    }
+  ngOnInit() {
+    this.loadProducts();
   }
 
-  onModelChange(item: any): void {
-    // Find the selected model object based on the selectedModel value
-    const selectedModelObject = item.models.find((model) => model.model === item.selectedModel);
-    if (selectedModelObject) {
-      // Update the size property with the size of the selected model
-      item.size = selectedModelObject.size;
-      item.selectedModelVariations = selectedModelObject.variations;
-    } else {
-      // Handle the case when no model is selected (optional)
-      item.size = '';
-      item.selectedModelVariations = [];
-    }
-  
-    // Update selectedModelVariations with the variations for the selected model
-    item.selectedModelVariations = selectedModelObject ? selectedModelObject.variations : [];
-
-    console.log("Selected Model:", item.selectedModel);
-    console.log("Selected Model Variations:", item.selectedModelVariations);
+  toggleVariations(item: any) {
+    item.showVariations = !item.showVariations;
   }
 
-  updateSelectedVariantInfo(item: any, selectedOrderNumber: string): void {
-    console.log('updateSelectedVariantInfo called for item:', item);
-    console.log('Selected Order Number:', selectedOrderNumber);
-  
-    // Log the selectedModelVariations array to verify its content
-    console.log('Selected Model Variations:', item.selectedModelVariations);
-  
-    const selectedVariant = item.selectedModelVariations.find((variation) => variation.orderNumber === selectedOrderNumber);
-    
-    if (selectedVariant) {
-      this.selectedVariant[item._id] = selectedVariant;
-      this.cdr.detectChanges();
-      console.log('Selected Variant:', selectedVariant);
-    } else {
-      // this.selectedVariant[item._id] = null;
-      this.cdr.detectChanges(); 
-      console.log('Selected Variant not found');
-    }
+  loadProducts() {
+    this.productService.getAllProducts().subscribe((res: any) => {
+      this.items = res.data || res; // depends backend response
+      console.log("All Products", this.items);
+
+      this.items.forEach((item: any) => {
+        item.totalStock =
+          item.variations?.reduce(
+            (sum: number, v: any) => sum + (v.quantity ? v.quantity : 0),
+            0,
+          ) || 0;
+      });
+
+      this.totalItems = this.items.length;
+      this.paginatedItems = this.items.slice(0, this.pageSize);
+
+      this.loading = false;
+    });
   }
-  
-  
 
   ngAfterViewInit(): void {
     this.paginator.page.subscribe(() => this.updatePaginatedItems());
-    // console.log(this.paginator)
+    console.log(this.paginator);
     this.updatePaginatedItems();
-    // console.log(this.updatePaginatedItems)
+    console.log(this.updatePaginatedItems);
   }
 
   getQueryParams(): any {
@@ -153,7 +112,7 @@ export class ItemsListComponent implements OnInit {
     // console.log(event)
     this.pageSize = event.pageSize;
     const queryParamsObj = this.getQueryParams();
-    this.getAllItems(queryParamsObj);
+    // this.getAllItems(queryParamsObj);
     const navigationExtras: NavigationExtras = {
       relativeTo: this.Router,
       queryParams: queryParamsObj,
@@ -162,21 +121,21 @@ export class ItemsListComponent implements OnInit {
     this.router.navigate([], navigationExtras);
     this.paginatedItems = this.items.slice(
       event.pageIndex * this.pageSize,
-      event.pageIndex * this.pageSize + this.pageSize
+      event.pageIndex * this.pageSize + this.pageSize,
     );
   }
 
-  fetchSuggestions(): void {
-    this.item.getItemSuggestion(this.itemName).subscribe(
-      (suggestions: any[]) => {
-        this.suggestions = suggestions;
-        // console.log(this.suggestions);
-      },
-      (error: any) => {
-        console.error("Error fetching suggestions:", error);
-      }
-    );
-  }
+  // fetchSuggestions(): void {
+  //   this.item.getItemSuggestion(this.itemName).subscribe(
+  //     (suggestions: any[]) => {
+  //       this.suggestions = suggestions;
+  //       // console.log(this.suggestions);
+  //     },
+  //     (error: any) => {
+  //       console.error("Error fetching suggestions:", error);
+  //     }
+  //   );
+  // }
 
   selectSuggestion(suggestion: string): void {
     this.itemName = suggestion;
@@ -185,26 +144,26 @@ export class ItemsListComponent implements OnInit {
 
   onStartDateChange(event: any): void {
     this.startDate = event.value;
-    // console.log("Start Date:", this.startDate);
+    console.log("Start Date:", this.startDate);
   }
 
   onEndDateChange(event: any): void {
     this.endDate = event.value;
-    // console.log("End Date:", this.endDate);
+    console.log("End Date:", this.endDate);
   }
 
-  getCategoryAndBrand(): void {
-    forkJoin({
-      categories: this.categoryS.getCategory(),
-      brands: this.brandS.getBrand(),
-    }).subscribe(
-      (response) => {
-        this.Category = response.categories;
-        this.Brands = response.brands;
-      },
-      (error) => console.error("Error retrieving data:", error)
-    );
-  }
+  // getCategoryAndBrand(): void {
+  //   forkJoin({
+  //     categories: this.categoryS.getCategory(),
+  //     brands: this.brandS.getBrand(),
+  //   }).subscribe(
+  //     (response) => {
+  //       this.Category = response.categories;
+  //       this.Brands = response.brands;
+  //     },
+  //     (error) => console.error("Error retrieving data:", error),
+  //   );
+  // }
 
   onSearch(page: number, perPage: number) {
     this.paginator.pageIndex = 0;
@@ -214,10 +173,6 @@ export class ItemsListComponent implements OnInit {
     };
 
     if (this.selectedOption === "name") {
-      // console.log("Selected Name:", this.itemName);
-      // console.log("Selected Category:", this.selectedCategory);
-      // console.log("Selected Brand:", this.selectedBrand);
-
       queryParamsObj = {
         ...queryParamsObj,
         name: this.itemName,
@@ -225,9 +180,6 @@ export class ItemsListComponent implements OnInit {
         brand: this.selectedBrand,
       };
     } else if (this.selectedOption === "category") {
-      // console.log("Selected Category:", this.selectedCategory);
-      // console.log("Selected Brand:", this.selectedBrand);
-
       queryParamsObj = {
         ...queryParamsObj,
         name: null,
@@ -235,8 +187,6 @@ export class ItemsListComponent implements OnInit {
         brand: this.selectedBrand,
       };
     } else if (this.selectedOption === "brand") {
-      // console.log("Selected Brand:", this.selectedBrand);
-
       queryParamsObj = {
         ...queryParamsObj,
         name: null,
@@ -244,7 +194,7 @@ export class ItemsListComponent implements OnInit {
         brand: this.selectedBrand,
       };
     } else if (this.selectedOption === "date") {
-      // console.log(this.startDate, this.endDate);
+      console.log(this.startDate, this.endDate);
       queryParamsObj = {
         ...queryParamsObj,
         startDate: this.startDate.toISOString().slice(0, 10),
@@ -252,7 +202,7 @@ export class ItemsListComponent implements OnInit {
       };
     }
 
-    // console.log("Query Parameters:", queryParamsObj);
+    console.log("Query Parameters:", queryParamsObj);
 
     // Now navigate with the queryParamsObj
     const navigationExtras: NavigationExtras = {
@@ -262,7 +212,7 @@ export class ItemsListComponent implements OnInit {
     };
 
     this.router.navigate([], navigationExtras);
-    this.getAllItems(queryParamsObj);
+    // this.getAllItems(queryParamsObj);
   }
 
   onClear() {
@@ -283,46 +233,38 @@ export class ItemsListComponent implements OnInit {
       },
       queryParamsHandling: "merge",
     });
-    this.getAllItems(null);
+    // this.getAllItems(null);
     this.suggestions = null;
   }
 
-  getAllItems(queryParamsObj): void {
-    this.loading = true;
-    this.item.getItem(queryParamsObj).subscribe(
-      (response: any) => {
-        this.items = response.items;
-        console.log(response)
-        this.totalItems = response.totalItems;
-        this.paginatedItems = this.items.slice(0, this.pageSize);
-        this.loading = false;
-      this.cdr.detectChanges();
-      },
-      (error) => console.error("Error retrieving items:", error)
-    );
-    this.loading = true;
-    this.cdr.detectChanges();
-  }
+  // getAllItems(queryParamsObj): void {
+  //   this.loading = true;
+  //   this.item.getItem(queryParamsObj).subscribe(
+  //     (response: any) => {
+  //       this.items = response.items;
+  //       console.log(response)
+  //       this.totalItems = response.totalItems;
+  //       this.paginatedItems = this.items.slice(0, this.pageSize);
+  //       this.loading = false;
+  //     this.cdr.detectChanges();
+  //     },
+  //     (error) => console.error("Error retrieving items:", error)
+  //   );
+  //   this.loading = true;
+  //   this.cdr.detectChanges();
+  // }
 
   updatePaginatedItems(): void {
-    if (this.paginator) {
-      const startIndex = this.paginator.pageIndex * this.pageSize;
-      // console.log(startIndex)
-      this.paginatedItems = this.items.slice(
-        startIndex,
-        startIndex + this.pageSize
-      );
-      // console.log("if",this.paginatedItems)
-      this.cdr.detectChanges();
-    } else {
-      this.paginatedItems = [];
-      // console.log("else",this.paginatedItems)
-    }
+    const startIndex = this.paginator.pageIndex * this.pageSize;
+    this.paginatedItems = this.items.slice(
+      startIndex,
+      startIndex + this.pageSize,
+    );
   }
 
   openAddItemModal(): void {
     const dialogRef = this.dialog.open(AddItemsComponent, {
-      width: "1000px",
+      width: "500px",
     });
 
     dialogRef.afterClosed().subscribe((result) => {
@@ -359,4 +301,23 @@ export class ItemsListComponent implements OnInit {
   viewItemDetails(itemId: string) {
     this.router.navigate(["/item-details", itemId]);
   }
+
+  editProduct(id: string) {
+    this.router.navigate(["/add-items", id]);
+  }
+
+  // openEditProduct(item: any, event: Event) {
+  //   event.stopPropagation();
+
+  //   const dialogRef = this.dialog.open(AddItemsComponent, {
+  //     width: "500px",
+  //     data: { product: item }, // 👈 passing full product
+  //   });
+
+  //   dialogRef.afterClosed().subscribe((result) => {
+  //     if (result) {
+  //       this.loadProducts(); // reload list after update
+  //     }
+  //   });
+  // }
 }

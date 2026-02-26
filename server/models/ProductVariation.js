@@ -58,6 +58,12 @@ const productVariationSchema = new mongoose.Schema({
     default: 0
   },
 
+  quantity: {
+  type: Number,
+  default: 0,
+  min: 0
+},
+
   discount: {
     type: {
       type: String,

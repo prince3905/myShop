@@ -1,0 +1,13 @@
+.form-container {
+  padding-top: 20px;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.half-width {
+  flex: 1 1 calc(50% - 20px);
+}

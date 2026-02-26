@@ -38,6 +38,7 @@ import { DistributorsComponent } from "app/all-distributors/distributors/distrib
 import { AddDistributorsComponent } from "app/all-distributors/add-distributors/add-distributors.component";
 import { ViewDistributorComponent } from "app/all-distributors/view-distributor/view-distributor.component";
 import { LedgerEntryComponent } from "app/all-distributors/ledger-entry/ledger-entry.component";
+import { AddDetailsComponent } from "app/all-items/add-details/add-details.component";
 
 @NgModule({
   imports: [
@@ -82,6 +83,7 @@ import { LedgerEntryComponent } from "app/all-distributors/ledger-entry/ledger-e
     DistributorsComponent,
     ViewDistributorComponent,
     LedgerEntryComponent,
+    AddDetailsComponent
   ],
 })
 export class AdminLayoutModule {

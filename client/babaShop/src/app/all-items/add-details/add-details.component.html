@@ -1,0 +1,84 @@
+<mat-card class="mat-elevation-z2">
+
+  <mat-card-header>
+    <mat-card-title>
+      {{ product?.name }} - Add Variation
+    </mat-card-title>
+    <mat-card-subtitle>
+      {{ isEditMode ? 'Edit Variation' : 'Create New Variation' }}
+    </mat-card-subtitle>
+  </mat-card-header>
+
+  <mat-divider></mat-divider>
+
+  <mat-card-content class="form-container">
+
+    <div class="row">
+
+      <!-- Model -->
+      <mat-form-field appearance="outline" class="half-width">
+        <mat-label>Model (Optional)</mat-label>
+        <input matInput [(ngModel)]="variation.model">
+      </mat-form-field>
+
+      <!-- SKU -->
+      <mat-form-field appearance="outline" class="half-width">
+        <mat-label>SKU *</mat-label>
+        <input matInput [(ngModel)]="variation.sku" required>
+      </mat-form-field>
+
+      <!-- Color -->
+      <mat-form-field appearance="outline" class="half-width">
+        <mat-label>Color</mat-label>
+        <input matInput [(ngModel)]="variation.color">
+      </mat-form-field>
+
+      <!-- Size -->
+      <mat-form-field appearance="outline" class="half-width">
+        <mat-label>Size</mat-label>
+        <input matInput [(ngModel)]="variation.size">
+      </mat-form-field>
+
+      <!-- Cost Price -->
+      <mat-form-field appearance="outline" class="half-width">
+        <mat-label>Cost Price</mat-label>
+        <input matInput type="number" [(ngModel)]="variation.costPrice">
+      </mat-form-field>
+
+      <!-- Selling Price -->
+      <mat-form-field appearance="outline" class="half-width">
+        <mat-label>Selling Price</mat-label>
+        <input matInput type="number" [(ngModel)]="variation.sellingPrice">
+      </mat-form-field>
+
+      <!-- Quantity -->
+      <mat-form-field appearance="outline" class="half-width">
+        <mat-label>Opening Stock</mat-label>
+        <input matInput type="number" [(ngModel)]="variation.quantity">
+      </mat-form-field>
+
+    </div>
+
+  </mat-card-content>
+
+  <mat-divider></mat-divider>
+
+  <mat-card-actions align="end">
+
+    <!-- <button mat-stroked-button color="warn"
+            (click)="router.navigate(['/all-items/item-list'])">
+      Cancel
+    </button> -->
+
+    <!-- <button mat-raised-button color="primary"
+            (click)="saveVariation()"
+            [disabled]="isLoading"
+            >
+
+      {{ isLoading ? 'Saving...' : (isEditMode ? 'Update Variation' : 'Save Variation') }}
+
+    </button> -->
+
+  </mat-card-actions>
+
+</mat-card>

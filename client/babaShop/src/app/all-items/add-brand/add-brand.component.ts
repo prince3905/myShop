@@ -1,53 +1,74 @@
-import { Component, OnInit } from '@angular/core';
-import { MatDialogRef } from '@angular/material/dialog';
-import { MatSnackBar } from '@angular/material/snack-bar';
-import { BrandService } from 'app/shared/services/brand.service';
+import { Component } from "@angular/core";
+import { MatDialogRef } from "@angular/material/dialog";
+import { MatSnackBar } from "@angular/material/snack-bar";
+import { BrandService } from "app/shared/services/brand.service";
+import { MAT_DIALOG_DATA } from "@angular/material/dialog";
+import { Inject } from "@angular/core";
 
 @Component({
-  selector: 'add-brand',
-  templateUrl: './add-brand.component.html',
-  styleUrls: ['./add-brand.component.css']
+  selector: "add-brand",
+  templateUrl: "./add-brand.component.html",
+  styleUrls: ["./add-brand.component.css"],
 })
-export class AddBrandComponent implements OnInit {
-
+export class AddBrandComponent {
   name: string = "";
   description: string = "";
+  isLoading = false;
+  isEditMode = false;
+  categoryId: string = "";
 
   constructor(
-    private Brand: BrandService,
+    private brandService: BrandService,
     private snackBar: MatSnackBar,
-    public dialogRef: MatDialogRef<any>
-  ) { }
+    public dialogRef: MatDialogRef<any>,
+    @Inject(MAT_DIALOG_DATA) public data: any,
+  ) {}
 
   ngOnInit(): void {
-  }
+    console.log("Selected Shop:", localStorage.getItem("selected_shop"));
 
-  onSubmit(): void {
-    const formData = {
-      name: this.name,
-      description: this.description,
-    };
-    console.log(formData);
-    this.Brand.addBrand(formData).subscribe(
-      (response: any) => {
-        console.log(response);
-        this.snackBar.open(response.message, "Close", {
-          duration: 5000,
-          horizontalPosition: "center",
-          verticalPosition: "bottom",
-        });
-        this.dialogRef.close();
+    this.brandService.getAllBrands().subscribe(
+      (res: any) => {
+        console.log("BRANDS RESPONSE FULL:", res);
+        console.log("BRANDS DATA ONLY:", res.data);
       },
-      (error: any) => {
-        console.error("Error adding item:", error);
-        this.snackBar.open("Failed to add item.", "Close", {
-          duration: 5000,
-          horizontalPosition: "center",
-          verticalPosition: "bottom",
-        });
-        this.dialogRef.close();
-      }
+      (error) => {
+        console.error("BRANDS ERROR:", error);
+      },
     );
   }
 
+  onSubmit(): void {
+    if (!this.name) {
+      this.snackBar.open("Brand name is required", "Close", { duration: 3000 });
+      return;
+    }
+
+    this.isLoading = true;
+
+    this.brandService
+      .addBrand({
+        name: this.name,
+        description: this.description,
+      })
+      .subscribe(
+        (res: any) => {
+          console.log("BRAND CREATED:", res);
+
+          this.snackBar.open(res.message, "Close", { duration: 3000 });
+          this.dialogRef.close(true);
+        },
+        (error) => {
+          console.error("BRAND ERROR:", error);
+
+          this.snackBar.open(
+            error.error?.message || "Failed to create brand",
+            "Close",
+            { duration: 3000 },
+          );
+
+          this.isLoading = false;
+        },
+      );
+  }
 }

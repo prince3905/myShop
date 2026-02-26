@@ -1,4 +1,5 @@
 const Brand = require("../models/brand");
+const Product = require("../models/Product");
 
 /* =========================
    CREATE BRAND
@@ -102,6 +103,15 @@ exports.updateBrand = async (req, res) => {
 exports.deleteBrand = async (req, res) => {
   try {
     const { id } = req.params;
+
+    const productUsingBrand = await Product.findOne({ brand: id });
+
+    if (productUsingBrand) {
+      return res.status(400).json({
+        success: false,
+        message: "Cannot delete brand. It is used in products."
+      });
+    }
 
     const brand = await Brand.findByIdAndDelete(id);
 

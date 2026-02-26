@@ -58,4 +58,13 @@ productSchema.index({ shop: 1, name: 1 }, { unique: true });
 /* Text search */
 productSchema.index({ name: "text" });
 
+productSchema.virtual("variations", {
+  ref: "ProductVariation",
+  localField: "_id",
+  foreignField: "product"
+});
+
+productSchema.set("toObject", { virtuals: true });
+productSchema.set("toJSON", { virtuals: true });
+
 module.exports = mongoose.model("Product", productSchema);

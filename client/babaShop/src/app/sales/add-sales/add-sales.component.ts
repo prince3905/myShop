@@ -56,7 +56,7 @@ export class AddSalesComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.getCategoryAndBrand();
+    // this.getCategoryAndBrand();
   }
 
   fetchSuggestions(): void {
@@ -161,21 +161,21 @@ export class AddSalesComponent implements OnInit {
     this.model_suggestions = [];
   }
 
-  getCategoryAndBrand(): void {
-    forkJoin({
-      categories: this.category.getCategory(),
-    }).subscribe(
-      (response: any) => {
-        this.Category = response.categories;
-        // this.Brands = response.brands;
-        console.log("All Categories:", this.Category);
-        // console.log("All Brands:", this.Brands);
-      },
-      (error) => {
-        console.error("Error retrieving data:", error);
-      }
-    );
-  }
+  // getCategoryAndBrand(): void {
+  //   forkJoin({
+  //     categories: this.category.getCategory(),
+  //   }).subscribe(
+  //     (response: any) => {
+  //       this.Category = response.categories;
+  //       // this.Brands = response.brands;
+  //       console.log("All Categories:", this.Category);
+  //       // console.log("All Brands:", this.Brands);
+  //     },
+  //     (error) => {
+  //       console.error("Error retrieving data:", error);
+  //     }
+  //   );
+  // }
 
   ProductsByName(data): void {
     console.log(data)
@@ -209,16 +209,16 @@ export class AddSalesComponent implements OnInit {
     console.log("Selected Model Variations:", item.selectedModelVariations);
   }
 
-  onCategoryChange(event: any) {
-    const selectedCategoryId = event.value;
-    console.log("Selected Category ID:", selectedCategoryId);
-    this.category
-      .getCategoryOnBrands(selectedCategoryId)
-      .subscribe((response: any) => {
-        console.log(response);
-        this.Brands = response.brands;
-      });
-  }
+  // onCategoryChange(event: any) {
+  //   const selectedCategoryId = event.value;
+  //   console.log("Selected Category ID:", selectedCategoryId);
+  //   this.category
+  //     .getCategoryOnBrands(selectedCategoryId)
+  //     .subscribe((response: any) => {
+  //       console.log(response);
+  //       this.Brands = response.brands;
+  //     });
+  // }
 
             async onSubmit(): Promise<void> {
                   // try {

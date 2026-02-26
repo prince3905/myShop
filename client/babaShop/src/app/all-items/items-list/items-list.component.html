@@ -131,121 +131,101 @@
             <mat-spinner class="loading" color="primary" mode="indeterminate"></mat-spinner>
         </div>
 
+
+
+
         <div class="card-body">
+
+            <table class="table">
+                <th>
+                    Name
+                </th>
+                <th>
+                    Brand
+                </th>
+                <th>
+                    Category
+                </th>
+                <th>
+                    Stock
+                </th>
+            </table>
             <div class="table-responsive">
-                <table class="table">
-                    <thead class="">
-                        <th>
-                            Name
-                        </th>
-                        <th>
-                            Brand
-                        </th>
-                        <th>
-                            Category
-                        </th>
-                        <th>
-                            Model
-                        </th>
-                        <th>
-                            variations
-                        </th>
-                        <th>
-                            Size
-                        </th>
-                        <th>
-                            Color
-                        </th>
-                        <th>
-                            Quantity
-                        </th>
-                        <th>
-                            Price
-                        </th>
-                        <th>
-                            SoldOut
-                        </th>
+                <mat-accordion multi="true">
 
-                    </thead>
-                    <tbody *ngFor="let item of paginatedItems">
+                    <mat-expansion-panel *ngFor="let item of paginatedItems">
 
-                        <tr>
-                            <td (click)="viewItemDetails(item._id)">
-                                {{item.name}}
-                            </td>
-                            <td>
-                                {{item?.brand?.name}}
-                            </td>
-                            <td>
-                                {{item?.category?.name}}
-                            </td>
-                            <td>
-                                <ng-container *ngIf="item.models && item.models.length > 0; else displayModel">
-                                    <mat-form-field class="modeloption">
-                                        <mat-label>Select model</mat-label>
-                                        <select matNativeControl [(ngModel)]="item.selectedModel"
-                                            (change)="onModelChange(item)">
-                                            <option label="Select Model"></option>
-                                            <option *ngFor="let model of item.models" [value]="model.model">
-                                                {{ model.model }}
-                                            </option>
-                                        </select>
-                                    </mat-form-field>
-                                </ng-container>
-                                <ng-template #displayModel>
-                                    {{ item.model }}
-                                </ng-template>
-                            </td>
-                            <td>
-                                <mat-form-field class="modeloption">
-                                    <mat-label>Select Variant</mat-label>
-                                    <select matNativeControl [(ngModel)]="selectedOrderNumber"
-                                        (change)="updateSelectedVariantInfo(item, selectedOrderNumber)">
-                                        <option label="Select Variant"></option>
-                                        <option *ngFor="let variation of item.selectedModelVariations"
-                                            [value]="variation.orderNumber">
-                                            {{ variation.orderNumber }}
-                                        </option>
-                                    </select>
-                                </mat-form-field>
-                            </td>
-                            <td>
-                                {{ selectedVariant[item._id]?.color }}
-                            </td>
-                            <td>
-                                {{ selectedVariant[item._id]?.size }}
-                            </td>
-                            <td>
-                                {{ selectedVariant[item._id]?.quantity }}
-                            </td>
-                            <td>
-                                {{ selectedVariant[item._id]?.s_price }}
-                            </td>
-                            <!-- <td>
-                                <span *ngIf="item?.soldOut">Yes</span>
-                                <span *ngIf="!item?.soldOut">No</span>
-                              </td> -->
-                            <td>
-                                <span *ngIf="selectedVariant[item._id]?.soldOut" style="color: red;">Yes</span>
-                                <span *ngIf="!selectedVariant[item._id]?.soldOut" style="color: green;">No</span>
-                            </td>
+                        <!-- HEADER -->
+                        <mat-expansion-panel-header>
+                            <mat-panel-title>
+                                {{ item.name }}
+                            </mat-panel-title>
+
+                            <mat-panel-title>
+                                {{ item.brand?.name }}
+                            </mat-panel-title>
+
+                            <mat-panel-title>
+                                {{ item.category?.name }}
+                            </mat-panel-title>
+
+                            <mat-panel-title [style.color]="item.totalStock < 5 ? 'red' : 'green'">
+                                Total Stock : {{ item.totalStock }}
+                            </mat-panel-title>
 
 
-                            <!-- <td>
-                                            <button mat-raised-button type="button" matTooltip="Edit Task"
-                                                [matTooltipPosition]="'above'"
-                                                class="btn btn-primary btn-link btn-sm btn-just-icon">
-                                                <i class="material-icons">edit</i>
+
+                        </mat-expansion-panel-header>
+
+                        <!-- EXPANDED CONTENT -->
+                        <div class="table-responsive">
+
+                            <table class="table table-sm table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Model</th>
+                                        <th>SKU</th>
+                                        <th>Color</th>
+                                        <th>Size</th>
+                                        <th>Quantity</th>
+                                        <th>Cost</th>
+                                        <th>Selling</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+                                    <tr *ngFor="let v of item.variations">
+                                        <td>{{ v.model?.name || '-' }}</td>
+                                        <td>{{ v.sku }}</td>
+                                        <td>{{ v.attributes?.color || '-' }}</td>
+                                        <td>{{ v.attributes?.size || '-' }}</td>
+                                        <td>{{ v.quantity ?? 0 }}</td>
+                                        <td>{{ v.costPrice }}</td>
+                                        <td>{{ v.sellingPrice }}</td>
+
+                                        <td (click)="$event.stopPropagation()" class="action-col">
+                                            <!-- View -->
+                                            <button mat-icon-button color="primary" matTooltip="View"
+                                                (click)="viewItemDetails(item._id); $event.stopPropagation()">
+                                                <mat-icon>visibility</mat-icon>
                                             </button>
-                                            <button mat-raised-button type="button" matTooltip="Remove"
-                                                [matTooltipPosition]="'above'"
-                                                class="btn btn-danger btn-link btn-sm btn-just-icon">
-                                                <i class="material-icons">close</i>
-                                            </button>
-                                        </td> -->
-                        </tr>
-                    </tbody>
-                </table>
+
+                                            <!-- Edit -->
+                                            <!-- <button mat-icon-button color="primary" matTooltip="Edit Product"
+                                                (click)="openEditProduct(item, $event)">
+                                                <mat-icon>edit</mat-icon>
+                                            </button> -->
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                        </div>
+
+                    </mat-expansion-panel>
+
+                </mat-accordion>
             </div>
         </div>
 

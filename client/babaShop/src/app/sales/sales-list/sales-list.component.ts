@@ -62,7 +62,7 @@ export class SalesListComponent implements OnInit {
 
   ngOnInit(): void {
     this.getAllItems("null");
-    this.getCategoryAndBrand();
+    // this.getCategoryAndBrand();
     this.updatePaginatedItems();
   }
 
@@ -291,23 +291,20 @@ export class SalesListComponent implements OnInit {
   }
 
 
-  getCategoryAndBrand(): void {
-    forkJoin({
-      categories: this.categoryS.getCategory(),
-      brands: this.brandS.getBrand(),
-    }).subscribe(
-      (response) => {
-        this.Category = response.categories;
-        this.Brands = response.brands;
-        // console.log("All Categories:", this.Category);
-        // console.log("All Brands:", this.Brands);
-      },
-      (error) => {
-        console.error("Error retrieving data:", error);
-        // Handle error here (e.g., show error message to the user)
-      }
-    );
-  }
+  // getCategoryAndBrand(): void {
+  //   forkJoin({
+  //     categories: this.categoryS.getCategory(),
+  //     brands: this.brandS.getBrand(),
+  //   }).subscribe(
+  //     (response) => {
+  //       this.Category = response.categories;
+  //       this.Brands = response.brands;
+  //     },
+  //     (error) => {
+  //       console.error("Error retrieving data:", error);
+  //     }
+  //   );
+  // }
 
 
 

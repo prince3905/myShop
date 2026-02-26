@@ -1,4 +1,5 @@
 const Category = require("../models/category");
+const Product = require("../models/Product");
 
 /* =========================
    CREATE CATEGORY
@@ -101,6 +102,15 @@ exports.updateCategory = async (req, res) => {
 exports.deleteCategory = async (req, res) => {
   try {
     const { id } = req.params;
+
+    const productUsingCategory = await Product.findOne({ category: id });
+
+    if (productUsingCategory) {
+      return res.status(400).json({
+        success: false,
+        message: "Cannot delete category. It is used in products."
+      });
+    }
 
     const category = await Category.findByIdAndDelete(id);
 
