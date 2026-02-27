@@ -8,7 +8,7 @@ const ProductModel = require("../models/ProductModel");
 ========================= */
 exports.createProduct = async (req, res) => {
   try {
-    const { name, category, brand, description, images, shop } = req.body;
+    const { name, category, brand, description, images } = req.body;
     const slug = slugify(name, { lower: true, strict: true });
 
     const product = await Product.create({
@@ -18,7 +18,7 @@ exports.createProduct = async (req, res) => {
       brand,
       description,
       images,
-      shop,
+      shop: req.shopId,
     });
 
     res.status(201).json({
@@ -47,16 +47,15 @@ exports.createProduct = async (req, res) => {
 ========================= */
 exports.getProducts = async (req, res) => {
   try {
-    const { shop } = req.query;
+    const { limit, skip, sort = "-createdAt", search } = req.query;
+    const query = { shop: req.shopId };
 
-    if (!shop) {
-      return res.status(400).json({
-        success: false,
-        message: "Shop ID is required",
-      });
+    if (search) {
+      query.name = { $regex: search, $options: "i" };
     }
 
-    const products = await Product.find({ shop })
+    let productQuery = Product.find(query)
+      .sort(sort)
       .populate("brand", "name")
       .populate("category", "name")
       .populate({
@@ -66,6 +65,16 @@ exports.getProducts = async (req, res) => {
           select: "name",
         },
       });
+
+    if (limit) {
+      productQuery = productQuery.limit(Number(limit) || 0);
+    }
+
+    if (skip) {
+      productQuery = productQuery.skip(Number(skip) || 0);
+    }
+
+    const products = await productQuery;
 
     res.json({
       success: true,
@@ -85,7 +94,10 @@ exports.getProducts = async (req, res) => {
 ========================= */
 exports.getProductById = async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id)
+    const product = await Product.findOne({
+      _id: req.params.id,
+      shop: req.shopId,
+    })
       .populate("category", "name")
       .populate("brand", "name")
       .populate({
@@ -121,9 +133,25 @@ exports.getProductById = async (req, res) => {
 exports.updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
+    const allowedFields = ["name", "category", "brand", "description", "images", "isActive"];
+    const updateData = {};
 
-    const product = await Product.findByIdAndUpdate(id, req.body, {
+    for (const field of allowedFields) {
+      if (req.body[field] !== undefined) {
+        updateData[field] = req.body[field];
+      }
+    }
+
+    if (updateData.name) {
+      updateData.slug = slugify(updateData.name, { lower: true, strict: true });
+    }
+
+    const product = await Product.findOneAndUpdate(
+      { _id: id, shop: req.shopId },
+      updateData,
+      {
       new: true,
+      runValidators: true,
     });
 
     if (!product) {
@@ -153,7 +181,10 @@ exports.deleteProduct = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const product = await Product.findById(id);
+    const product = await Product.findOne({
+      _id: id,
+      shop: req.shopId,
+    });
 
     if (!product) {
       return res.status(404).json({
@@ -163,13 +194,13 @@ exports.deleteProduct = async (req, res) => {
     }
 
     // Delete variations
-    await ProductVariation.deleteMany({ product: id });
+    await ProductVariation.deleteMany({ product: id, shop: req.shopId });
 
     // Delete models
-    await ProductModel.deleteMany({ product: id });
+    await ProductModel.deleteMany({ product: id, shop: req.shopId });
 
     // Delete product
-    await Product.findByIdAndDelete(id);
+    await Product.findOneAndDelete({ _id: id, shop: req.shopId });
 
     res.status(200).json({
       success: true,

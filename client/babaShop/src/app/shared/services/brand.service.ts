@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import {environment} from '../../../environments/environment'
+import { AuthService } from './auth.service';
 
 
 @Injectable({
@@ -9,25 +10,24 @@ import {environment} from '../../../environments/environment'
 })
 export class BrandService {
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private authService: AuthService,
+  ) {}
 
   get baseURL(): string {
     return environment.apiBaseURL;
   }
 
   getAllBrands(): Observable<any> {
-    const shopId = localStorage.getItem("selected_shop");
+    const shopId = this.authService.getShopId();
     return this.http.get(`${this.baseURL}/api/brands`, {
       params: { shop: shopId || "" }
     });
   }
 
   addBrand(data: any): Observable<any> {
-    const shopId = localStorage.getItem("selected_shop");
-    return this.http.post(`${this.baseURL}/api/brands`, {
-      ...data,
-      shop: shopId
-    });
+    return this.http.post(`${this.baseURL}/api/brands`, data);
   }
 
   updateBrand(id: string, data: any): Observable<any> {

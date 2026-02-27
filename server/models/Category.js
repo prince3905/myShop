@@ -26,6 +26,7 @@ const categorySchema = new mongoose.Schema({
 
 }, { timestamps: true });
 
-categorySchema.index({ name: 1, shop: 1 }, { unique: true });
+categorySchema.index({ shop: 1, name: 1 }, { unique: true });
+categorySchema.index({ shop: 1 });
 
 module.exports = mongoose.model('Category', categorySchema);

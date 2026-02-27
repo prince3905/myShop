@@ -3,16 +3,7 @@ const mongoose = require("mongoose");
 
 exports.createCategoryValidation = [
   body("name")
-    .notEmpty().withMessage("Category name is required"),
-
-  body("shop")
-    .notEmpty().withMessage("Shop ID is required")
-    .custom((value) => {
-      if (!mongoose.Types.ObjectId.isValid(value)) {
-        throw new Error("Invalid Shop ID");
-      }
-      return true;
-    })
+    .notEmpty().withMessage("Category name is required")
 ];
 
 exports.updateCategoryValidation = [

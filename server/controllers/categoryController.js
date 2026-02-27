@@ -1,4 +1,4 @@
-const Category = require("../models/category");
+const Category = require("../models/Category");
 const Product = require("../models/Product");
 
 /* =========================
@@ -6,13 +6,13 @@ const Product = require("../models/Product");
 ========================= */
 exports.createCategory = async (req, res) => {
   try {
-    const { name, description, image, shop } = req.body;
+    const { name, description, image } = req.body;
 
     const category = await Category.create({
       name,
       description,
       image,
-      shop
+      shop: req.shopId,
     });
 
     res.status(201).json({
@@ -42,9 +42,24 @@ exports.createCategory = async (req, res) => {
 ========================= */
 exports.getCategories = async (req, res) => {
   try {
-    const { shop } = req.query;
+    const { limit, skip, sort = "-createdAt", search } = req.query;
+    const query = { shop: req.shopId };
 
-    const categories = await Category.find({ shop });
+    if (search) {
+      query.name = { $regex: search, $options: "i" };
+    }
+
+    let categoryQuery = Category.find(query).sort(sort);
+
+    if (limit) {
+      categoryQuery = categoryQuery.limit(Number(limit) || 0);
+    }
+
+    if (skip) {
+      categoryQuery = categoryQuery.skip(Number(skip) || 0);
+    }
+
+    const categories = await categoryQuery;
 
     res.status(200).json({
       success: true,
@@ -67,11 +82,19 @@ exports.getCategories = async (req, res) => {
 exports.updateCategory = async (req, res) => {
   try {
     const { id } = req.params;
+    const allowedFields = ["name", "description", "image", "isActive"];
+    const updateData = {};
 
-    const category = await Category.findByIdAndUpdate(
-      id,
-      req.body,
-      { new: true }
+    for (const field of allowedFields) {
+      if (req.body[field] !== undefined) {
+        updateData[field] = req.body[field];
+      }
+    }
+
+    const category = await Category.findOneAndUpdate(
+      { _id: id, shop: req.shopId },
+      updateData,
+      { new: true, runValidators: true }
     );
 
     if (!category) {
@@ -103,7 +126,10 @@ exports.deleteCategory = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const productUsingCategory = await Product.findOne({ category: id });
+    const productUsingCategory = await Product.findOne({
+      category: id,
+      shop: req.shopId,
+    });
 
     if (productUsingCategory) {
       return res.status(400).json({
@@ -112,7 +138,10 @@ exports.deleteCategory = async (req, res) => {
       });
     }
 
-    const category = await Category.findByIdAndDelete(id);
+    const category = await Category.findOneAndDelete({
+      _id: id,
+      shop: req.shopId,
+    });
 
     if (!category) {
       return res.status(404).json({

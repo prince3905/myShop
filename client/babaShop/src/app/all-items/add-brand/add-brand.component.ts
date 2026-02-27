@@ -25,8 +25,6 @@ export class AddBrandComponent {
   ) {}
 
   ngOnInit(): void {
-    console.log("Selected Shop:", localStorage.getItem("selected_shop"));
-
     this.brandService.getAllBrands().subscribe(
       (res: any) => {
         console.log("BRANDS RESPONSE FULL:", res);

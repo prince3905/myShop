@@ -1,4 +1,4 @@
-const Brand = require("../models/brand");
+const Brand = require("../models/Brand");
 const Product = require("../models/Product");
 
 /* =========================
@@ -6,13 +6,13 @@ const Product = require("../models/Product");
 ========================= */
 exports.createBrand = async (req, res) => {
   try {
-    const { name, description, logo, shop } = req.body;
+    const { name, description, logo } = req.body;
 
     const brand = await Brand.create({
       name,
       description,
       logo,
-      shop
+      shop: req.shopId,
     });
 
     res.status(201).json({
@@ -43,9 +43,24 @@ exports.createBrand = async (req, res) => {
 ========================= */
 exports.getBrands = async (req, res) => {
   try {
-    const { shop } = req.query;
+    const { limit, skip, sort = "-createdAt", search } = req.query;
+    const query = { shop: req.shopId };
 
-    const brands = await Brand.find({ shop });
+    if (search) {
+      query.name = { $regex: search, $options: "i" };
+    }
+
+    let brandQuery = Brand.find(query).sort(sort);
+
+    if (limit) {
+      brandQuery = brandQuery.limit(Number(limit) || 0);
+    }
+
+    if (skip) {
+      brandQuery = brandQuery.skip(Number(skip) || 0);
+    }
+
+    const brands = await brandQuery;
 
     res.status(200).json({
       success: true,
@@ -68,11 +83,19 @@ exports.getBrands = async (req, res) => {
 exports.updateBrand = async (req, res) => {
   try {
     const { id } = req.params;
+    const allowedFields = ["name", "description", "logo", "isActive"];
+    const updateData = {};
 
-    const brand = await Brand.findByIdAndUpdate(
-      id,
-      req.body,
-      { new: true }
+    for (const field of allowedFields) {
+      if (req.body[field] !== undefined) {
+        updateData[field] = req.body[field];
+      }
+    }
+
+    const brand = await Brand.findOneAndUpdate(
+      { _id: id, shop: req.shopId },
+      updateData,
+      { new: true, runValidators: true }
     );
 
     if (!brand) {
@@ -104,7 +127,10 @@ exports.deleteBrand = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const productUsingBrand = await Product.findOne({ brand: id });
+    const productUsingBrand = await Product.findOne({
+      brand: id,
+      shop: req.shopId,
+    });
 
     if (productUsingBrand) {
       return res.status(400).json({
@@ -113,7 +139,10 @@ exports.deleteBrand = async (req, res) => {
       });
     }
 
-    const brand = await Brand.findByIdAndDelete(id);
+    const brand = await Brand.findOneAndDelete({
+      _id: id,
+      shop: req.shopId,
+    });
 
     if (!brand) {
       return res.status(404).json({

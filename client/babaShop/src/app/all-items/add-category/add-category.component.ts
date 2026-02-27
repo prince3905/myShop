@@ -32,8 +32,6 @@ export class AddCategoryComponent {
       this.description = this.data.category.description;
     }
 
-    console.log("Selected Shop:", localStorage.getItem("selected_shop"));
-
     this.Category.getAllCategories().subscribe(
       (res: any) => {
         console.log("CATEGORIES RESPONSE FULL:", res);

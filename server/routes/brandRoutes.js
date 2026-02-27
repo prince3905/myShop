@@ -2,12 +2,16 @@ const express = require("express");
 const router = express.Router();
 
 const brandController = require("../controllers/brandController");
+const { protect, attachShop } = require("../middleware/authMiddleware");
 
 const { validate } = require("../middleware/validate");
 const {
   createBrandValidation,
   updateBrandValidation
 } = require("../middleware/brandValidation");
+
+router.use(protect);
+router.use(attachShop);
 
 /* =========================
    CREATE BRAND

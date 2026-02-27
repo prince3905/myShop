@@ -76,10 +76,19 @@ login(email: string, password: string) {
     localStorage.setItem(this.USER_KEY, JSON.stringify(user));
   }
 
+  getCurrentUser(): any | null {
+    const user = localStorage.getItem(this.USER_KEY);
+    return user ? JSON.parse(user) : null;
+  }
+
+  getShopId(): string | null {
+    const user = this.getCurrentUser();
+    return user?.shop || null;
+  }
+
 
  getUserRole(): string | null {
-  const user = localStorage.getItem('user');
-  return user ? JSON.parse(user).role : null;
+  return this.getCurrentUser()?.role || null;
 }
 
   
@@ -111,8 +120,7 @@ login(email: string, password: string) {
   }
 
   isSuperAdmin(): boolean {
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
-  console.log('User role:', user.role); // Debugging log
+  const user = this.getCurrentUser() || {};
   return user.role === 'SUPER_ADMIN';
 }
 

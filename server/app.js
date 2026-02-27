@@ -9,7 +9,7 @@ const distributorRouter = require("./routes/distributorRoutes");
 const distributorLedgerRoutes = require("./routes/distributorLedgerRoutes");
 const brandRoutes = require("./routes/brandRoutes");
 const categoryRoutes = require("./routes/categoryRouter");
-const productRoutes = require("./routes/ProductRoutes");
+const productRoutes = require("./routes/productRoutes");
 const productModelRoutes = require("./routes/productModelRoutes");
 const productVariationRoutes = require("./routes/productVariationRoutes");
 

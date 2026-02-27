@@ -2,12 +2,16 @@ const express = require("express");
 const router = express.Router();
 
 const productController = require("../controllers/ProductController");
+const { protect, attachShop } = require("../middleware/authMiddleware");
 
 const { validate } = require("../middleware/validate");
 const {
   createProductValidation,
   updateProductValidation
 } = require("../middleware/productValidation");
+
+router.use(protect);
+router.use(attachShop);
 
 /* =========================
    CREATE PRODUCT

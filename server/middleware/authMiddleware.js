@@ -105,10 +105,22 @@ exports.attachShop = async (req, res, next) => {
     }
 
     // NORMAL USER
-    const shop = await Shop.findOne({
-      owner: req.user._id,
-      isActive: true,
-    });
+    let shop = null;
+
+    if (req.user.shop) {
+      shop = await Shop.findOne({
+        _id: req.user.shop,
+        isActive: true,
+      });
+    }
+
+    // Backward compatibility for old users where shop is not set on user
+    if (!shop) {
+      shop = await Shop.findOne({
+        owner: req.user._id,
+        isActive: true,
+      });
+    }
 
     if (!shop) {
       return res.status(403).json({

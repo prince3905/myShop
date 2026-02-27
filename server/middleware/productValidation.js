@@ -10,15 +10,6 @@ exports.createProductValidation = [
     .notEmpty().withMessage("Product name is required")
     .isLength({ min: 2 }).withMessage("Product name too short"),
 
-  body("shop")
-    .notEmpty().withMessage("Shop ID is required")
-    .custom((value) => {
-      if (!mongoose.Types.ObjectId.isValid(value)) {
-        throw new Error("Invalid Shop ID");
-      }
-      return true;
-    }),
-
   body("category")
     .notEmpty().withMessage("Category ID is required")
     .custom((value) => {

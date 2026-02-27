@@ -22,6 +22,7 @@ export class AuthInterceptor implements HttpInterceptor {
 
     const authToken = this.authService.getToken();
     const selectedShop = localStorage.getItem('selected_shop');
+    const userShop = this.authService.getShopId();
 
     let headers: any = {};
 
@@ -29,8 +30,10 @@ export class AuthInterceptor implements HttpInterceptor {
       headers['Authorization'] = `Bearer ${authToken}`;
     }
 
-    if (selectedShop) {
-      headers['x-shop-id'] = selectedShop;
+    const activeShopId = selectedShop || userShop;
+
+    if (activeShopId) {
+      headers['x-shop-id'] = activeShopId;
     }
 
     const modifiedRequest = request.clone({
