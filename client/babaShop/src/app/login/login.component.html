@@ -1,10 +1,10 @@
 <div class="login-wrapper">
   <div class="background-overlay"></div>
-  
+
   <mat-card class="login-card">
     <!-- Header Section with Branding -->
     <div class="brand-header">
-       <!-- LOGO SECTION -->
+      <!-- LOGO SECTION -->
       <div class="icon-circle">
         <img src="../../assets/img/logo.png" alt="Baba Vishwanath Logo" class="brand-logo">
       </div>
@@ -15,13 +15,26 @@
 
     <mat-card-content>
       <form (ngSubmit)="onSubmit()" #loginForm="ngForm" class="login-form">
-        
+
+        <!-- Shop Code Input -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Shop Code</mat-label>
+          <mat-icon matPrefix>store</mat-icon>
+          <input matInput placeholder="BABA01" [(ngModel)]="shopCode" name="shopCode" required>
+
+          <mat-error *ngIf="loginForm.controls['shopCode']?.invalid && 
+      (loginForm.controls['shopCode']?.dirty || loginForm.controls['shopCode']?.touched)">
+            Shop Code is required.
+          </mat-error>
+        </mat-form-field>
+
         <!-- Email Input -->
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Email Address</mat-label>
           <mat-icon matPrefix>email</mat-icon>
           <input matInput placeholder="admin@example.com" [(ngModel)]="email" name="email" required email>
-          <mat-error *ngIf="loginForm.controls['email']?.invalid && (loginForm.controls['email']?.dirty || loginForm.controls['email']?.touched)">
+          <mat-error
+            *ngIf="loginForm.controls['email']?.invalid && (loginForm.controls['email']?.dirty || loginForm.controls['email']?.touched)">
             Please enter a valid email address.
           </mat-error>
         </mat-form-field>
@@ -30,8 +43,10 @@
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Password</mat-label>
           <mat-icon matPrefix>lock</mat-icon>
-          <input matInput type="password" placeholder="Enter your password" [(ngModel)]="password" name="password" required>
-          <mat-error *ngIf="loginForm.controls['password']?.invalid && (loginForm.controls['password']?.dirty || loginForm.controls['password']?.touched)">
+          <input matInput type="password" placeholder="Enter your password" [(ngModel)]="password" name="password"
+            required>
+          <mat-error
+            *ngIf="loginForm.controls['password']?.invalid && (loginForm.controls['password']?.dirty || loginForm.controls['password']?.touched)">
             Password is required.
           </mat-error>
         </mat-form-field>
@@ -45,7 +60,7 @@
 
       </form>
     </mat-card-content>
-    
+
     <mat-card-footer class="footer-text">
       <p>&copy; 2024 Baba Vishwanath Furniture</p>
     </mat-card-footer>

@@ -15,6 +15,7 @@ export class LoginComponent implements OnInit {
   
   email: string = '';
   password: string = '';
+  shopCode : string = '';
 
   constructor(
     private authService: AuthService,
@@ -28,25 +29,27 @@ export class LoginComponent implements OnInit {
   }
   }
 
-  onSubmit(): void {
-    if (!this.email || !this.password) {
-        return;
-    }
+  
+onSubmit(): void {
+  if (!this.shopCode || !this.email || !this.password) {
+    return;
+  }
 
-    this.authService.login(this.email, this.password).subscribe(
+  this.authService
+    .login(this.shopCode, this.email, this.password)
+    .subscribe(
       (response) => {
-        console.log('Login successful:', response);
         this.router.navigate(['/dashboard']);
       },
       (error) => {
-        console.error('Login failed:', error);
-        this.snackBar.open('Login failed. Please check your credentials.', 'Close', {
-          duration: 5000,
-          horizontalPosition: 'center',
-          verticalPosition: 'bottom',
-          panelClass: ['error-snackbar'] // Optional styling class
-        });
+        this.snackBar.open(
+          'Login failed. Please check credentials.',
+          'Close',
+          { duration: 4000 }
+        );
       }
     );
-  }
+}
+
+
 }

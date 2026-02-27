@@ -39,11 +39,12 @@ isLoggedIn(): boolean {
   return !!this.getToken();
 }
 
-login(email: string, password: string) {
+login(shopCode: string, email: string, password: string) {
   this.showLoader = true;
 
   return this.http
     .post<LoginResponse>(`${this.baseURL}/api/auth/login`, {
+      shopCode,
       email,
       password,
     })

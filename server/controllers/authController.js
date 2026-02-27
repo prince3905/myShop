@@ -3,36 +3,64 @@ const User = require("../models/User");
 
 exports.login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { shopCode, email, password } = req.body;
 
-    if (!email || !password) {
-      return res.status(400).json({ message: "Email and Password required" });
+    if (!shopCode || !email || !password) {
+      return res.status(400).json({
+        message: "Shop Code, Email and Password required",
+      });
     }
 
-    const user = await User.findOne({ email }).select("+password");
+    // Find shop by shopCode
+    const shop = await require("../models/Shop").findOne({
+      shopCode: shopCode.toUpperCase(),
+      isActive: true,
+    });
+
+    if (!shop) {
+      return res.status(404).json({
+        message: "Shop not found",
+      });
+    }
+
+    // Find user inside that shop
+    const user = await require("../models/User")
+      .findOne({
+        email,
+        shop: shop._id,
+      })
+      .select("+password");
 
     if (!user) {
-      return res.status(400).json({ message: "User not found" });
+      return res.status(400).json({
+        message: "User not found for this shop",
+      });
     }
 
     if (!user.isActive) {
-      return res.status(403).json({ message: "User is disabled" });
+      return res.status(403).json({
+        message: "User is disabled",
+      });
     }
 
+    // Check password
     const isMatch = await user.comparePassword(password);
 
     if (!isMatch) {
-      return res.status(400).json({ message: "Wrong password" });
+      return res.status(400).json({
+        message: "Wrong password",
+      });
     }
 
-    const token = jwt.sign(
+    // Generate token
+    const token = require("jsonwebtoken").sign(
       {
         id: user._id,
         role: user.role,
-        shop: user.shop,
+        shop: shop._id,
       },
       process.env.JWT_SECRET,
-      { expiresIn: "7d" }
+      { expiresIn: "7d" },
     );
 
     res.status(200).json({
@@ -42,7 +70,7 @@ exports.login = async (req, res) => {
         id: user._id,
         email: user.email,
         role: user.role,
-        shop: user.shop,
+        shop: shop._id,
       },
     });
   } catch (error) {
@@ -50,7 +78,6 @@ exports.login = async (req, res) => {
     res.status(500).json({ message: "Server Error" });
   }
 };
-
 
 exports.register = async (req, res) => {
   try {
@@ -70,13 +97,12 @@ exports.register = async (req, res) => {
       email,
       password,
       phoneNo,
-      role
+      role,
     });
 
     res.status(201).json({
-      message: "User created successfully"
+      message: "User created successfully",
     });
-
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
