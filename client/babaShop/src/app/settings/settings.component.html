@@ -1,0 +1,285 @@
+<div class="main-content">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-3">
+        <div class="card settings-nav-card">
+          <div class="card-header card-header-danger">
+            <h4 class="card-title">Settings</h4>
+          </div>
+          <div class="card-body settings-nav">
+            <button
+              *ngFor="let section of sections"
+              mat-button
+              class="section-btn"
+              [class.active]="activeSection === section"
+              (click)="setSection(section)"
+            >
+              {{ section }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-9">
+        <div class="card">
+          <div class="card-header card-header-danger">
+            <h4 class="card-title">{{ activeSection }}</h4>
+          </div>
+          <div class="card-body">
+            <div *ngIf="loadingOverview" class="loading-block">Loading settings...</div>
+
+            <ng-container *ngIf="!loadingOverview">
+              <div *ngIf="activeSection === 'Profile Settings'">
+                <form [formGroup]="profileForm" (ngSubmit)="saveProfileSettings()">
+                  <div class="row">
+                    <div class="col-md-6">
+                      <mat-form-field class="example-full-width">
+                        <mat-label>First Name</mat-label>
+                        <input matInput formControlName="pFname" />
+                      </mat-form-field>
+                    </div>
+                    <div class="col-md-6">
+                      <mat-form-field class="example-full-width">
+                        <mat-label>Last Name</mat-label>
+                        <input matInput formControlName="pLname" />
+                      </mat-form-field>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col-md-6">
+                      <mat-form-field class="example-full-width">
+                        <mat-label>Profile Email</mat-label>
+                        <input matInput formControlName="pEmail" />
+                      </mat-form-field>
+                    </div>
+                    <div class="col-md-6">
+                      <mat-form-field class="example-full-width">
+                        <mat-label>Primary Phone</mat-label>
+                        <input matInput formControlName="phoneNo" />
+                      </mat-form-field>
+                    </div>
+                  </div>
+                  <button mat-raised-button class="btn btn-danger" [disabled]="savingProfile">
+                    {{ savingProfile ? "Saving..." : "Save Profile Settings" }}
+                  </button>
+                </form>
+              </div>
+
+              <div *ngIf="activeSection === 'Account Security'">
+                <div class="toggle-row">
+                  <label class="toggle-label">Two-Factor Authentication</label>
+                  <label class="switch">
+                    <input
+                      type="checkbox"
+                      [checked]="twoFactorEnabled"
+                      (change)="twoFactorEnabled = !twoFactorEnabled; onToggle2FA()"
+                      [disabled]="updating2FA"
+                    />
+                    <span class="slider"></span>
+                  </label>
+                </div>
+                <form [formGroup]="passwordForm" (ngSubmit)="onChangePassword()">
+                  <mat-form-field class="example-full-width">
+                    <mat-label>Current Password</mat-label>
+                    <input matInput type="password" formControlName="currentPassword" />
+                  </mat-form-field>
+                  <mat-form-field class="example-full-width">
+                    <mat-label>New Password</mat-label>
+                    <input matInput type="password" formControlName="newPassword" />
+                  </mat-form-field>
+                  <mat-form-field class="example-full-width">
+                    <mat-label>Confirm Password</mat-label>
+                    <input matInput type="password" formControlName="confirmPassword" />
+                  </mat-form-field>
+                  <button mat-raised-button class="btn btn-danger" [disabled]="changingPassword || passwordForm.invalid">
+                    {{ changingPassword ? "Changing..." : "Change Password" }}
+                  </button>
+                </form>
+              </div>
+
+              <div *ngIf="activeSection === 'Shop Settings'">
+                <form [formGroup]="shopForm" (ngSubmit)="saveShopSettings()">
+                  <div class="row">
+                    <div class="col-md-6"><mat-form-field class="example-full-width"><mat-label>Shop Name</mat-label><input matInput formControlName="name"></mat-form-field></div>
+                    <div class="col-md-6"><mat-form-field class="example-full-width"><mat-label>Contact</mat-label><input matInput formControlName="contactNumber"></mat-form-field></div>
+                  </div>
+                  <div class="row">
+                    <div class="col-md-6"><mat-form-field class="example-full-width"><mat-label>Shop Email</mat-label><input matInput formControlName="email"></mat-form-field></div>
+                    <div class="col-md-6"><mat-form-field class="example-full-width"><mat-label>Address Line 1</mat-label><input matInput formControlName="addressLine1"></mat-form-field></div>
+                  </div>
+                  <button mat-raised-button class="btn btn-danger" [disabled]="savingShop">
+                    {{ savingShop ? "Saving..." : "Save Shop Settings" }}
+                  </button>
+                </form>
+              </div>
+
+              <div *ngIf="activeSection === 'Role & Permissions'">
+                <p><strong>Role:</strong> {{ profile?.role || "-" }}</p>
+                <p><strong>Permissions:</strong></p>
+                <ul>
+                  <li *ngFor="let permission of rolePermissions">{{ permission }}</li>
+                </ul>
+              </div>
+
+              <div *ngIf="activeSection === 'Notification Settings'">
+                <form [formGroup]="notificationForm" (ngSubmit)="saveNotificationSettings()">
+                  <div class="checkbox-group">
+                    <mat-checkbox formControlName="email">Email Notifications</mat-checkbox>
+                    <mat-checkbox formControlName="sms">SMS Notifications</mat-checkbox>
+                    <mat-checkbox formControlName="whatsapp">WhatsApp Notifications</mat-checkbox>
+                    <mat-checkbox formControlName="inApp">In-app Notifications</mat-checkbox>
+                  </div>
+                  <button mat-raised-button class="btn btn-danger" [disabled]="savingNotifications">
+                    {{ savingNotifications ? "Saving..." : "Save Notification Settings" }}
+                  </button>
+                </form>
+              </div>
+
+              <div *ngIf="activeSection === 'Billing & Subscription'">
+                <p><strong>Plan:</strong> {{ billing?.subscriptionPlan || "N/A" }}</p>
+                <p><strong>Expiry:</strong> {{ billing?.subscriptionExpiry ? (billing.subscriptionExpiry | date: "dd/MM/yyyy") : "N/A" }}</p>
+                <p><strong>Shop Active:</strong> {{ billing?.isActive ? "Yes" : "No" }}</p>
+              </div>
+
+              <div *ngIf="activeSection === 'Integrations'">
+                <form [formGroup]="integrationForm" (ngSubmit)="saveIntegrations()">
+                  <div class="checkbox-group">
+                    <mat-checkbox formControlName="gstEnabled">GST</mat-checkbox>
+                    <mat-checkbox formControlName="whatsappEnabled">WhatsApp</mat-checkbox>
+                    <mat-checkbox formControlName="smsEnabled">SMS</mat-checkbox>
+                    <mat-checkbox formControlName="emailEnabled">Email</mat-checkbox>
+                  </div>
+                  <mat-form-field class="example-full-width">
+                    <mat-label>Payment Gateway</mat-label>
+                    <mat-select formControlName="paymentGateway">
+                      <mat-option value="NONE">None</mat-option>
+                      <mat-option value="RAZORPAY">Razorpay</mat-option>
+                      <mat-option value="STRIPE">Stripe</mat-option>
+                      <mat-option value="PAYU">PayU</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                  <button mat-raised-button class="btn btn-danger" [disabled]="savingIntegrations">
+                    {{ savingIntegrations ? "Saving..." : "Save Integrations" }}
+                  </button>
+                </form>
+              </div>
+
+              <div *ngIf="activeSection === 'Data & Backup'">
+                <form [formGroup]="backupForm" (ngSubmit)="saveBackupSettings()">
+                  <div class="checkbox-group">
+                    <mat-checkbox formControlName="autoBackup">Enable Auto Backup</mat-checkbox>
+                  </div>
+                  <mat-form-field class="example-full-width">
+                    <mat-label>Frequency</mat-label>
+                    <mat-select formControlName="frequency">
+                      <mat-option value="DAILY">Daily</mat-option>
+                      <mat-option value="WEEKLY">Weekly</mat-option>
+                      <mat-option value="MONTHLY">Monthly</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                  <mat-form-field class="example-full-width">
+                    <mat-label>Last Backup</mat-label>
+                    <input matInput formControlName="lastBackupAt" readonly />
+                  </mat-form-field>
+                  <button mat-raised-button class="btn btn-danger" [disabled]="savingBackup">
+                    {{ savingBackup ? "Saving..." : "Save Backup Settings" }}
+                  </button>
+                  <button type="button" mat-raised-button class="btn btn-outline-danger ml-2" [disabled]="runningBackup" (click)="runBackupNowAction()">
+                    {{ runningBackup ? "Running..." : "Run Backup Now" }}
+                  </button>
+                </form>
+              </div>
+
+              <div *ngIf="activeSection === 'Audit Logs'">
+                <div *ngIf="loadingAudit" class="loading-block">Loading logs...</div>
+                <div *ngIf="!loadingAudit && auditLogs.length === 0">No audit logs yet.</div>
+                <div class="session-list" *ngIf="!loadingAudit && auditLogs.length > 0">
+                  <div class="session-item" *ngFor="let log of auditLogs">
+                    <div class="session-device">{{ log.action }}</div>
+                    <div class="session-meta">{{ log.details || "-" }}</div>
+                    <div class="session-meta">{{ log.createdAt | date: "dd/MM/yyyy hh:mm a" }}</div>
+                  </div>
+                </div>
+              </div>
+
+              <div *ngIf="activeSection === 'Session Management'">
+                <div *ngIf="loadingSessions" class="loading-block">Loading sessions...</div>
+                <div *ngIf="!loadingSessions && sessions.length === 0" class="loading-block">No active sessions found.</div>
+                <div *ngIf="!loadingSessions && sessions.length > 0" class="session-list">
+                  <div class="session-item" *ngFor="let session of sessions">
+                    <div class="session-device">{{ session.userAgent || "Unknown Device" }}</div>
+                    <div class="session-meta">IP: {{ session.ip || "Unknown" }}</div>
+                    <div class="session-meta">Created: {{ session.createdAt | date: "dd/MM/yyyy hh:mm a" }}</div>
+                    <div class="session-meta">Last Seen: {{ session.lastSeenAt | date: "dd/MM/yyyy hh:mm a" }}</div>
+                  </div>
+                </div>
+                <button mat-raised-button class="btn btn-danger mt-3" (click)="onLogoutAllDevices()" [disabled]="loggingOutAll">
+                  {{ loggingOutAll ? "Processing..." : "Logout All Devices" }}
+                </button>
+              </div>
+
+              <div *ngIf="activeSection === 'App Preferences'">
+                <form [formGroup]="preferencesForm" (ngSubmit)="savePreferences()">
+                  <div class="row">
+                    <div class="col-md-6">
+                      <mat-form-field class="example-full-width">
+                        <mat-label>Language</mat-label>
+                        <mat-select formControlName="language">
+                          <mat-option value="en">English</mat-option>
+                          <mat-option value="hi">Hindi</mat-option>
+                        </mat-select>
+                      </mat-form-field>
+                    </div>
+                    <div class="col-md-6">
+                      <mat-form-field class="example-full-width">
+                        <mat-label>Timezone</mat-label>
+                        <mat-select formControlName="timezone">
+                          <mat-option value="Asia/Kolkata">Asia/Kolkata</mat-option>
+                          <mat-option value="UTC">UTC</mat-option>
+                        </mat-select>
+                      </mat-form-field>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col-md-6">
+                      <mat-form-field class="example-full-width">
+                        <mat-label>Currency</mat-label>
+                        <mat-select formControlName="currency">
+                          <mat-option value="INR">INR</mat-option>
+                          <mat-option value="USD">USD</mat-option>
+                        </mat-select>
+                      </mat-form-field>
+                    </div>
+                    <div class="col-md-6">
+                      <mat-form-field class="example-full-width">
+                        <mat-label>Date Format</mat-label>
+                        <mat-select formControlName="dateFormat">
+                          <mat-option value="DD/MM/YYYY">DD/MM/YYYY</mat-option>
+                          <mat-option value="MM/DD/YYYY">MM/DD/YYYY</mat-option>
+                          <mat-option value="YYYY-MM-DD">YYYY-MM-DD</mat-option>
+                        </mat-select>
+                      </mat-form-field>
+                    </div>
+                  </div>
+                  <button mat-raised-button class="btn btn-danger" [disabled]="savingPreferences">
+                    {{ savingPreferences ? "Saving..." : "Save Preferences" }}
+                  </button>
+                </form>
+              </div>
+
+              <div *ngIf="activeSection === 'Danger Zone'" class="danger-zone">
+                <p>These actions are irreversible. Use carefully.</p>
+                <button mat-raised-button class="btn btn-danger mr-2" [disabled]="deactivatingAccount" (click)="deactivateAccount()">
+                  {{ deactivatingAccount ? "Deactivating..." : "Deactivate Account" }}
+                </button>
+                <button mat-raised-button class="btn btn-outline-danger" [disabled]="deactivatingShop" (click)="deactivateShop()">
+                  {{ deactivatingShop ? "Deactivating..." : "Deactivate Current Shop" }}
+                </button>
+              </div>
+            </ng-container>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

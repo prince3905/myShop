@@ -1,10 +1,11 @@
 const express = require('express');
 const distributorController = require('../controllers/distributorController');
-const authController = require('../controllers/authController');
+const { protect, attachShop } = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
-router.use(authController.protect); //Protect all routes
+router.use(protect);
+router.use(attachShop);
 
 router.get('/distributor-suggestions', distributorController.distributorSuggestions)
 router.get('/', distributorController.allDistributors);

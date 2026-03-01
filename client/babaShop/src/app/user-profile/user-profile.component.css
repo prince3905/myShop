@@ -1,0 +1,35 @@
+.loading-block {
+  padding: 24px 0;
+  color: #666;
+  font-weight: 500;
+}
+
+.profile-initials {
+  width: 88px;
+  height: 88px;
+  margin: 18px auto 0;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #d32f2f, #ef5350);
+  color: #fff;
+  font-size: 32px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.badge-status {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: #b0bec5;
+  color: #263238;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.badge-status.active {
+  background: #c8e6c9;
+  color: #1b5e20;
+}

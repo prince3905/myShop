@@ -64,7 +64,55 @@ const userSchema = new mongoose.Schema({
     default: false
   },
 
-  lastLogin: Date
+  lastLogin: Date,
+
+  twoFactorEnabled: {
+    type: Boolean,
+    default: false
+  },
+
+  sessions: [{
+    sid: {
+      type: String,
+      required: true
+    },
+    userAgent: {
+      type: String,
+      default: "Unknown"
+    },
+    ip: {
+      type: String,
+      default: "Unknown"
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now
+    },
+    lastSeenAt: {
+      type: Date,
+      default: Date.now
+    }
+  }],
+
+  notificationSettings: {
+    email: { type: Boolean, default: true },
+    sms: { type: Boolean, default: false },
+    whatsapp: { type: Boolean, default: false },
+    inApp: { type: Boolean, default: true }
+  },
+
+  preferences: {
+    language: { type: String, default: "en" },
+    timezone: { type: String, default: "Asia/Kolkata" },
+    currency: { type: String, default: "INR" },
+    dateFormat: { type: String, default: "DD/MM/YYYY" }
+  },
+
+  auditLogs: [{
+    action: { type: String, required: true },
+    details: { type: String, default: "" },
+    createdAt: { type: Date, default: Date.now }
+  }]
 
 }, { timestamps: true });
 

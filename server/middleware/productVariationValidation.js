@@ -7,9 +7,6 @@ exports.createVariationValidation = [
   body("model")
     .notEmpty().withMessage("Model is required"),
 
-  body("shop")
-    .notEmpty().withMessage("Shop is required"),
-
   body("sku")
     .notEmpty().withMessage("SKU is required"),
 

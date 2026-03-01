@@ -2,19 +2,24 @@ import { Injectable } from "@angular/core";
 import { HttpClient, HttpParams } from "@angular/common/http";
 import { Observable } from "rxjs";
 import { environment } from "../../../environments/environment";
+import { AuthService } from "./auth.service";
 
 @Injectable({
   providedIn: "root",
 })
 export class DistributorService {
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private authService: AuthService) {}
 
   get baseURL(): string {
     return environment.apiBaseURL;
   }
 
   getDistributor(data: any) {
-    const params = new HttpParams({ fromObject: data });
+    let params = new HttpParams({ fromObject: data || {} });
+    const selectedShop = this.authService.getShopId();
+    if (selectedShop) {
+      params = params.set("shopId", selectedShop);
+    }
     // console.log(params);
     return this.http.get(`${this.baseURL}/api/distributor`, { params: params });
   }
@@ -25,15 +30,19 @@ export class DistributorService {
 
   getDistributorSuggestionName(searchTerm: string) {
     console.log(searchTerm);
+    const selectedShop = this.authService.getShopId();
+    const shopQuery = selectedShop ? `&shopId=${selectedShop}` : "";
     return this.http.get(
-      `${this.baseURL}/api/distributor/distributor-suggestions?term=${searchTerm}`,
+      `${this.baseURL}/api/distributor/distributor-suggestions?term=${searchTerm}${shopQuery}`,
     );
   }
 
   getDistributorSuggestionPhone(searchTerm: number) {
     console.log(searchTerm);
+    const selectedShop = this.authService.getShopId();
+    const shopQuery = selectedShop ? `&shopId=${selectedShop}` : "";
     return this.http.get(
-      `${this.baseURL}/api/distributor/distributor-suggestions?term=${searchTerm}`,
+      `${this.baseURL}/api/distributor/distributor-suggestions?term=${searchTerm}${shopQuery}`,
     );
   }
 

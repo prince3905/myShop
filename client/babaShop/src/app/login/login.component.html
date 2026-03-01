@@ -20,12 +20,8 @@
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Shop Code</mat-label>
           <mat-icon matPrefix>store</mat-icon>
-          <input matInput placeholder="BABA01" [(ngModel)]="shopCode" name="shopCode" required>
+          <input matInput placeholder="BABA01" [(ngModel)]="shopCode" name="shopCode">
 
-          <mat-error *ngIf="loginForm.controls['shopCode']?.invalid && 
-      (loginForm.controls['shopCode']?.dirty || loginForm.controls['shopCode']?.touched)">
-            Shop Code is required.
-          </mat-error>
         </mat-form-field>
 
         <!-- Email Input -->

@@ -1,8 +1,36 @@
 const ProductModel = require("../models/ProductModel");
+const Product = require("../models/Product");
+
+const isSuperAdminGlobal = (req) =>
+  req.user?.role === "SUPER_ADMIN" && !req.shopId;
 
 exports.createProductModel = async (req, res) => {
   try {
-    const productModel = await ProductModel.create(req.body);
+    if (!req.shopId) {
+      return res.status(400).json({
+        success: false,
+        message: "Please select a shop first",
+      });
+    }
+
+    const { product, name, description, images, isActive } = req.body;
+    const productExists = await Product.findOne({ _id: product, shop: req.shopId });
+
+    if (!productExists) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid product for selected shop",
+      });
+    }
+
+    const productModel = await ProductModel.create({
+      product,
+      name,
+      description,
+      images,
+      isActive,
+      shop: req.shopId,
+    });
 
     res.status(201).json({
       success: true,
@@ -18,7 +46,8 @@ exports.createProductModel = async (req, res) => {
 
 exports.getProductModels = async (req, res) => {
   try {
-    const models = await ProductModel.find()
+    const filter = isSuperAdminGlobal(req) ? {} : { shop: req.shopId };
+    const models = await ProductModel.find(filter)
       .populate("shop", "name")
       .populate("product", "name");
 

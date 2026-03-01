@@ -91,27 +91,27 @@
 }
 
 /* Icons (Email/Lock) Gold color */
-::ng-deep .mat-form-field-prefix .mat-icon {
+:host ::ng-deep .login-wrapper .mat-form-field-prefix .mat-icon {
   color: #d4af37 !important;
   margin-right: 10px;
 }
 
 /* Input Text Color (Jab type karoge) */
-::ng-deep .mat-input-element {
+:host ::ng-deep .login-wrapper .mat-input-element {
   color: #fff !important; /* Type karte waqt white taaki dikhe */
   caret-color: #d4af37;   /* Cursor Gold */
 }
 
 /* Label (Placeholder) Color */
-::ng-deep .mat-form-field-label {
+:host ::ng-deep .login-wrapper .mat-form-field-label {
   color: #bfa361 !important;
 }
 
 /* Outline Border Color (Normal & Focus) */
-::ng-deep .mat-form-field-appearance-outline .mat-form-field-outline {
+:host ::ng-deep .login-wrapper .mat-form-field-appearance-outline .mat-form-field-outline {
   color: #665c3b !important; /* Dark Gold defaults */
 }
-::ng-deep .mat-form-field.mat-focused .mat-form-field-outline-thick {
+:host ::ng-deep .login-wrapper .mat-form-field.mat-focused .mat-form-field-outline-thick {
   color: #ffd700 !important; /* Bright Gold on Click */
 }
 
@@ -157,10 +157,10 @@
 /* --- AUTOFILL BACKGROUND FIX --- */
 
 /* Ye Chrome, Edge, Safari ke auto-fill background ko overwrite karega */
-input:-webkit-autofill,
-input:-webkit-autofill:hover, 
-input:-webkit-autofill:focus, 
-input:-webkit-autofill:active {
+.login-wrapper input:-webkit-autofill,
+.login-wrapper input:-webkit-autofill:hover, 
+.login-wrapper input:-webkit-autofill:focus, 
+.login-wrapper input:-webkit-autofill:active {
     
     /* 1. Background ko wapas Black/Dark banata hai */
     -webkit-box-shadow: 0 0 0 50px #0a0a0a inset !important; 

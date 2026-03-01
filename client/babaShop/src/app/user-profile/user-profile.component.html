@@ -1,105 +1,169 @@
 <div class="main-content">
   <div class="container-fluid">
-      <div class="row">
-          <div class="col-md-8">
-              <div class="card">
-                  <div class="card-header card-header-danger">
-                      <h4 class="card-title">Edit Profile</h4>
-                      <p class="card-category">Complete your profile</p>
-                  </div>
-                  <div class="card-body">
-                      <form>
-                          <div class="row">
-                              <div class="col-md-5">
-                                <mat-form-field class="example-full-width">
-                                    <input matInput placeholder="Company (disabled)" disabled>
-                                  </mat-form-field>
-                              </div>
-                              <div class="col-md-3">
-                                  <mat-form-field class="example-full-width">
-                                    <input matInput placeholder="Username">
-                                  </mat-form-field>
-                              </div>
-                              <div class="col-md-4">
-                                  <mat-form-field class="example-full-width">
-                                    <input matInput placeholder="Email address" type="email">
-                                  </mat-form-field>
-                              </div>
-                          </div>
-                          <div class="row">
-                              <div class="col-md-6">
-                                <mat-form-field class="example-full-width">
-                                  <input matInput placeholder="Fist Name" type="text">
-                                </mat-form-field>
-                              </div>
-                              <div class="col-md-6">
-                                <mat-form-field class="example-full-width">
-                                  <input matInput placeholder="Last Name" type="text">
-                                </mat-form-field>
-                              </div>
-                          </div>
-                          <div class="row">
-                              <div class="col-md-12">
-                                <mat-form-field class="example-full-width">
-                                  <input matInput placeholder="Adress" type="text">
-                                </mat-form-field>
-                              </div>
-                          </div>
-                          <div class="row">
-                              <div class="col-md-4">
-                                <mat-form-field class="example-full-width">
-                                  <input matInput placeholder="City" type="text">
-                                </mat-form-field>
-                              </div>
-                              <div class="col-md-4">
-                                <mat-form-field class="example-full-width">
-                                  <input matInput placeholder="Country" type="text">
-                                </mat-form-field>
-                              </div>
-                              <div class="col-md-4">
-                                <mat-form-field class="example-full-width">
-                                  <input matInput placeholder="Postal Code" type="text">
-                                </mat-form-field>
-                              </div>
-                          </div>
-                          <div class="row">
-                              <div class="col-md-12">
-                                <label>About Me</label>
-                                <mat-form-field class="example-full-width">
-                                   <textarea matInput placeholder="Lamborghini Mercy, Your chick she so thirsty, I'm in that two seat Lambo."></textarea>
-                                 </mat-form-field>
-                                  <!-- <div class="form-group">
+    <div class="row">
+      <div class="col-md-8">
+        <div class="card">
+          <div class="card-header card-header-danger">
+            <h4 class="card-title">Profile</h4>
+            <p class="card-category">Manage your account details</p>
+          </div>
+          <div class="card-body">
+            <div *ngIf="profileLoading" class="text-center loading-block">
+              Loading profile...
+            </div>
 
-                                      <div class="form-group">
-                                          <label class="bmd-label-floating"> Lamborghini Mercy, Your chick she so thirsty, I'm in that two seat Lambo.</label>
-                                          <textarea class="form-control" rows="5"></textarea>
-                                      </div>
-                                  </div> -->
-                              </div>
-                          </div>
-                          <button mat-raised-button type="submit" class="btn btn-danger pull-right">Update Profile</button>
-                          <div class="clearfix"></div>
-                      </form>
-                  </div>
+            <form *ngIf="!profileLoading" [formGroup]="profileForm" (ngSubmit)="onSubmit()">
+              <div class="row">
+                <div class="col-md-6">
+                  <mat-form-field class="example-full-width">
+                    <mat-label>First Name</mat-label>
+                    <input matInput formControlName="pFname" />
+                  </mat-form-field>
+                </div>
+                <div class="col-md-6">
+                  <mat-form-field class="example-full-width">
+                    <mat-label>Last Name</mat-label>
+                    <input matInput formControlName="pLname" />
+                  </mat-form-field>
+                </div>
               </div>
-          </div>
-          <div class="col-md-4">
-              <div class="card card-profile">
-                  <div class="card-avatar">
-                      <a href="javascript:void(0)">
-                          <img class="img" src="./assets/img/faces/marc.jpg" />
-                      </a>
-                  </div>
-                  <div class="card-body">
-                      <h6 class="card-category text-gray">CEO / Co-Founder</h6>
-                      <h4 class="card-title">Alec Thompson</h4>
-                      <p class="card-description">
-                          Don't be scared of the truth because we need to restart the human foundation in truth And I love you like Kanye loves Kanye I love Rick Owens’ bed design but the back is...
-                      </p>
-                      <a href="javascript:void(0)" class="btn btn-danger btn-round">Follow</a>
-                  </div>
+
+              <div class="row">
+                <div class="col-md-6">
+                  <mat-form-field class="example-full-width">
+                    <mat-label>Primary Email</mat-label>
+                    <input matInput formControlName="email" readonly />
+                  </mat-form-field>
+                </div>
+                <div class="col-md-6">
+                  <mat-form-field class="example-full-width">
+                    <mat-label>Profile Email</mat-label>
+                    <input matInput formControlName="pEmail" type="email" />
+                    <mat-error *ngIf="profileForm.get('pEmail')?.invalid">
+                      Enter a valid email
+                    </mat-error>
+                  </mat-form-field>
+                </div>
               </div>
+
+              <div class="row">
+                <div class="col-md-6">
+                  <mat-form-field class="example-full-width">
+                    <mat-label>Primary Phone</mat-label>
+                    <input matInput formControlName="phoneNo" />
+                    <mat-error *ngIf="profileForm.get('phoneNo')?.invalid">
+                      Enter valid phone (10-15 digits)
+                    </mat-error>
+                  </mat-form-field>
+                </div>
+                <div class="col-md-6">
+                  <mat-form-field class="example-full-width">
+                    <mat-label>Alternate Phone</mat-label>
+                    <input matInput formControlName="pPhoneNo" />
+                    <mat-error *ngIf="profileForm.get('pPhoneNo')?.invalid">
+                      Enter valid phone (10-15 digits)
+                    </mat-error>
+                  </mat-form-field>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-4">
+                  <mat-form-field class="example-full-width">
+                    <mat-label>Role</mat-label>
+                    <input matInput formControlName="role" readonly />
+                  </mat-form-field>
+                </div>
+                <div class="col-md-4">
+                  <mat-form-field class="example-full-width">
+                    <mat-label>Shop ID</mat-label>
+                    <input matInput formControlName="shop" readonly />
+                  </mat-form-field>
+                </div>
+                <div class="col-md-4">
+                  <mat-form-field class="example-full-width">
+                    <mat-label>Shop Name</mat-label>
+                    <input matInput formControlName="shopName" readonly />
+                  </mat-form-field>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-4">
+                  <mat-form-field class="example-full-width">
+                    <mat-label>Shop Code</mat-label>
+                    <input matInput formControlName="shopCode" readonly />
+                  </mat-form-field>
+                </div>
+                <div class="col-md-4">
+                  <mat-form-field class="example-full-width">
+                    <mat-label>Current Mode</mat-label>
+                    <input matInput formControlName="mode" readonly />
+                  </mat-form-field>
+                </div>
+                <div class="col-md-4">
+                  <mat-form-field class="example-full-width">
+                    <mat-label>Status</mat-label>
+                    <input matInput formControlName="isActive" readonly />
+                  </mat-form-field>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-6">
+                  <mat-form-field class="example-full-width">
+                    <mat-label>Last Login</mat-label>
+                    <input matInput formControlName="lastLogin" readonly />
+                  </mat-form-field>
+                </div>
+                <div class="col-md-6">
+                  <mat-form-field class="example-full-width">
+                    <mat-label>Joined At</mat-label>
+                    <input matInput formControlName="createdAt" readonly />
+                  </mat-form-field>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-12">
+                  <mat-form-field class="example-full-width">
+                    <mat-label>Permissions Summary</mat-label>
+                    <textarea matInput formControlName="permissions" rows="2" readonly></textarea>
+                  </mat-form-field>
+                </div>
+              </div>
+
+              <button
+                mat-raised-button
+                type="submit"
+                class="btn btn-danger pull-right"
+                [disabled]="profileForm.invalid || saveLoading"
+              >
+                {{ saveLoading ? "Updating..." : "Update Profile" }}
+              </button>
+              <div class="clearfix"></div>
+            </form>
           </div>
+        </div>
       </div>
+
+      <div class="col-md-4">
+        <div class="card card-profile">
+          <div class="profile-initials">
+            {{ initials }}
+          </div>
+          <div class="card-body">
+            <h6 class="card-category text-gray">{{ profileForm.get("role")?.value || "-" }}</h6>
+            <h4 class="card-title">{{ displayName }}</h4>
+            <p class="card-description">
+              Keep your profile details updated so your account, permissions, and shop context stay accurate.
+            </p>
+            <span class="badge-status" [class.active]="profileForm.get('isActive')?.value === 'Active'">
+              {{ profileForm.get("isActive")?.value || "Unknown" }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>

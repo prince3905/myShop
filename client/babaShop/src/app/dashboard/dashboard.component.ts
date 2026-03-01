@@ -175,14 +175,25 @@ export class DashboardComponent implements OnInit {
   loadShops() {
     this.shopService.getAllShops().subscribe((res: any) => {
       if (res.success) {
-        this.shops = res.data; // 🔥 IMPORTANT
+        const user = this.authService.getCurrentUser();
+        const scopedShopId = user?.shop || null;
+        const scopedShopCode = user?.shopCode || null;
+
+        if (scopedShopId) {
+          this.shops = (res.data || []).filter((shop: any) => shop._id === scopedShopId);
+          this.selectedShop = scopedShopId;
+          this.shopService.setSelectedShop(scopedShopId, scopedShopCode);
+        } else {
+          this.shops = res.data; // global for super admin without shop
+        }
         console.log(this.shops);
       }
     });
   }
   onShopChange(event: any) {
     const shopId = event.target.value;
-    this.shopService.setSelectedShop(shopId);
+    const selectedShopObj = this.shops.find((shop: any) => shop._id === shopId);
+    this.shopService.setSelectedShop(shopId, selectedShopObj?.shopCode || null);
     this.selectedShop = shopId;
 
     console.log("Selected Shop:", shopId);

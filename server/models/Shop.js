@@ -68,6 +68,20 @@ const shopSchema = new mongoose.Schema({
     default: false,
   },
 
+  integrationSettings: {
+    gstEnabled: { type: Boolean, default: false },
+    whatsappEnabled: { type: Boolean, default: false },
+    smsEnabled: { type: Boolean, default: false },
+    emailEnabled: { type: Boolean, default: true },
+    paymentGateway: { type: String, default: "NONE" }
+  },
+
+  backupSettings: {
+    autoBackup: { type: Boolean, default: false },
+    frequency: { type: String, enum: ["DAILY", "WEEKLY", "MONTHLY"], default: "WEEKLY" },
+    lastBackupAt: { type: Date, default: null }
+  },
+
 }, { timestamps: true });
 
 /* Compound index for safety */

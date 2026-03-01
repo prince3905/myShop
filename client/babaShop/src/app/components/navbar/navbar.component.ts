@@ -61,7 +61,8 @@ export class NavbarComponent implements OnInit {
   }
 
   onShopChange(shopId: string) {
-    this.shopService.setSelectedShop(shopId);
+    const selectedShopObj = this.shops.find((shop: any) => shop._id === shopId);
+    this.shopService.setSelectedShop(shopId, selectedShopObj?.shopCode || null);
   }
 
   sidebarOpen() {

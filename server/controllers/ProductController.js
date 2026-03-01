@@ -3,12 +3,31 @@ const slugify = require("slugify");
 const ProductVariation = require("../models/ProductVariation");
 const ProductModel = require("../models/ProductModel");
 
+const isSuperAdminGlobal = (req) =>
+  req.user?.role === "SUPER_ADMIN" && !req.shopId;
+
 /* =========================
    CREATE PRODUCT
 ========================= */
 exports.createProduct = async (req, res) => {
   try {
     const { name, category, brand, description, images } = req.body;
+    console.log("[FLOW][PRODUCT][CREATE]", {
+      userId: req.user?._id?.toString(),
+      role: req.user?.role,
+      shopId: req.shopId?.toString(),
+      name,
+      category,
+      brand,
+    });
+
+    if (!req.shopId) {
+      return res.status(400).json({
+        success: false,
+        message: "Please select a shop first",
+      });
+    }
+
     const slug = slugify(name, { lower: true, strict: true });
 
     const product = await Product.create({
@@ -48,7 +67,13 @@ exports.createProduct = async (req, res) => {
 exports.getProducts = async (req, res) => {
   try {
     const { limit, skip, sort = "-createdAt", search } = req.query;
-    const query = { shop: req.shopId };
+    const query = isSuperAdminGlobal(req) ? {} : { shop: req.shopId };
+    console.log("[FLOW][PRODUCT][LIST] request", {
+      userId: req.user?._id?.toString(),
+      role: req.user?.role,
+      shopId: req.shopId?.toString(),
+      query: { limit, skip, sort, search },
+    });
 
     if (search) {
       query.name = { $regex: search, $options: "i" };
@@ -75,6 +100,10 @@ exports.getProducts = async (req, res) => {
     }
 
     const products = await productQuery;
+    console.log("[FLOW][PRODUCT][LIST] response", {
+      count: products.length,
+      shopId: req.shopId?.toString(),
+    });
 
     res.json({
       success: true,
@@ -94,10 +123,17 @@ exports.getProducts = async (req, res) => {
 ========================= */
 exports.getProductById = async (req, res) => {
   try {
-    const product = await Product.findOne({
-      _id: req.params.id,
-      shop: req.shopId,
-    })
+    console.log("[FLOW][PRODUCT][GET_ONE]", {
+      userId: req.user?._id?.toString(),
+      role: req.user?.role,
+      shopId: req.shopId?.toString(),
+      productId: req.params.id,
+    });
+    const filter = isSuperAdminGlobal(req)
+      ? { _id: req.params.id }
+      : { _id: req.params.id, shop: req.shopId };
+
+    const product = await Product.findOne(filter)
       .populate("category", "name")
       .populate("brand", "name")
       .populate({
@@ -133,6 +169,19 @@ exports.getProductById = async (req, res) => {
 exports.updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
+    console.log("[FLOW][PRODUCT][UPDATE]", {
+      userId: req.user?._id?.toString(),
+      role: req.user?.role,
+      shopId: req.shopId?.toString(),
+      productId: id,
+    });
+    if (!req.shopId) {
+      return res.status(400).json({
+        success: false,
+        message: "Please select a shop first",
+      });
+    }
+
     const allowedFields = ["name", "category", "brand", "description", "images", "isActive"];
     const updateData = {};
 
@@ -180,6 +229,18 @@ exports.updateProduct = async (req, res) => {
 exports.deleteProduct = async (req, res) => {
   try {
     const { id } = req.params;
+    console.log("[FLOW][PRODUCT][DELETE]", {
+      userId: req.user?._id?.toString(),
+      role: req.user?.role,
+      shopId: req.shopId?.toString(),
+      productId: id,
+    });
+    if (!req.shopId) {
+      return res.status(400).json({
+        success: false,
+        message: "Please select a shop first",
+      });
+    }
 
     const product = await Product.findOne({
       _id: id,

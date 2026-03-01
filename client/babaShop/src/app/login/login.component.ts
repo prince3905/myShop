@@ -31,14 +31,23 @@ export class LoginComponent implements OnInit {
 
   
 onSubmit(): void {
-  if (!this.shopCode || !this.email || !this.password) {
+  if (!this.email || !this.password) {
     return;
   }
+  console.log("[FLOW][FE][LOGIN_COMPONENT] submit", {
+    email: this.email,
+    shopCode: this.shopCode,
+  });
 
   this.authService
     .login(this.shopCode, this.email, this.password)
     .subscribe(
       (response) => {
+        console.log("[FLOW][FE][LOGIN_COMPONENT] navigateDashboard", {
+          userId: response?.user?.id,
+          role: response?.user?.role,
+          shop: response?.user?.shop,
+        });
         this.router.navigate(['/dashboard']);
       },
       (error) => {

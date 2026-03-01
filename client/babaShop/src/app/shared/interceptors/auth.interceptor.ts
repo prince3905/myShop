@@ -21,8 +21,8 @@ export class AuthInterceptor implements HttpInterceptor {
   ): Observable<HttpEvent<unknown>> {
 
     const authToken = this.authService.getToken();
-    const selectedShop = localStorage.getItem('selected_shop');
-    const userShop = this.authService.getShopId();
+    const resolvedShopId = this.authService.getShopId();
+    const userRole = this.authService.getUserRole();
 
     let headers: any = {};
 
@@ -30,9 +30,19 @@ export class AuthInterceptor implements HttpInterceptor {
       headers['Authorization'] = `Bearer ${authToken}`;
     }
 
-    const activeShopId = selectedShop || userShop;
+    const activeShopId = resolvedShopId;
+    console.log("[FLOW][FE][INTERCEPTOR] outgoing", {
+      url: request.url,
+      hasToken: !!authToken,
+      selectedShop: this.authService.getCurrentUser()?.shop || null,
+      userShop: this.authService.getCurrentUser()?.shop || null,
+      role: userRole,
+      activeShopId,
+    });
 
-    if (activeShopId) {
+    const isShopAdminListCall = request.url.includes('/api/shops/admin/all');
+
+    if (activeShopId && !isShopAdminListCall) {
       headers['x-shop-id'] = activeShopId;
     }
 
@@ -42,10 +52,16 @@ export class AuthInterceptor implements HttpInterceptor {
 
     return next.handle(modifiedRequest).pipe(
       catchError((err: HttpErrorResponse) => {
-        if (err.status === 401) {
-          this.authService.removeToken();
-          this.authService.removeUser();
-          this.router.navigateByUrl('/authentication/login');
+        const isLoginCall = request.url.includes('/api/auth/login');
+
+        if (err.status === 401 && !isLoginCall) {
+          if (authToken) {
+            this.authService.removeToken();
+            this.authService.removeUser();
+          }
+          if (this.router.url !== '/login') {
+            this.router.navigateByUrl('/login');
+          }
         }
         return throwError(() => err);
       })

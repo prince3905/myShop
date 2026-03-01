@@ -4,7 +4,7 @@ import { Injectable } from "@angular/core";
 import { HttpClient } from "@angular/common/http";
 import { tap, catchError, finalize } from "rxjs/operators";
 import { environment } from "../../../environments/environment";
-import { BehaviorSubject, throwError } from "rxjs";
+import { throwError } from "rxjs";
 
 interface LoginResponse {
   success: boolean;
@@ -14,7 +14,15 @@ interface LoginResponse {
 
 interface AuthenticatedResponse {
   success: boolean;
+  message?: string;
   user: any;
+}
+
+interface SessionsResponse {
+  success: boolean;
+  message?: string;
+  sessions: any[];
+  count: number;
 }
 
 @Injectable({
@@ -41,6 +49,7 @@ isLoggedIn(): boolean {
 
 login(shopCode: string, email: string, password: string) {
   this.showLoader = true;
+  console.log("[FLOW][FE][AUTH][LOGIN] request", { email, shopCode });
 
   return this.http
     .post<LoginResponse>(`${this.baseURL}/api/auth/login`, {
@@ -54,6 +63,12 @@ login(shopCode: string, email: string, password: string) {
       }),
       tap((res) => {
         if (res.success && res.token && res.user) {
+          console.log("[FLOW][FE][AUTH][LOGIN] success", {
+            userId: res.user?.id,
+            role: res.user?.role,
+            shop: res.user?.shop,
+            shopCode: res.user?.shopCode,
+          });
           this.saveToken(res.token);
           this.user = res.user;
         }
@@ -73,6 +88,10 @@ login(shopCode: string, email: string, password: string) {
     return localStorage.removeItem(this.USER_KEY);
   }
 
+  removeSelectedShop() {
+    this.setActiveShop(null);
+  }
+
   set user(user) {
     localStorage.setItem(this.USER_KEY, JSON.stringify(user));
   }
@@ -80,6 +99,14 @@ login(shopCode: string, email: string, password: string) {
   getCurrentUser(): any | null {
     const user = localStorage.getItem(this.USER_KEY);
     return user ? JSON.parse(user) : null;
+  }
+
+  setActiveShop(shopId: string | null, shopCode: string | null = null) {
+    const user = this.getCurrentUser();
+    if (!user) return;
+    user.shop = shopId || null;
+    user.shopCode = shopCode || null;
+    this.user = user;
   }
 
   getShopId(): string | null {
@@ -111,11 +138,88 @@ login(shopCode: string, email: string, password: string) {
       );
   }
 
+  getProfile() {
+    return this.http
+      .get<AuthenticatedResponse>(`${this.baseURL}/api/auth/authenticated`)
+      .pipe(
+        tap(({ user }) => {
+          this.user = user;
+        }),
+      );
+  }
+
+  updateProfile(payload: any) {
+    return this.http
+      .put<AuthenticatedResponse>(`${this.baseURL}/api/auth/profile`, payload)
+      .pipe(
+        tap(({ user }) => {
+          this.user = user;
+        }),
+      );
+  }
+
+  getActiveSessions() {
+    return this.http.get<SessionsResponse>(`${this.baseURL}/api/auth/sessions`);
+  }
+
+  changePassword(payload: { currentPassword: string; newPassword: string }) {
+    return this.http.put<any>(`${this.baseURL}/api/auth/change-password`, payload);
+  }
+
+  updateTwoFactor(enabled: boolean) {
+    return this.http.put<any>(`${this.baseURL}/api/auth/2fa`, { enabled });
+  }
+
+  logoutAllDevices() {
+    return this.http.post<any>(`${this.baseURL}/api/auth/logout-all`, {});
+  }
+
+  getSettingsOverview() {
+    return this.http.get<any>(`${this.baseURL}/api/auth/settings-overview`);
+  }
+
+  updateNotificationSettings(payload: any) {
+    return this.http.put<any>(`${this.baseURL}/api/auth/settings/notifications`, payload);
+  }
+
+  updateAppPreferences(payload: any) {
+    return this.http.put<any>(`${this.baseURL}/api/auth/settings/preferences`, payload);
+  }
+
+  updateShopSettings(payload: any) {
+    return this.http.put<any>(`${this.baseURL}/api/auth/settings/shop`, payload);
+  }
+
+  updateIntegrations(payload: any) {
+    return this.http.put<any>(`${this.baseURL}/api/auth/settings/integrations`, payload);
+  }
+
+  updateBackupSettings(payload: any) {
+    return this.http.put<any>(`${this.baseURL}/api/auth/settings/backup`, payload);
+  }
+
+  runBackupNow() {
+    return this.http.post<any>(`${this.baseURL}/api/auth/settings/backup/run`, {});
+  }
+
+  getAuditLogs() {
+    return this.http.get<any>(`${this.baseURL}/api/auth/settings/audit-logs`);
+  }
+
+  deactivateAccount() {
+    return this.http.post<any>(`${this.baseURL}/api/auth/settings/danger/account-deactivate`, {});
+  }
+
+  deactivateShop() {
+    return this.http.post<any>(`${this.baseURL}/api/auth/settings/danger/shop-deactivate`, {});
+  }
+
   logout() {
     return this.http.get<any>(`${this.baseURL}/api/auth/logout`).pipe(
       finalize(() => {
         this.removeToken();
         this.removeUser();
+        this.removeSelectedShop();
       }),
     );
   }

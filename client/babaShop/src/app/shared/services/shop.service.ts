@@ -1,16 +1,22 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
-import { tap } from 'rxjs/operators';
+import { BehaviorSubject } from 'rxjs';
+import { AuthService } from './auth.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ShopService {
 
-  private SHOP_KEY = 'selected_shop';
+  private selectedShopSubject = new BehaviorSubject<string | null>(
+    null,
+  );
+  selectedShop$ = this.selectedShopSubject.asObservable();
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private authService: AuthService) {
+    this.selectedShopSubject.next(this.authService.getShopId());
+  }
 
   get baseURL(): string {
     return environment.apiBaseURL;
@@ -20,15 +26,22 @@ export class ShopService {
     return this.http.get<any>(`${this.baseURL}/api/shops/admin/all`);
   }
 
-  setSelectedShop(shopId: string) {
-    localStorage.setItem(this.SHOP_KEY, shopId);
+  setSelectedShop(shopId: string, shopCode: string | null = null) {
+    if (!shopId) {
+      this.clearSelectedShop();
+      return;
+    }
+
+    this.authService.setActiveShop(shopId, shopCode);
+    this.selectedShopSubject.next(shopId);
   }
 
   getSelectedShop() {
-    return localStorage.getItem(this.SHOP_KEY);
+    return this.authService.getShopId();
   }
 
   clearSelectedShop() {
-    localStorage.removeItem(this.SHOP_KEY);
+    this.authService.setActiveShop(null);
+    this.selectedShopSubject.next(null);
   }
 }

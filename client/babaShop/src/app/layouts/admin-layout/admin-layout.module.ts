@@ -32,6 +32,7 @@ import { MatAutocompleteModule } from "@angular/material/autocomplete";
 import { StocksComponent } from "app/stocks/stocks.component";
 import { MatPaginatorModule } from "@angular/material/paginator";
 import { MatProgressSpinnerModule } from "@angular/material/progress-spinner";
+import { MatCheckboxModule } from "@angular/material/checkbox";
 import { OrdersComponent } from "app/orders/orders.component";
 import { CustomersComponent } from "app/customers/customers.component";
 import { DistributorsComponent } from "app/all-distributors/distributors/distributors.component";
@@ -39,6 +40,7 @@ import { AddDistributorsComponent } from "app/all-distributors/add-distributors/
 import { ViewDistributorComponent } from "app/all-distributors/view-distributor/view-distributor.component";
 import { LedgerEntryComponent } from "app/all-distributors/ledger-entry/ledger-entry.component";
 import { AddDetailsComponent } from "app/all-items/add-details/add-details.component";
+import { SettingsComponent } from "app/settings/settings.component";
 
 @NgModule({
   imports: [
@@ -63,6 +65,7 @@ import { AddDetailsComponent } from "app/all-items/add-details/add-details.compo
     MatAutocompleteModule,
     MatPaginatorModule,
     MatProgressSpinnerModule,
+    MatCheckboxModule,
   ],
   declarations: [
     DashboardComponent,
@@ -83,7 +86,8 @@ import { AddDetailsComponent } from "app/all-items/add-details/add-details.compo
     DistributorsComponent,
     ViewDistributorComponent,
     LedgerEntryComponent,
-    AddDetailsComponent
+    AddDetailsComponent,
+    SettingsComponent
   ],
 })
 export class AdminLayoutModule {

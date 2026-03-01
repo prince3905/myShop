@@ -14,6 +14,7 @@ import { DistributorsComponent } from "app/all-distributors/distributors/distrib
 import { OrdersComponent } from "app/orders/orders.component";
 import { CustomersComponent } from "app/customers/customers.component";
 import { AddDetailsComponent } from "app/all-items/add-details/add-details.component";
+import { SettingsComponent } from "app/settings/settings.component";
 
 export const AdminLayoutRoutes: Routes = [
   {
@@ -22,6 +23,7 @@ export const AdminLayoutRoutes: Routes = [
     canActivate: [SecurePageGuardGuard],
   },
   { path: "login", component: LoginComponent },
+  { path: "profile", component: UserProfileComponent },
   { path: "user-profile", component: UserProfileComponent },
   { path: "item-list", component: ItemsListComponent },
   { path: "add-items", component: AddItemsComponent },
@@ -34,4 +36,5 @@ export const AdminLayoutRoutes: Routes = [
   { path: "distributor", component: DistributorsComponent },
   { path: "order", component: OrdersComponent },
   { path: "customer", component: CustomersComponent },
+  { path: "settings", component: SettingsComponent },
 ];

@@ -1,25 +1,23 @@
 const Distributor = require("../models/Distributor");
+const Shop = require("../models/Shop");
 const {
   createDistributorLedgerEntry,
 } = require("../utils/distributorLedger.service");
 
+const isSuperAdminGlobal = (req) =>
+  req.user?.role === "SUPER_ADMIN" && !req.shopId;
+
 exports.allDistributors = async (req, res) => {
   try {
-    const { name, phone, page = 1, perPage = 10, shopId } = req.query;
+    const { name, phone, page = 1, perPage = 10 } = req.query;
+    console.log("[FLOW][DISTRIBUTOR][LIST] request", {
+      userId: req.user?._id?.toString(),
+      role: req.user?.role,
+      shopId: req.shopId?.toString(),
+      query: { name, phone, page, perPage },
+    });
 
-    let query = {};
-
-    // 🔐 ROLE BASED FILTER
-    if (req.user.role === "SUPER_ADMIN") {
-      // If shopId provided → filter
-      if (shopId) {
-        query.shop = shopId;
-      }
-      // else → no shop filter (see all)
-    } else {
-      // Normal admin → only their shop
-      query.shop = req.user.shop;
-    }
+    let query = isSuperAdminGlobal(req) ? {} : { shop: req.shopId };
 
     // 🔍 Search filters
     if (name) {
@@ -40,6 +38,11 @@ exports.allDistributors = async (req, res) => {
       .skip(skip)
       .limit(limit)
       .sort({ createdAt: -1 });
+    console.log("[FLOW][DISTRIBUTOR][LIST] response", {
+      count: distributors.length,
+      totalItems,
+      shopId: req.shopId?.toString(),
+    });
 
     res.status(200).json({
       success: true,
@@ -54,23 +57,44 @@ exports.allDistributors = async (req, res) => {
 
 exports.addDistributor = async (req, res) => {
   try {
-    let shopId;
+    console.log("[FLOW][DISTRIBUTOR][CREATE] request", {
+      userId: req.user?._id?.toString(),
+      role: req.user?.role,
+      shopId: req.shopId?.toString(),
+      name: req.body?.name,
+      phone: req.body?.phone,
+      bodyShop: req.body?.shop || null,
+    });
 
-    if (req.user.role === "SUPER_ADMIN") {
-      if (!req.body.shop) {
-        return res.status(400).json({
+    let targetShopId = req.shopId;
+
+    // Super admin in global mode can explicitly pass shop in payload
+    if (!targetShopId && req.user?.role === "SUPER_ADMIN" && req.body?.shop) {
+      const requestedShop = await Shop.findOne({
+        _id: req.body.shop,
+        isActive: true,
+      });
+
+      if (!requestedShop) {
+        return res.status(404).json({
           success: false,
-          message: "Shop ID required",
+          message: "Selected shop not found",
         });
       }
-      shopId = req.body.shop;
-    } else {
-      shopId = req.user.shop;
+
+      targetShopId = requestedShop._id;
+    }
+
+    if (!targetShopId) {
+      return res.status(400).json({
+        success: false,
+        message: "Please select a shop first",
+      });
     }
 
     const distributor = new Distributor({
       ...req.body,
-      shop: shopId,
+      shop: targetShopId,
       currentBalance: 0, // IMPORTANT
     });
 
@@ -83,7 +107,7 @@ exports.addDistributor = async (req, res) => {
       console.log("Creating opening ledger entry...");
 
       await createDistributorLedgerEntry({
-        shop: shopId,
+        shop: targetShopId,
         distributor: savedDistributor._id,
         type: "opening",
         amount: openingAmount,
@@ -105,11 +129,15 @@ exports.addDistributor = async (req, res) => {
 
 exports.getDistributorDetails = async (req, res) => {
   try {
-    let query = { _id: req.params.id };
-
-    if (req.user.role !== "SUPER_ADMIN") {
-      query.shop = req.user.shop;
-    }
+    console.log("[FLOW][DISTRIBUTOR][GET_ONE]", {
+      userId: req.user?._id?.toString(),
+      role: req.user?.role,
+      shopId: req.shopId?.toString(),
+      distributorId: req.params.id,
+    });
+    const query = isSuperAdminGlobal(req)
+      ? { _id: req.params.id }
+      : { _id: req.params.id, shop: req.shopId };
 
     const distributor = await Distributor.findOne(query);
 
@@ -128,6 +156,19 @@ exports.getDistributorDetails = async (req, res) => {
 
 exports.updateDistributor = async (req, res) => {
   try {
+    console.log("[FLOW][DISTRIBUTOR][UPDATE]", {
+      userId: req.user?._id?.toString(),
+      role: req.user?.role,
+      shopId: req.shopId?.toString(),
+      distributorId: req.params.id,
+    });
+    if (!req.shopId) {
+      return res.status(400).json({
+        success: false,
+        message: "Please select a shop first",
+      });
+    }
+
     const distributorId = req.params.id;
 
     // ONLY allowed fields
@@ -140,8 +181,8 @@ exports.updateDistributor = async (req, res) => {
       address: req.body.address,
     };
 
-    const updatedDistributor = await Distributor.findByIdAndUpdate(
-      distributorId,
+    const updatedDistributor = await Distributor.findOneAndUpdate(
+      { _id: distributorId, shop: req.shopId },
       updateData,
       { new: true, runValidators: true }
     );
@@ -162,13 +203,23 @@ exports.updateDistributor = async (req, res) => {
 
 exports.deleteDistributor = async (req, res) => {
   try {
-    let query = { _id: req.params.id };
-
-    if (req.user.role !== "SUPER_ADMIN") {
-      query.shop = req.user.shop;
+    console.log("[FLOW][DISTRIBUTOR][DELETE]", {
+      userId: req.user?._id?.toString(),
+      role: req.user?.role,
+      shopId: req.shopId?.toString(),
+      distributorId: req.params.id,
+    });
+    if (!req.shopId) {
+      return res.status(400).json({
+        success: false,
+        message: "Please select a shop first",
+      });
     }
 
-    const deleted = await Distributor.findOneAndDelete(query);
+    const deleted = await Distributor.findOneAndDelete({
+      _id: req.params.id,
+      shop: req.shopId,
+    });
 
     if (!deleted) {
       return res.status(404).json({
@@ -188,6 +239,20 @@ exports.deleteDistributor = async (req, res) => {
 
 exports.updateStatus = async (req, res) => {
   try {
+    console.log("[FLOW][DISTRIBUTOR][STATUS]", {
+      userId: req.user?._id?.toString(),
+      role: req.user?.role,
+      shopId: req.shopId?.toString(),
+      distributorId: req.params.id,
+      status: req.body?.status,
+    });
+    if (!req.shopId) {
+      return res.status(400).json({
+        success: false,
+        message: "Please select a shop first",
+      });
+    }
+
     const { id } = req.params;
     const { status } = req.body;
 
@@ -198,8 +263,8 @@ exports.updateStatus = async (req, res) => {
       });
     }
 
-    const distributor = await Distributor.findByIdAndUpdate(
-      id,
+    const distributor = await Distributor.findOneAndUpdate(
+      { _id: id, shop: req.shopId },
       { status: status },
       { new: true }
     );
@@ -229,22 +294,28 @@ exports.updateStatus = async (req, res) => {
 exports.distributorSuggestions = async (req, res) => {
   try {
     const { term } = req.query;
+    console.log("[FLOW][DISTRIBUTOR][SUGGEST] request", {
+      userId: req.user?._id?.toString(),
+      role: req.user?.role,
+      shopId: req.shopId?.toString(),
+      term,
+    });
 
     let query = {
       name: { $regex: term, $options: "i" },
     };
-
-    // ROLE BASED FILTER
-    if (req.user.role !== "SUPER_ADMIN") {
-      query.shop = req.user.shop;
-    } else if (req.query.shopId) {
-      query.shop = req.query.shopId;
+    if (!isSuperAdminGlobal(req)) {
+      query.shop = req.shopId;
     }
 
     const results = await Distributor.find(query)
       .sort({ createdAt: -1 })   // 🔥 important
       .limit(10)
       .select("name");
+    console.log("[FLOW][DISTRIBUTOR][SUGGEST] response", {
+      count: results.length,
+      shopId: req.shopId?.toString(),
+    });
 
     res.json(results.map((d) => d.name));
   } catch (err) {

@@ -64,6 +64,7 @@ exports.createUser = async (req, res) => {
 };
 
 exports.getAllUsers = async (req, res) => {
-  const users = await User.find();
+  const filter = req.user.role === "SUPER_ADMIN" ? {} : { shop: req.user.shop };
+  const users = await User.find(filter);
   res.json(users);
 };

@@ -7,6 +7,8 @@ import {
 import { MatSnackBar } from "@angular/material/snack-bar";
 import { DistributorService } from "app/shared/services/distributor.service";
 import { FormBuilder, FormGroup, Validators } from "@angular/forms";
+import { AuthService } from "app/shared/services/auth.service";
+import { ShopService } from "app/shared/services/shop.service";
 
 @Component({
   selector: "add-distributors",
@@ -18,11 +20,16 @@ export class AddDistributorsComponent implements OnInit {
   isEditMode = false;
   distributorId: string;
   isSubmitting = false;
+  isSuperAdmin = false;
+  shops: any[] = [];
+  activeShopId: string | null = null;
 
   constructor(
     private fb: FormBuilder,
     private snackBar: MatSnackBar,
     private distributor: DistributorService,
+    private authService: AuthService,
+    private shopService: ShopService,
     public dialogRef: MatDialogRef<any>,
     private dialog: MatDialog,
     @Inject(MAT_DIALOG_DATA) public data: any,
@@ -38,6 +45,7 @@ export class AddDistributorsComponent implements OnInit {
       openingBalance: [0],
       creditLimit: [0],
       paymentTerms: [0],
+      shop: [""],
 
       addressLine1: [""],
       addressLine2: [""],
@@ -66,14 +74,58 @@ export class AddDistributorsComponent implements OnInit {
         district: this.data.address?.district,
         state: this.data.address?.state,
         pincode: this.data.address?.pincode,
+        shop:
+          this.data?.shop && typeof this.data.shop === "object"
+            ? this.data.shop._id
+            : this.data?.shop || "",
       });
       //  Disable after patch
       this.distributorForm.get("openingBalance")?.disable();
       this.distributorForm.get("creditLimit")?.disable();
       this.distributorForm.get("paymentTerms")?.disable();
+      this.distributorForm.get("shop")?.disable();
     } else {
       console.log("Add Mode Activated");
     }
+
+    this.isSuperAdmin = this.authService.isSuperAdmin();
+    this.activeShopId = this.shopService.getSelectedShop();
+
+    if (this.isSuperAdmin) {
+      this.loadShops();
+      if (this.activeShopId) {
+        this.distributorForm.patchValue({ shop: this.activeShopId });
+      } else if (!this.isEditMode) {
+        this.distributorForm.get("shop")?.setValidators([Validators.required]);
+        this.distributorForm.get("shop")?.updateValueAndValidity();
+      }
+    } else {
+      const userShopId = this.authService.getCurrentUser()?.shop || this.activeShopId;
+      if (userShopId) {
+        this.distributorForm.patchValue({ shop: userShopId });
+      }
+    }
+  }
+
+  loadShops() {
+    this.shopService.getAllShops().subscribe({
+      next: (res: any) => {
+        if (res?.success) {
+          const user = this.authService.getCurrentUser();
+          const scopedShopId = user?.role === "SUPER_ADMIN" ? user?.shop || null : user?.shop || null;
+
+          if (scopedShopId) {
+            this.shops = (res.data || []).filter((shop: any) => shop._id === scopedShopId);
+            this.distributorForm.patchValue({ shop: scopedShopId });
+          } else {
+            this.shops = res.data || [];
+          }
+        }
+      },
+      error: () => {
+        this.snackBar.open("Unable to load shops", "Close", { duration: 3000 });
+      },
+    });
   }
 
   onSubmit() {
@@ -82,8 +134,11 @@ export class AddDistributorsComponent implements OnInit {
       return;
     }
 
-    const shopId = localStorage.getItem("selected_shop");
-    console.log(localStorage.getItem("selected_shop"));
+    const selectedFormShop = this.distributorForm.get("shop")?.value || null;
+    const userShop = this.authService.getCurrentUser()?.shop || null;
+    const shopId = this.isSuperAdmin
+      ? selectedFormShop || this.activeShopId || userShop
+      : this.activeShopId || userShop;
 
     if (!shopId) {
       this.snackBar.open("Shop not selected", "Close", { duration: 3000 });

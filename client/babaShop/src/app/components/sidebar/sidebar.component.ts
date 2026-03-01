@@ -162,6 +162,7 @@ export class SidebarComponent implements OnInit {
   logout(): void {
     this.auth.removeToken();
     this.auth.removeUser();
+    this.auth.removeSelectedShop();
     this.router.navigate(["/login"]);
   }
 

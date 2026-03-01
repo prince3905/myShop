@@ -1,19 +1,20 @@
 import { MatPaginator, PageEvent } from "@angular/material/paginator";
 import { DistributorService } from "../../shared/services/distributor.service";
-import { ChangeDetectorRef, Component, OnInit, ViewChild } from "@angular/core";
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from "@angular/core";
 import { ActivatedRoute, NavigationExtras, Router } from "@angular/router";
 import { MatSnackBar } from "@angular/material/snack-bar";
-import { Subject } from "rxjs";
+import { Subject, Subscription } from "rxjs";
 import { MatDialog } from "@angular/material/dialog";
 import { AddDistributorsComponent } from "../add-distributors/add-distributors.component";
 import { ViewDistributorComponent } from "../view-distributor/view-distributor.component";
+import { ShopService } from "app/shared/services/shop.service";
 
 @Component({
   selector: "distributors",
   templateUrl: "./distributors.component.html",
   styleUrls: ["./distributors.component.css"],
 })
-export class DistributorsComponent implements OnInit {
+export class DistributorsComponent implements OnInit, OnDestroy {
   panelOpenState = false;
   // Category: any = [];
   // Brands: any = [];
@@ -46,6 +47,8 @@ export class DistributorsComponent implements OnInit {
   isEditMode: boolean;
   selectedDistributor: any;
   distributorForm: any;
+  private shopSubscription?: Subscription;
+  private lastShopId: string | null | undefined = undefined;
 
   constructor(
     private distributor: DistributorService,
@@ -54,10 +57,24 @@ export class DistributorsComponent implements OnInit {
     private Router: ActivatedRoute,
     public dialog: MatDialog,
     private snackBar: MatSnackBar,
+    private shopService: ShopService,
   ) {}
 
   ngOnInit(): void {
-    this.getAllDistributors(null);
+    this.shopSubscription = this.shopService.selectedShop$.subscribe((shopId) => {
+      if (this.lastShopId === shopId) return;
+      this.lastShopId = shopId;
+
+      if (this.paginator) {
+        this.paginator.pageIndex = 0;
+      }
+
+      this.getAllDistributors(null);
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.shopSubscription?.unsubscribe();
   }
 
   getAllDistributors(queryParamsObj): void {
