@@ -1,4 +1,5 @@
-import { Component, OnInit } from "@angular/core";
+import { Component, Inject, OnDestroy, OnInit, Renderer2 } from "@angular/core";
+import { DOCUMENT } from "@angular/common";
 import { Router } from "@angular/router";
 import { AuthService } from "app/shared/services/auth.service";
 
@@ -132,19 +133,33 @@ export const ROUTES: RouteInfo[] = [
   templateUrl: "./sidebar.component.html",
   styleUrls: ["./sidebar.component.css"],
 })
-export class SidebarComponent implements OnInit {
+export class SidebarComponent implements OnInit, OnDestroy {
   menuItems: any[];
   userRole: string | null = null;
   isCollapsed = false;
+  activeFlyoutKey: string | null = null;
+  private readonly collapseKey = "sidebar_collapsed";
+  private sidebarEl: HTMLElement | null = null;
+  private mainPanelEl: HTMLElement | null = null;
 
   constructor(
     private router: Router,
     private auth: AuthService,
+    private renderer: Renderer2,
+    @Inject(DOCUMENT) private document: Document,
   ) {}
 
   ngOnInit() {
     this.userRole = this.auth.getUserRole();
     this.menuItems = this.filterMenuByRole(ROUTES);
+    this.sidebarEl = this.document.querySelector(".sidebar");
+    this.mainPanelEl = this.document.querySelector(".main-panel");
+    this.restoreCollapseState();
+  }
+
+  ngOnDestroy(): void {
+    // Keep layout class in sync when component is recreated.
+    this.syncBodyClass();
   }
 
   filterMenuByRole(items: RouteInfo[]): RouteInfo[] {
@@ -173,6 +188,8 @@ export class SidebarComponent implements OnInit {
   }
 
   toggleMenu(menuItem: RouteInfo) {
+    if (this.isCollapsed) return;
+
     this.menuItems.forEach((item) => {
       if (item !== menuItem) {
         item.expanded = false;
@@ -180,5 +197,82 @@ export class SidebarComponent implements OnInit {
     });
 
     menuItem.expanded = !menuItem.expanded;
+  }
+
+  toggleSidebar(): void {
+    this.isCollapsed = !this.isCollapsed;
+    if (!this.isCollapsed) {
+      this.activeFlyoutKey = null;
+    }
+    localStorage.setItem(this.collapseKey, String(this.isCollapsed));
+    this.syncBodyClass();
+  }
+
+  getTooltip(title: string): string {
+    return this.isCollapsed ? title : "";
+  }
+
+  openFlyout(menuItem: RouteInfo, idx: number): void {
+    if (!this.isCollapsed || !menuItem?.children?.length) return;
+    this.activeFlyoutKey = this.getFlyoutKey(menuItem, idx);
+  }
+
+  closeFlyout(menuItem?: RouteInfo, idx?: number): void {
+    if (!this.isCollapsed) return;
+    if (!menuItem || idx === undefined) {
+      this.activeFlyoutKey = null;
+      return;
+    }
+    const key = this.getFlyoutKey(menuItem, idx);
+    if (this.activeFlyoutKey === key) {
+      this.activeFlyoutKey = null;
+    }
+  }
+
+  isFlyoutOpen(menuItem: RouteInfo, idx: number): boolean {
+    if (!this.isCollapsed) return !!menuItem?.expanded;
+    return this.activeFlyoutKey === this.getFlyoutKey(menuItem, idx);
+  }
+
+  private restoreCollapseState(): void {
+    const saved = localStorage.getItem(this.collapseKey);
+    this.isCollapsed = saved === "true";
+    this.syncBodyClass();
+  }
+
+  private getFlyoutKey(menuItem: RouteInfo, idx: number): string {
+    return `${menuItem?.title || "menu"}-${idx}`;
+  }
+
+  private syncBodyClass(): void {
+    if (this.isCollapsed) {
+      this.renderer.addClass(this.document.body, "sidebar-mini");
+      this.applyCollapsedDimensions();
+    } else {
+      this.renderer.removeClass(this.document.body, "sidebar-mini");
+      this.clearCollapsedDimensions();
+    }
+  }
+
+  private applyCollapsedDimensions(): void {
+    if (this.sidebarEl) {
+      this.renderer.setStyle(this.sidebarEl, "width", "80px");
+      this.renderer.setStyle(this.sidebarEl, "min-width", "80px");
+      this.renderer.setStyle(this.sidebarEl, "max-width", "80px");
+    }
+    if (this.mainPanelEl) {
+      this.renderer.setStyle(this.mainPanelEl, "width", "calc(100% - 80px)");
+    }
+  }
+
+  private clearCollapsedDimensions(): void {
+    if (this.sidebarEl) {
+      this.renderer.removeStyle(this.sidebarEl, "width");
+      this.renderer.removeStyle(this.sidebarEl, "min-width");
+      this.renderer.removeStyle(this.sidebarEl, "max-width");
+    }
+    if (this.mainPanelEl) {
+      this.renderer.removeStyle(this.mainPanelEl, "width");
+    }
   }
 }

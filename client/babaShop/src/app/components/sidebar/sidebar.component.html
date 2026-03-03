@@ -1,7 +1,16 @@
-<div class="sidebar-wrapper">
+<div class="sidebar-wrapper" [class.collapsed]="isCollapsed">
+  <div class="sidebar-head">
+    <button
+      mat-icon-button
+      class="collapse-toggle"
+      (click)="toggleSidebar()"
+      [matTooltip]="isCollapsed ? 'Expand menu' : 'Collapse menu'">
+      <mat-icon>{{ isCollapsed ? 'chevron_right' : 'chevron_left' }}</mat-icon>
+    </button>
+  </div>
 
   <!-- Logo -->
-  <div class="logo">
+  <div class="logo" *ngIf="!isCollapsed">
     <a routerLink="/" class="simple-text">
       <div class="logo-img">
         <img src="/assets/img/logo.png" />
@@ -11,17 +20,40 @@
 
   <!-- Menu -->
   <ul class="nav">
-    <li *ngFor="let menuItem of menuItems" class="nav-item">
+    <li
+      *ngFor="let menuItem of menuItems; let i = index"
+      class="nav-item"
+      [class.has-children]="menuItem.children"
+      [class.expanded]="menuItem.expanded"
+      (mouseenter)="openFlyout(menuItem, i)"
+      (mouseleave)="closeFlyout(menuItem, i)">
 
       <!-- Simple Link -->
-      <a *ngIf="!menuItem.children" class="nav-link" routerLinkActive="active" [routerLink]="[menuItem.path]">
+      <a
+        *ngIf="!menuItem.children"
+        class="nav-link"
+        routerLinkActive="active"
+        [routerLink]="[menuItem.path]"
+        [matTooltip]="menuItem.title"
+        [matTooltipDisabled]="!isCollapsed"
+        matTooltipPosition="right"
+        [matTooltipShowDelay]="100"
+        matTooltipClass="sidebar-tooltip">
 
         <i class="material-icons">{{menuItem.icon}}</i>
         <p *ngIf="!isCollapsed">{{menuItem.title}}</p>
       </a>
 
       <!-- Dropdown -->
-      <a *ngIf="menuItem.children" class="nav-link" (click)="toggleMenu(menuItem)">
+      <a
+        *ngIf="menuItem.children"
+        class="nav-link"
+        (click)="toggleMenu(menuItem)"
+        [matTooltip]="menuItem.title"
+        [matTooltipDisabled]="!isCollapsed"
+        matTooltipPosition="right"
+        [matTooltipShowDelay]="100"
+        matTooltipClass="sidebar-tooltip">
 
         <i class="material-icons">{{menuItem.icon}}</i>
         <p *ngIf="!isCollapsed">
@@ -30,10 +62,22 @@
         </p>
       </a>
 
-      <ul *ngIf="menuItem.children && menuItem.expanded" class="nav child-menu">
+      <ul
+        *ngIf="menuItem.children && (isCollapsed ? isFlyoutOpen(menuItem, i) : menuItem.expanded)"
+        class="nav child-menu"
+        [class.flyout]="isCollapsed"
+        (mouseenter)="openFlyout(menuItem, i)"
+        (mouseleave)="closeFlyout(menuItem, i)">
         <li *ngFor="let child of menuItem.children" routerLinkActive="active" class="nav-item">
 
-          <a class="nav-link" [routerLink]="[child.path]">
+          <a
+            class="nav-link"
+            [routerLink]="[child.path]"
+            [matTooltip]="child.title"
+            [matTooltipDisabled]="!isCollapsed"
+            matTooltipPosition="right"
+            [matTooltipShowDelay]="100"
+            matTooltipClass="sidebar-tooltip">
 
             <i class="material-icons">{{child.icon}}</i>
             <p *ngIf="!isCollapsed">{{child.title}}</p>
@@ -46,7 +90,14 @@
 
     <!-- Logout -->
     <li class="nav-item logout-item">
-      <a class="nav-link" (click)="logout()">
+      <a
+        class="nav-link"
+        (click)="logout()"
+        matTooltip="Logout"
+        [matTooltipDisabled]="!isCollapsed"
+        matTooltipPosition="right"
+        [matTooltipShowDelay]="100"
+        matTooltipClass="sidebar-tooltip">
         <i class="material-icons">logout</i>
         <p *ngIf="!isCollapsed">Logout</p>
       </a>
