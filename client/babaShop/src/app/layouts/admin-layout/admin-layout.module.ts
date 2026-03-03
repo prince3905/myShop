@@ -33,6 +33,8 @@ import { StocksComponent } from "app/stocks/stocks.component";
 import { MatPaginatorModule } from "@angular/material/paginator";
 import { MatProgressSpinnerModule } from "@angular/material/progress-spinner";
 import { MatCheckboxModule } from "@angular/material/checkbox";
+import { MatSnackBarModule } from "@angular/material/snack-bar";
+import { MatChipsModule } from "@angular/material/chips";
 import { OrdersComponent } from "app/orders/orders.component";
 import { CustomersComponent } from "app/customers/customers.component";
 import { DistributorsComponent } from "app/all-distributors/distributors/distributors.component";
@@ -41,6 +43,7 @@ import { ViewDistributorComponent } from "app/all-distributors/view-distributor/
 import { LedgerEntryComponent } from "app/all-distributors/ledger-entry/ledger-entry.component";
 import { AddDetailsComponent } from "app/all-items/add-details/add-details.component";
 import { SettingsComponent } from "app/settings/settings.component";
+import { ManageShopsComponent } from "app/shops/manage-shops/manage-shops.component";
 
 @NgModule({
   imports: [
@@ -66,6 +69,8 @@ import { SettingsComponent } from "app/settings/settings.component";
     MatPaginatorModule,
     MatProgressSpinnerModule,
     MatCheckboxModule,
+    MatSnackBarModule,
+    MatChipsModule,
   ],
   declarations: [
     DashboardComponent,
@@ -87,7 +92,8 @@ import { SettingsComponent } from "app/settings/settings.component";
     ViewDistributorComponent,
     LedgerEntryComponent,
     AddDetailsComponent,
-    SettingsComponent
+    SettingsComponent,
+    ManageShopsComponent
   ],
 })
 export class AdminLayoutModule {

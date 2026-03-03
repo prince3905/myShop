@@ -2,12 +2,14 @@ import { Component, OnInit, ElementRef } from "@angular/core";
 import { ROUTES } from "../sidebar/sidebar.component";
 import { ShopService } from "../../shared/services/shop.service";
 import { AuthService } from "../../shared/services/auth.service";
-import {
-  Location,
-  LocationStrategy,
-  PathLocationStrategy,
-} from "@angular/common";
+import { Location } from "@angular/common";
 import { Router } from "@angular/router";
+
+interface NavbarLink {
+  title: string;
+  path: string | null;
+  icon: string;
+}
 
 @Component({
   selector: "app-navbar",
@@ -18,6 +20,7 @@ export class NavbarComponent implements OnInit {
   shops: any[] = [];
   selectedShop: string | null = null;
   isSuperAdmin: boolean = false;
+  navLinks: NavbarLink[] = [];
   location: Location;
   mobile_menu_visible: any = 0;
   private toggleButton: any;
@@ -48,6 +51,11 @@ export class NavbarComponent implements OnInit {
       }
     });
     this.isSuperAdmin = this.authService.getUserRole() === "SUPER_ADMIN";
+    this.selectedShop = this.shopService.getSelectedShop();
+    this.navLinks = this.getRoleBasedLinks();
+    this.shopService.selectedShop$.subscribe((shopId) => {
+      this.selectedShop = shopId;
+    });
 
     if (this.isSuperAdmin) {
       this.loadShops();
@@ -56,13 +64,53 @@ export class NavbarComponent implements OnInit {
 
   loadShops() {
     this.shopService.getAllShops().subscribe((res: any) => {
-      this.shops = res.data;
+      this.shops = Array.isArray(res?.data) ? res.data : [];
     });
   }
 
   onShopChange(shopId: string) {
     const selectedShopObj = this.shops.find((shop: any) => shop._id === shopId);
     this.shopService.setSelectedShop(shopId, selectedShopObj?.shopCode || null);
+    window.location.reload();
+  }
+
+  clearShopSelection() {
+    this.shopService.clearSelectedShop();
+    window.location.reload();
+  }
+
+  getCurrentShopLabel(): string {
+    if (!this.selectedShop) {
+      return this.isSuperAdmin ? "Global View" : "No Shop";
+    }
+    const selected = this.shops.find((shop: any) => shop._id === this.selectedShop);
+    if (!selected) return this.selectedShop;
+    return `${selected.name}${selected.shopCode ? ` (${selected.shopCode})` : ""}`;
+  }
+
+  navigateTo(path: string | null) {
+    if (!path) return;
+    this.router.navigateByUrl(path);
+  }
+
+  private getRoleBasedLinks(): NavbarLink[] {
+    if (this.isSuperAdmin) {
+      return [
+        { title: "Dashboard", path: "/dashboard", icon: "dashboard" },
+        { title: "Subscriptions", path: "/settings", icon: "credit_card" },
+        { title: "Reports", path: "/sale-list", icon: "analytics" },
+        { title: "Settings", path: "/settings", icon: "settings" },
+      ];
+    }
+
+    return [
+      { title: "Dashboard", path: "/dashboard", icon: "dashboard" },
+      { title: "Products", path: "/item-list", icon: "inventory_2" },
+      { title: "Sales", path: "/sale-list", icon: "point_of_sale" },
+      { title: "Purchase", path: "/stocks", icon: "shopping_cart" },
+      { title: "Customers", path: "/customer", icon: "people" },
+      { title: "Reports", path: "/sale-list", icon: "analytics" },
+    ];
   }
 
   sidebarOpen() {

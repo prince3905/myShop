@@ -17,15 +17,15 @@ export class CategoryService {
     return environment.apiBaseURL;
   }
 
-  getAllCategories(): Observable<any> {
+  getAllCategories(params: any = {}): Observable<any> {
     const shopId = this.authService.getShopId();
-    const params: any = {};
+    const finalParams: any = { ...params };
 
     if (shopId) {
-      params.shop = shopId;
+      finalParams.shop = shopId;
     }
 
-    return this.http.get(`${this.baseURL}/api/categories`, { params });
+    return this.http.get(`${this.baseURL}/api/categories`, { params: finalParams });
   }
 
   addCategory(data: any): Observable<any> {

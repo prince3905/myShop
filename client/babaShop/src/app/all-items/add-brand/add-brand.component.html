@@ -1,40 +1,95 @@
 <div class="main-content">
   <div class="card">
     <div class="card-header card-header-danger">
-      <h4 class="card-title">Add Brand</h4>
+      <h4 class="card-title">{{ isEditMode ? "Edit Brand" : "Add Brand" }}</h4>
+      <p class="card-category">Brand master with search and status control</p>
     </div>
 
     <div class="card-body">
-      <form (ngSubmit)="onSubmit()" #brandForm="ngForm">
-
+      <form (ngSubmit)="onSubmit()" #brandForm="ngForm" class="brand-form">
         <mat-form-field class="example-full-width">
-          <input
-            matInput
-            placeholder="Brand Name"
-            name="name"
-            [(ngModel)]="name"
-            required
-          />
+          <mat-label>Brand Name</mat-label>
+          <input matInput name="name" [(ngModel)]="name" required />
         </mat-form-field>
 
         <mat-form-field class="example-full-width">
-          <textarea
-            matInput
-            placeholder="Brand Description"
-            name="description"
-            [(ngModel)]="description">
-          </textarea>
+          <mat-label>Brand Description</mat-label>
+          <textarea matInput name="description" [(ngModel)]="description"></textarea>
         </mat-form-field>
 
-        <button
-          mat-raised-button
-          type="submit"
-          class="btn btn-danger"
-          [disabled]="!brandForm.valid || isLoading">
-          Add Brand
-        </button>
-
+        <div class="form-actions">
+          <button mat-raised-button type="submit" class="btn btn-danger" [disabled]="!brandForm.valid || isLoading">
+            {{ isLoading ? "Saving..." : (isEditMode ? "Update Brand" : "Add Brand") }}
+          </button>
+          <button mat-stroked-button type="button" *ngIf="isEditMode" (click)="resetForm()">Cancel</button>
+        </div>
       </form>
+
+      <hr />
+
+      <div class="filter-row">
+        <mat-form-field class="filter-field">
+          <mat-label>Search</mat-label>
+          <input matInput [(ngModel)]="search" (ngModelChange)="onSearchChange()" placeholder="Search brand..." />
+        </mat-form-field>
+
+        <mat-form-field class="filter-field">
+          <mat-label>Status</mat-label>
+          <mat-select [(ngModel)]="activeFilter" (selectionChange)="onSearchChange()">
+            <mat-option value="all">All</mat-option>
+            <mat-option value="true">Active</mat-option>
+            <mat-option value="false">Inactive</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <div class="loading-block" *ngIf="loadingList">Loading brands...</div>
+
+      <div class="table-responsive" *ngIf="!loadingList">
+        <table class="table">
+          <thead class="text-danger">
+            <tr>
+              <th>Name</th>
+              <th>Description</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let brand of brands">
+              <td>{{ brand.name }}</td>
+              <td>{{ brand.description || "-" }}</td>
+              <td>
+                <span class="status-pill" [ngClass]="brand.isActive ? 'active' : 'inactive'">
+                  {{ brand.isActive ? "Active" : "Inactive" }}
+                </span>
+              </td>
+              <td class="action-col">
+                <button mat-icon-button color="primary" (click)="startEdit(brand)" matTooltip="Edit">
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button mat-icon-button color="accent" (click)="toggleStatus(brand)" matTooltip="Toggle status">
+                  <mat-icon>{{ brand.isActive ? "toggle_on" : "toggle_off" }}</mat-icon>
+                </button>
+                <button mat-icon-button color="warn" (click)="deleteBrand(brand)" matTooltip="Delete">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="brands.length === 0">
+              <td colspan="4" class="text-center">No brands found</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <mat-paginator
+        [length]="totalItems"
+        [pageSize]="pageSize"
+        [pageSizeOptions]="[5,10,25]"
+        [pageIndex]="pageIndex"
+        (page)="onPageChange($event)">
+      </mat-paginator>
     </div>
   </div>
 </div>

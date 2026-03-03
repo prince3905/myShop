@@ -1,0 +1,53 @@
+.example-full-width {
+  width: 100%;
+}
+
+.brand-form {
+  display: grid;
+  gap: 10px;
+}
+
+.form-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.filter-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 10px 0;
+}
+
+.filter-field {
+  min-width: 220px;
+  flex: 1;
+}
+
+.status-pill {
+  display: inline-flex;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.status-pill.active {
+  background: #e8f5e9;
+  color: #1b5e20;
+}
+
+.status-pill.inactive {
+  background: #ffebee;
+  color: #b71c1c;
+}
+
+.action-col {
+  white-space: nowrap;
+}
+
+.loading-block {
+  padding: 10px 0;
+  color: #666;
+}

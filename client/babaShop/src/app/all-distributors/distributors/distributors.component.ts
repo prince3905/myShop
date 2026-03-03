@@ -8,6 +8,7 @@ import { MatDialog } from "@angular/material/dialog";
 import { AddDistributorsComponent } from "../add-distributors/add-distributors.component";
 import { ViewDistributorComponent } from "../view-distributor/view-distributor.component";
 import { ShopService } from "app/shared/services/shop.service";
+import { AuthService } from "app/shared/services/auth.service";
 
 @Component({
   selector: "distributors",
@@ -31,7 +32,7 @@ export class DistributorsComponent implements OnInit, OnDestroy {
 
   Distributors: any[] = [];
 
-  selectedOption: string;
+  selectedOption: string = "name";
   // selectedCategory: string;
   // selectedBrand: string;
 
@@ -49,6 +50,7 @@ export class DistributorsComponent implements OnInit, OnDestroy {
   distributorForm: any;
   private shopSubscription?: Subscription;
   private lastShopId: string | null | undefined = undefined;
+  isGlobalSuperAdmin = false;
 
   constructor(
     private distributor: DistributorService,
@@ -58,10 +60,17 @@ export class DistributorsComponent implements OnInit, OnDestroy {
     public dialog: MatDialog,
     private snackBar: MatSnackBar,
     private shopService: ShopService,
+    private authService: AuthService,
   ) {}
 
   ngOnInit(): void {
+    this.isGlobalSuperAdmin =
+      this.authService.getUserRole() === "SUPER_ADMIN" &&
+      !this.authService.getShopId();
+
     this.shopSubscription = this.shopService.selectedShop$.subscribe((shopId) => {
+      this.isGlobalSuperAdmin =
+        this.authService.getUserRole() === "SUPER_ADMIN" && !shopId;
       if (this.lastShopId === shopId) return;
       this.lastShopId = shopId;
 
@@ -71,6 +80,16 @@ export class DistributorsComponent implements OnInit, OnDestroy {
 
       this.getAllDistributors(null);
     });
+  }
+
+  get activeFilterChips(): Array<{ key: string; label: string; value: string }> {
+    const chips: Array<{ key: string; label: string; value: string }> = [];
+    if (this.name) chips.push({ key: "name", label: "Name", value: this.name });
+    if (this.phone) chips.push({ key: "phone", label: "Phone", value: this.phone });
+    if (this.isGlobalSuperAdmin) {
+      chips.push({ key: "mode", label: "Mode", value: "Global (read-only write blocked)" });
+    }
+    return chips;
   }
 
   ngOnDestroy(): void {
@@ -95,8 +114,9 @@ export class DistributorsComponent implements OnInit, OnDestroy {
   }
 
   getQueryParams(): any {
+    const pageIndex = this.paginator?.pageIndex ?? 0;
     let queryParamsObj: any = {
-      page: this.paginator.pageIndex + 1,
+      page: pageIndex + 1,
       perPage: this.pageSize,
     };
     if (this.selectedOption === "name") {
@@ -143,6 +163,12 @@ export class DistributorsComponent implements OnInit, OnDestroy {
   }
 
   openAddDistributor() {
+    if (this.isGlobalSuperAdmin) {
+      this.snackBar.open("Select a shop first to add distributor", "Close", {
+        duration: 3000,
+      });
+      return;
+    }
     console.log("Opening Add Distributor Modal");
 
     this.dialog
@@ -192,6 +218,18 @@ export class DistributorsComponent implements OnInit, OnDestroy {
     this.suggestions = null;
   }
 
+  clearFilterChip(key: string): void {
+    if (key === "name") {
+      this.name = null;
+      this.suggestions = [];
+    }
+    if (key === "phone") {
+      this.phone = null;
+      this.suggestions = [];
+    }
+    this.getAllDistributors(this.getQueryParams());
+  }
+
   onSearch(page: number, perPage: number) {
     this.paginator.pageIndex = 0;
 
@@ -236,6 +274,12 @@ export class DistributorsComponent implements OnInit, OnDestroy {
   }
 
   openEditDistributor(row: any) {
+    if (this.isGlobalSuperAdmin) {
+      this.snackBar.open("Select a shop first to edit distributor", "Close", {
+        duration: 3000,
+      });
+      return;
+    }
     console.log("Editing Distributor:", row);
 
     this.dialog
@@ -261,6 +305,12 @@ export class DistributorsComponent implements OnInit, OnDestroy {
   }
 
   toggleStatus(item: any): void {
+    if (this.isGlobalSuperAdmin) {
+      this.snackBar.open("Select a shop first to update status", "Close", {
+        duration: 3000,
+      });
+      return;
+    }
     // optimistic UI update pattern: toggle locally first, then call API
     const oldStatus = item.status;
     const newStatus = oldStatus === "disabled" ? "active" : "disabled";
@@ -276,7 +326,9 @@ export class DistributorsComponent implements OnInit, OnDestroy {
         // revert on error
         item.status = oldStatus;
         console.error("Failed to update status", err);
-        alert("Failed to update status. Try again.");
+        this.snackBar.open("Failed to update status. Try again.", "Close", {
+          duration: 2500,
+        });
       },
     });
   }

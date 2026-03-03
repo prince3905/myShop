@@ -64,6 +64,23 @@ td {
     justify-content: center;
     margin-top: 20px; /* Add top margin for spacing */
   }
+
+.state-card {
+  margin-bottom: 12px;
+  padding: 14px 16px;
+  font-size: 14px;
+}
+
+.state-card.error {
+  color: #b91c1c;
+  border-left: 4px solid #ef4444;
+}
+
+.empty-row {
+  text-align: center;
+  color: #6b7280;
+  font-style: italic;
+}
   
   /* Style for each button */
   button {

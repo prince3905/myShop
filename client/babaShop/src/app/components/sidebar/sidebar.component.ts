@@ -86,6 +86,12 @@ export const ROUTES: RouteInfo[] = [
     roles: ["SUPER_ADMIN", "ADMIN", "MANAGER"],
     children: [
       {
+        path: "/users",
+        title: "Users",
+        icon: "manage_accounts",
+        roles: ["SUPER_ADMIN", "ADMIN"],
+      },
+      {
         path: "/customer",
         title: "Customers",
         icon: "supervised_user_circle",

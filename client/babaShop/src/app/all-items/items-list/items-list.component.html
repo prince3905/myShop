@@ -6,7 +6,7 @@
                 <div fxLayout="row" fxLayoutAlign="start center">
                     <mat-form-field class="dropdown">
                         <mat-label>Filter by</mat-label>
-                        <select matNativeControl [(ngModel)]="selectedOption" required>
+                        <select matNativeControl [(ngModel)]="selectedOption" (ngModelChange)="onFilterModeChange()" required>
                             <option label="--select something --"></option>
                             <option value="name">Name</option>
                             <option value="category">Category</option>
@@ -21,19 +21,12 @@
                     fxLayoutAlign.lt-md="start center">
                     <mat-form-field fxFlex="10%">
                         <input matInput placeholder="Product Name" name="ItemName" [(ngModel)]="itemName"
-                            (input)="fetchSuggestions()">
+                            (ngModelChange)="onFilterInputChange()">
                     </mat-form-field>
-                    <div class="suggesion" fxFlex="10%">
-                        <mat-option *ngFor="let suggestion of suggestions" (click)="selectSuggestion(suggestion)"
-                            (optionSelected)="selectSuggestion($event)">
-                            {{suggestion}}
-                        </mat-option>
-                    </div>
-
 
                     <mat-form-field fxFlex="10%" fxHide.lt-md>
                         <mat-label>Category</mat-label>
-                        <mat-select [(ngModel)]="selectedCategory">
+                        <mat-select [(ngModel)]="selectedCategory" (ngModelChange)="onFilterInputChange()">
                             <mat-option *ngFor="let category of Category" [value]="category._id">
                                 {{ category.name }}
                             </mat-option>
@@ -41,7 +34,7 @@
                     </mat-form-field>
                     <mat-form-field fxFlex="10%" fxHide.lt-md>
                         <mat-label>Brand</mat-label>
-                        <mat-select [(ngModel)]="selectedBrand">
+                        <mat-select [(ngModel)]="selectedBrand" (ngModelChange)="onFilterInputChange()">
                             <mat-option *ngFor="let brand of Brands" [value]="brand._id">
                                 {{ brand.name}}
                             </mat-option>
@@ -55,7 +48,7 @@
                     fxLayoutAlign.lt-md="start center">
                     <mat-form-field fxFlex="10%" fxHide.lt-md>
                         <mat-label>Category</mat-label>
-                        <mat-select [(ngModel)]="selectedCategory">
+                        <mat-select [(ngModel)]="selectedCategory" (ngModelChange)="onFilterInputChange()">
                             <mat-option *ngFor="let category of Category" [value]="category._id">
                                 {{ category.name }}
                             </mat-option>
@@ -63,7 +56,7 @@
                     </mat-form-field>
                     <mat-form-field fxFlex="10%" fxHide.lt-md>
                         <mat-label>Brand</mat-label>
-                        <mat-select [(ngModel)]="selectedBrand">
+                        <mat-select [(ngModel)]="selectedBrand" (ngModelChange)="onFilterInputChange()">
                             <mat-option *ngFor="let brand of Brands" [value]="brand._id">
                                 {{ brand.name}}
                             </mat-option>
@@ -76,7 +69,7 @@
                     fxLayoutAlign.lt-md="start center">
                     <mat-form-field fxFlex="10%" fxHide.lt-md>
                         <mat-label>Brand</mat-label>
-                        <mat-select [(ngModel)]="selectedBrand">
+                        <mat-select [(ngModel)]="selectedBrand" (ngModelChange)="onFilterInputChange()">
                             <mat-option *ngFor="let brand of Brands" [value]="brand._id">
                                 {{ brand.name }}
                             </mat-option>

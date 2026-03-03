@@ -1,158 +1,121 @@
 <div class="main-content">
-    <div class="container-fluid">
-
-        <!-- FILTER CARD -->
-        <div class="card card-plain">
-            <div class="card-header" fxLayout="row wrap" fxLayoutGap="15px" fxLayoutAlign="start center">
-
-                <!-- FILTER DROPDOWN -->
-                <mat-form-field appearance="outline" style="width:200px">
-                    <mat-label>Filter by</mat-label>
-                    <mat-select [(ngModel)]="selectedOption">
-                        <mat-option value="name">By Name</mat-option>
-                        <mat-option value="phone">By Phone</mat-option>
-                    </mat-select>
-                </mat-form-field>
-
-                <!-- NAME SEARCH -->
-                <ng-container *ngIf="selectedOption === 'name'">
-
-                    <mat-form-field appearance="outline" style="width:250px">
-                        <mat-label>Search Name</mat-label>
-                        <input matInput [(ngModel)]="name" (input)="fetchSuggestionsName()"
-                            [matAutocomplete]="autoName">
-
-                        <mat-autocomplete #autoName="matAutocomplete"
-                            (optionSelected)="selectSuggestion($event.option.value)">
-                            <mat-option *ngFor="let suggestion of suggestions" [value]="suggestion">
-                                {{ suggestion }}
-                            </mat-option>
-                        </mat-autocomplete>
-                    </mat-form-field>
-
-                    <mat-form-field appearance="outline" style="width:200px">
-                        <mat-label>Phone</mat-label>
-                        <input matInput [(ngModel)]="phone">
-                    </mat-form-field>
-
-                </ng-container>
-
-                <!-- PHONE SEARCH -->
-                <ng-container *ngIf="selectedOption === 'phone'">
-
-                    <mat-form-field appearance="outline" style="width:250px">
-                        <mat-label>Search Phone</mat-label>
-                        <input matInput [(ngModel)]="phone" (input)="fetchSuggestionsPhone()"
-                            [matAutocomplete]="autoPhone">
-
-                        <mat-autocomplete #autoPhone="matAutocomplete"
-                            (optionSelected)="selectSuggestion($event.option.value)">
-                            <mat-option *ngFor="let suggestion of suggestions" [value]="suggestion">
-                                {{ suggestion }}
-                            </mat-option>
-                        </mat-autocomplete>
-                    </mat-form-field>
-
-                </ng-container>
-
-                <!-- SEARCH BUTTONS -->
-                <div *ngIf="selectedOption">
-                    <button mat-raised-button color="primary" (click)="onSearch(1, pageSize)">
-                        Search
-                    </button>
-
-                    <button mat-raised-button color="primary" (click)="onClear()">
-                        Clear
-                    </button>
-                </div>
-
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <button mat-raised-button color="primary" (click)="openAddDistributor()">
-                        Add Distributor
-                    </button>
-                </div>
-            </div>
-
+  <div class="container-fluid">
+    <div class="card">
+      <div class="card-header card-header-danger">
+        <div class="header-main">
+          <h4 class="card-title">Distributors</h4>
         </div>
 
-        <!-- LOADING -->
-        <div class="loading" *ngIf="loading">
-            <mat-spinner color="primary"></mat-spinner>
+        <div class="header-filters">
+          <mat-form-field appearance="outline" class="header-field filter-by">
+            <mat-label>Filter By</mat-label>
+            <mat-select [(ngModel)]="selectedOption">
+              <mat-option value="name">By Name</mat-option>
+              <mat-option value="phone">By Phone</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="header-field search-field">
+            <mat-label>Search Name</mat-label>
+            <input matInput [(ngModel)]="name" (input)="fetchSuggestionsName()" [matAutocomplete]="autoName" />
+            <mat-autocomplete #autoName="matAutocomplete" (optionSelected)="selectSuggestion($event.option.value)">
+              <mat-option *ngFor="let suggestion of suggestions" [value]="suggestion">
+                {{ suggestion }}
+              </mat-option>
+            </mat-autocomplete>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="header-field phone-field">
+            <mat-label>Phone</mat-label>
+            <input matInput [(ngModel)]="phone" (input)="selectedOption === 'phone' ? fetchSuggestionsPhone() : null" [matAutocomplete]="autoPhone" />
+            <mat-autocomplete #autoPhone="matAutocomplete" (optionSelected)="selectSuggestion($event.option.value)">
+              <mat-option *ngFor="let suggestion of suggestions" [value]="suggestion">
+                {{ suggestion }}
+              </mat-option>
+            </mat-autocomplete>
+          </mat-form-field>
+
+          <div class="filter-actions">
+            <button mat-raised-button color="primary" (click)="onSearch(1, pageSize)">
+              <mat-icon>search</mat-icon>
+            </button>
+            <button mat-stroked-button color="primary" (click)="onClear()">
+              <mat-icon>clear</mat-icon>
+            </button>
+            <button mat-raised-button color="accent" (click)="openAddDistributor()">
+              <mat-icon>add</mat-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-body">
+        <div class="chip-row" *ngIf="activeFilterChips.length > 0">
+          <mat-chip-set>
+            <mat-chip *ngFor="let chip of activeFilterChips" [removable]="chip.key !== 'mode'" (removed)="clearFilterChip(chip.key)">
+              {{ chip.label }}: {{ chip.value }}
+              <button matChipRemove *ngIf="chip.key !== 'mode'">
+                <mat-icon>cancel</mat-icon>
+              </button>
+            </mat-chip>
+          </mat-chip-set>
         </div>
 
-
-
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table">
-                    <thead class="">
-                        <th>
-                            Customer ID
-                        </th>
-                        <th>
-                            Name
-                        </th>
-                        <th>
-                            Phone
-                        </th>
-                        <th>
-                            Email
-                        </th>
-                        <th>
-                            Action
-                        </th>
-
-                    </thead>
-                    <tbody>
-                        <tr *ngFor="let item of Distributors" (click)="viewItemDetails(item._id)">
-                            <td>
-                                {{item._id}}
-                            </td>
-                            <td>
-                                {{item.name}}
-                            </td>
-                            <td>
-                                {{item.phone}}
-                            </td>
-                            <td>
-                                {{item.email}}
-                            </td>
-                            <td (click)="$event.stopPropagation()" class="action-col">
-
-                                <!-- View -->
-                                <button mat-icon-button color="primary" matTooltip="View"
-                                    (click)="openViewDistributor(item, $event)">
-                                    <mat-icon>visibility</mat-icon>
-                                </button>
-
-                                <!-- Edit -->
-                                <button mat-icon-button color="primary" matTooltip="Edit Distributor"
-                                    (click)="openEditDistributor(item, $event)">
-                                    <mat-icon>edit</mat-icon>
-                                </button>
-
-                                <!-- Delete / Disable -->
-                                <button mat-button class="status-btn"
-                                    [ngClass]="item.status === 'active' ? 'active' : 'disabled'"
-                                    (click)="toggleStatus(item)">
-                                    <mat-icon>
-                                        {{ item.status === 'active' ? 'check_circle' : 'cancel' }}
-                                    </mat-icon>
-                                    {{ item.status | titlecase }}
-                                </button>
-
-
-
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+        <div class="loading-wrap" *ngIf="loading">
+          <mat-spinner diameter="36"></mat-spinner>
         </div>
 
+        <div class="table-responsive" *ngIf="!loading">
+          <table class="table mat-elevation-z1 distributor-table">
+            <thead class="text-danger">
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Phone</th>
+                <th>Email</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of Distributors" (click)="openViewDistributor(item, $event)">
+                <td>{{ item._id }}</td>
+                <td>{{ item.name }}</td>
+                <td>{{ item.phone }}</td>
+                <td>{{ item.email || "-" }}</td>
+                <td>
+                  <span class="status-badge" [ngClass]="item.status === 'active' ? 'active' : 'disabled'">
+                    {{ item.status | titlecase }}
+                  </span>
+                </td>
+                <td (click)="$event.stopPropagation()" class="action-col">
+                  <button mat-icon-button color="primary" matTooltip="View" (click)="openViewDistributor(item, $event)">
+                    <mat-icon>visibility</mat-icon>
+                  </button>
+                  <button mat-icon-button color="accent" matTooltip="Edit Distributor" (click)="openEditDistributor(item)">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <button mat-stroked-button class="status-btn" [ngClass]="item.status === 'active' ? 'active' : 'disabled'" (click)="toggleStatus(item)">
+                    <mat-icon>{{ item.status === 'active' ? 'toggle_on' : 'toggle_off' }}</mat-icon>
+                    {{ item.status === 'active' ? 'Disable' : 'Enable' }}
+                  </button>
+                </td>
+              </tr>
+              <tr *ngIf="Distributors.length === 0">
+                <td colspan="6" class="empty-row">No distributors found</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
-        <mat-paginator #paginator [length]="totalItems" [pageSize]="pageSize" [pageSizeOptions]="pageSizeOptions"
-            (page)="onPageChange($event)">
+        <mat-paginator
+          #paginator
+          [length]="totalItems"
+          [pageSize]="pageSize"
+          [pageSizeOptions]="pageSizeOptions"
+          (page)="onPageChange($event)">
         </mat-paginator>
+      </div>
     </div>
+  </div>
 </div>

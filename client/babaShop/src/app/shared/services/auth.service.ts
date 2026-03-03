@@ -4,7 +4,7 @@ import { Injectable } from "@angular/core";
 import { HttpClient } from "@angular/common/http";
 import { tap, catchError, finalize } from "rxjs/operators";
 import { environment } from "../../../environments/environment";
-import { throwError } from "rxjs";
+import { throwError, BehaviorSubject } from "rxjs";
 
 interface LoginResponse {
   success: boolean;
@@ -32,8 +32,12 @@ export class AuthService {
   public showLoader: boolean = false;
   private TOKEN_KEY: string = "token";
   private USER_KEY: string = "user";
+  private currentShopSubject = new BehaviorSubject<string | null>(null);
+  currentShop$ = this.currentShopSubject.asObservable();
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) {
+    this.currentShopSubject.next(this.getShopId());
+  }
 
   get baseURL(): string {
     return environment.apiBaseURL;
@@ -85,7 +89,9 @@ login(shopCode: string, email: string, password: string) {
   }
 
   removeUser() {
-    return localStorage.removeItem(this.USER_KEY);
+    const result = localStorage.removeItem(this.USER_KEY);
+    this.currentShopSubject.next(null);
+    return result;
   }
 
   removeSelectedShop() {
@@ -94,6 +100,7 @@ login(shopCode: string, email: string, password: string) {
 
   set user(user) {
     localStorage.setItem(this.USER_KEY, JSON.stringify(user));
+    this.currentShopSubject.next(user?.shop || null);
   }
 
   getCurrentUser(): any | null {
@@ -107,6 +114,7 @@ login(shopCode: string, email: string, password: string) {
     user.shop = shopId || null;
     user.shopCode = shopCode || null;
     this.user = user;
+    this.currentShopSubject.next(shopId || null);
   }
 
   getShopId(): string | null {

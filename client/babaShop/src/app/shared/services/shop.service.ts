@@ -16,6 +16,9 @@ export class ShopService {
 
   constructor(private http: HttpClient, private authService: AuthService) {
     this.selectedShopSubject.next(this.authService.getShopId());
+    this.authService.currentShop$.subscribe((shopId) => {
+      this.selectedShopSubject.next(shopId);
+    });
   }
 
   get baseURL(): string {
@@ -24,6 +27,10 @@ export class ShopService {
 
   getAllShops() {
     return this.http.get<any>(`${this.baseURL}/api/shops/admin/all`);
+  }
+
+  createShop(payload: any) {
+    return this.http.post<any>(`${this.baseURL}/api/shops`, payload);
   }
 
   setSelectedShop(shopId: string, shopCode: string | null = null) {

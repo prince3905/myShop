@@ -1,70 +1,86 @@
-<div class="main-content" *ngIf="item">
+<div class="main-content">
+  <div class="container-fluid">
+    <mat-card class="state-card" *ngIf="loading">
+      Loading product details...
+    </mat-card>
 
-  <!-- Product Info -->
-  <mat-card class="mb-3">
-    <mat-card-title>{{ item.name }}</mat-card-title>
-    <mat-card-content>
+    <mat-card class="state-card error" *ngIf="!loading && errorMessage">
+      {{ errorMessage }}
+    </mat-card>
 
-      <div class="row">
-        <div class="col-md-6">
-          <p><strong>Brand:</strong> {{ item.brand?.name }}</p>
-          <p><strong>Category:</strong> {{ item.category?.name }}</p>
-          <p>
-            <strong>Total Stock:</strong>
-            <span [style.color]="item.totalStock < 5 ? 'red' : 'green'">
-              {{ item.totalStock }}
-            </span>
-          </p>
+    <ng-container *ngIf="!loading && !errorMessage && item">
+      <!-- Product Info -->
+      <mat-card class="mb-3">
+        <mat-card-title>{{ item.name }}</mat-card-title>
+        <mat-card-content>
+
+          <div class="row">
+            <div class="col-md-6">
+              <p><strong>Brand:</strong> {{ item.brand?.name || "-" }}</p>
+              <p><strong>Category:</strong> {{ item.category?.name || "-" }}</p>
+              <p>
+                <strong>Total Stock:</strong>
+                <span [style.color]="item.totalStock < 5 ? 'red' : 'green'">
+                  {{ item.totalStock }}
+                </span>
+              </p>
+            </div>
+
+            <div class="col-md-6">
+              <p><strong>Description:</strong> {{ item.description || "-" }}</p>
+              <p><strong>Created:</strong> {{ item.createdAt | date: "medium" }}</p>
+              <button mat-icon-button color="primary" matTooltip="Edit Product" (click)="openEditProduct(item)">
+                <mat-icon>edit</mat-icon>
+              </button>
+            </div>
+          </div>
+
+        </mat-card-content>
+      </mat-card>
+
+      <!-- SKU Variations Table -->
+      <mat-card>
+        <mat-card-title>SKU Variations</mat-card-title>
+
+        <div class="table-responsive">
+          <table class="table table-bordered table-sm">
+            <thead>
+              <tr>
+                <th>Model</th>
+                <th>SKU</th>
+                <th>Storage</th>
+                <th>Color</th>
+                <th>Size</th>
+                <th>Qty</th>
+                <th>Cost</th>
+                <th>Selling</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <ng-container *ngIf="item.variations?.length; else noVariations">
+                <tr *ngFor="let v of item.variations">
+                  <td>{{ v.model?.name || "-" }}</td>
+                  <td>{{ v.sku || "-" }}</td>
+                  <td>{{ v.attributes?.storage || "-" }}</td>
+                  <td>{{ v.attributes?.color || "-" }}</td>
+                  <td>{{ v.attributes?.size || "-" }}</td>
+                  <td>{{ v.quantity ?? 0 }}</td>
+                  <td>{{ (v.costPrice ?? 0) | currency: "INR":"symbol":"1.2-2":"en-IN" }}</td>
+                  <td>{{ (v.sellingPrice ?? 0) | currency: "INR":"symbol":"1.2-2":"en-IN" }}</td>
+                </tr>
+              </ng-container>
+            </tbody>
+          </table>
         </div>
+      </mat-card>
+    </ng-container>
 
-        <div class="col-md-6">
-          <p><strong>Description:</strong> {{ item.description }}</p>
-          <p><strong>Created:</strong> {{ item.createdAt | date }}</p>
-          <button mat-icon-button color="primary" matTooltip="Edit Product" (click)="openEditProduct(item)">
-            <mat-icon>edit</mat-icon>
-          </button>
-        </div>
-
-
-      </div>
-
-    </mat-card-content>
-  </mat-card>
-
-  <!-- SKU Variations Table -->
-  <mat-card>
-    <mat-card-title>SKU Variations</mat-card-title>
-
-    <div class="table-responsive">
-      <table class="table table-bordered table-sm">
-        <thead>
-          <tr>
-            <th>Model</th>
-            <th>SKU</th>
-            <th>Storage</th>
-            <th>Color</th>
-            <th>Size</th>
-            <th>Qty</th>
-            <th>Cost</th>
-            <th>Selling</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          <tr *ngFor="let v of item.variations">
-            <td>{{ v.model?.name || '-' }}</td>
-            <td>{{ v.sku }}</td>
-            <td>{{ v.attributes?.storage || '-' }}</td>
-            <td>{{ v.attributes?.color || '-' }}</td>
-            <td>{{ v.attributes?.size || '-' }}</td>
-            <td>{{ v.quantity }}</td>
-            <td>{{ v.costPrice }}</td>
-            <td>{{ v.sellingPrice }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-  </mat-card>
+    <ng-template #noVariations>
+      <tr>
+        <td colspan="8" class="empty-row">No SKU variations available.</td>
+      </tr>
+    </ng-template>
+  </div>
 
 </div>

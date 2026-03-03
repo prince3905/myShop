@@ -111,48 +111,59 @@
 
   <div class="ledger-action-bar">
 
-    <button mat-raised-button color="primary" (click)="openLedgerModal('payment')">
+    <button mat-raised-button color="primary" (click)="openLedgerModal('payment')" [disabled]="!canMutateLedger">
       <mat-icon>payments</mat-icon>
       Payment
     </button>
 
-    <button mat-raised-button color="accent" (click)="openLedgerModal('purchase')">
+    <button mat-raised-button color="accent" (click)="openLedgerModal('purchase')" [disabled]="!canMutateLedger">
       <mat-icon>shopping_cart</mat-icon>
       Purchase
     </button>
 
-    <button mat-raised-button color="warn" (click)="openLedgerModal('purchase_return')">
+    <button mat-raised-button color="warn" (click)="openLedgerModal('purchase_return')" [disabled]="!canMutateLedger">
       <mat-icon>assignment_return</mat-icon>
       Return
     </button>
 
-    <button mat-stroked-button (click)="openLedgerModal('adjustment')">
+    <button mat-stroked-button (click)="openLedgerModal('adjustment')" [disabled]="!canMutateLedger">
       <mat-icon>tune</mat-icon>
       Adjustment
     </button>
 
   </div>
 
+  <div class="section-title" *ngIf="!canMutateLedger">
+    Select a shop to create payment/purchase/return/adjustment entries.
+  </div>
+
 
 
   <div class="date-filter">
-  <mat-form-field appearance="outline">
+  <mat-form-field appearance="outline" class="date-field">
     <mat-label>From Date</mat-label>
     <input matInput type="date" [(ngModel)]="fromDate" (change)="applyDateFilter()">
   </mat-form-field>
 
-  <mat-form-field appearance="outline">
+  <mat-form-field appearance="outline" class="date-field">
     <mat-label>To Date</mat-label>
     <input matInput type="date" [(ngModel)]="toDate" (change)="applyDateFilter()">
   </mat-form-field>
 
-  <button mat-raised-button color="primary" (click)="applyDateFilter()">
-    Apply
-  </button>
+  <div class="date-actions">
+    <button mat-raised-button color="primary" (click)="applyDateFilter()">
+      Apply
+    </button>
 
-  <button mat-button color="warn" (click)="resetFilter()">
-    Reset
-  </button>
+    <button mat-button color="warn" (click)="resetFilter()">
+      Reset
+    </button>
+
+    <button mat-raised-button color="accent" (click)="printLedgerHistory()" [disabled]="!ledger.length">
+      <mat-icon>print</mat-icon>
+      Print
+    </button>
+  </div>
 </div>
 
 

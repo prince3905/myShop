@@ -1,4 +1,5 @@
 const jwt = require("jsonwebtoken");
+const mongoose = require("mongoose");
 const User = require("../models/User");
 const Shop = require("../models/Shop");
 const rolePermissions = require("../config/permissions");
@@ -144,11 +145,17 @@ exports.attachShop = async (req, res, next) => {
         return next();
       }
 
-      const shop = await Shop.findById(selectedShopId);
+      if (!mongoose.Types.ObjectId.isValid(selectedShopId)) {
+        return res.status(400).json({
+          message: "Invalid selected shop id",
+        });
+      }
+
+      const shop = await Shop.findOne({ _id: selectedShopId, isActive: true });
 
       if (!shop) {
         return res.status(404).json({
-          message: "Selected shop not found",
+          message: "Selected shop not found or inactive",
         });
       }
 

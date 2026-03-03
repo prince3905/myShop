@@ -15,6 +15,8 @@ import { OrdersComponent } from "app/orders/orders.component";
 import { CustomersComponent } from "app/customers/customers.component";
 import { AddDetailsComponent } from "app/all-items/add-details/add-details.component";
 import { SettingsComponent } from "app/settings/settings.component";
+import { UserComponent } from "app/all-users/user/user.component";
+import { ManageShopsComponent } from "app/shops/manage-shops/manage-shops.component";
 
 export const AdminLayoutRoutes: Routes = [
   {
@@ -36,5 +38,7 @@ export const AdminLayoutRoutes: Routes = [
   { path: "distributor", component: DistributorsComponent },
   { path: "order", component: OrdersComponent },
   { path: "customer", component: CustomersComponent },
+  { path: "users", component: UserComponent },
+  { path: "shops", component: ManageShopsComponent },
   { path: "settings", component: SettingsComponent },
 ];

@@ -124,6 +124,25 @@ span {
   font-weight: 500;
 }
 
+.date-filter {
+  display: grid;
+  grid-template-columns: minmax(180px, 220px) minmax(180px, 220px) 1fr;
+  gap: 10px;
+  align-items: center;
+  margin: 8px 0 16px;
+}
+
+.date-field {
+  width: 100%;
+}
+
+.date-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
 /* Mobile responsive */
 @media (max-width: 600px) {
   .ledger-action-bar {
@@ -164,11 +183,12 @@ span {
   }
 
   .date-filter {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
-}
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .date-actions {
+    width: 100%;
+  }
 
 }

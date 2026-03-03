@@ -46,7 +46,7 @@
   <button mat-raised-button
           color="primary"
           (click)="submit()"
-          [disabled]="form.invalid || loading">
+          [disabled]="!canSubmit || form.invalid || loading">
 
     {{ loading ? 'Saving...' : 'Save' }}
 

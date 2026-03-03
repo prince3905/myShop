@@ -19,11 +19,13 @@ export class BrandService {
     return environment.apiBaseURL;
   }
 
-  getAllBrands(): Observable<any> {
+  getAllBrands(params: any = {}): Observable<any> {
     const shopId = this.authService.getShopId();
-    return this.http.get(`${this.baseURL}/api/brands`, {
-      params: { shop: shopId || "" }
-    });
+    const finalParams: any = { ...params };
+    if (shopId) {
+      finalParams.shop = shopId;
+    }
+    return this.http.get(`${this.baseURL}/api/brands`, { params: finalParams });
   }
 
   addBrand(data: any): Observable<any> {

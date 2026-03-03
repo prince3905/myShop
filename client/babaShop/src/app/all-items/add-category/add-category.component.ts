@@ -1,9 +1,11 @@
-import { Component, OnInit } from "@angular/core";
+import { Component } from "@angular/core";
 import { MatDialogRef } from "@angular/material/dialog";
 import { MatSnackBar } from "@angular/material/snack-bar";
 import { CategoryService } from "app/shared/services/category.service";
 import { MAT_DIALOG_DATA } from "@angular/material/dialog";
 import { Inject } from "@angular/core";
+import { AuthService } from "app/shared/services/auth.service";
+import { PageEvent } from "@angular/material/paginator";
 
 @Component({
   selector: "add-category",
@@ -16,36 +18,136 @@ export class AddCategoryComponent {
   isLoading = false;
   isEditMode = false;
   categoryId: string = "";
+  isGlobalSuperAdmin = false;
+
+  categories: any[] = [];
+  loadingList = false;
+  search = "";
+  activeFilter: "all" | "true" | "false" = "all";
+  pageSize = 5;
+  pageIndex = 0;
+  totalItems = 0;
 
   constructor(
-    private Category: CategoryService,
+    private categoryService: CategoryService,
     private snackBar: MatSnackBar,
+    private authService: AuthService,
     public dialogRef: MatDialogRef<any>,
     @Inject(MAT_DIALOG_DATA) public data: any,
   ) {}
 
   ngOnInit(): void {
+    this.isGlobalSuperAdmin =
+      this.authService.getUserRole() === "SUPER_ADMIN" &&
+      !this.authService.getShopId();
+
     if (this.data?.category) {
-      this.isEditMode = true;
-      this.categoryId = this.data.category._id;
-      this.name = this.data.category.name;
-      this.description = this.data.category.description;
+      this.startEdit(this.data.category);
     }
 
-    this.Category.getAllCategories().subscribe(
-      (res: any) => {
-        console.log("CATEGORIES RESPONSE FULL:", res);
-        console.log("CATEGORIES DATA ONLY:", res.data);
+    this.loadCategories();
+  }
+
+  loadCategories(): void {
+    this.loadingList = true;
+    const params: any = {
+      limit: this.pageSize,
+      skip: this.pageIndex * this.pageSize,
+      sort: "-createdAt",
+    };
+    if (this.search.trim()) {
+      params.search = this.search.trim();
+    }
+    if (this.activeFilter !== "all") {
+      params.isActive = this.activeFilter;
+    }
+
+    this.categoryService.getAllCategories(params).subscribe({
+      next: (res: any) => {
+        this.categories = res?.data || [];
+        this.totalItems = res?.totalItems ?? this.categories.length;
+        this.loadingList = false;
       },
-      (error) => {
-        console.error("CATEGORY ERROR:", error);
+      error: () => {
+        this.loadingList = false;
+        this.snackBar.open("Failed to load categories", "Close", { duration: 2500 });
       },
-    );
+    });
+  }
+
+  onSearchChange(): void {
+    this.pageIndex = 0;
+    this.loadCategories();
+  }
+
+  onPageChange(event: PageEvent): void {
+    this.pageSize = event.pageSize;
+    this.pageIndex = event.pageIndex;
+    this.loadCategories();
+  }
+
+  startEdit(category: any): void {
+    this.isEditMode = true;
+    this.categoryId = category?._id;
+    this.name = category?.name || "";
+    this.description = category?.description || "";
+  }
+
+  resetForm(): void {
+    this.isEditMode = false;
+    this.categoryId = "";
+    this.name = "";
+    this.description = "";
+  }
+
+  toggleStatus(category: any): void {
+    if (this.isGlobalSuperAdmin) {
+      this.snackBar.open("Please select a shop first", "Close", { duration: 2500 });
+      return;
+    }
+    this.categoryService
+      .updateCategory(category._id, { isActive: !category.isActive })
+      .subscribe({
+        next: () => this.loadCategories(),
+        error: (error) => {
+          this.snackBar.open(error?.error?.message || "Failed to update status", "Close", {
+            duration: 2500,
+          });
+        },
+      });
+  }
+
+  deleteCategory(category: any): void {
+    if (this.isGlobalSuperAdmin) {
+      this.snackBar.open("Please select a shop first", "Close", { duration: 2500 });
+      return;
+    }
+    const ok = confirm(`Delete category "${category?.name}"?`);
+    if (!ok) return;
+    this.categoryService.deleteCategory(category._id).subscribe({
+      next: (res: any) => {
+        this.snackBar.open(res?.message || "Category deleted", "Close", { duration: 2500 });
+        this.loadCategories();
+      },
+      error: (error) => {
+        this.snackBar.open(error?.error?.message || "Failed to delete category", "Close", {
+          duration: 2500,
+        });
+      },
+    });
   }
 
   onSubmit(): void {
-    if (!this.name) {
-      this.snackBar.open("⚠ Category name is required", "Close", {
+    if (this.isGlobalSuperAdmin) {
+      this.snackBar.open("Please select a shop first", "Close", {
+        duration: 3000,
+        panelClass: ["snackbar-error"],
+      });
+      return;
+    }
+
+    if (!this.name.trim()) {
+      this.snackBar.open("Category name is required", "Close", {
         duration: 3000,
         panelClass: ["snackbar-error"],
       });
@@ -55,48 +157,37 @@ export class AddCategoryComponent {
     this.isLoading = true;
 
     const payload = {
-      name: this.name,
-      description: this.description,
+      name: this.name.trim(),
+      description: this.description?.trim(),
     };
 
-    if (this.isEditMode) {
-      this.Category.updateCategory(this.categoryId, payload).subscribe({
-        next: (res: any) => {
-          this.snackBar.open("✅ Category updated successfully", "Close", {
+    const req$ = this.isEditMode
+      ? this.categoryService.updateCategory(this.categoryId, payload)
+      : this.categoryService.addCategory(payload);
+
+    req$.subscribe({
+      next: (res: any) => {
+        this.snackBar.open(
+          res?.message || (this.isEditMode ? "Category updated successfully" : "Category created successfully"),
+          "Close",
+          {
             duration: 3000,
             panelClass: ["snackbar-success"],
-          });
-          this.dialogRef.close(true);
-        },
-
-        error: (err) => {
-          this.isLoading = false;
-          this.snackBar.open(
-            err.error?.message || "❌ Failed to update category",
-            "Close",
-            { duration: 3000, panelClass: ["snackbar-error"] },
-          );
-        },
-      });
-    } else {
-      this.Category.addCategory(payload).subscribe({
-        next: (res: any) => {
-          this.snackBar.open("✅ Category created successfully", "Close", {
-            duration: 3000,
-            panelClass: ["snackbar-success"],
-          });
-          this.dialogRef.close(true);
-        },
-
-        error: (err) => {
-          this.isLoading = false;
-          this.snackBar.open(
-            err.error?.message || "❌ Failed to create category",
-            "Close",
-            { duration: 3000, panelClass: ["snackbar-error"] },
-          );
-        },
-      });
-    }
+          },
+        );
+        this.isLoading = false;
+        this.resetForm();
+        this.pageIndex = 0;
+        this.loadCategories();
+      },
+      error: (err) => {
+        this.isLoading = false;
+        this.snackBar.open(
+          err.error?.message || (this.isEditMode ? "Failed to update category" : "Failed to create category"),
+          "Close",
+          { duration: 3000, panelClass: ["snackbar-error"] },
+        );
+      },
+    });
   }
 }

@@ -12,8 +12,24 @@ router.post("/login", authController.login);
 router.get(
   "/",
   protect,
-  authorizeRoles("SUPER_ADMIN", "ADMIN"),
+  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER"),
   userController.getAllUsers
+);
+
+// CREATE USER (Protected + Role Based)
+router.post(
+  "/",
+  protect,
+  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER"),
+  userController.createUser
+);
+
+// UPDATE USER (Protected + Role Based)
+router.put(
+  "/:id",
+  protect,
+  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER"),
+  userController.updateUser
 );
 
 module.exports = router;

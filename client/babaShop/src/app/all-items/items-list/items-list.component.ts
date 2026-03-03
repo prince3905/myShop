@@ -9,6 +9,8 @@ import { AddBrandComponent } from "../add-brand/add-brand.component";
 
 import { MatPaginator, PageEvent } from "@angular/material/paginator";
 import { ProductService } from "app/shared/services/product.service";
+import { CategoryService } from "app/shared/services/category.service";
+import { BrandService } from "app/shared/services/brand.service";
 @Component({
   selector: "items-list",
   templateUrl: "./items-list.component.html",
@@ -18,6 +20,7 @@ export class ItemsListComponent implements OnInit {
   panelOpenState = false;
   Category: any = [];
   Brands: any = [];
+  allItems: any[] = [];
   items: any[] = [];
   name: string;
   category: string;
@@ -36,7 +39,6 @@ export class ItemsListComponent implements OnInit {
   selectedCategory: string;
   selectedBrand: string;
   searchParams = {};
-  suggestions: string[] = [];
 
   pageSize = 10; // Number of items per page
   pageSizeOptions: number[] = [5, 10, 25, 50];
@@ -48,11 +50,14 @@ export class ItemsListComponent implements OnInit {
   constructor(
     public dialog: MatDialog,
     private productService: ProductService,
+    private categoryService: CategoryService,
+    private brandService: BrandService,
     private router: Router,
     private Router: ActivatedRoute,
   ) {}
 
   ngOnInit() {
+    this.getCategoryAndBrand();
     this.loadProducts();
   }
 
@@ -62,10 +67,11 @@ export class ItemsListComponent implements OnInit {
 
   loadProducts() {
     this.productService.getAllProducts().subscribe((res: any) => {
-      this.items = res.data || res; // depends backend response
+      this.allItems = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+      this.items = [...this.allItems];
       console.log("All Products", this.items);
 
-      this.items.forEach((item: any) => {
+      this.allItems.forEach((item: any) => {
         item.totalStock =
           item.variations?.reduce(
             (sum: number, v: any) => sum + (v.quantity ? v.quantity : 0),
@@ -81,10 +87,9 @@ export class ItemsListComponent implements OnInit {
   }
 
   ngAfterViewInit(): void {
+    if (!this.paginator) return;
     this.paginator.page.subscribe(() => this.updatePaginatedItems());
-    console.log(this.paginator);
     this.updatePaginatedItems();
-    console.log(this.updatePaginatedItems);
   }
 
   getQueryParams(): any {
@@ -125,48 +130,33 @@ export class ItemsListComponent implements OnInit {
     );
   }
 
-  // fetchSuggestions(): void {
-  //   this.item.getItemSuggestion(this.itemName).subscribe(
-  //     (suggestions: any[]) => {
-  //       this.suggestions = suggestions;
-  //       // console.log(this.suggestions);
-  //     },
-  //     (error: any) => {
-  //       console.error("Error fetching suggestions:", error);
-  //     }
-  //   );
-  // }
-
-  selectSuggestion(suggestion: string): void {
-    this.itemName = suggestion;
-    this.suggestions = [];
-  }
-
   onStartDateChange(event: any): void {
     this.startDate = event.value;
-    console.log("Start Date:", this.startDate);
+    this.onFilterInputChange();
   }
 
   onEndDateChange(event: any): void {
     this.endDate = event.value;
-    console.log("End Date:", this.endDate);
+    this.onFilterInputChange();
   }
 
-  // getCategoryAndBrand(): void {
-  //   forkJoin({
-  //     categories: this.categoryS.getCategory(),
-  //     brands: this.brandS.getBrand(),
-  //   }).subscribe(
-  //     (response) => {
-  //       this.Category = response.categories;
-  //       this.Brands = response.brands;
-  //     },
-  //     (error) => console.error("Error retrieving data:", error),
-  //   );
-  // }
+  getCategoryAndBrand(): void {
+    forkJoin({
+      categories: this.categoryService.getAllCategories({ page: 1, limit: 500 }),
+      brands: this.brandService.getAllBrands({ page: 1, limit: 500 }),
+    }).subscribe({
+      next: (response: any) => {
+        this.Category = this.extractList(response?.categories);
+        this.Brands = this.extractList(response?.brands);
+      },
+      error: (error) => console.error("Error retrieving category/brand:", error),
+    });
+  }
 
   onSearch(page: number, perPage: number) {
-    this.paginator.pageIndex = 0;
+    if (this.paginator) {
+      this.paginator.pageIndex = 0;
+    }
     let queryParamsObj: any = {
       page: 1,
       perPage: perPage,
@@ -212,7 +202,28 @@ export class ItemsListComponent implements OnInit {
     };
 
     this.router.navigate([], navigationExtras);
-    // this.getAllItems(queryParamsObj);
+    this.applyFilters();
+  }
+
+  onFilterModeChange(): void {
+    this.itemName = "";
+    this.selectedCategory = null;
+    this.selectedBrand = null;
+    this.startDate = null;
+    this.endDate = null;
+    this.items = [...this.allItems];
+    this.totalItems = this.items.length;
+    if (this.paginator) {
+      this.paginator.pageIndex = 0;
+    }
+    this.updatePaginatedItems();
+  }
+
+  onFilterInputChange(): void {
+    if (this.paginator) {
+      this.paginator.pageIndex = 0;
+    }
+    this.applyFilters();
   }
 
   onClear() {
@@ -233,8 +244,13 @@ export class ItemsListComponent implements OnInit {
       },
       queryParamsHandling: "merge",
     });
-    // this.getAllItems(null);
-    this.suggestions = null;
+    this.selectedOption = null;
+    this.items = [...this.allItems];
+    this.totalItems = this.items.length;
+    if (this.paginator) {
+      this.paginator.pageIndex = 0;
+    }
+    this.updatePaginatedItems();
   }
 
   // getAllItems(queryParamsObj): void {
@@ -255,11 +271,73 @@ export class ItemsListComponent implements OnInit {
   // }
 
   updatePaginatedItems(): void {
-    const startIndex = this.paginator.pageIndex * this.pageSize;
+    const pageIndex = this.paginator?.pageIndex || 0;
+    const startIndex = pageIndex * this.pageSize;
     this.paginatedItems = this.items.slice(
       startIndex,
       startIndex + this.pageSize,
     );
+  }
+
+  private applyFilters(): void {
+    const byName = (item: any): boolean => {
+      if (!this.itemName?.trim()) return true;
+      return (item?.name || "").toLowerCase().includes(this.itemName.trim().toLowerCase());
+    };
+
+    const byCategory = (item: any): boolean => {
+      if (!this.selectedCategory) return true;
+      return item?.category?._id === this.selectedCategory;
+    };
+
+    const byBrand = (item: any): boolean => {
+      if (!this.selectedBrand) return true;
+      return item?.brand?._id === this.selectedBrand;
+    };
+
+    const byDate = (item: any): boolean => {
+      if (!this.startDate && !this.endDate) return true;
+      const createdAt = new Date(item?.createdAt);
+      if (Number.isNaN(createdAt.getTime())) return false;
+
+      if (this.startDate) {
+        const from = new Date(this.startDate);
+        from.setHours(0, 0, 0, 0);
+        if (createdAt < from) return false;
+      }
+      if (this.endDate) {
+        const to = new Date(this.endDate);
+        to.setHours(23, 59, 59, 999);
+        if (createdAt > to) return false;
+      }
+      return true;
+    };
+
+    this.items = this.allItems.filter((item: any) => {
+      if (this.selectedOption === "name") {
+        return byName(item) && byCategory(item) && byBrand(item);
+      }
+      if (this.selectedOption === "category") {
+        return byCategory(item) && byBrand(item);
+      }
+      if (this.selectedOption === "brand") {
+        return byBrand(item);
+      }
+      if (this.selectedOption === "date") {
+        return byDate(item);
+      }
+      return true;
+    });
+
+    this.totalItems = this.items.length;
+    this.updatePaginatedItems();
+  }
+
+  private extractList(response: any): any[] {
+    if (Array.isArray(response?.data)) return response.data;
+    if (Array.isArray(response?.items)) return response.items;
+    if (Array.isArray(response)) return response;
+    return [];
   }
 
   openAddItemModal(): void {
@@ -276,7 +354,9 @@ export class ItemsListComponent implements OnInit {
 
   openAddCategoryModal(): void {
     const dialogRef = this.dialog.open(AddCategoryComponent, {
-      width: "400px",
+      width: "960px",
+      maxWidth: "96vw",
+      height: "86vh",
     });
 
     dialogRef.afterClosed().subscribe((result) => {
@@ -288,7 +368,9 @@ export class ItemsListComponent implements OnInit {
 
   openAddBrandModal(): void {
     const dialogRef = this.dialog.open(AddBrandComponent, {
-      width: "400px",
+      width: "960px",
+      maxWidth: "96vw",
+      height: "86vh",
     });
 
     dialogRef.afterClosed().subscribe((result) => {

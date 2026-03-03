@@ -2,6 +2,8 @@ import { Component, Inject, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { DistributorService } from '../../shared/services/distributor.service';
+import { AuthService } from 'app/shared/services/auth.service';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-ledger-entry',
@@ -13,10 +15,13 @@ export class LedgerEntryComponent implements OnInit {
   form!: FormGroup;
   type!: string;
   loading = false;
+  canSubmit = true;
 
   constructor(
     private fb: FormBuilder,
     private distributorService: DistributorService,
+    private authService: AuthService,
+    private snackBar: MatSnackBar,
     private dialogRef: MatDialogRef<LedgerEntryComponent>,
     @Inject(MAT_DIALOG_DATA) public data: any
   ) {}
@@ -36,9 +41,23 @@ export class LedgerEntryComponent implements OnInit {
       this.form.get('paymentMode')?.setValidators([Validators.required]);
       this.form.get('paymentMode')?.updateValueAndValidity();
     }
+
+    this.canSubmit = !(
+      this.authService.getUserRole() === "SUPER_ADMIN" &&
+      !this.authService.getShopId()
+    );
+
+    if (!this.canSubmit) {
+      this.form.disable();
+    }
   }
 
   submit() {
+
+    if (!this.canSubmit) {
+      this.snackBar.open("Please select a shop first", "Close", { duration: 3000 });
+      return;
+    }
 
     if (this.form.invalid) return;
 

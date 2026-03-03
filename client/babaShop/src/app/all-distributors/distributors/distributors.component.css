@@ -1,180 +1,116 @@
-.card-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 16px;
-    background-color: #f44336; /* Red color for the card header */
-    color: #fff; /* Text color for the card header */
-    border-radius: 5px;
-    height: 100px;
-  }
-  .card-plain {
-    margin-top: -30px;
-  }
-  
-  .card-title {
-    font-size: 24px;
-  }
-  
-  .dropdown {
-    flex: 1;
-    margin-right: 16px;
-  }
-  
-  .mat-option {
-    background-color: rgb(3 0 0 / 80%) !important;
-    color: white !important;
-    font-size: small !important;
-    height: 38px !important;
-  }
-  .suggesion {
-    position: absolute;
-    margin-top: 35%;
-  }
-  
-  .name-filter {
-    display: flex;
-    align-items: center;
-  }
-  
-  .name-filter mat-form-field {
-    margin-right: 16px;
-  }
-  
-  .button-container {
-    display: flex;
-    align-items: center;
-  }
-  
-  .button-container button {
-    margin-right: 10px;
-  }
-  
-  .material-icons {
-    font-size: 24px;
-    margin-right: 8px;
-  }
-  .btn add {
-    margin-left: 10px;
-  }
-  
-  .loading{
-    margin-left: 36% !important;
-    position: absolute !important;
-    margin-top: 100px;
+.header-main {
+  margin-bottom: 8px;
+}
+
+.header-filters {
+  display: grid;
+  grid-template-columns: 180px minmax(220px, 1fr) minmax(180px, 240px) auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.header-field {
+  margin: 0;
+}
+
+.header-filters .mat-form-field-wrapper {
+  padding-bottom: 0 !important;
+}
+
+.card-header .card-title,
+.card-header .card-category {
+  color: #fff;
+}
+
+.filter-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  align-items: center;
+}
+
+.chip-row {
+  margin: 10px 0 12px;
+}
+
+.loading-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 24px 0;
+}
+
+.distributor-table {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.distributor-table tbody tr {
+  cursor: pointer;
+}
+
+.distributor-table tbody tr:hover {
+  background: #fafafa;
+}
+
+.action-col {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.status-badge.active {
+  background: #e8f5e9;
+  color: #1b5e20;
+}
+
+.status-badge.disabled {
+  background: #ffebee;
+  color: #b71c1c;
+}
+
+.status-btn {
+  min-width: 105px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.status-btn.active {
+  color: #b71c1c;
+  border-color: #ef9a9a;
+}
+
+.status-btn.disabled {
+  color: #1b5e20;
+  border-color: #a5d6a7;
+}
+
+.empty-row {
+  text-align: center;
+  color: #666;
+  padding: 14px;
+}
+
+@media (max-width: 768px) {
+  .header-filters {
+    grid-template-columns: 1fr;
   }
 
-  .button-container {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-top: 10px;
-  }
-  
-  button.add {
-    height: 36px;
-  }
-
-  .table tbody tr {
-    cursor: pointer;
-  }
-  
-  .table tbody tr:hover {
-    background-color: #ffffff;
+  .filter-actions {
+    justify-content: flex-start;
   }
 
   .action-col {
-    display: flex;
-    gap: 8px;
-    align-items: center;
+    flex-wrap: wrap;
   }
-  
-  td button {
-    margin: 0;
-  }
-  
-  .disabled-row {
-    opacity: 0.5;
-    background-color: #f7f7f7;
-  }
-  
-  .status-btn {
-    border-radius: 50%;
-    transition: all 0.3s ease;
-  }
-  
-  
-  .status-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 4px 10px;
-    border-radius: 6px;
-    font-size: 13px;
-    font-weight: 500;
-    letter-spacing: 0.3px;
-  }
-  
-  .status-btn {
-    min-width: 90px;
-    height: 32px;
-    padding: 0 10px;
-    font-size: 13px;
-    font-weight: 500;
-    border-radius: 6px;
-    text-transform: capitalize;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-  }
-  
-  /* 🟢 ACTIVE */
-  .status-btn.active {
-    background-color: #e6f4ea;
-    color: #1e7e34;
-  }
-  
-  /* 🔴 DISABLED */
-  .status-btn.disabled {
-    background-color: #fdecea;
-    color: #c62828;
-  }
-  
-  /* icon size control */
-  .status-btn mat-icon {
-    font-size: 18px;
-  }
-  
-  
-  
-  
-  
-  
-  
-  @media (max-width: 412px) {
-    .mat-form-field {
-      width: 78px !important;
-      margin-left: -13px;
-      font-size: 12px;
-      text-align: center;
-      color: white;
-    }
-    .card-plain .card-header {
-      margin-left: -30px !important;
-      margin-right: 0px !important;
-      width: 119% !important;
-    }
-  
-    .add {
-      height: 35px;
-      margin-left: 2px;
-      margin-right: -13px;
-      width: 73px;
-      font-size: 10px;
-    }
-  
-    .button-container button {
-      margin-right: 2px;
-    }
-  }
-  
+}

@@ -1,3 +1,104 @@
-/* Navbar styles intentionally left empty (restored) */
+.navbar .navbar-collapse {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
 
+.navbar .navbar-nav {
+  gap: 2px;
+}
 
+.navbar .nav-item .nav-link {
+  padding: 6px 8px;
+}
+
+.shop-count-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.shop-count-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #424242;
+}
+
+.shop-count-badge {
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #c62828;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.shop-chip {
+  margin-right: 12px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #fff5f5;
+  border: 1px solid #ffd7d7;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 360px;
+}
+
+.shop-chip-label {
+  color: #5f6368;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.shop-chip-value {
+  color: #c62828;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.quick-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.quick-link-text {
+  font-size: 12px;
+  font-weight: 600;
+  color: #424242;
+}
+
+@media (max-width: 1400px) {
+  .quick-link-text {
+    display: none;
+  }
+}
+
+@media (max-width: 1199px) {
+  .shop-chip {
+    max-width: 260px;
+    margin-right: 6px;
+  }
+}
+
+@media (max-width: 991px) {
+  .shop-chip {
+    width: 100%;
+    max-width: 100%;
+    border-radius: 8px;
+  }
+
+  .navbar .navbar-collapse {
+    margin-top: 8px;
+  }
+}

@@ -1,0 +1,78 @@
+<div class="main-content">
+  <div class="row shops-page">
+    <div class="col-md-5">
+      <div class="card">
+        <div class="card-header card-header-danger">
+          <h4 class="card-title">Add Shop</h4>
+          <p class="card-category">Create a new tenant/shop</p>
+        </div>
+        <div class="card-body">
+          <form [formGroup]="shopForm" (ngSubmit)="createShop()">
+            <mat-form-field class="example-full-width">
+              <mat-label>Shop Name</mat-label>
+              <input matInput formControlName="name" />
+            </mat-form-field>
+
+            <mat-form-field class="example-full-width">
+              <mat-label>Shop Code</mat-label>
+              <input matInput formControlName="shopCode" />
+            </mat-form-field>
+
+            <mat-form-field class="example-full-width">
+              <mat-label>Contact Number</mat-label>
+              <input matInput formControlName="contactNumber" />
+            </mat-form-field>
+
+            <mat-form-field class="example-full-width">
+              <mat-label>Email</mat-label>
+              <input matInput type="email" formControlName="email" />
+            </mat-form-field>
+
+            <mat-form-field class="example-full-width">
+              <mat-label>Shop Type</mat-label>
+              <mat-select formControlName="shopType">
+                <mat-option value="POS">POS</mat-option>
+                <mat-option value="ECOMMERCE">ECOMMERCE</mat-option>
+                <mat-option value="HYBRID">HYBRID</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <button mat-raised-button class="btn btn-danger" [disabled]="saving">
+              {{ saving ? "Creating..." : "Create Shop" }}
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-7">
+      <div class="card">
+        <div class="card-header card-header-danger">
+          <h4 class="card-title">All Shops</h4>
+          <p class="card-category">Manage and switch shop context</p>
+        </div>
+        <div class="card-body">
+          <div *ngIf="loading" class="loading-block">Loading shops...</div>
+
+          <div *ngIf="!loading && shops.length === 0" class="loading-block">
+            No shops found.
+          </div>
+
+          <div *ngIf="!loading && shops.length > 0" class="shop-list">
+            <div class="shop-row" *ngFor="let shop of shops">
+              <div>
+                <div class="shop-name">{{ shop.name }}</div>
+                <div class="shop-meta">
+                  {{ shop.shopCode }} | {{ shop.isActive ? "Active" : "Inactive" }}
+                </div>
+              </div>
+              <button mat-stroked-button color="primary" (click)="switchShop(shop)">
+                Switch
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

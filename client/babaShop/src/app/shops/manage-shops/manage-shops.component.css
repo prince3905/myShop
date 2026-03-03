@@ -1,0 +1,46 @@
+.shops-page {
+  margin-top: 0;
+}
+
+.shops-page .card {
+  margin-top: 0;
+}
+
+.example-full-width {
+  width: 100%;
+}
+
+.loading-block {
+  color: #616161;
+  padding: 12px 0;
+}
+
+.shop-list {
+  display: grid;
+  gap: 10px;
+}
+
+.shop-row {
+  border: 1px solid #ededed;
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.shop-name {
+  font-weight: 700;
+  color: #212121;
+}
+
+.shop-meta {
+  color: #666;
+  font-size: 12px;
+}
+
+@media (max-width: 767px) {
+  .shops-page {
+    margin-top: 6px;
+  }
+}
