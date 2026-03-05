@@ -126,11 +126,13 @@ export class ViewDistributorComponent implements OnInit {
           (entry.type === "adjustment" && entry.amount < 0)
             ? `Rs ${Math.abs(Number(entry.amount || 0)).toFixed(2)}`
             : "-";
+        const paymentMethod = this.resolvePaymentMethod(entry);
 
         return `
           <tr>
             <td>${this.formatDate(entry.transactionDate)}</td>
             <td>${this.escapeHtml(this.toTitleCase(entry.type || "-"))}</td>
+            <td>${this.escapeHtml(this.toTitleCase(paymentMethod))}</td>
             <td>${this.escapeHtml(entry.note || "-")}</td>
             <td style="text-align:right;">${debit}</td>
             <td style="text-align:right;">${credit}</td>
@@ -215,6 +217,7 @@ export class ViewDistributorComponent implements OnInit {
               <tr>
                 <th>Date</th>
                 <th>Type</th>
+                <th>Payment Mode</th>
                 <th>Note</th>
                 <th style="text-align:right;">Debit</th>
                 <th style="text-align:right;">Credit</th>
@@ -254,6 +257,17 @@ export class ViewDistributorComponent implements OnInit {
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;")
       .replace(/'/g, "&#039;");
+  }
+
+  resolvePaymentMethod(entry: any): string {
+    const direct = `${entry?.paymentMethod || ""}`.trim().toUpperCase();
+    if (direct) return direct;
+    const note = `${entry?.note || ""}`.toUpperCase();
+    const known = ["CASH", "BANK", "ONLINE", "UPI", "CARD", "CHEQUE"];
+    for (const mode of known) {
+      if (note.includes(mode)) return mode;
+    }
+    return "-";
   }
 
   openLedgerModal(type: string) {

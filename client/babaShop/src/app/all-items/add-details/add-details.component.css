@@ -1,13 +1,97 @@
 .form-container {
-  padding-top: 20px;
+  padding-top: 8px;
 }
 
-.row {
+.w-100 {
+  width: 100%;
+}
+
+.form-section {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 8px 10px 0;
+  margin-bottom: 8px;
+  background: #f8fafc;
+}
+
+.section-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #334155;
+  letter-spacing: 0.1px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.model-add-inline {
   display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
+  align-items: flex-start;
+  gap: 8px;
 }
 
-.half-width {
-  flex: 1 1 calc(50% - 20px);
+.model-add-btn {
+  height: 36px;
+  margin-top: 2px;
+  white-space: nowrap;
+}
+
+.regenerate-col {
+  display: flex;
+  align-items: center;
+}
+
+.active-col {
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+}
+
+.code-lock-note {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #b91c1c;
+  font-weight: 600;
+}
+
+.form-container .row {
+  margin-bottom: 2px;
+}
+
+.form-container .mat-form-field {
+  margin-bottom: -6px;
+}
+
+.form-container .mat-form-field-wrapper {
+  padding-bottom: 0.75em;
+}
+
+.table td,
+.table th {
+  vertical-align: middle;
+}
+
+.filter-row {
+  margin-bottom: 8px;
+}
+
+.status-filters {
+  display: flex;
+  gap: 8px;
+}
+
+.filter-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+@media (max-width: 991px) {
+  .model-add-inline {
+    flex-direction: column;
+  }
+
+  .model-add-btn {
+    margin-top: 0;
+  }
 }

@@ -46,6 +46,12 @@ router.get(
   productVariationController.getSingleVariation
 );
 
+router.get(
+  "/:id/usage",
+  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"),
+  productVariationController.getVariationUsage
+);
+
 /* =========================
    UPDATE VARIATION
 ========================= */
@@ -55,6 +61,12 @@ router.put(
   updateVariationValidation,
   validate,
   productVariationController.updateVariation
+);
+
+router.post(
+  "/:id/print-log",
+  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER"),
+  productVariationController.logVariationPrint
 );
 
 /* =========================

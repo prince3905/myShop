@@ -1,0 +1,51 @@
+<h2 mat-dialog-title>Create Purchase Return</h2>
+
+<mat-dialog-content>
+  <div class="top-note">
+    Invoice: <strong>{{ data?.purchase?.invoiceNo || data?.purchase?._id }}</strong>
+  </div>
+
+  <form [formGroup]="form">
+    <div formArrayName="items" class="rows">
+      <div class="row-item" *ngFor="let row of itemsArray.controls; let i = index" [formGroupName]="i">
+        <div class="line-head">
+          <span class="sku">{{ row.value.sku }}</span>
+          <span class="model">{{ row.value.model }}</span>
+          <span class="qty">Purchased: {{ row.value.purchasedQty }}</span>
+        </div>
+
+        <div class="line-fields">
+          <mat-form-field appearance="outline">
+            <mat-label>Return Qty</mat-label>
+            <input matInput type="number" formControlName="returnQty" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Reason</mat-label>
+            <mat-select formControlName="reason">
+              <mat-option *ngFor="let r of reasons" [value]="r">{{ r }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="wide">
+            <mat-label>Note (optional)</mat-label>
+            <input matInput formControlName="note" />
+          </mat-form-field>
+        </div>
+      </div>
+    </div>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Return Note (optional)</mat-label>
+      <textarea matInput rows="2" formControlName="note"></textarea>
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" mat-dialog-close>Cancel</button>
+  <button mat-flat-button color="warn" type="button" (click)="submit()" [disabled]="saving">
+    {{ saving ? "Saving..." : "Create Return" }}
+  </button>
+</mat-dialog-actions>
+

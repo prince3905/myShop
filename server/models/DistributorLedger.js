@@ -31,6 +31,11 @@ const distributorLedgerSchema = new mongoose.Schema(
       required: true,
     },
 
+    paymentMethod: {
+      type: String,
+      enum: ["CASH", "BANK", "ONLINE", "UPI", "CARD", "CHEQUE"],
+    },
+
     balanceAfterTransaction: {
       type: Number,
       required: true,

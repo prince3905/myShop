@@ -1,213 +1,332 @@
 <div class="main-content">
-    <div class="container-fluid">
-
-        <div class="card card-plain">
-            <div class="card-header " fxLayout="column" fxLayout.lt-sm="row" fxLayoutGap="5px">
-                <div fxLayout="row" fxLayoutAlign="start center">
-                    <mat-form-field class="dropdown">
-                        <mat-label>Filter by</mat-label>
-                        <select matNativeControl [(ngModel)]="selectedOption" required>
-                            <option label="--select something --"></option>
-                            <option value="name">Name</option>
-                            <option value="category">Category</option>
-                            <option value="brand">Brand</option>
-                            <option value="date">By Date</option>
-                        </select>
-                    </mat-form-field>
-                </div>
-
-
-                <div *ngIf="selectedOption === 'name'" class="name-filter" fxLayout="row"
-                    fxLayoutAlign.lt-md="start center">
-                    <mat-form-field fxFlex="10%">
-                        <input matInput placeholder="itemName" name="ItemName" [(ngModel)]="itemName"
-                            (input)="fetchSuggestions()">
-                    </mat-form-field>
-                    <div class="suggesion" fxFlex="10%">
-                        <mat-option *ngFor="let suggestion of suggestions" (click)="selectSuggestion(suggestion)"
-                            (optionSelected)="selectSuggestion($event)">
-                            {{suggestion}}
-                        </mat-option>
-                    </div>
-
-
-                    <mat-form-field fxFlex="10%" fxHide.lt-md>
-                        <mat-label>Category</mat-label>
-                        <mat-select [(ngModel)]="selectedCategory">
-                            <mat-option *ngFor="let category of Category" [value]="category._id">
-                                {{ category.name }}
-                            </mat-option>
-                        </mat-select>
-                    </mat-form-field>
-                    <mat-form-field fxFlex="10%" fxHide.lt-md>
-                        <mat-label>Brand</mat-label>
-                        <mat-select [(ngModel)]="selectedBrand">
-                            <mat-option *ngFor="let brand of Brands" [value]="brand._id">
-                                {{ brand.name}}
-                            </mat-option>
-                        </mat-select>
-                    </mat-form-field>
-                </div>
-
-
-
-                <div *ngIf="selectedOption === 'category'" class="name-filter" fxLayout="row"
-                    fxLayoutAlign.lt-md="start center">
-                    <mat-form-field fxFlex="10%" fxHide.lt-md>
-                        <mat-label>Category</mat-label>
-                        <mat-select [(ngModel)]="selectedCategory">
-                            <mat-option *ngFor="let category of Category" [value]="category._id">
-                                {{ category.name }}
-                            </mat-option>
-                        </mat-select>
-                    </mat-form-field>
-                    <mat-form-field fxFlex="10%" fxHide.lt-md>
-                        <mat-label>Brand</mat-label>
-                        <mat-select [(ngModel)]="selectedBrand">
-                            <mat-option *ngFor="let brand of Brands" [value]="brand._id">
-                                {{ brand.name}}
-                            </mat-option>
-                        </mat-select>
-                    </mat-form-field>
-                </div>
-
-
-                <div *ngIf="selectedOption === 'brand'" class="name-filter" fxLayout="row"
-                    fxLayoutAlign.lt-md="start center">
-                    <mat-form-field fxFlex="10%" fxHide.lt-md>
-                        <mat-label>Brand</mat-label>
-                        <mat-select [(ngModel)]="selectedBrand">
-                            <mat-option *ngFor="let brand of Brands" [value]="brand._id">
-                                {{ brand.name }}
-                            </mat-option>
-                        </mat-select>
-                    </mat-form-field>
-                </div>
-
-                <div *ngIf="selectedOption === 'date'" class="name-filter" fxLayout="row" fxLayoutAlign="start center">
-                    <mat-form-field>
-                        <mat-label>Enter a date range</mat-label>
-                        <mat-date-range-input [rangePicker]="picker">
-                            <input matStartDate placeholder="Start date" (dateChange)="onStartDateChange($event)">
-                            <input matEndDate placeholder="End date" (dateChange)="onEndDateChange($event)">
-                        </mat-date-range-input>
-                        <mat-hint>MM/DD/YYYY – MM/DD/YYYY</mat-hint>
-                        <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
-                        <mat-date-range-picker #picker></mat-date-range-picker>
-                    </mat-form-field>
-                </div>
-
-                <div class="button-container">
-                    <div
-                        *ngIf="selectedOption === 'name' || selectedOption === 'category' || selectedOption === 'brand' || selectedOption === 'date'">
-                        <button mat-raised-button type="submit" class="btn btn-white btn-round btn-just-icon"
-                            (click)="onSearch()">
-                            <i class="material-icons">search</i>
-                        </button>
-                        <button mat-raised-button type="submit" class="btn btn-white btn-round btn-just-icon"
-                            (click)="onClear()">
-                            <i class="material-icons">clear</i>
-                        </button>
-                    </div>
-                </div>
-
-            </div>
-
+  <div class="container-fluid">
+    <div class="card filter-card">
+      <div class="card-header card-header-danger">
+        <h4 class="card-title">Stock Report</h4>
+        <p class="card-category">Live stock, valuation and low-stock tracking</p>
+      </div>
+      <div class="card-body">
+        <div class="stock-context-row">
+          <div class="context-chip">Scope: {{ currentScopeLabel }}</div>
+          <div class="context-chip">Records: {{ totalItems }}</div>
+          <button mat-stroked-button color="warn" (click)="exportStockCsv()">Export Stock CSV</button>
+          <button mat-stroked-button color="primary" (click)="goToProducts()">Manage Products</button>
+          <button mat-stroked-button color="accent" (click)="goToPurchase()">Create Purchase</button>
         </div>
 
-
-        <div class="loading" *ngIf="loading" >
-            <mat-spinner class="loading"  color="primary" mode="indeterminate"></mat-spinner>
+        <div class="filter-row" *ngIf="canCreateReorderDraft">
+          <mat-form-field appearance="outline" class="filter-field search-field">
+            <mat-label>Reorder Distributor</mat-label>
+            <mat-select [(ngModel)]="reorderDistributorId">
+              <mat-option [value]="null">Select distributor</mat-option>
+              <mat-option *ngFor="let d of distributors" [value]="d._id">
+                {{ d.name }} ({{ d.phone }})
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+          <div class="context-chip">Low stock rows can create draft directly</div>
+          <button
+            mat-raised-button
+            color="primary"
+            [disabled]="!reorderDistributorId || bulkReorderSaving || rows.length === 0"
+            (click)="createBulkReorderDrafts()">
+            {{ bulkReorderSaving ? 'Creating Bulk Drafts...' : 'Bulk Reorder Low Stock' }}
+          </button>
         </div>
 
+        <div class="filter-row">
+          <mat-form-field appearance="outline" class="filter-field search-field">
+            <mat-label>Search SKU / Product / Model</mat-label>
+            <input matInput [(ngModel)]="search" (keyup.enter)="onSearch()" placeholder="e.g. S24-256-BLK or Galaxy M24" />
+          </mat-form-field>
 
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table">
-                    <thead class="">
-                        <th>
-                            Name
-                        </th>
-                        <th>
-                            Brand
-                        </th>
-                        <th>
-                            Category
-                        </th>
-                        <th>
-                            Model
-                        </th>
-                        <th>
-                            Total-Qty
-                        </th>
-                        <th>
-                            Stock-Qty
-                        </th>
-                        <th>
-                            Price
-                        </th>
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Sort By</mat-label>
+            <mat-select [(ngModel)]="sortBy">
+              <mat-option value="updatedAt">Updated At</mat-option>
+              <mat-option value="quantity">Quantity</mat-option>
+              <mat-option value="lastPurchasePrice">Last Purchase Price</mat-option>
+            </mat-select>
+          </mat-form-field>
 
-                        <th>
-                            Size
-                        </th>
-                        <th>
-                            Stock Value
-                        </th>
-                        <th>
-                            Alert
-                        </th>
-                    </thead>
-                    <tbody *ngFor="let item of stocks" (click)="viewItemDetails(item._id)">
-                        <tr>
-                            <td>
-                                {{item.itemName}}
-                            </td>
-                            <td>
-                                {{item?.brand?.name}}
-                            </td>
-                            <td>
-                                {{item?.category?.name}}
-                            </td>
-                            <td>
-                                {{item.model}}
-                            </td>
-                            <td>
-                                {{item.quantity}}
-                            </td>
-                             <td>
-                                {{item.remainingQuantity}}
-                             </td>
-                            <td>
-                                {{item.s_price}}
-                            </td>
-                            <td>
-                                {{item.size}}
-                            </td>
-                            <td>
-                                {{ item.stockValue }}
-                            </td>
-                            <td [ngClass]="{ 'low-stock': item.isLowStock, 'high-stock': !item.isLowStock }">
-                                {{ item.isLowStock ? 'No' : 'Yes' }}
-                              </td>
-                            <!-- <td>
-                                            <button mat-raised-button type="button" matTooltip="Edit Task"
-                                                [matTooltipPosition]="'above'"
-                                                class="btn btn-primary btn-link btn-sm btn-just-icon">
-                                                <i class="material-icons">edit</i>
-                                            </button>
-                                            <button mat-raised-button type="button" matTooltip="Remove"
-                                                [matTooltipPosition]="'above'"
-                                                class="btn btn-danger btn-link btn-sm btn-just-icon">
-                                                <i class="material-icons">close</i>
-                                            </button>
-                                        </td> -->
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Order</mat-label>
+            <mat-select [(ngModel)]="order">
+              <mat-option value="desc">Descending</mat-option>
+              <mat-option value="asc">Ascending</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-checkbox [(ngModel)]="lowStockOnly" class="low-stock-toggle">Low Stock Only</mat-checkbox>
+
+          <button mat-raised-button color="primary" (click)="onSearch()">Apply</button>
+          <button mat-stroked-button color="warn" (click)="onClear()">Reset</button>
         </div>
-        <mat-paginator #paginator [length]="totalItems" [pageSize]="pageSize" [pageSizeOptions]="pageSizeOptions"
-        (page)="onPageChange($event)">
-    </mat-paginator>
-
+      </div>
     </div>
+
+    <div class="stock-summary-grid" *ngIf="!loading">
+      <div class="summary-card">
+        <div class="label">Total Qty</div>
+        <div class="value">{{ summary.totalQuantity }}</div>
+      </div>
+      <div class="summary-card">
+        <div class="label">Reserved Qty</div>
+        <div class="value">{{ summary.totalReserved }}</div>
+      </div>
+      <div class="summary-card">
+        <div class="label">Damaged Qty</div>
+        <div class="value">{{ summary.totalDamaged }}</div>
+      </div>
+      <div class="summary-card">
+        <div class="label">Low Stock SKUs</div>
+        <div class="value">{{ summary.lowStockCount }}</div>
+      </div>
+      <div class="summary-card valuation">
+        <div class="label">Total Stock Valuation (Cost)</div>
+        <div class="value">₹ {{ summary.totalCostValue | number:'1.2-2' }}</div>
+      </div>
+    </div>
+
+    <div class="loading-wrap" *ngIf="loading">
+      <mat-spinner color="primary" diameter="40"></mat-spinner>
+    </div>
+
+    <div class="card" *ngIf="!loading">
+      <div class="card-body table-wrap">
+        <div class="table-responsive">
+          <table class="table stock-table">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Model</th>
+                <th>SKU</th>
+                <th>Variant</th>
+                <th>Qty</th>
+                <th>Reserved</th>
+                <th>Damaged</th>
+                <th>Available</th>
+                <th>Reorder</th>
+                <th>Cost</th>
+                <th>Value</th>
+                <th>Status</th>
+                <th *ngIf="canCreateReorderDraft">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let row of rows">
+                <td>{{ row?.product?.name || '-' }}</td>
+                <td>{{ row?.model?.name || '-' }}</td>
+                <td>{{ row?.sku || row?.variation?.sku || '-' }}</td>
+                <td>
+                  {{ row?.variation?.attributes?.storage || '-' }}/
+                  {{ row?.variation?.attributes?.color || '-' }}/
+                  {{ row?.variation?.attributes?.size || '-' }}
+                </td>
+                <td>{{ row?.quantity || 0 }}</td>
+                <td>{{ row?.reservedQuantity || 0 }}</td>
+                <td>{{ row?.damagedQuantity || 0 }}</td>
+                <td>{{ getAvailableQty(row) }}</td>
+                <td>{{ row?.reorderLevel || 0 }}</td>
+                <td>₹ {{ row?.lastPurchasePrice || 0 | number:'1.2-2' }}</td>
+                <td>₹ {{ getStockValue(row) | number:'1.2-2' }}</td>
+                <td>
+                  <span class="stock-badge" [ngClass]="isLowStock(row) ? 'low' : 'ok'">
+                    {{ isLowStock(row) ? 'LOW' : 'OK' }}
+                  </span>
+                </td>
+                <td *ngIf="canCreateReorderDraft">
+                  <button
+                    mat-stroked-button
+                    color="primary"
+                    *ngIf="isLowStock(row)"
+                    [disabled]="!reorderDistributorId || reorderingIds[(row?._id || row?.variation?._id || '')]"
+                    (click)="createReorderDraft(row)">
+                    {{
+                      reorderingIds[(row?._id || row?.variation?._id || '')]
+                        ? 'Creating...'
+                        : ('Reorder +' + getSuggestedReorderQty(row))
+                    }}
+                  </button>
+                  <span *ngIf="!isLowStock(row)" class="muted-action">-</span>
+                </td>
+              </tr>
+              <tr *ngIf="rows.length === 0">
+                <td [attr.colspan]="canCreateReorderDraft ? 13 : 12" class="empty">
+                  No stock records found.
+                  <span class="empty-help">Create/confirm purchase to auto-generate stock entries.</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <mat-paginator
+        [length]="totalItems"
+        [pageIndex]="page - 1"
+        [pageSize]="pageSize"
+        [pageSizeOptions]="pageSizeOptions"
+        (page)="onPageChange($event)">
+      </mat-paginator>
+    </div>
+
+    <div class="card mt-3">
+      <div class="card-header card-header-info">
+        <h4 class="card-title">Stock Transactions</h4>
+        <p class="card-category">Track IN/OUT/Adjustment/Return movement history</p>
+      </div>
+      <div class="card-body">
+        <div class="stock-context-row">
+          <div class="context-chip">Transaction Records: {{ txTotalItems }}</div>
+          <button mat-stroked-button color="warn" (click)="exportTransactionsCsv()">Export Transactions CSV</button>
+        </div>
+        <div class="filter-row">
+          <mat-form-field appearance="outline" class="filter-field search-field">
+            <mat-label>Search SKU</mat-label>
+            <input matInput [(ngModel)]="txFilters.search" (keyup.enter)="onTxApply()" placeholder="Enter SKU" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Type</mat-label>
+            <mat-select [(ngModel)]="txFilters.type">
+              <mat-option [value]="null">All</mat-option>
+              <mat-option value="IN">IN</mat-option>
+              <mat-option value="OUT">OUT</mat-option>
+              <mat-option value="ADJUSTMENT">ADJUSTMENT</mat-option>
+              <mat-option value="RESERVE">RESERVE</mat-option>
+              <mat-option value="RELEASE">RELEASE</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Reference</mat-label>
+            <mat-select [(ngModel)]="txFilters.referenceType">
+              <mat-option [value]="null">All</mat-option>
+              <mat-option value="PURCHASE">PURCHASE</mat-option>
+              <mat-option value="SALE">SALE</mat-option>
+              <mat-option value="RETURN">RETURN</mat-option>
+              <mat-option value="MANUAL">MANUAL</mat-option>
+              <mat-option value="RESERVATION">RESERVATION</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <button mat-raised-button color="primary" (click)="onTxApply()">Apply</button>
+          <button mat-stroked-button color="warn" (click)="onTxReset()">Reset</button>
+        </div>
+
+        <div class="loading-wrap" *ngIf="txLoading">
+          <mat-spinner color="primary" diameter="34"></mat-spinner>
+        </div>
+
+        <div class="table-responsive" *ngIf="!txLoading">
+          <table class="table tx-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>SKU</th>
+                <th>Product</th>
+                <th>Type</th>
+                <th>Ref</th>
+                <th>Qty</th>
+                <th>Prev</th>
+                <th>New</th>
+                <th>User</th>
+                <th>Note</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let tx of txRows">
+                <td>{{ tx?.createdAt | date:'dd MMM yyyy, hh:mm a' }}</td>
+                <td>{{ tx?.sku || '-' }}</td>
+                <td>{{ tx?.product?.name || '-' }}</td>
+                <td>
+                  <span class="tx-pill" [ngClass]="'tx-' + (tx?.type || 'ADJUSTMENT')">{{ tx?.type }}</span>
+                </td>
+                <td>{{ tx?.referenceType || '-' }}</td>
+                <td>{{ tx?.deltaQuantity }}</td>
+                <td>{{ tx?.previousQuantity }}</td>
+                <td>{{ tx?.newQuantity }}</td>
+                <td>{{ tx?.createdBy?.email || '-' }}</td>
+                <td>{{ tx?.note || '-' }}</td>
+              </tr>
+              <tr *ngIf="txRows.length === 0">
+                <td colspan="10" class="empty">No transaction records found</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <mat-paginator
+          [length]="txTotalItems"
+          [pageIndex]="txPage - 1"
+          [pageSize]="txPageSize"
+          [pageSizeOptions]="txPageSizeOptions"
+          (page)="onTxPageChange($event)">
+        </mat-paginator>
+      </div>
+    </div>
+
+    <div class="card mt-3" *ngIf="canAdjustStock">
+      <div class="card-header card-header-warning">
+        <h4 class="card-title">Manual Stock Adjustment</h4>
+        <p class="card-category">Adjust quantity by variation with secure stock transaction log</p>
+      </div>
+      <div class="card-body">
+        <div class="filter-row">
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Product</mat-label>
+            <mat-select [(ngModel)]="adjustForm.product" (selectionChange)="onAdjustProductChange()">
+              <mat-option [value]="null">Select Product</mat-option>
+              <mat-option *ngFor="let p of products" [value]="p._id">
+                {{ p.name }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Model</mat-label>
+            <mat-select [(ngModel)]="adjustForm.model" [disabled]="!adjustForm.product" (selectionChange)="onAdjustModelChange()">
+              <mat-option [value]="null">Select Model</mat-option>
+              <mat-option *ngFor="let m of adjustModelOptions" [value]="m._id">
+                {{ m.name }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="filter-field search-field">
+            <mat-label>Variation SKU</mat-label>
+            <mat-select [(ngModel)]="adjustForm.variation" [disabled]="!adjustForm.model">
+              <mat-option [value]="null">Select Variation</mat-option>
+              <mat-option *ngFor="let v of adjustVariationOptions" [value]="v._id">
+                {{ v.sku }} - {{ v.attributes?.storage || '-' }}/{{ v.attributes?.color || '-' }}/{{ v.attributes?.size || '-' }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Type</mat-label>
+            <mat-select [(ngModel)]="adjustForm.type">
+              <mat-option value="IN">IN</mat-option>
+              <mat-option value="OUT">OUT</mat-option>
+              <mat-option value="ADJUSTMENT">ADJUSTMENT</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Quantity</mat-label>
+            <input matInput type="number" [(ngModel)]="adjustForm.quantity" placeholder="e.g. 5" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="filter-field note-field">
+            <mat-label>Note</mat-label>
+            <input matInput [(ngModel)]="adjustForm.note" placeholder="Reason for adjustment" />
+          </mat-form-field>
+
+          <button mat-raised-button color="primary" [disabled]="adjustSaving" (click)="submitAdjustment()">
+            {{ adjustSaving ? 'Saving...' : 'Adjust Stock' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

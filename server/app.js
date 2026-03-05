@@ -12,6 +12,10 @@ const categoryRoutes = require("./routes/categoryRouter");
 const productRoutes = require("./routes/productRoutes");
 const productModelRoutes = require("./routes/productModelRoutes");
 const productVariationRoutes = require("./routes/productVariationRoutes");
+const stockRoutes = require("./routes/stockRoutes");
+const purchaseRoutes = require("./routes/purchaseRoutes");
+const dashboardRoutes = require("./routes/dashboardRoutes");
+const salesRoutes = require("./routes/salesRoutes");
 
 
 //Middleware
@@ -30,6 +34,11 @@ app.use("/api/categories", categoryRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/product-models", productModelRoutes);
 app.use("/api/product-variations", productVariationRoutes);
+app.use("/api/stocks", stockRoutes);
+app.use("/api/purchases", purchaseRoutes);
+app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/purchase", salesRoutes);
+app.use("/api/sales", salesRoutes);
 
 
 module.exports = app;

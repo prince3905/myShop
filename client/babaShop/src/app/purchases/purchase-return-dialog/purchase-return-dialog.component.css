@@ -1,0 +1,61 @@
+.top-note {
+  font-size: 13px;
+  color: #334155;
+  margin-bottom: 8px;
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.row-item {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 8px;
+  background: #f8fafc;
+}
+
+.line-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+.line-head .sku {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.line-head .model {
+  color: #334155;
+}
+
+.line-head .qty {
+  color: #64748b;
+}
+
+.line-fields {
+  display: grid;
+  grid-template-columns: 120px 170px 1fr;
+  gap: 8px;
+}
+
+.wide {
+  min-width: 0;
+}
+
+.full-width {
+  width: 100%;
+}
+
+@media (max-width: 991px) {
+  .line-fields {
+    grid-template-columns: 1fr;
+  }
+}
+

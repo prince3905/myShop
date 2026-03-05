@@ -1,18 +1,26 @@
 const express = require("express");
-
-const authController =require('../controllers/authController')
-const stockController =require('../controllers/stockController')
-
-
-
+const stockController = require("../controllers/stockController");
+const { protect, attachShop, authorizeRoles } = require("../middleware/authMiddleware");
 
 const router = express.Router();
-module.exports = authController.protect
 
+router.use(protect);
+router.use(attachShop);
 
-router.get('/', stockController.getStockReport);
-// router.get('/:itemId', stockController.getStockQuantity);
-
-
+router.get(
+  "/",
+  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"),
+  stockController.getStockReport,
+);
+router.get(
+  "/transactions",
+  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"),
+  stockController.getTransactions,
+);
+router.post(
+  "/adjust",
+  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER"),
+  stockController.manualAdjust,
+);
 
 module.exports = router;

@@ -1,0 +1,516 @@
+<div class="main-content">
+  <div class="container-fluid">
+    <div class="card filter-card">
+      <div class="card-header card-header-danger">
+        <h4 class="card-title">Purchase Console</h4>
+        <p class="card-category">Draft create, confirm automation, stock and ledger sync</p>
+      </div>
+
+      <div class="card-body">
+        <div class="top-bar">
+          <div class="context-chip">
+            Role: {{ authService.getUserRole() || '-' }}
+          </div>
+          <div class="context-chip">
+            Scope: {{ authService.getShopId() ? 'Shop Wise' : 'Global' }}
+          </div>
+          <button mat-stroked-button color="primary" type="button" (click)="addItemRow()">+ Add Item</button>
+          <button mat-stroked-button color="warn" type="button" (click)="resetForm()">Reset Form</button>
+        </div>
+
+        <div class="summary-grid" *ngIf="!loading">
+          <div class="summary-card">
+            <div class="label">Total Purchases</div>
+            <div class="value">{{ totalPurchases }}</div>
+          </div>
+          <div class="summary-card">
+            <div class="label">Draft</div>
+            <div class="value">{{ draftCount }}</div>
+          </div>
+          <div class="summary-card">
+            <div class="label">Confirmed</div>
+            <div class="value">{{ confirmedCount }}</div>
+          </div>
+          <div class="summary-card valuation">
+            <div class="label">Current Draft Total</div>
+            <div class="value">₹ {{ getGrandTotalPreview() | number:'1.2-2' }}</div>
+          </div>
+        </div>
+
+        <form [formGroup]="purchaseForm" (ngSubmit)="submitDraft()">
+          <div class="edit-banner" *ngIf="editingPurchaseId">
+            <span>Editing Draft: {{ editingPurchaseId }}</span>
+            <button mat-button type="button" color="warn" (click)="resetForm()">Discard Edit</button>
+          </div>
+
+          <div class="section-card">
+            <h5 class="section-title">Purchase Header</h5>
+            <div class="row">
+              <div class="col-md-3">
+                <mat-form-field class="w-100" appearance="outline">
+                  <mat-label>Distributor</mat-label>
+                  <mat-select formControlName="distributor" required>
+                    <mat-option *ngFor="let d of distributors" [value]="d._id">
+                      {{ d.name }} ({{ d.phone }})
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+              <div class="col-md-2">
+                <mat-form-field class="w-100" appearance="outline">
+                  <mat-label>Invoice No</mat-label>
+                  <input matInput formControlName="invoiceNo" />
+                </mat-form-field>
+              </div>
+              <div class="col-md-2">
+                <mat-form-field class="w-100" appearance="outline">
+                  <mat-label>Purchase Date</mat-label>
+                  <input matInput [matDatepicker]="picker" formControlName="purchaseDate" />
+                  <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+                  <mat-datepicker #picker></mat-datepicker>
+                </mat-form-field>
+              </div>
+              <div class="col-md-2">
+                <mat-form-field class="w-100" appearance="outline">
+                  <mat-label>Payment Mode</mat-label>
+                  <mat-select formControlName="paymentMethod">
+                    <mat-option *ngFor="let m of paymentMethods" [value]="m">{{ m }}</mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+              <div class="col-md-1">
+                <mat-form-field class="w-100" appearance="outline">
+                  <mat-label>Paid</mat-label>
+                  <input matInput type="number" formControlName="paidAmount" />
+                </mat-form-field>
+              </div>
+              <div class="col-md-1">
+                <mat-form-field class="w-100" appearance="outline">
+                  <mat-label>Bill Disc.</mat-label>
+                  <input matInput type="number" formControlName="discountAmount" />
+                </mat-form-field>
+              </div>
+              <div class="col-md-1 d-flex align-items-center">
+                <button mat-raised-button type="button" color="primary" (click)="addItemRow()">+ Item</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="section-card" formArrayName="items">
+            <h5 class="section-title">Line Items</h5>
+            <div class="item-row" *ngFor="let row of itemsFormArray.controls; let i = index" [formGroupName]="i">
+              <div class="item-flow-hint">
+                <span class="step-chip">Product</span>
+                <span class="step-arrow">-></span>
+                <span class="step-chip">Model</span>
+                <span class="step-arrow">-></span>
+                <span class="step-chip">SKU</span>
+                <span class="step-arrow">-></span>
+                <span class="step-chip">Qty/Pricing</span>
+              </div>
+
+              <div class="row">
+                <div class="col-md-2">
+                  <mat-form-field class="w-100" appearance="outline">
+                    <mat-label>Product</mat-label>
+                    <mat-select formControlName="product" (selectionChange)="onProductSelected(i)">
+                      <mat-option *ngFor="let p of products" [value]="p._id">{{ p.name }}</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+                <div class="col-md-2">
+                  <mat-form-field class="w-100" appearance="outline">
+                    <mat-label>Model</mat-label>
+                    <mat-select formControlName="model" [disabled]="!isProductSelected(i)" (selectionChange)="onModelSelected(i)">
+                      <mat-option *ngFor="let m of rowModelsByIndex[i] || []" [value]="m._id">{{ m.name }}</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+                <div class="col-md-2">
+                  <mat-form-field class="w-100" appearance="outline">
+                    <mat-label>SKU</mat-label>
+                    <mat-select formControlName="variation" [disabled]="!isModelSelected(i)" (selectionChange)="onVariationSelected(i, $event.value)">
+                      <mat-option *ngFor="let v of rowVariationsByIndex[i] || []" [value]="v._id">
+                        {{ v.sku }} - {{ v.attributes?.storage || '-' }}/{{ v.attributes?.color || '-' }}
+                      </mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+                <div class="col-md-1">
+                  <mat-form-field class="w-100" appearance="outline">
+                    <mat-label>Qty</mat-label>
+                    <input matInput type="number" formControlName="quantity" />
+                  </mat-form-field>
+                </div>
+                <div class="col-md-1">
+                  <mat-form-field class="w-100" appearance="outline">
+                    <mat-label>Free</mat-label>
+                    <input matInput type="number" formControlName="freeQuantity" />
+                  </mat-form-field>
+                </div>
+                <div class="col-md-1">
+                  <mat-form-field class="w-100" appearance="outline">
+                    <mat-label>Tax %</mat-label>
+                    <input matInput type="number" formControlName="taxPercent" />
+                  </mat-form-field>
+                </div>
+                <div class="col-md-1">
+                  <mat-form-field class="w-100" appearance="outline">
+                    <mat-label>Discount</mat-label>
+                    <input matInput type="number" formControlName="discountAmount" />
+                  </mat-form-field>
+                </div>
+                <div class="col-md-1">
+                  <mat-form-field class="w-100" appearance="outline">
+                    <mat-label>Cost</mat-label>
+                    <input matInput type="number" formControlName="purchasePrice" />
+                  </mat-form-field>
+                </div>
+                <div class="col-md-1">
+                  <mat-form-field class="w-100" appearance="outline">
+                    <mat-label>Total</mat-label>
+                    <input matInput [value]="getRowTotal(i) | number:'1.2-2'" readonly />
+                  </mat-form-field>
+                </div>
+                <div class="col-md-1 d-flex align-items-center">
+                  <button mat-icon-button color="warn" type="button" (click)="removeItemRow(i)">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="section-card footer-section">
+            <div class="row">
+              <div class="col-md-8">
+                <mat-form-field class="w-100" appearance="outline">
+                  <mat-label>Note</mat-label>
+                  <textarea matInput rows="2" formControlName="note"></textarea>
+                </mat-form-field>
+              </div>
+              <div class="col-md-4 totals-box">
+                <div class="grand-total">Grand Total: ₹ {{ getGrandTotalPreview() | number:'1.2-2' }}</div>
+                <button
+                  *hasRole="['SUPER_ADMIN','ADMIN','MANAGER']"
+                  mat-raised-button
+                  color="primary"
+                  [disabled]="saving || !canMutatePurchase"
+                >
+                  {{ saving ? 'Saving...' : (editingPurchaseId ? 'Update Draft' : 'Create Draft') }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="card mt-3">
+      <div class="card-header card-header-info">
+        <h4 class="card-title">Recent Purchases</h4>
+      </div>
+      <div class="card-body">
+        <div class="purchase-filter-row">
+          <mat-form-field appearance="outline" class="filter-field search-field">
+            <mat-label>Search Invoice</mat-label>
+            <input
+              matInput
+              [(ngModel)]="purchaseFilters.search"
+              [ngModelOptions]="{ standalone: true }"
+              (keyup.enter)="applyPurchaseFilters()"
+              placeholder="INV-1001"
+            />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Status</mat-label>
+            <mat-select [(ngModel)]="purchaseFilters.status" [ngModelOptions]="{ standalone: true }">
+              <mat-option [value]="null">All</mat-option>
+              <mat-option value="DRAFT">DRAFT</mat-option>
+              <mat-option value="CONFIRMED">CONFIRMED</mat-option>
+              <mat-option value="CANCELLED">CANCELLED</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Return Status</mat-label>
+            <mat-select [(ngModel)]="purchaseFilters.returnStatus" [ngModelOptions]="{ standalone: true }">
+              <mat-option [value]="null">All</mat-option>
+              <mat-option value="NONE">NONE</mat-option>
+              <mat-option value="PARTIAL">PARTIAL</mat-option>
+              <mat-option value="FULL">FULL</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Distributor</mat-label>
+            <mat-select [(ngModel)]="purchaseFilters.distributor" [ngModelOptions]="{ standalone: true }">
+              <mat-option [value]="null">All</mat-option>
+              <mat-option *ngFor="let d of distributors" [value]="d._id">
+                {{ d.name }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="filter-field date-field">
+            <mat-label>From</mat-label>
+            <input
+              matInput
+              [matDatepicker]="fromPicker"
+              [(ngModel)]="purchaseFilters.dateFrom"
+              [ngModelOptions]="{ standalone: true }"
+            />
+            <mat-datepicker-toggle matSuffix [for]="fromPicker"></mat-datepicker-toggle>
+            <mat-datepicker #fromPicker></mat-datepicker>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="filter-field date-field">
+            <mat-label>To</mat-label>
+            <input
+              matInput
+              [matDatepicker]="toPicker"
+              [(ngModel)]="purchaseFilters.dateTo"
+              [ngModelOptions]="{ standalone: true }"
+            />
+            <mat-datepicker-toggle matSuffix [for]="toPicker"></mat-datepicker-toggle>
+            <mat-datepicker #toPicker></mat-datepicker>
+          </mat-form-field>
+
+          <button mat-raised-button color="primary" (click)="applyPurchaseFilters()">Apply</button>
+          <button mat-stroked-button color="warn" (click)="clearPurchaseFilters()">Reset</button>
+        </div>
+        <div class="purchase-filter-row sort-row">
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Sort By</mat-label>
+            <mat-select [(ngModel)]="sortBy" [ngModelOptions]="{ standalone: true }" (selectionChange)="applySort()">
+              <mat-option value="createdAt">Created</mat-option>
+              <mat-option value="purchaseDate">Purchase Date</mat-option>
+              <mat-option value="grandTotal">Grand Total</mat-option>
+              <mat-option value="status">Status</mat-option>
+              <mat-option value="invoiceNo">Invoice</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Order</mat-label>
+            <mat-select
+              [(ngModel)]="sortOrder"
+              [ngModelOptions]="{ standalone: true }"
+              (selectionChange)="applySort()"
+            >
+              <mat-option value="desc">Descending</mat-option>
+              <mat-option value="asc">Ascending</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="filter-chips">
+          <span class="chip" *ngIf="purchaseFilters.search">
+            Search: {{ purchaseFilters.search }}
+            <button mat-icon-button type="button" (click)="removeFilterChip('search')">
+              <mat-icon>close</mat-icon>
+            </button>
+          </span>
+          <span class="chip" *ngIf="purchaseFilters.status">
+            Status: {{ purchaseFilters.status }}
+            <button mat-icon-button type="button" (click)="removeFilterChip('status')">
+              <mat-icon>close</mat-icon>
+            </button>
+          </span>
+          <span class="chip" *ngIf="purchaseFilters.returnStatus">
+            Return: {{ purchaseFilters.returnStatus }}
+            <button mat-icon-button type="button" (click)="removeFilterChip('returnStatus')">
+              <mat-icon>close</mat-icon>
+            </button>
+          </span>
+          <span class="chip" *ngIf="purchaseFilters.distributor">
+            Distributor: {{ getDistributorNameById(purchaseFilters.distributor) }}
+            <button mat-icon-button type="button" (click)="removeFilterChip('distributor')">
+              <mat-icon>close</mat-icon>
+            </button>
+          </span>
+          <span class="chip" *ngIf="purchaseFilters.dateFrom">
+            From: {{ purchaseFilters.dateFrom | date:'dd MMM yyyy' }}
+            <button mat-icon-button type="button" (click)="removeFilterChip('dateFrom')">
+              <mat-icon>close</mat-icon>
+            </button>
+          </span>
+          <span class="chip" *ngIf="purchaseFilters.dateTo">
+            To: {{ purchaseFilters.dateTo | date:'dd MMM yyyy' }}
+            <button mat-icon-button type="button" (click)="removeFilterChip('dateTo')">
+              <mat-icon>close</mat-icon>
+            </button>
+          </span>
+        </div>
+
+        <div class="loading-wrap" *ngIf="loading">
+          <mat-spinner color="primary" diameter="36"></mat-spinner>
+        </div>
+        <div class="empty-state" *ngIf="!loading && purchases.length === 0">No purchases found.</div>
+
+        <div class="table-responsive" *ngIf="!loading && purchases.length > 0">
+          <table class="table purchase-table">
+            <thead>
+              <tr>
+                <th class="sortable" (click)="toggleSort('invoiceNo')">
+                  <span>Invoice</span>
+                  <mat-icon class="sort-icon" [ngClass]="{ active: isSortActive('invoiceNo') }">
+                    {{ getSortIcon('invoiceNo') }}
+                  </mat-icon>
+                </th>
+                <th>Distributor</th>
+                <th class="sortable" (click)="toggleSort('status')">
+                  <span>Status</span>
+                  <mat-icon class="sort-icon" [ngClass]="{ active: isSortActive('status') }">
+                    {{ getSortIcon('status') }}
+                  </mat-icon>
+                </th>
+                <th>Payment</th>
+                <th>Return</th>
+                <th class="sortable" (click)="toggleSort('grandTotal')">
+                  <span>Total</span>
+                  <mat-icon class="sort-icon" [ngClass]="{ active: isSortActive('grandTotal') }">
+                    {{ getSortIcon('grandTotal') }}
+                  </mat-icon>
+                </th>
+                <th class="sortable" (click)="toggleSort('purchaseDate')">
+                  <span>Date</span>
+                  <mat-icon class="sort-icon" [ngClass]="{ active: isSortActive('purchaseDate') }">
+                    {{ getSortIcon('purchaseDate') }}
+                  </mat-icon>
+                </th>
+                <th>Action</th>
+                <th>Details</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let p of purchases">
+                <td>{{ p.invoiceNo || p._id }}</td>
+                <td>{{ p.distributor?.name || '-' }}</td>
+                <td><span class="status-pill" [ngClass]="p.status === 'CONFIRMED' ? 'ok' : 'draft'">{{ p.status }}</span></td>
+                <td>{{ getPaymentModeLabel(p) }}</td>
+                <td>
+                  <span class="return-badge" [ngClass]="'ret-' + (p.returnStatus || 'NONE')">
+                    {{ getReturnStatusLabel(p) }}
+                  </span>
+                  <small class="return-meta" *ngIf="(p.returnedQty || 0) > 0">{{ p.returnedQty || 0 }} qty</small>
+                </td>
+                <td>₹ {{ p.grandTotal | number:'1.2-2' }}</td>
+                <td>{{ p.purchaseDate || p.createdAt | date:'mediumDate' }}</td>
+                <td class="action-col">
+                  <button mat-stroked-button color="accent" (click)="openDetails(p._id)">View</button>
+                  <ng-container *hasRole="['SUPER_ADMIN','ADMIN','MANAGER']">
+                    <button
+                      mat-stroked-button
+                      color="primary"
+                      *ngIf="p.status !== 'CONFIRMED'"
+                      [disabled]="!canMutatePurchase || confirmingIds[p._id]"
+                      (click)="confirmPurchase(p._id)"
+                    >
+                      {{ confirmingIds[p._id] ? 'Confirming...' : 'Confirm' }}
+                    </button>
+                    <button mat-stroked-button color="primary" *ngIf="p.status === 'DRAFT'" (click)="editDraft(p)">Edit</button>
+                    <button
+                      mat-stroked-button
+                      color="warn"
+                      *ngIf="p.status === 'DRAFT'"
+                      [disabled]="cancelingIds[p._id]"
+                      (click)="cancelDraft(p._id)"
+                    >
+                      {{ cancelingIds[p._id] ? 'Cancelling...' : 'Cancel' }}
+                    </button>
+                    <button
+                      mat-stroked-button
+                      color="warn"
+                      *ngIf="p.status === 'CONFIRMED'"
+                      [disabled]="(p.returnStatus || 'NONE') === 'FULL'"
+                      (click)="openReturnDialog(p._id)"
+                    >
+                      Return
+                    </button>
+                  </ng-container>
+                </td>
+                <td>{{ p.items?.length || 0 }} items</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <mat-paginator
+          [length]="totalPurchases"
+          [pageIndex]="page - 1"
+          [pageSize]="pageSize"
+          [pageSizeOptions]="pageSizeOptions"
+          (page)="onPageChange($event)"
+        >
+        </mat-paginator>
+      </div>
+    </div>
+
+    <div class="purchase-drawer" *ngIf="drawerOpen && selectedPurchase">
+      <div class="drawer-head">
+        <h5>Purchase Detail</h5>
+        <button mat-icon-button (click)="closeDrawer()"><mat-icon>close</mat-icon></button>
+      </div>
+      <div class="drawer-meta-grid">
+        <div class="meta-card"><span class="meta-label">Invoice</span><span class="meta-value">{{ selectedPurchase.invoiceNo || selectedPurchase._id }}</span></div>
+        <div class="meta-card"><span class="meta-label">Status</span><span class="meta-value">{{ selectedPurchase.status }}</span></div>
+        <div class="meta-card"><span class="meta-label">Distributor</span><span class="meta-value">{{ selectedPurchase.distributor?.name || '-' }}</span></div>
+        <div class="meta-card"><span class="meta-label">Grand Total</span><span class="meta-value">₹ {{ selectedPurchase.grandTotal | number:'1.2-2' }}</span></div>
+        <div class="meta-card"><span class="meta-label">Subtotal</span><span class="meta-value">₹ {{ selectedPurchase.subtotal | number:'1.2-2' }}</span></div>
+        <div class="meta-card"><span class="meta-label">Tax Amount</span><span class="meta-value">₹ {{ selectedPurchase.taxAmount | number:'1.2-2' }}</span></div>
+        <div class="meta-card"><span class="meta-label">Bill Discount</span><span class="meta-value">₹ {{ selectedPurchase.discountAmount | number:'1.2-2' }}</span></div>
+        <div class="meta-card"><span class="meta-label">Payment Mode</span><span class="meta-value">{{ getPaymentModeLabel(selectedPurchase) }}</span></div>
+        <div class="meta-card"><span class="meta-label">Paid</span><span class="meta-value">₹ {{ selectedPurchase.paidAmount | number:'1.2-2' }}</span></div>
+        <div class="meta-card"><span class="meta-label">Due</span><span class="meta-value">₹ {{ selectedPurchase.dueAmount | number:'1.2-2' }}</span></div>
+      </div>
+
+      <div class="table-responsive drawer-table-wrap">
+        <table class="table table-sm purchase-items-table">
+          <thead>
+            <tr>
+              <th>Product</th><th>Model</th><th>SKU</th><th>Variant</th><th>Qty</th><th>Free</th><th>Price</th><th>Tax %</th><th>Discount</th><th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let it of selectedPurchase.items">
+              <td>{{ it.product?.name || '-' }}</td>
+              <td>{{ it.model?.name || '-' }}</td>
+              <td>{{ it.sku || it.variation?.sku || '-' }}</td>
+              <td>{{ it.variation?.attributes?.storage || '-' }} / {{ it.variation?.attributes?.color || '-' }} / {{ it.variation?.attributes?.size || '-' }}</td>
+              <td>{{ it.quantity }}</td>
+              <td>{{ it.freeQuantity || 0 }}</td>
+              <td>₹ {{ it.purchasePrice | number:'1.2-2' }}</td>
+              <td>{{ it.taxPercent || 0 }}</td>
+              <td>₹ {{ (it.discountAmount || 0) | number:'1.2-2' }}</td>
+              <td>₹ {{ it.totalAmount | number:'1.2-2' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="return-section" *ngIf="purchaseReturns?.length">
+        <div class="return-head">
+          <h6>Purchase Returns</h6>
+          <div class="return-summary">
+            Qty: {{ purchaseReturnSummary?.totalReturnedQty || 0 }} |
+            Amount: ₹ {{ (purchaseReturnSummary?.totalReturnedAmount || 0) | number:'1.2-2' }}
+          </div>
+        </div>
+
+        <div class="table-responsive drawer-table-wrap">
+          <table class="table table-sm purchase-items-table">
+            <thead><tr><th>Date</th><th>Items</th><th>Qty</th><th>Amount</th></tr></thead>
+            <tbody>
+              <tr *ngFor="let r of purchaseReturns">
+                <td>{{ r.createdAt | date:'dd MMM yyyy, hh:mm a' }}</td>
+                <td>{{ r.items?.length || 0 }}</td>
+                <td>{{ r.totalQuantity || 0 }}</td>
+                <td>₹ {{ r.totalAmount | number:'1.2-2' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

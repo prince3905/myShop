@@ -1,70 +1,196 @@
-const Item = require("../models/item");
+const mongoose = require("mongoose");
+const Stock = require("../models/Stock");
+const ProductVariation = require("../models/ProductVariation");
+const Product = require("../models/Product");
+const ProductModel = require("../models/ProductModel");
+const StockTransaction = require("../models/StockTransaction");
+const { applyStockTransaction } = require("../utils/stock.service");
+
+const isSuperAdminGlobal = (req) =>
+  req.user?.role === "SUPER_ADMIN" && !req.shopId;
 
 exports.getStockReport = async (req, res) => {
   try {
-    const lowStockThreshold = 5; // Define low stock threshold
-    const { name, category, brand ,page, perPage} = req.query;
-    const query = {};
+    const {
+      page = 1,
+      limit = 20,
+      search = "",
+      lowStock = "false",
+      sortBy = "updatedAt",
+      order = "desc",
+    } = req.query;
 
-    // console.log(req.query);
+    const safePage = Math.max(1, Number(page || 1));
+    const safeLimit = Math.min(100, Math.max(1, Number(limit || 20)));
+    const skip = (safePage - 1) * safeLimit;
+    const sortDir = order === "asc" ? 1 : -1;
 
-    if (name && name !== "null") {
-      query.name = { $regex: name, $options: "i" };
+    const query = isSuperAdminGlobal(req) ? {} : { shop: req.shopId };
+    if (search) {
+      const regex = new RegExp(search, "i");
+      const [productMatches, modelMatches] = await Promise.all([
+        Product.find({ name: regex }).select("_id").lean(),
+        ProductModel.find({ name: regex }).select("_id").lean(),
+      ]);
+
+      const productIds = productMatches.map((p) => p._id);
+      const modelIds = modelMatches.map((m) => m._id);
+
+      query.$or = [{ sku: regex }];
+      if (productIds.length) query.$or.push({ product: { $in: productIds } });
+      if (modelIds.length) query.$or.push({ model: { $in: modelIds } });
     }
-    if (category && category !== "null") {
-      query.category = category;
-    }
-    if (brand && brand !== "null") {
-      query.brand = brand;
+
+    if (String(lowStock) === "true") {
+      query.$expr = { $lte: ["$quantity", "$reorderLevel"] };
     }
 
-    const itemsPerPage = parseInt(perPage) || 10; 
-    const currentPage = parseInt(page) || 1; 
-    const totalItems = await Item.countDocuments(query);
-    const skipItems = (currentPage - 1) * itemsPerPage;
+    const [rows, total] = await Promise.all([
+      Stock.find(query)
+        .sort({ [sortBy]: sortDir })
+        .skip(skip)
+        .limit(safeLimit)
+        .populate("shop", "name shopCode")
+        .populate("product", "name")
+        .populate("model", "name")
+        .populate("variation", "sku attributes"),
+      Stock.countDocuments(query),
+    ]);
 
-    const items = await Item.find(query)
-    .skip(skipItems)
-    .limit(itemsPerPage);
-    const stockReport = [];
+    const summaryRows = await Stock.aggregate([
+      { $match: query },
+      {
+        $group: {
+          _id: null,
+          totalQuantity: { $sum: "$quantity" },
+          totalReserved: { $sum: "$reservedQuantity" },
+          totalDamaged: { $sum: "$damagedQuantity" },
+          totalCostValue: { $sum: { $multiply: ["$quantity", "$lastPurchasePrice"] } },
+          lowStockCount: {
+            $sum: {
+              $cond: [{ $lte: ["$quantity", "$reorderLevel"] }, 1, 0],
+            },
+          },
+        },
+      },
+    ]);
+    const summary = summaryRows[0] || {};
 
-    for (const item of items) {
-      const populatedItem = await Item.findById(item._id)
-        .populate("brand")
-        .populate("category")
-        
-      // const purchasedQuantity = await Purchase.aggregate([
-      //   { $unwind: "$items" },
-      //   { $match: { "items.itemName": populatedItem.name } },
-      //   { $group: { _id: null, totalQuantity: { $sum: "$items.quantity" } } },
-      // ]);
+    return res.status(200).json({
+      success: true,
+      page: safePage,
+      limit: safeLimit,
+      total,
+      stockReport: rows,
+      summary: {
+        totalQuantity: Number(summary.totalQuantity || 0),
+        totalReserved: Number(summary.totalReserved || 0),
+        totalDamaged: Number(summary.totalDamaged || 0),
+        totalCostValue: Number(summary.totalCostValue || 0),
+        lowStockCount: Number(summary.lowStockCount || 0),
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Error retrieving stock report",
+      error: error.message,
+    });
+  }
+};
 
-      // const remainingQuantity =
-      //   populatedItem.quantity -
-      //   (purchasedQuantity.length > 0 ? purchasedQuantity[0].totalQuantity : 0);
+exports.getTransactions = async (req, res) => {
+  try {
+    const { page = 1, limit = 20, variation, type, referenceType, search = "" } = req.query;
+    const safePage = Math.max(1, Number(page || 1));
+    const safeLimit = Math.min(100, Math.max(1, Number(limit || 20)));
+    const skip = (safePage - 1) * safeLimit;
 
-      // const isLowStock = remainingQuantity <= lowStockThreshold;
+    const query = isSuperAdminGlobal(req) ? {} : { shop: req.shopId };
+    if (variation) query.variation = variation;
+    if (type) query.type = type;
+    if (referenceType) query.referenceType = referenceType;
+    if (search) query.sku = { $regex: search, $options: "i" };
 
-      // const stockValue = remainingQuantity * populatedItem.p_price; // Calculate stock value
+    const [items, total] = await Promise.all([
+      StockTransaction.find(query)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(safeLimit)
+        .populate("shop", "name shopCode")
+        .populate("product", "name")
+        .populate("model", "name")
+        .populate("variation", "sku attributes")
+        .populate("createdBy", "email role"),
+      StockTransaction.countDocuments(query),
+    ]);
 
-      stockReport.push({
-        itemName: populatedItem.name,
-        quantity: populatedItem.quantity,
-        remainingQuantity,
-        p_price: populatedItem.p_price,
-        s_price: populatedItem.s_price,
-        brand: populatedItem.brand,
-        category: populatedItem.category,
-        size: populatedItem.size,
-        isLowStock,
-        stockValue, // Add stock value information
+    return res.status(200).json({
+      success: true,
+      page: safePage,
+      limit: safeLimit,
+      total,
+      data: items,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Error retrieving stock transactions",
+      error: error.message,
+    });
+  }
+};
+
+exports.manualAdjust = async (req, res) => {
+  try {
+    if (!req.shopId) {
+      return res.status(400).json({ success: false, message: "Please select a shop first" });
+    }
+
+    const { variation, type = "ADJUSTMENT", quantity, note = "" } = req.body;
+    if (!variation || quantity === undefined) {
+      return res.status(400).json({
+        success: false,
+        message: "variation and quantity are required",
       });
     }
-    res.status(200).json({stockReport,totalItems: totalItems});
-    console.log("Count Items:", totalItems);
-    console.log("Items:", items);
+
+    if (!mongoose.Types.ObjectId.isValid(variation)) {
+      return res.status(400).json({ success: false, message: "Invalid variation id" });
+    }
+
+    const variationDoc = await ProductVariation.findOne({
+      _id: variation,
+      shop: req.shopId,
+    });
+
+    if (!variationDoc) {
+      return res.status(404).json({ success: false, message: "Variation not found for selected shop" });
+    }
+
+    const { stock, tx } = await applyStockTransaction({
+      shop: req.shopId,
+      product: variationDoc.product,
+      model: variationDoc.model,
+      variation: variationDoc._id,
+      sku: variationDoc.sku,
+      type,
+      quantity: Number(quantity),
+      referenceType: "MANUAL",
+      note,
+      createdBy: req.user?._id,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Stock adjusted successfully",
+      data: { stock, transaction: tx },
+    });
   } catch (error) {
-    console.error("Error retrieving stock report:", error);
-    res.status(500).json({ error: "Error retrieving stock report" });
+    return res.status(500).json({
+      success: false,
+      message: "Error adjusting stock",
+      error: error.message,
+    });
   }
 };

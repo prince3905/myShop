@@ -21,9 +21,9 @@
       class="full-width">
       <mat-label>Payment Mode</mat-label>
       <mat-select formControlName="paymentMode">
-        <mat-option value="cash">Cash</mat-option>
-        <mat-option value="online">Online</mat-option>
-        <mat-option value="bank">Bank</mat-option>
+        <mat-option *ngFor="let m of paymentModes" [value]="m">
+          {{ m }}
+        </mat-option>
       </mat-select>
       <mat-error *ngIf="form.get('paymentMode')?.hasError('required')">
         Payment mode required

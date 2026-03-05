@@ -1,19 +1,20 @@
 <div class="main-content">
-    <div *ngIf="isSuperAdmin" class="row mb-3">
-        <div class="col-md-4">
-            <label><b>Select Shop</b></label>
-            <select class="form-control" (change)="onShopChange($event)" [value]="selectedShop">
-
-                <option value="">-- Select Shop --</option>
-
-                <option *ngFor="let shop of shops" [value]="shop._id">
-                    {{ shop.name }}
-                </option>
-
-            </select>
-        </div>
-    </div>
     <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="dashboard-header-card">
+                    <div>
+                        <h3 class="dashboard-header-title">Dashboard Overview</h3>
+                        <p class="dashboard-header-subtitle">Live business snapshot by current shop context</p>
+                    </div>
+                    <div class="dashboard-header-meta">
+                        <span class="header-pill">Products: {{ inventorySummary.products }}</span>
+                        <span class="header-pill">Categories: {{ inventorySummary.categories }}</span>
+                        <span class="header-pill">Brands: {{ inventorySummary.brands }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div class="row">
             <div class="col-lg-3 col-md-6 col-sm-6">
                 <div class="card card-stats">
@@ -21,12 +22,12 @@
                         <div class="card-icon">
                             <i class="material-icons">store</i>
                         </div>
-                        <p class="card-category">Total Revenue</p>
-                        <h3 class="card-title">Rs 99,245</h3>
+                        <p class="card-category">Today Sales</p>
+                        <h3 class="card-title">₹ {{ kpis?.todaySales | number:'1.2-2' }}</h3>
                     </div>
                     <div class="card-footer">
                         <div class="stats">
-                            <i class="material-icons">date_range</i> Last 24 Hours
+                            <i class="material-icons">date_range</i> {{ loadingKpis ? 'Loading...' : 'Last 24 Hours' }}
                         </div>
                     </div>
                 </div>
@@ -37,15 +38,13 @@
                         <div class="card-icon">
                             <i class="material-icons">content_copy</i>
                         </div>
-                        <p class="card-category">Intraday Sell</p>
-                        <h3 class="card-title">100000
-                            <small>Rs</small>
-                        </h3>
+                        <p class="card-category">Today Orders</p>
+                        <h3 class="card-title">{{ kpis?.todayOrders || 0 }}</h3>
                     </div>
                     <div class="card-footer">
                         <div class="stats">
-                            <i class="material-icons text-success">warning</i>
-                            <a href="javascript:void(0)">Get More Info...</a>
+                            <i class="material-icons text-success">shopping_cart</i>
+                            Active customers: {{ kpis?.totalCustomers || 0 }}
                         </div>
                     </div>
                 </div>
@@ -56,12 +55,12 @@
                         <div class="card-icon">
                             <i class="material-icons">info_outline</i>
                         </div>
-                        <p class="card-category">Fixed Issues</p>
-                        <h3 class="card-title">75</h3>
+                        <p class="card-category">Today Purchase</p>
+                        <h3 class="card-title">₹ {{ kpis?.todayPurchase | number:'1.2-2' }}</h3>
                     </div>
                     <div class="card-footer">
                         <div class="stats">
-                            <i class="material-icons">local_offer</i> Tracked from Github
+                            <i class="material-icons">local_offer</i> Distributor due: ₹ {{ kpis?.distributorDue | number:'1.2-2' }}
                         </div>
                     </div>
                 </div>
@@ -72,13 +71,59 @@
                         <div class="card-icon">
                             <i class="fa fa-twitter"></i>
                         </div>
-                        <p class="card-category">Followers</p>
-                        <h3 class="card-title">+245</h3>
+                        <p class="card-category">Low Stock Alerts</p>
+                        <h3 class="card-title">{{ kpis?.lowStockCount || 0 }}</h3>
                     </div>
                     <div class="card-footer">
                         <div class="stats">
-                            <i class="material-icons">update</i> Just Updated
+                            <i class="material-icons">update</i> Active shops: {{ kpis?.activeShops || 0 }}
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <div class="analytics-strip">
+                    <div class="analytics-card">
+                        <div class="title">Purchase Today</div>
+                        <div class="amount">₹ {{ purchaseAnalytics?.today?.totalAmount | number:'1.2-2' }}</div>
+                        <div class="meta">
+                            Paid: ₹ {{ purchaseAnalytics?.today?.totalPaid | number:'1.2-2' }} |
+                            Due: ₹ {{ purchaseAnalytics?.today?.totalDue | number:'1.2-2' }} |
+                            Count: {{ purchaseAnalytics?.today?.count || 0 }}
+                        </div>
+                    </div>
+                    <div class="analytics-card">
+                        <div class="title">Purchase Weekly</div>
+                        <div class="amount">₹ {{ purchaseAnalytics?.weekly?.totalAmount | number:'1.2-2' }}</div>
+                        <div class="meta">
+                            Paid: ₹ {{ purchaseAnalytics?.weekly?.totalPaid | number:'1.2-2' }} |
+                            Due: ₹ {{ purchaseAnalytics?.weekly?.totalDue | number:'1.2-2' }} |
+                            Count: {{ purchaseAnalytics?.weekly?.count || 0 }}
+                        </div>
+                    </div>
+                    <div class="analytics-card">
+                        <div class="title">Purchase Monthly</div>
+                        <div class="amount">₹ {{ purchaseAnalytics?.monthly?.totalAmount | number:'1.2-2' }}</div>
+                        <div class="meta">
+                            Paid: ₹ {{ purchaseAnalytics?.monthly?.totalPaid | number:'1.2-2' }} |
+                            Due: ₹ {{ purchaseAnalytics?.monthly?.totalDue | number:'1.2-2' }} |
+                            Count: {{ purchaseAnalytics?.monthly?.count || 0 }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card card-chart">
+                    <div class="card-header card-header-info">
+                        <div class="ct-chart" id="purchaseAnalyticsChart"></div>
+                    </div>
+                    <div class="card-body">
+                        <h4 class="card-title">Purchase Analytics Snapshot</h4>
+                        <p class="card-category">Today vs Weekly vs Monthly purchase value</p>
                     </div>
                 </div>
             </div>
@@ -90,11 +135,8 @@
                         <div class="ct-chart" id="dailySalesChart"></div>
                     </div>
                     <div class="card-body">
-                        <h4 class="card-title">Daily Sales</h4>
-                        <p class="card-category">
-                            <span class="text-success"><i class="fa fa-long-arrow-up"></i> 55% </span> increase in today
-                            sales.
-                        </p>
+                        <h4 class="card-title">Sales Trend ({{ trendDays }} days)</h4>
+                        <p class="card-category">Shop scoped line trend</p>
                     </div>
                     <div class="card-footer">
                         <div class="stats">
@@ -109,8 +151,8 @@
                         <div class="ct-chart" id="websiteViewsChart"></div>
                     </div>
                     <div class="card-body">
-                        <h4 class="card-title">Email Subscriptions</h4>
-                        <p class="card-category">Last Campaign Performance</p>
+                        <h4 class="card-title">Orders Trend ({{ trendDays }} days)</h4>
+                        <p class="card-category">Daily order count</p>
                     </div>
                     <div class="card-footer">
                         <div class="stats">
@@ -125,8 +167,8 @@
                         <div class="ct-chart" id="completedTasksChart"></div>
                     </div>
                     <div class="card-body">
-                        <h4 class="card-title">Completed Tasks</h4>
-                        <p class="card-category">Last Campaign Performance</p>
+                        <h4 class="card-title">Purchase Trend ({{ trendDays }} days)</h4>
+                        <p class="card-category">Confirmed purchases value</p>
                     </div>
                     <div class="card-footer">
                         <div class="stats">

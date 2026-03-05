@@ -18,6 +18,7 @@ import { MatIconModule } from "@angular/material/icon";
 import { AddUserComponent } from "app/all-users/add-user/add-user.component";
 import { UserComponent } from "app/all-users/user/user.component";
 import { ItemDetailsComponent } from "app/all-items/item-details/item-details.component";
+import { ConfirmDialogComponent } from "app/shared/components/confirm-dialog/confirm-dialog.component";
 import { MatInputModule } from "@angular/material/input";
 import { MatMenuModule } from "@angular/material/menu";
 import { MatExpansionModule } from "@angular/material/expansion";
@@ -30,6 +31,7 @@ import { MatDatepickerModule } from "@angular/material/datepicker";
 import { MatNativeDateModule } from "@angular/material/core";
 import { MatAutocompleteModule } from "@angular/material/autocomplete";
 import { StocksComponent } from "app/stocks/stocks.component";
+import { StockReorderPreviewDialogComponent } from "app/stocks/stock-reorder-preview-dialog.component";
 import { MatPaginatorModule } from "@angular/material/paginator";
 import { MatProgressSpinnerModule } from "@angular/material/progress-spinner";
 import { MatCheckboxModule } from "@angular/material/checkbox";
@@ -42,8 +44,12 @@ import { AddDistributorsComponent } from "app/all-distributors/add-distributors/
 import { ViewDistributorComponent } from "app/all-distributors/view-distributor/view-distributor.component";
 import { LedgerEntryComponent } from "app/all-distributors/ledger-entry/ledger-entry.component";
 import { AddDetailsComponent } from "app/all-items/add-details/add-details.component";
+import { LabelPrintOptionsDialogComponent } from "app/all-items/add-details/label-print-options-dialog.component";
 import { SettingsComponent } from "app/settings/settings.component";
 import { ManageShopsComponent } from "app/shops/manage-shops/manage-shops.component";
+import { PurchaseConsoleComponent } from "app/purchases/purchase-console/purchase-console.component";
+import { PurchaseReturnDialogComponent } from "app/purchases/purchase-return-dialog/purchase-return-dialog.component";
+import { HasRoleDirective } from "app/shared/directives/has-role.directive";
 
 @NgModule({
   imports: [
@@ -80,11 +86,13 @@ import { ManageShopsComponent } from "app/shops/manage-shops/manage-shops.compon
     UserComponent,
     AddUserComponent,
     ItemDetailsComponent,
+    ConfirmDialogComponent,
     AddCategoryComponent,
     AddBrandComponent,
     SalesListComponent,
     AddSalesComponent,
     StocksComponent,
+    StockReorderPreviewDialogComponent,
     OrdersComponent,
     CustomersComponent,
     AddDistributorsComponent,
@@ -92,8 +100,12 @@ import { ManageShopsComponent } from "app/shops/manage-shops/manage-shops.compon
     ViewDistributorComponent,
     LedgerEntryComponent,
     AddDetailsComponent,
+    LabelPrintOptionsDialogComponent,
     SettingsComponent,
-    ManageShopsComponent
+    ManageShopsComponent,
+    PurchaseConsoleComponent,
+    PurchaseReturnDialogComponent,
+    HasRoleDirective,
   ],
 })
 export class AdminLayoutModule {

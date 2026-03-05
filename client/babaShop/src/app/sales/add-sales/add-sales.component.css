@@ -1,25 +1,96 @@
-.mat-dialog-container {
-    margin-left: 50% !important;
+.sales-form-card {
+  margin-top: -16px;
 }
 
-.total{
-    display: flex;
-    flex-wrap: wrap;
-    align-content: stretch;
-    justify-content: space-evenly;
-    margin-left: 10%;
-    font-weight: bolder;
+.sales-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 14px;
 }
 
-.table > tbody > tr > td, .table > tfoot > tr > td {
-    padding: 2px 8px;
-    vertical-align: middle;
+.entry-panel,
+.cart-panel {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px;
+  background: #fff;
 }
 
-.mat-option {
-    background-color: rgb(3 0 0 / 80%) !important;
-    color: white !important;
-    font-size: small !important;
-    height: 38px !important;
+.section-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #334155;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-bottom: 8px;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.scan-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.suggestion-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: -2px 0 8px;
+}
+
+.suggestion-list button {
+  font-size: 12px;
+  line-height: 28px;
+  height: 30px;
+}
+
+.actions-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.cart-table thead th {
+  white-space: nowrap;
+  font-size: 12px;
+  color: #475569;
+}
+
+.cart-table tbody td {
+  font-size: 13px;
+  color: #0f172a;
+  vertical-align: middle;
+}
+
+.empty {
+  text-align: center;
+  color: #64748b;
+  padding: 16px 0;
+}
+
+.totals-card {
+  margin-top: 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f8fafc;
+  padding: 10px 12px;
+  display: grid;
+  gap: 6px;
+}
+
+.totals-card div {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+}
+
+@media (max-width: 991px) {
+  .sales-grid {
+    grid-template-columns: 1fr;
   }
-  
+}

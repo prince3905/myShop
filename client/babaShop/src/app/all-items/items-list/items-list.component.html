@@ -1,230 +1,198 @@
 <div class="main-content">
-    <div class="container-fluid">
-
-        <div class="card card-plain">
-            <div class="card-header " fxLayout="column" fxLayout.lt-sm="row" fxLayoutGap="5px">
-                <div fxLayout="row" fxLayoutAlign="start center">
-                    <mat-form-field class="dropdown">
-                        <mat-label>Filter by</mat-label>
-                        <select matNativeControl [(ngModel)]="selectedOption" (ngModelChange)="onFilterModeChange()" required>
-                            <option label="--select something --"></option>
-                            <option value="name">Name</option>
-                            <option value="category">Category</option>
-                            <option value="brand">Brand</option>
-                            <option value="date">By Date</option>
-                        </select>
-                    </mat-form-field>
-                </div>
-
-
-                <div *ngIf="selectedOption === 'name'" class="name-filter" fxLayout="row"
-                    fxLayoutAlign.lt-md="start center">
-                    <mat-form-field fxFlex="10%">
-                        <input matInput placeholder="Product Name" name="ItemName" [(ngModel)]="itemName"
-                            (ngModelChange)="onFilterInputChange()">
-                    </mat-form-field>
-
-                    <mat-form-field fxFlex="10%" fxHide.lt-md>
-                        <mat-label>Category</mat-label>
-                        <mat-select [(ngModel)]="selectedCategory" (ngModelChange)="onFilterInputChange()">
-                            <mat-option *ngFor="let category of Category" [value]="category._id">
-                                {{ category.name }}
-                            </mat-option>
-                        </mat-select>
-                    </mat-form-field>
-                    <mat-form-field fxFlex="10%" fxHide.lt-md>
-                        <mat-label>Brand</mat-label>
-                        <mat-select [(ngModel)]="selectedBrand" (ngModelChange)="onFilterInputChange()">
-                            <mat-option *ngFor="let brand of Brands" [value]="brand._id">
-                                {{ brand.name}}
-                            </mat-option>
-                        </mat-select>
-                    </mat-form-field>
-                </div>
-
-
-
-                <div *ngIf="selectedOption === 'category'" class="name-filter" fxLayout="row"
-                    fxLayoutAlign.lt-md="start center">
-                    <mat-form-field fxFlex="10%" fxHide.lt-md>
-                        <mat-label>Category</mat-label>
-                        <mat-select [(ngModel)]="selectedCategory" (ngModelChange)="onFilterInputChange()">
-                            <mat-option *ngFor="let category of Category" [value]="category._id">
-                                {{ category.name }}
-                            </mat-option>
-                        </mat-select>
-                    </mat-form-field>
-                    <mat-form-field fxFlex="10%" fxHide.lt-md>
-                        <mat-label>Brand</mat-label>
-                        <mat-select [(ngModel)]="selectedBrand" (ngModelChange)="onFilterInputChange()">
-                            <mat-option *ngFor="let brand of Brands" [value]="brand._id">
-                                {{ brand.name}}
-                            </mat-option>
-                        </mat-select>
-                    </mat-form-field>
-                </div>
-
-
-                <div *ngIf="selectedOption === 'brand'" class="name-filter" fxLayout="row"
-                    fxLayoutAlign.lt-md="start center">
-                    <mat-form-field fxFlex="10%" fxHide.lt-md>
-                        <mat-label>Brand</mat-label>
-                        <mat-select [(ngModel)]="selectedBrand" (ngModelChange)="onFilterInputChange()">
-                            <mat-option *ngFor="let brand of Brands" [value]="brand._id">
-                                {{ brand.name }}
-                            </mat-option>
-                        </mat-select>
-                    </mat-form-field>
-                </div>
-
-                <div *ngIf="selectedOption === 'date'" class="name-filter" fxLayout="row" fxLayoutAlign="start center">
-                    <mat-form-field>
-                        <mat-label>Enter a date range</mat-label>
-                        <mat-date-range-input [rangePicker]="picker">
-                            <input matStartDate placeholder="Start date" (dateChange)="onStartDateChange($event)">
-                            <input matEndDate placeholder="End date" (dateChange)="onEndDateChange($event)">
-                        </mat-date-range-input>
-                        <mat-hint>MM/DD/YYYY – MM/DD/YYYY</mat-hint>
-                        <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
-                        <mat-date-range-picker #picker></mat-date-range-picker>
-                    </mat-form-field>
-                </div>
-
-                <div class="button-container">
-                    <div
-                        *ngIf="selectedOption === 'name' || selectedOption === 'category' || selectedOption === 'brand' || selectedOption === 'date'">
-                        <button mat-raised-button type="submit" class="btn btn-white btn-round btn-just-icon"
-                            (click)="onSearch(paginator.pageIndex + 1, paginator.pageSize)">
-                            <i class="material-icons">search</i>
-                        </button>
-                        <button mat-raised-button type="submit" class="btn btn-white btn-round btn-just-icon"
-                            (click)="onClear()">
-                            <i class="material-icons">clear</i>
-                        </button>
-                    </div>
-                    <button class="add" mat-raised-button color="primary" (click)="openAddItemModal()"
-                        *ngIf="!selectedOption">
-                        Add Product
-                    </button>
-                    <button class="add" mat-raised-button color="primary" (click)="openAddCategoryModal()"
-                        *ngIf="!selectedOption">
-                        Add Category
-                    </button>
-                    <button class="add" mat-raised-button color="primary" (click)="openAddBrandModal()"
-                        *ngIf="!selectedOption">
-                        Add Brand
-                    </button>
-                </div>
-
-            </div>
-
+  <div class="container-fluid">
+    <div class="card filter-card">
+      <div class="card-header card-header-danger">
+        <h4 class="card-title">Product Console</h4>
+        <p class="card-category">Manage products, categories, brands, and variations</p>
+      </div>
+      <div class="card-body">
+        <div class="top-bar">
+          <div class="context-chip">Visible Products: {{ totalItems || 0 }}</div>
+          <button mat-stroked-button color="primary" (click)="openAddItemModal()">Add Product</button>
+          <button mat-stroked-button color="accent" (click)="openAddCategoryModal()">Add Category</button>
+          <button mat-stroked-button color="accent" (click)="openAddBrandModal()">Add Brand</button>
         </div>
 
-        <div class="loading" *ngIf="loading">
-            <mat-spinner class="loading" color="primary" mode="indeterminate"></mat-spinner>
+        <div class="filter-row">
+          <mat-form-field appearance="outline" class="filter-field mode-field">
+            <mat-label>Filter by</mat-label>
+            <mat-select [(ngModel)]="selectedOption" (ngModelChange)="onFilterModeChange()">
+              <mat-option [value]="null">All</mat-option>
+              <mat-option value="name">Name</mat-option>
+              <mat-option value="category">Category</mat-option>
+              <mat-option value="brand">Brand</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <ng-container *ngIf="selectedOption === 'name'">
+            <mat-form-field appearance="outline" class="filter-field search-field">
+              <mat-label>Product Name</mat-label>
+              <input matInput [(ngModel)]="itemName" (ngModelChange)="onFilterInputChange()" />
+            </mat-form-field>
+          </ng-container>
+
+          <ng-container *ngIf="selectedOption === 'name' || selectedOption === 'category'">
+            <mat-form-field appearance="outline" class="filter-field">
+              <mat-label>Category</mat-label>
+              <mat-select [(ngModel)]="selectedCategory" (ngModelChange)="onFilterInputChange()">
+                <mat-option [value]="null">All Categories</mat-option>
+                <mat-option *ngFor="let category of Category" [value]="category._id">
+                  {{ category.name }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </ng-container>
+
+          <ng-container *ngIf="selectedOption === 'name' || selectedOption === 'category' || selectedOption === 'brand'">
+            <mat-form-field appearance="outline" class="filter-field">
+              <mat-label>Brand</mat-label>
+              <mat-select [(ngModel)]="selectedBrand" (ngModelChange)="onFilterInputChange()">
+                <mat-option [value]="null">All Brands</mat-option>
+                <mat-option *ngFor="let brand of Brands" [value]="brand._id">
+                  {{ brand.name }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </ng-container>
+
+          <button
+            mat-raised-button
+            color="primary"
+            *ngIf="selectedOption === 'name' || selectedOption === 'category' || selectedOption === 'brand'"
+            (click)="onSearch((paginator?.pageIndex || 0) + 1, paginator?.pageSize || pageSize)"
+          >
+            Apply
+          </button>
+          <button
+            mat-stroked-button
+            color="warn"
+            *ngIf="selectedOption === 'name' || selectedOption === 'category' || selectedOption === 'brand'"
+            (click)="onClear()"
+          >
+            Reset
+          </button>
         </div>
-
-
-
-
-        <div class="card-body">
-
-            <table class="table">
-                <th>
-                    Name
-                </th>
-                <th>
-                    Brand
-                </th>
-                <th>
-                    Category
-                </th>
-                <th>
-                    Stock
-                </th>
-            </table>
-            <div class="table-responsive">
-                <mat-accordion multi="true">
-
-                    <mat-expansion-panel *ngFor="let item of paginatedItems">
-
-                        <!-- HEADER -->
-                        <mat-expansion-panel-header>
-                            <mat-panel-title>
-                                {{ item.name }}
-                            </mat-panel-title>
-
-                            <mat-panel-title>
-                                {{ item.brand?.name }}
-                            </mat-panel-title>
-
-                            <mat-panel-title>
-                                {{ item.category?.name }}
-                            </mat-panel-title>
-
-                            <mat-panel-title [style.color]="item.totalStock < 5 ? 'red' : 'green'">
-                                Total Stock : {{ item.totalStock }}
-                            </mat-panel-title>
-
-
-
-                        </mat-expansion-panel-header>
-
-                        <!-- EXPANDED CONTENT -->
-                        <div class="table-responsive">
-
-                            <table class="table table-sm table-bordered">
-                                <thead>
-                                    <tr>
-                                        <th>Model</th>
-                                        <th>SKU</th>
-                                        <th>Color</th>
-                                        <th>Size</th>
-                                        <th>Quantity</th>
-                                        <th>Cost</th>
-                                        <th>Selling</th>
-                                        <th>Action</th>
-                                    </tr>
-                                </thead>
-
-                                <tbody>
-                                    <tr *ngFor="let v of item.variations">
-                                        <td>{{ v.model?.name || '-' }}</td>
-                                        <td>{{ v.sku }}</td>
-                                        <td>{{ v.attributes?.color || '-' }}</td>
-                                        <td>{{ v.attributes?.size || '-' }}</td>
-                                        <td>{{ v.quantity ?? 0 }}</td>
-                                        <td>{{ v.costPrice }}</td>
-                                        <td>{{ v.sellingPrice }}</td>
-
-                                        <td (click)="$event.stopPropagation()" class="action-col">
-                                            <!-- View -->
-                                            <button mat-icon-button color="primary" matTooltip="View"
-                                                (click)="viewItemDetails(item._id); $event.stopPropagation()">
-                                                <mat-icon>visibility</mat-icon>
-                                            </button>
-
-                                            <!-- Edit -->
-                                            <!-- <button mat-icon-button color="primary" matTooltip="Edit Product"
-                                                (click)="openEditProduct(item, $event)">
-                                                <mat-icon>edit</mat-icon>
-                                            </button> -->
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-
-                        </div>
-
-                    </mat-expansion-panel>
-
-                </mat-accordion>
-            </div>
-        </div>
-
-        <mat-paginator #paginator [length]="totalItems" [pageSize]="pageSize" [pageSizeOptions]="pageSizeOptions"
-            (page)="onPageChange($event)">
-        </mat-paginator>
-
-
+      </div>
     </div>
+
+    <div class="summary-grid">
+      <div class="summary-card clickable" role="button" tabindex="0" (click)="onSummaryProductsClick()">
+        <div class="label">All Products</div>
+        <div class="value">{{ summaryCounts.products }}</div>
+      </div>
+      <div class="summary-card">
+        <div class="label">All Categories</div>
+        <div class="value">{{ summaryCounts.categories }}</div>
+        <button mat-icon-button type="button" matTooltip="Filter categories" (click)="onSummaryCategoryFilter()">
+          <mat-icon>filter_list</mat-icon>
+        </button>
+      </div>
+      <div class="summary-card">
+        <div class="label">All Brands</div>
+        <div class="value">{{ summaryCounts.brands }}</div>
+        <button mat-icon-button type="button" matTooltip="Filter brands" (click)="onSummaryBrandFilter()">
+          <mat-icon>filter_list</mat-icon>
+        </button>
+      </div>
+    </div>
+
+    <div class="loading-wrap" *ngIf="loading">
+      <mat-spinner color="primary" diameter="40"></mat-spinner>
+    </div>
+
+    <div class="card table-card" *ngIf="!loading">
+      <div class="card-body">
+        <div class="list-header-grid">
+          <span>Name</span>
+          <span>Brand</span>
+          <span>Category</span>
+          <span class="text-right">Stock</span>
+        </div>
+        <div class="table-responsive">
+          <mat-accordion multi="true">
+            <mat-expansion-panel *ngFor="let item of paginatedItems" class="product-panel">
+              <mat-expansion-panel-header>
+                <div class="panel-grid">
+                  <div class="name">{{ item.name }}</div>
+                  <div>{{ item.brand?.name || '-' }}</div>
+                  <div>{{ item.category?.name || '-' }}</div>
+                  <div class="stock">
+                    <span class="stock-badge" [ngClass]="item.totalStock < 5 ? 'low' : 'ok'">
+                      {{ item.totalStock }}
+                    </span>
+                  </div>
+                </div>
+              </mat-expansion-panel-header>
+
+              <div class="table-responsive variation-table-wrap">
+                <table class="table table-sm table-bordered variation-table">
+                  <thead>
+                    <tr>
+                      <th>Model</th>
+                      <th>SKU</th>
+                      <th>Barcode</th>
+                      <th>Color</th>
+                      <th>Size</th>
+                      <th>Qty</th>
+                      <th>Cost</th>
+                      <th>Selling</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <ng-container *ngIf="item.variations?.length; else noVariationRow">
+                      <tr *ngFor="let v of item.variations">
+                        <td>{{ v.model?.name || '-' }}</td>
+                        <td>{{ v.sku }}</td>
+                        <td>{{ v.barcode || '-' }}</td>
+                        <td>{{ v.attributes?.color || '-' }}</td>
+                        <td>{{ v.attributes?.size || '-' }}</td>
+                        <td>{{ v.quantity ?? 0 }}</td>
+                        <td>₹ {{ v.costPrice || 0 }}</td>
+                        <td>₹ {{ v.sellingPrice || 0 }}</td>
+                        <td (click)="$event.stopPropagation()" class="action-col">
+                          <button
+                            mat-icon-button
+                            color="primary"
+                            matTooltip="View"
+                            (click)="viewItemModelDetails(item._id, v); $event.stopPropagation()"
+                          >
+                            <mat-icon>visibility</mat-icon>
+                          </button>
+                        </td>
+                      </tr>
+                    </ng-container>
+                    <ng-template #noVariationRow>
+                      <tr>
+                        <td colspan="8" class="text-muted no-variation-msg">No variations added yet.</td>
+                        <td (click)="$event.stopPropagation()" class="action-col">
+                          <button
+                            mat-icon-button
+                            color="primary"
+                            matTooltip="View"
+                            (click)="viewItemDetails(item._id); $event.stopPropagation()"
+                          >
+                            <mat-icon>visibility</mat-icon>
+                          </button>
+                        </td>
+                      </tr>
+                    </ng-template>
+                  </tbody>
+                </table>
+              </div>
+            </mat-expansion-panel>
+          </mat-accordion>
+        </div>
+      </div>
+
+      <mat-paginator
+        #paginator
+        [length]="totalItems"
+        [pageSize]="pageSize"
+        [pageSizeOptions]="pageSizeOptions"
+        (page)="onPageChange($event)"
+      >
+      </mat-paginator>
+    </div>
+  </div>
+</div>

@@ -11,6 +11,18 @@ interface NavbarLink {
   icon: string;
 }
 
+interface BreadcrumbItem {
+  label: string;
+  path: string | null;
+  active: boolean;
+}
+
+interface RouteMeta {
+  title: string;
+  path: string;
+  parentTitle: string | null;
+}
+
 @Component({
   selector: "app-navbar",
   templateUrl: "./navbar.component.html",
@@ -25,7 +37,7 @@ export class NavbarComponent implements OnInit {
   mobile_menu_visible: any = 0;
   private toggleButton: any;
   private sidebarVisible: boolean;
-  private listTitles: any[];
+  private listTitles: RouteMeta[] = [];
 
   constructor(
     location: Location,
@@ -39,7 +51,7 @@ export class NavbarComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.listTitles = ROUTES.filter((listTitle) => listTitle);
+    this.listTitles = this.flattenRoutes(ROUTES);
     const navbar: HTMLElement = this.element.nativeElement;
     this.toggleButton = navbar.getElementsByClassName("navbar-toggler")[0];
     this.router.events.subscribe((event) => {
@@ -190,16 +202,200 @@ export class NavbarComponent implements OnInit {
   }
 
   getTitle() {
-    var titlee = this.location.prepareExternalUrl(this.location.path());
-    if (titlee.charAt(0) === "#") {
-      titlee = titlee.slice(1);
+    const currentPath = this.getCurrentPath();
+    if (!currentPath || currentPath === "/") return "Home";
+
+    const exactMatch = this.listTitles.find((item) => item.path === currentPath);
+    if (exactMatch?.title) return exactMatch.title;
+
+    const prefixMatch = [...this.listTitles]
+      .filter((item) => item.path && currentPath.startsWith(`${item.path}/`))
+      .sort((a, b) => (b.path?.length || 0) - (a.path?.length || 0))[0];
+    if (prefixMatch?.title) return prefixMatch.title;
+
+    return currentPath;
+  }
+
+  showBackButton(): boolean {
+    const currentPath = this.getCurrentPath();
+    return currentPath !== "/dashboard" && currentPath !== "/";
+  }
+
+  goBack(): void {
+    this.location.back();
+  }
+
+  getBreadcrumbs(): BreadcrumbItem[] {
+    const currentPath = this.getCurrentPath();
+    const crumbs: BreadcrumbItem[] = [
+      {
+        label: "Dashboard",
+        path: "/dashboard",
+        active: currentPath === "/dashboard",
+      },
+    ];
+
+    if (!currentPath || currentPath === "/" || currentPath === "/dashboard") {
+      return crumbs;
     }
 
-    for (var item = 0; item < this.listTitles.length; item++) {
-      if (this.listTitles[item].path === titlee) {
-        return this.listTitles[item].title;
-      }
+    const segments = currentPath.split("/").filter(Boolean);
+    const moduleTitle = this.getModuleTitle(segments[0], currentPath);
+    if (moduleTitle && moduleTitle !== "Dashboard") {
+      crumbs.push({ label: moduleTitle, path: null, active: false });
     }
-    return "Dashboard";
+
+    const bestRoute = this.getBestRouteMeta(currentPath);
+    if (bestRoute) {
+      if (
+        bestRoute.parentTitle &&
+        bestRoute.parentTitle !== "Dashboard" &&
+        !crumbs.some((crumb) => crumb.label === bestRoute.parentTitle)
+      ) {
+        crumbs.push({ label: bestRoute.parentTitle, path: null, active: false });
+      }
+      crumbs.push({
+        label: bestRoute.title,
+        path: bestRoute.path === currentPath ? null : bestRoute.path,
+        active: bestRoute.path === currentPath,
+      });
+
+      const routeSegCount = bestRoute.path.split("/").filter(Boolean).length;
+      const trailingSegments = segments.slice(routeSegCount);
+      trailingSegments.forEach((segment, index) => {
+        crumbs.push({
+          label: this.formatSegment(segment),
+          path: null,
+          active: index === trailingSegments.length - 1,
+        });
+      });
+      return this.deduplicateBreadcrumbs(this.compactBreadcrumbLabels(crumbs));
+    }
+
+    let runningPath = "";
+
+    segments.forEach((segment, index) => {
+      runningPath += `/${segment}`;
+      const matched = this.listTitles.find((item) => item.path === runningPath);
+      const label = matched?.title || this.formatSegment(segment);
+      const isLast = index === segments.length - 1;
+      const segmentPath = isLast ? null : runningPath;
+
+      crumbs.push({
+        label,
+        path: segmentPath,
+        active: isLast,
+      });
+    });
+
+    return this.deduplicateBreadcrumbs(this.compactBreadcrumbLabels(crumbs));
+  }
+
+  onBreadcrumbClick(path: string | null): void {
+    if (!path) return;
+    this.router.navigateByUrl(path);
+  }
+
+  private getCurrentPath(): string {
+    const rawPath = this.location.prepareExternalUrl(this.location.path()) || "";
+    const cleanPath = rawPath.startsWith("#") ? rawPath.slice(1) : rawPath;
+    return cleanPath.split("?")[0].split("#")[0];
+  }
+
+  private formatSegment(segment: string): string {
+    if (/^[a-f0-9]{24}$/i.test(segment)) {
+      return `${segment.slice(0, 6)}...${segment.slice(-4)}`;
+    }
+    return segment.replace(/-/g, " ");
+  }
+
+  private compactBreadcrumbLabels(crumbs: BreadcrumbItem[]): BreadcrumbItem[] {
+    return crumbs.map((crumb, index) => {
+      if (index === 0) return crumb;
+      return {
+        ...crumb,
+        label: crumb.label
+          .split(" ")
+          .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+          .join(" "),
+      };
+    });
+  }
+
+  private deduplicateBreadcrumbs(crumbs: BreadcrumbItem[]): BreadcrumbItem[] {
+    const unique: BreadcrumbItem[] = [];
+    crumbs.forEach((crumb) => {
+      const last = unique[unique.length - 1];
+      if (last && last.label.toLowerCase() === crumb.label.toLowerCase()) {
+        unique[unique.length - 1] = {
+          ...last,
+          active: last.active || crumb.active,
+          path: crumb.path ?? last.path,
+        };
+        return;
+      }
+      unique.push(crumb);
+    });
+    return unique;
+  }
+
+  private flattenRoutes(routes: any[]): RouteMeta[] {
+    const flat: RouteMeta[] = [];
+    routes.forEach((route) => {
+      if (route?.path) {
+        flat.push({
+          title: route.title,
+          path: route.path,
+          parentTitle: null,
+        });
+      }
+      if (Array.isArray(route?.children)) {
+        route.children.forEach((child: any) => {
+          if (child?.path) {
+            flat.push({
+              title: child.title,
+              path: child.path,
+              parentTitle: route.title || null,
+            });
+          }
+        });
+      }
+    });
+    return flat;
+  }
+
+  private getBestRouteMeta(path: string): RouteMeta | null {
+    const exact = this.listTitles.find((item) => item.path === path);
+    if (exact) return exact;
+    const prefix = [...this.listTitles]
+      .filter((item) => path.startsWith(`${item.path}/`))
+      .sort((a, b) => b.path.length - a.path.length)[0];
+    return prefix || null;
+  }
+
+  private getModuleTitle(firstSegment: string, currentPath: string): string | null {
+    const moduleMap: Record<string, string> = {
+      dashboard: "Dashboard",
+      "item-list": "Inventory",
+      "add-items": "Inventory",
+      "add-detail": "Inventory",
+      "item-details": "Inventory",
+      stocks: "Inventory",
+      purchase: "Inventory",
+      "sale-list": "Sales",
+      order: "Sales",
+      pos: "Sales",
+      returns: "Sales",
+      users: "People",
+      customer: "People",
+      distributor: "People",
+      profile: "Account",
+      settings: "Account",
+      shops: "Shops",
+    };
+
+    if (moduleMap[firstSegment]) return moduleMap[firstSegment];
+    const bestRoute = this.getBestRouteMeta(currentPath);
+    return bestRoute?.parentTitle || null;
   }
 }

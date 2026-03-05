@@ -1,191 +1,172 @@
 <div class="main-content">
-    <div class="row">
-        <div class="col-md-12">
-            <div class="card">
-                <div class="card-header card-header-danger">
-                    <h4 class="card-title">Add Sales</h4>
-                    <!-- <p class="card-category">Complete your profile</p> -->
+  <div class="container-fluid">
+    <div class="card sales-form-card">
+      <div class="card-header card-header-danger">
+        <h4 class="card-title">Add Sale</h4>
+        <p class="card-category">Scan barcode or select product variation and build sale cart</p>
+      </div>
+
+      <div class="card-body">
+        <div class="sales-grid">
+          <div class="entry-panel">
+            <form (ngSubmit)="onSubmit()" #addItemForm="ngForm">
+              <div class="section-title">Quick Scan</div>
+              <div class="scan-row">
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Scan Barcode</mat-label>
+                  <input
+                    #barcodeInputRef
+                    matInput
+                    name="scanBarcode"
+                    [(ngModel)]="scannedBarcode"
+                    (input)="onBarcodeInputChange()"
+                    (keyup.enter)="onBarcodeScan()" />
+                </mat-form-field>
+                <button mat-stroked-button color="primary" type="button" (click)="onBarcodeScan()">Scan</button>
+              </div>
+
+              <div class="section-title">Customer</div>
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Customer Name</mat-label>
+                <input matInput name="customerName" [(ngModel)]="customerName" (input)="fetchCusSuggestions()" required />
+              </mat-form-field>
+              <div class="suggestion-list" *ngIf="cus_suggestions?.length">
+                <button mat-stroked-button type="button" *ngFor="let suggestion of cus_suggestions" (click)="selectCusSuggestion(suggestion)">
+                  {{ suggestion }}
+                </button>
+              </div>
+
+              <div class="section-title">Item</div>
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Item Name</mat-label>
+                <input matInput name="itemName" [(ngModel)]="itemName" (input)="fetchSuggestions()" required />
+              </mat-form-field>
+              <div class="suggestion-list" *ngIf="suggestions?.length">
+                <button mat-stroked-button type="button" *ngFor="let suggestion of suggestions" (click)="selectSuggestion(suggestion)">
+                  {{ suggestion }}
+                </button>
+              </div>
+
+              <div class="row">
+                <div class="col-md-6">
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Model</mat-label>
+                    <mat-select [(ngModel)]="selectedModel" name="selectedModel" (selectionChange)="updateSelectedModelVariations()">
+                      <mat-option [value]="''">Select Model</mat-option>
+                      <mat-option *ngFor="let m of selectedItemModels" [value]="m.model">{{ m.model }}</mat-option>
+                    </mat-select>
+                  </mat-form-field>
                 </div>
-                <div class="row">
-                    <div class="col-md-5">
-                        <div class="card-body">
-                            <form (ngSubmit)="onSubmit()" #addItemForm="ngForm">
-                                <div class="row">
-                                    <div class="col-md-12">
-                                        <mat-form-field class="example-full-width">
-                                            <input matInput placeholder="Customer Name" name="customerName"
-                                                [(ngModel)]="customerName" (input)="fetchCusSuggestions()" required>
-                                            <mat-option *ngFor="let suggestion of cus_suggestions"
-                                                (click)="selectCusSuggestion(suggestion)"
-                                                (optionSelected)="selectCusSuggestion($event)">
-                                                {{suggestion}}
-                                            </mat-option>
-                                        </mat-form-field>
-                                    </div>
-                                </div>
-                               
-                                <!-- <div class="row">
-                                    <div class="col-md-6">
-                                        <mat-form-field class="example-full-width">
-                                            <mat-label>Category</mat-label>
-                                            <mat-select name="category" [(ngModel)]="selectedCategory"
-                                                (selectionChange)="onCategoryChange($event)" required>
-                                                <mat-option *ngFor="let category of Category" [value]="category._id">
-                                                    {{ category.name }}
-                                                </mat-option>
-                                            </mat-select>
-                                        </mat-form-field>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <mat-form-field class="example-full-width">
-                                            <mat-label>Brand</mat-label>
-                                            <mat-select name="brand" [(ngModel)]="selectedBrand" required>
-                                                <mat-option *ngFor="let brand of Brands" [value]="brand._id">
-                                                    {{ brand.name }}
-                                                </mat-option>
-                                            </mat-select>
-                                        </mat-form-field>
-                                    </div>
-                                </div> -->
-                                <div class="row">
-                                    <div class="col-md-12">
-                                        <mat-form-field class="example-full-width">
-                                            <input matInput placeholder="Item Name" name="itemName"
-                                                [(ngModel)]="itemName" (input)="fetchSuggestions()" required>
-                                            <mat-option *ngFor="let suggestion of suggestions"
-                                                (click)="selectSuggestion(suggestion)"
-                                                (optionSelected)="selectSuggestion($event)">
-                                                {{suggestion}}
-                                            </mat-option>
-                                        </mat-form-field>
-                                    </div>
-                                </div>
-
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <mat-form-field class="modeloption">
-                                            <mat-label>Models</mat-label>
-                                            <select matNativeControl [(ngModel)]="selectedModel"
-                                                (change)="updateSelectedModelVariations()">
-                                                <option label="Select Model"></option>
-                                                <option *ngFor="let model of selectedItemModels" [value]="model.model">
-                                                    {{ model.model }}
-                                                </option>
-                                            </select>
-                                        </mat-form-field>
-                                    </div>
-
-                                    <div class="col-md-6">
-                                        <mat-form-field class="modeloption">
-                                            <mat-label>Variants</mat-label>
-                                            <select matNativeControl [(ngModel)]="selectedVariation" (change)="onVariationChange(selectedVariation)">
-                                                <option label="Select Variant"></option>
-                                                <option *ngFor="let variation of selectedModelVariations"
-                                                    [value]="variation.orderNumber">
-                                                    {{ variation.orderNumber }}
-                                                </option>
-                                            </select>
-                                        </mat-form-field>
-                                    </div>
-                                </div>
-                                <div class="row">
-                                   
-                                    <div class="col-md-6">
-                                        <mat-form-field class="example-full-width">
-                                            <input type="number" matInput placeholder=" Quantity" name="quantity"
-                                                [(ngModel)]="quantity" required>
-                                        </mat-form-field>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <mat-form-field class="example-full-width">
-                                            <input type="number" matInput placeholder=" Sell Price" name="purchasePrice"
-                                                [(ngModel)]="purchasePrice" required>
-                                        </mat-form-field>
-                                    </div>
-                                </div>
-
-                                <div class="row">
-                                    <div class="col-md-12">
-                                        <label>About Item Description</label>
-                                        <mat-form-field class="example-full-width">
-                                            <textarea matInput placeholder="Description can be in Details ."
-                                                name="description" [(ngModel)]="description"></textarea>
-                                        </mat-form-field>
-                                    </div>
-                                </div>
-                                <button mat-raised-button type="submit" class="btn btn-danger pull-center"
-                                    [disabled]="!addItemForm.valid">Add More Item</button>
-                                <!-- <div class="clearfix"></div> -->
-                                <button mat-raised-button type="submit" class="btn btn-danger pull-center"
-                                    [disabled]="!addItemForm.valid" (click)="onSales()">Save</button>
-                                <!-- <div class="clearfix"></div> -->
-                            </form>
-                        </div>
-                    </div>
-                    <div class="col-md-7">
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table">
-                                    <thead class="">
-                                        <th>
-                                            Name
-                                        </th>
-                                        <th>
-                                            Model
-                                        </th>
-                                        <th>
-                                            Size
-                                        </th>
-                                        <th>
-                                            Quantity
-                                        </th>
-                                        <th>
-                                            Price
-                                        </th>
-                                    </thead>
-                                    <tbody>
-                                        <tr *ngFor="let item of Display_items; let i = index">
-                                            <td>
-                                                {{item?.itemName}}
-                                            </td>
-                                            <td>
-                                                {{item?.model}}
-                                            </td>
-                                            <td>
-                                                {{item.size}}
-                                            </td>
-                                            <td>
-                                                {{item?.quantity}}
-                                            </td>
-                                            <td>
-                                                {{item?.purchasePrice}}
-                                            </td>
-                                            <td>
-                                                <button mat-raised-button type="button" matTooltip="Remove"
-                                                    [matTooltipPosition]="'above'"
-                                                    class="btn btn-danger btn-link btn-sm btn-just-icon"
-                                                    (click)="removeItem(i)">
-                                                    <i class="material-icons">close</i>
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                                <mat-divider></mat-divider>
-                                <div class="total">
-                                    <span>Total: </span>
-                                    <div>
-                                        {{totalQuantity}}
-                                    </div>
-                                    <div>
-                                        {{totalPurchasePrice}}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                <div class="col-md-6">
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Variation</mat-label>
+                    <mat-select [(ngModel)]="selectedVariation" name="selectedVariation" (selectionChange)="onVariationChange($event.value)">
+                      <mat-option [value]="''">Select Variation</mat-option>
+                      <mat-option *ngFor="let v of selectedModelVariations" [value]="v.orderNumber">
+                        {{ v.orderNumber }}
+                      </mat-option>
+                    </mat-select>
+                  </mat-form-field>
                 </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-6">
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Quantity</mat-label>
+                    <input type="number" matInput name="quantity" [(ngModel)]="quantity" required />
+                  </mat-form-field>
+                </div>
+                <div class="col-md-6">
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Selling Price</mat-label>
+                    <input type="number" matInput name="purchasePrice" [(ngModel)]="purchasePrice" required />
+                  </mat-form-field>
+                </div>
+              </div>
+
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Description</mat-label>
+                <textarea matInput name="description" rows="2" [(ngModel)]="description"></textarea>
+              </mat-form-field>
+
+              <div class="section-title">Billing</div>
+              <div class="row">
+                <div class="col-md-4">
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Bill Discount</mat-label>
+                    <input type="number" matInput name="billDiscount" [(ngModel)]="billDiscount" min="0" />
+                  </mat-form-field>
+                </div>
+                <div class="col-md-4">
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Payment Mode</mat-label>
+                    <mat-select name="paymentMethod" [(ngModel)]="paymentMethod">
+                      <mat-option *ngFor="let pm of paymentMethods" [value]="pm">{{ pm }}</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+                <div class="col-md-4">
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Paid Amount</mat-label>
+                    <input type="number" matInput name="paidAmount" [(ngModel)]="paidAmount" min="0" />
+                  </mat-form-field>
+                </div>
+              </div>
+
+              <div class="actions-row">
+                <button mat-raised-button type="submit" color="primary" [disabled]="!addItemForm.valid">Add Item</button>
+                <button mat-raised-button type="button" color="accent" [disabled]="!addItemForm.valid" (click)="onSales()">Save Sale</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="cart-panel">
+            <div class="section-title">Sale Cart</div>
+
+            <div class="table-responsive">
+              <table class="table cart-table">
+                <thead>
+                  <tr>
+                    <th>Item</th>
+                    <th>Model</th>
+                    <th>Size</th>
+                    <th>Qty</th>
+                    <th>Price</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let item of Display_items; let i = index">
+                    <td>{{ item?.itemName }}</td>
+                    <td>{{ item?.model }}</td>
+                    <td>{{ item?.size }}</td>
+                    <td>{{ item?.quantity }}</td>
+                    <td>Rs {{ item?.purchasePrice | number:'1.2-2' }}</td>
+                    <td>
+                      <button mat-icon-button color="warn" type="button" (click)="removeItem(i)">
+                        <mat-icon>close</mat-icon>
+                      </button>
+                    </td>
+                  </tr>
+                  <tr *ngIf="!Display_items || Display_items.length === 0">
+                    <td colspan="6" class="empty">No items added yet</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
+
+            <div class="totals-card">
+              <div><span>Total Qty:</span><strong>{{ totalQuantity || 0 }}</strong></div>
+              <div><span>Sub Total:</span><strong>Rs {{ totalPurchasePrice || 0 | number:'1.2-2' }}</strong></div>
+              <div><span>Bill Discount:</span><strong>Rs {{ billDiscount || 0 | number:'1.2-2' }}</strong></div>
+              <div><span>Net Total:</span><strong>Rs {{ getNetTotal() | number:'1.2-2' }}</strong></div>
+              <div><span>Paid:</span><strong>Rs {{ paidAmount || 0 | number:'1.2-2' }}</strong></div>
+              <div><span>Due:</span><strong>Rs {{ getDueAmount() | number:'1.2-2' }}</strong></div>
+            </div>
+          </div>
         </div>
+      </div>
     </div>
+  </div>
 </div>

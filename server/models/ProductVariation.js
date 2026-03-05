@@ -89,4 +89,13 @@ productVariationSchema.index(
   { unique: true }
 );
 
+/* Unique Barcode per shop (if barcode exists) */
+productVariationSchema.index(
+  { shop: 1, barcode: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { barcode: { $type: "string", $ne: "" } },
+  },
+);
+
 module.exports = mongoose.model("ProductVariation", productVariationSchema);

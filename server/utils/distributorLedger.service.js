@@ -6,6 +6,7 @@ exports.createDistributorLedgerEntry = async ({
   distributor,
   type,
   amount,
+  paymentMethod,
   referenceId,
   note,
   transactionDate,
@@ -59,6 +60,10 @@ exports.createDistributorLedgerEntry = async ({
     distributor,
     type,
     amount,
+    paymentMethod:
+      type === "payment"
+        ? `${paymentMethod || "CASH"}`.trim().toUpperCase()
+        : undefined,
     balanceAfterTransaction: newBalance,
     referenceId,
     note,

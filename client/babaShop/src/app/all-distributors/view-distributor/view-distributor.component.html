@@ -214,6 +214,7 @@
       <tr>
         <th>Date</th>
         <th>Type</th>
+        <th>Payment Mode</th>
         <th>Note</th>
         <th class="right">Debit</th>
         <th class="right">Credit</th>
@@ -231,6 +232,10 @@
         <!-- Type -->
         <td>
           {{ entry.type | titlecase }}
+        </td>
+
+        <td>
+          {{ resolvePaymentMethod(entry) | titlecase }}
         </td>
 
         <!-- Note -->

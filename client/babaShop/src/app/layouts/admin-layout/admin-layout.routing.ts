@@ -17,28 +17,32 @@ import { AddDetailsComponent } from "app/all-items/add-details/add-details.compo
 import { SettingsComponent } from "app/settings/settings.component";
 import { UserComponent } from "app/all-users/user/user.component";
 import { ManageShopsComponent } from "app/shops/manage-shops/manage-shops.component";
+import { RoleGuard } from "app/shared/guard/role.guard";
+import { PurchaseConsoleComponent } from "app/purchases/purchase-console/purchase-console.component";
 
 export const AdminLayoutRoutes: Routes = [
   {
     path: "dashboard",
     component: DashboardComponent,
-    canActivate: [SecurePageGuardGuard],
+    canActivate: [SecurePageGuardGuard, RoleGuard],
+    data: { roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"] },
   },
   { path: "login", component: LoginComponent },
-  { path: "profile", component: UserProfileComponent },
-  { path: "user-profile", component: UserProfileComponent },
-  { path: "item-list", component: ItemsListComponent },
-  { path: "add-items", component: AddItemsComponent },
-  { path: "add-items/:id", component: AddItemsComponent },
-  { path: "add-detail/:productId", component: AddDetailsComponent },
-  { path: "add-detail/:productId/:id", component: AddDetailsComponent },
-  { path: "item-details/:id", component: ItemDetailsComponent },
-  { path: "sale-list", component: SalesListComponent },
-  { path: "stocks", component: StocksComponent },
-  { path: "distributor", component: DistributorsComponent },
-  { path: "order", component: OrdersComponent },
-  { path: "customer", component: CustomersComponent },
-  { path: "users", component: UserComponent },
-  { path: "shops", component: ManageShopsComponent },
-  { path: "settings", component: SettingsComponent },
+  { path: "profile", component: UserProfileComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"] } },
+  { path: "user-profile", component: UserProfileComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"] } },
+  { path: "item-list", component: ItemsListComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"] } },
+  { path: "add-items", component: AddItemsComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ["SUPER_ADMIN", "ADMIN", "MANAGER"] } },
+  { path: "add-items/:id", component: AddItemsComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ["SUPER_ADMIN", "ADMIN", "MANAGER"] } },
+  { path: "add-detail/:productId", component: AddDetailsComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ["SUPER_ADMIN", "ADMIN", "MANAGER"] } },
+  { path: "add-detail/:productId/:id", component: AddDetailsComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ["SUPER_ADMIN", "ADMIN", "MANAGER"] } },
+  { path: "item-details/:id", component: ItemDetailsComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"] } },
+  { path: "sale-list", component: SalesListComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"] } },
+  { path: "stocks", component: StocksComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"] } },
+  { path: "purchase", component: PurchaseConsoleComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ["SUPER_ADMIN", "ADMIN", "MANAGER"] } },
+  { path: "distributor", component: DistributorsComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ["SUPER_ADMIN", "ADMIN"] } },
+  { path: "order", component: OrdersComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ["SUPER_ADMIN", "ADMIN", "MANAGER"] } },
+  { path: "customer", component: CustomersComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"] } },
+  { path: "users", component: UserComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ["SUPER_ADMIN", "ADMIN", "MANAGER"] } },
+  { path: "shops", component: ManageShopsComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ["SUPER_ADMIN"] } },
+  { path: "settings", component: SettingsComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ["SUPER_ADMIN", "ADMIN"] } },
 ];

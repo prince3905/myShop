@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
+import { Observable } from 'rxjs';
 import {environment} from '../../../environments/environment'
 
 @Injectable({
@@ -14,7 +14,6 @@ export class SalesService {
     return environment.apiBaseURL;
   }
   getCustomerSuggestion(searchTerm: string) {
-    console.log(searchTerm);
     return this.http.get(`${this.baseURL}/api/purchase/customer-suggestions?term=${searchTerm}`);
   }
 
@@ -23,8 +22,12 @@ export class SalesService {
   }
 
   getSales(data:any) {
-    const params = new HttpParams({ fromObject: data });
-    // console.log(params)
+    let params = new HttpParams();
+    Object.keys(data || {}).forEach((key) => {
+      const value = data[key];
+      if (value === null || value === undefined || value === "") return;
+      params = params.set(key, String(value));
+    });
     return this.http.get(`${this.baseURL}/api/purchase`,{ params: params });
   }
 }

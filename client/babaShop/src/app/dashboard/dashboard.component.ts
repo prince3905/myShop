@@ -2,6 +2,12 @@ import { Component, OnInit } from "@angular/core";
 import * as Chartist from "chartist";
 import { ShopService } from "./../shared/services/shop.service";
 import { AuthService } from "../shared/services/auth.service";
+import { DashboardService } from "app/shared/services/dashboard.service";
+import { forkJoin } from "rxjs";
+import { ProductService } from "app/shared/services/product.service";
+import { CategoryService } from "app/shared/services/category.service";
+import { BrandService } from "app/shared/services/brand.service";
+import { Router } from "@angular/router";
 
 @Component({
   selector: "app-dashboard",
@@ -12,8 +18,36 @@ export class DashboardComponent implements OnInit {
   shops: any[] = [];
   selectedShop: string | null = null;
   isSuperAdmin = false;
-  constructor(private shopService: ShopService,
-    private authService: AuthService
+  loadingKpis = false;
+  kpis: any = {
+    todaySales: 0,
+    todayOrders: 0,
+    todayPurchase: 0,
+    lowStockCount: 0,
+    activeShops: 0,
+    totalCustomers: 0,
+    distributorDue: 0,
+    mode: "SHOP_WISE",
+  };
+  inventorySummary = {
+    products: 0,
+    categories: 0,
+    brands: 0,
+  };
+  trendDays = 7;
+  purchaseAnalytics: any = {
+    today: { totalAmount: 0, totalPaid: 0, totalDue: 0, count: 0 },
+    weekly: { totalAmount: 0, totalPaid: 0, totalDue: 0, count: 0 },
+    monthly: { totalAmount: 0, totalPaid: 0, totalDue: 0, count: 0 },
+  };
+  constructor(
+    private shopService: ShopService,
+    private authService: AuthService,
+    private dashboardService: DashboardService,
+    private productService: ProductService,
+    private categoryService: CategoryService,
+    private brandService: BrandService,
+    private router: Router,
   ) {}
 
   startAnimationForLineChart(chart) {
@@ -78,98 +112,16 @@ export class DashboardComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.loadShops();
     this.selectedShop = this.shopService.getSelectedShop();
     this.isSuperAdmin = this.authService.isSuperAdmin();
 
-  if (this.isSuperAdmin) {
-    this.loadShops();
-  }
-    /* ----------==========     Daily Sales Chart initialization For Documentation    ==========---------- */
-
-    const dataDailySalesChart: any = {
-      labels: ["M", "T", "W", "T", "F", "S", "S"],
-      series: [[12, 17, 7, 17, 23, 18, 38]],
-    };
-
-    const optionsDailySalesChart: any = {
-      lineSmooth: Chartist.Interpolation.cardinal({
-        tension: 0,
-      }),
-      low: 0,
-      high: 50, // creative tim: we recommend you to set the high sa the biggest value + something for a better look
-      chartPadding: { top: 0, right: 0, bottom: 0, left: 0 },
-    };
-
-    var dailySalesChart = new Chartist.Line(
-      "#dailySalesChart",
-      dataDailySalesChart,
-      optionsDailySalesChart,
-    );
-
-    this.startAnimationForLineChart(dailySalesChart);
-
-    /* ----------==========     Completed Tasks Chart initialization    ==========---------- */
-
-    const dataCompletedTasksChart: any = {
-      labels: ["12p", "3p", "6p", "9p", "12p", "3a", "6a", "9a"],
-      series: [[230, 750, 450, 300, 280, 240, 200, 190]],
-    };
-
-    const optionsCompletedTasksChart: any = {
-      lineSmooth: Chartist.Interpolation.cardinal({
-        tension: 0,
-      }),
-      low: 0,
-      high: 1000, // creative tim: we recommend you to set the high sa the biggest value + something for a better look
-      chartPadding: { top: 0, right: 0, bottom: 0, left: 0 },
-    };
-
-    var completedTasksChart = new Chartist.Line(
-      "#completedTasksChart",
-      dataCompletedTasksChart,
-      optionsCompletedTasksChart,
-    );
-
-    // start animation for the Completed Tasks Chart - Line Chart
-    this.startAnimationForLineChart(completedTasksChart);
-
-    /* ----------==========     Emails Subscription Chart initialization    ==========---------- */
-
-    var datawebsiteViewsChart = {
-      labels: ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"],
-      series: [[542, 443, 320, 780, 553, 453, 326, 434, 568, 610, 756, 895]],
-    };
-    var optionswebsiteViewsChart = {
-      axisX: {
-        showGrid: false,
-      },
-      low: 0,
-      high: 1000,
-      chartPadding: { top: 0, right: 5, bottom: 0, left: 0 },
-    };
-    var responsiveOptions: any[] = [
-      [
-        "screen and (max-width: 640px)",
-        {
-          seriesBarDistance: 5,
-          axisX: {
-            labelInterpolationFnc: function (value) {
-              return value[0];
-            },
-          },
-        },
-      ],
-    ];
-    var websiteViewsChart = new Chartist.Bar(
-      "#websiteViewsChart",
-      datawebsiteViewsChart,
-      optionswebsiteViewsChart,
-      responsiveOptions,
-    );
-
-    //start animation for the Emails Subscription Chart
-    this.startAnimationForBarChart(websiteViewsChart);
+    if (this.isSuperAdmin) {
+      this.loadShops();
+    }
+    this.loadKpis();
+    this.loadTrends();
+    this.loadInventorySummary();
+    this.loadPurchaseAnalytics();
   }
 
   loadShops() {
@@ -186,18 +138,190 @@ export class DashboardComponent implements OnInit {
         } else {
           this.shops = res.data; // global for super admin without shop
         }
-        console.log(this.shops);
+        this.loadKpis();
+        this.loadTrends();
+        this.loadInventorySummary();
+        this.loadPurchaseAnalytics();
       }
     });
   }
+
+  loadKpis() {
+    this.loadingKpis = true;
+    this.dashboardService.getKpis().subscribe({
+      next: (res: any) => {
+        this.kpis = {
+          ...this.kpis,
+          ...(res?.data || {}),
+        };
+        this.loadingKpis = false;
+      },
+      error: () => {
+        this.loadingKpis = false;
+      },
+    });
+  }
+
+  loadTrends() {
+    this.dashboardService.getTrends(this.trendDays).subscribe({
+      next: (res: any) => {
+        const data = res?.data || {};
+        this.renderTrendCharts(
+          data.labels || [],
+          data.sales || [],
+          data.orders || [],
+          data.purchase || [],
+        );
+      },
+      error: () => {
+        this.renderTrendCharts([], [], [], []);
+      },
+    });
+  }
+
+  loadInventorySummary() {
+    forkJoin({
+      products: this.productService.getAllProducts(),
+      categories: this.categoryService.getAllCategories({ page: 1, limit: 1 }),
+      brands: this.brandService.getAllBrands({ page: 1, limit: 1 }),
+    }).subscribe({
+      next: (res: any) => {
+        this.inventorySummary.products = this.extractCount(res?.products, ["data"]);
+        this.inventorySummary.categories = this.extractCount(res?.categories, [
+          "data",
+          "items",
+          "categories",
+        ]);
+        this.inventorySummary.brands = this.extractCount(res?.brands, [
+          "data",
+          "items",
+          "brands",
+        ]);
+      },
+      error: () => {
+        this.inventorySummary = { products: 0, categories: 0, brands: 0 };
+      },
+    });
+  }
+
+  loadPurchaseAnalytics() {
+    this.dashboardService.getPurchaseAnalytics().subscribe({
+      next: (res: any) => {
+        const data = res?.data || {};
+        this.purchaseAnalytics = {
+          today: data.today || this.purchaseAnalytics.today,
+          weekly: data.weekly || this.purchaseAnalytics.weekly,
+          monthly: data.monthly || this.purchaseAnalytics.monthly,
+        };
+        this.renderPurchaseAnalyticsChart();
+      },
+      error: () => {
+        this.purchaseAnalytics = {
+          today: { totalAmount: 0, totalPaid: 0, totalDue: 0, count: 0 },
+          weekly: { totalAmount: 0, totalPaid: 0, totalDue: 0, count: 0 },
+          monthly: { totalAmount: 0, totalPaid: 0, totalDue: 0, count: 0 },
+        };
+        this.renderPurchaseAnalyticsChart();
+      },
+    });
+  }
+
+  private renderTrendCharts(
+    labels: string[],
+    salesSeries: number[],
+    ordersSeries: number[],
+    purchaseSeries: number[],
+  ) {
+    const finalLabels = labels.length ? labels : ["-", "-", "-", "-", "-", "-", "-"];
+    const finalSales = salesSeries.length ? salesSeries : [0, 0, 0, 0, 0, 0, 0];
+    const finalOrders = ordersSeries.length ? ordersSeries : [0, 0, 0, 0, 0, 0, 0];
+    const finalPurchase = purchaseSeries.length ? purchaseSeries : [0, 0, 0, 0, 0, 0, 0];
+
+    const salesChart = new Chartist.Line(
+      "#dailySalesChart",
+      { labels: finalLabels, series: [finalSales] },
+      {
+        lineSmooth: Chartist.Interpolation.cardinal({ tension: 0 }),
+        low: 0,
+        chartPadding: { top: 0, right: 0, bottom: 0, left: 0 },
+      },
+    );
+    this.startAnimationForLineChart(salesChart);
+
+    const ordersChart = new Chartist.Bar(
+      "#websiteViewsChart",
+      { labels: finalLabels, series: [finalOrders] },
+      {
+        axisX: { showGrid: false },
+        low: 0,
+        chartPadding: { top: 0, right: 5, bottom: 0, left: 0 },
+      },
+    );
+    this.startAnimationForBarChart(ordersChart);
+
+    const purchaseChart = new Chartist.Line(
+      "#completedTasksChart",
+      { labels: finalLabels, series: [finalPurchase] },
+      {
+        lineSmooth: Chartist.Interpolation.cardinal({ tension: 0 }),
+        low: 0,
+        chartPadding: { top: 0, right: 0, bottom: 0, left: 0 },
+      },
+    );
+    this.startAnimationForLineChart(purchaseChart);
+  }
+
   onShopChange(event: any) {
     const shopId = event.target.value;
     const selectedShopObj = this.shops.find((shop: any) => shop._id === shopId);
-    this.shopService.setSelectedShop(shopId, selectedShopObj?.shopCode || null);
+    if (shopId) {
+      this.shopService.setSelectedShop(shopId, selectedShopObj?.shopCode || null);
+    } else {
+      this.shopService.clearSelectedShop();
+    }
     this.selectedShop = shopId;
 
-    console.log("Selected Shop:", shopId);
+    this.loadKpis();
+    this.loadTrends();
+    this.loadInventorySummary();
+    this.loadPurchaseAnalytics();
+  }
 
-    // Yaha future me dashboard reload logic add kar sakte ho
+  goToProducts(): void {
+    this.router.navigateByUrl("/item-list");
+  }
+
+  private extractCount(response: any, arrayKeys: string[] = ["data", "items"]): number {
+    if (typeof response?.total === "number") return response.total;
+    if (typeof response?.totalItems === "number") return response.totalItems;
+    if (typeof response?.count === "number") return response.count;
+    if (typeof response?.pagination?.total === "number") return response.pagination.total;
+    for (const key of arrayKeys) {
+      if (Array.isArray(response?.[key])) return response[key].length;
+    }
+    if (Array.isArray(response)) return response.length;
+    return 0;
+  }
+
+  private renderPurchaseAnalyticsChart(): void {
+    const values = [
+      Number(this.purchaseAnalytics?.today?.totalAmount || 0),
+      Number(this.purchaseAnalytics?.weekly?.totalAmount || 0),
+      Number(this.purchaseAnalytics?.monthly?.totalAmount || 0),
+    ];
+
+    const chart = new Chartist.Bar(
+      "#purchaseAnalyticsChart",
+      {
+        labels: ["Today", "Weekly", "Monthly"],
+        series: [values],
+      },
+      {
+        axisX: { showGrid: false },
+        low: 0,
+        chartPadding: { top: 0, right: 8, bottom: 0, left: 0 },
+      },
+    );
+    this.startAnimationForBarChart(chart);
   }
 }

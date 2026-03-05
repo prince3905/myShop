@@ -31,6 +31,11 @@ export class ItemsListComponent implements OnInit {
   searchInput: string;
   searchInputSubject = new Subject<string>();
   loading: boolean = true;
+  summaryCounts = {
+    products: 0,
+    categories: 0,
+    brands: 0,
+  };
 
   productId: string;
   isEditMode = false;
@@ -69,6 +74,7 @@ export class ItemsListComponent implements OnInit {
     this.productService.getAllProducts().subscribe((res: any) => {
       this.allItems = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
       this.items = [...this.allItems];
+      this.summaryCounts.products = this.allItems.length;
       console.log("All Products", this.items);
 
       this.allItems.forEach((item: any) => {
@@ -148,6 +154,8 @@ export class ItemsListComponent implements OnInit {
       next: (response: any) => {
         this.Category = this.extractList(response?.categories);
         this.Brands = this.extractList(response?.brands);
+        this.summaryCounts.categories = this.Category.length;
+        this.summaryCounts.brands = this.Brands.length;
       },
       error: (error) => console.error("Error retrieving category/brand:", error),
     });
@@ -382,6 +390,31 @@ export class ItemsListComponent implements OnInit {
 
   viewItemDetails(itemId: string) {
     this.router.navigate(["/item-details", itemId]);
+  }
+
+  viewItemModelDetails(itemId: string, variation: any): void {
+    const modelId = variation?.model?._id || variation?.model || null;
+    if (!modelId) {
+      this.viewItemDetails(itemId);
+      return;
+    }
+    this.router.navigate(["/item-details", itemId], {
+      queryParams: { model: modelId },
+    });
+  }
+
+  onSummaryProductsClick(): void {
+    this.onClear();
+  }
+
+  onSummaryCategoryFilter(): void {
+    this.selectedOption = "category";
+    this.onFilterModeChange();
+  }
+
+  onSummaryBrandFilter(): void {
+    this.selectedOption = "brand";
+    this.onFilterModeChange();
   }
 
   editProduct(id: string) {

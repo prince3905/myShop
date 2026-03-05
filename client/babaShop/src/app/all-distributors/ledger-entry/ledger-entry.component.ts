@@ -16,6 +16,7 @@ export class LedgerEntryComponent implements OnInit {
   type!: string;
   loading = false;
   canSubmit = true;
+  readonly paymentModes = ["CASH", "BANK", "ONLINE", "UPI", "CARD", "CHEQUE"];
 
   constructor(
     private fb: FormBuilder,
@@ -32,7 +33,7 @@ export class LedgerEntryComponent implements OnInit {
 
     this.form = this.fb.group({
       amount: [null, [Validators.required, Validators.min(1)]],
-      paymentMode: [''],
+      paymentMode: ['CASH'],
       note: ['']
     });
 

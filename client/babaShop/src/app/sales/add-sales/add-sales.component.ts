@@ -1,4 +1,4 @@
-import { Component, OnInit } from "@angular/core";
+import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, ViewChild } from "@angular/core";
 import { MatDialogRef } from "@angular/material/dialog";
 import { MatSnackBar } from "@angular/material/snack-bar";
 import { BrandService } from "app/shared/services/brand.service";
@@ -6,6 +6,7 @@ import { CategoryService } from "app/shared/services/category.service";
 import { ItemService } from "app/shared/services/item.service";
 import { SalesService } from "app/shared/services/sales.service";
 import { StocksService } from "app/shared/services/stocks.service";
+import { VariationService } from "app/shared/services/variation.service";
 import { forkJoin } from "rxjs";
 
 @Component({
@@ -13,7 +14,7 @@ import { forkJoin } from "rxjs";
   templateUrl: "./add-sales.component.html",
   styleUrls: ["./add-sales.component.css"],
 })
-export class AddSalesComponent implements OnInit {
+export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
   Category: any = [];
   Brands: any = [];
   selectedCategory: string = "";
@@ -30,6 +31,10 @@ export class AddSalesComponent implements OnInit {
   color: string;
   purchasePrice: number;
   description: string = "";
+  billDiscount: number = 0;
+  paidAmount: number = 0;
+  paymentMethod: "CASH" | "UPI" | "CARD" | "BANK" | "ONLINE" | "CREDIT" = "CASH";
+  readonly paymentMethods = ["CASH", "UPI", "CARD", "BANK", "ONLINE", "CREDIT"];
   Sales_added: any = {};
   final_Sales_data: any = {};
   Display_items: any = {};
@@ -44,6 +49,14 @@ export class AddSalesComponent implements OnInit {
   selectedModel: string = '';
   selectedVariation: string = '';
   selectedModelVariations: any[] = [];
+  selectedVariationId: string = "";
+  selectedProductId: string = "";
+  selectedModelId: string = "";
+  selectedVariationSku: string = "";
+  scannedBarcode: string = "";
+  private scanDebounceTimer: any = null;
+  private barcodeLookupLoading = false;
+  @ViewChild("barcodeInputRef") barcodeInputRef?: ElementRef<HTMLInputElement>;
 
   constructor(
     private category: CategoryService,
@@ -52,11 +65,23 @@ export class AddSalesComponent implements OnInit {
     private snackBar: MatSnackBar,
     public dialogRef: MatDialogRef<any>,
     private Sales: SalesService,
-    private stock: StocksService
+    private stock: StocksService,
+    private variationService: VariationService,
   ) {}
 
   ngOnInit(): void {
     // this.getCategoryAndBrand();
+  }
+
+  ngAfterViewInit(): void {
+    setTimeout(() => this.focusBarcodeInput(), 120);
+  }
+
+  ngOnDestroy(): void {
+    if (this.scanDebounceTimer) {
+      clearTimeout(this.scanDebounceTimer);
+      this.scanDebounceTimer = null;
+    }
   }
 
   fetchSuggestions(): void {
@@ -135,12 +160,21 @@ export class AddSalesComponent implements OnInit {
       console.log(selectedVariationObject)
       this.size = selectedVariationObject.size;
       this.color = selectedVariationObject.color;
+      this.selectedVariationId = selectedVariationObject._id || "";
+      this.selectedVariationSku = selectedVariationObject.sku || selectedVariationObject.orderNumber || "";
+      this.selectedProductId = selectedVariationObject.product?._id || selectedVariationObject.product || "";
+      this.selectedModelId =
+        selectedVariationObject.model?._id || selectedVariationObject.model || this.selectedModelId;
       console.log("Selected Variation: ", selectedVariation);
       console.log("Selected Size: ", this.size);
       console.log("Selected Color: ", this.color);
     } else {
       this.size = ''; // Clear the size field
       this.color = ''; // Clear the color field
+      this.selectedVariationId = "";
+      this.selectedVariationSku = "";
+      this.selectedProductId = "";
+      this.selectedModelId = "";
     }
   }
 
@@ -159,6 +193,71 @@ export class AddSalesComponent implements OnInit {
   selectModSuggestion(suggestion: string): void {
     this.model = suggestion;
     this.model_suggestions = [];
+  }
+
+  onBarcodeScan(): void {
+    const code = (this.scannedBarcode || "").trim();
+    if (!code || this.barcodeLookupLoading) return;
+
+    this.barcodeLookupLoading = true;
+
+    this.variationService.getVariations({ barcode: code, limit: 1, skip: 0 }).subscribe({
+      next: (res: any) => {
+        const row = Array.isArray(res?.data) ? res.data[0] : null;
+        if (!row) {
+          this.snackBar.open("No variation found for this barcode", "Close", {
+            duration: 2500,
+          });
+          this.barcodeLookupLoading = false;
+          return;
+        }
+
+        this.itemName = row?.product?.name || this.itemName;
+        this.model = row?.model?.name || this.model;
+        this.color = row?.attributes?.color || "";
+        this.size = row?.attributes?.size || "";
+        this.purchasePrice = Number(row?.sellingPrice || 0);
+        this.selectedVariationId = row?._id || "";
+        this.selectedVariationSku = row?.sku || "";
+        this.selectedProductId = row?.product?._id || row?.product || "";
+        this.selectedModelId = row?.model?._id || row?.model || "";
+        this.variations = row?.sku || "";
+        if (!this.quantity || this.quantity < 1) {
+          this.quantity = 1;
+        }
+
+        this.snackBar.open(`Loaded: ${row?.sku || code}`, "Close", {
+          duration: 1800,
+        });
+        this.barcodeLookupLoading = false;
+        this.scannedBarcode = "";
+        this.focusBarcodeInput();
+      },
+      error: () => {
+        this.snackBar.open("Barcode search failed", "Close", { duration: 2500 });
+        this.barcodeLookupLoading = false;
+        this.focusBarcodeInput();
+      },
+    });
+  }
+
+  onBarcodeInputChange(): void {
+    const code = (this.scannedBarcode || "").trim();
+    if (!code) return;
+
+    if (this.scanDebounceTimer) {
+      clearTimeout(this.scanDebounceTimer);
+    }
+    this.scanDebounceTimer = setTimeout(() => {
+      this.onBarcodeScan();
+    }, 140);
+  }
+
+  private focusBarcodeInput(): void {
+    try {
+      this.barcodeInputRef?.nativeElement?.focus();
+      this.barcodeInputRef?.nativeElement?.select();
+    } catch (err) {}
   }
 
   // getCategoryAndBrand(): void {
@@ -288,7 +387,11 @@ export class AddSalesComponent implements OnInit {
                           purchasePrice: this.purchasePrice,
                           model: this.model,
                           size: this.size,
-                          variations: this.variations
+                          variations: this.selectedVariationSku || this.variations,
+                          variationId: this.selectedVariationId || null,
+                          variationSku: this.selectedVariationSku || this.variations || null,
+                          productId: this.selectedProductId || null,
+                          modelId: this.selectedModelId || null,
                         },
                       ],
                       totalPurchasePrice: this.quantity * this.purchasePrice,
@@ -305,7 +408,11 @@ export class AddSalesComponent implements OnInit {
                       purchasePrice: this.purchasePrice,
                       model: this.model,
                       size: this.size,
-                      variations: this.variations
+                      variations: this.selectedVariationSku || this.variations,
+                      variationId: this.selectedVariationId || null,
+                      variationSku: this.selectedVariationSku || this.variations || null,
+                      productId: this.selectedProductId || null,
+                      modelId: this.selectedModelId || null,
                     });
                     customerSales.totalPurchasePrice += this.quantity * this.purchasePrice;
                     customerSales.totalQuantity += this.quantity;
@@ -313,6 +420,9 @@ export class AddSalesComponent implements OnInit {
                   this.final_Sales_data = {
                     customerName: this.customerName,
                     items: customerSales.items,
+                    billDiscount: Number(this.billDiscount || 0),
+                    paidAmount: Number(this.paidAmount || 0),
+                    paymentMethod: this.paymentMethod || "CASH",
                   };
 
               // this.totalPurchasePrice = customerSales.totalPurchasePrice;
@@ -347,6 +457,14 @@ export class AddSalesComponent implements OnInit {
               }
             }
 
+            getNetTotal(): number {
+              return Math.max(0, Number(this.totalPurchasePrice || 0) - Number(this.billDiscount || 0));
+            }
+
+            getDueAmount(): number {
+              return Math.max(0, this.getNetTotal() - Number(this.paidAmount || 0));
+            }
+
 
 
 
@@ -376,27 +494,61 @@ export class AddSalesComponent implements OnInit {
 
               //     ]
               // }
+              if (!Array.isArray(this.Display_items) || this.Display_items.length === 0) {
+                this.snackBar.open("Add at least one item before save", "Close", {
+                  duration: 2500,
+                });
+                return;
+              }
+
+              const net = this.getNetTotal();
+              if (Number(this.paidAmount || 0) > net) {
+                this.snackBar.open("Paid amount cannot be greater than net total", "Close", {
+                  duration: 2600,
+                });
+                return;
+              }
+
+              this.final_Sales_data = {
+                customerName: this.customerName || "Walk-in",
+                items: (this.Display_items || []).map((it: any) => ({
+                  itemName: it?.itemName,
+                  category: it?.category || null,
+                  brand: it?.brand || null,
+                  quantity: Number(it?.quantity || 0),
+                  purchasePrice: Number(it?.purchasePrice || 0),
+                  model: it?.model || "",
+                  size: it?.size || "",
+                  variations: it?.variations || it?.variationSku || null,
+                  variationId: it?.variationId || null,
+                  variationSku: it?.variationSku || it?.variations || null,
+                  productId: it?.productId || null,
+                  modelId: it?.modelId || null,
+                })),
+                billDiscount: Number(this.billDiscount || 0),
+                paidAmount: Number(this.paidAmount || 0),
+                paymentMethod: this.paymentMethod || "CASH",
+              };
+
               console.log("Submitting Sales Data:", this.final_Sales_data);
-              // this.Sales.addSales(this.final_Sales_data).subscribe(
-              //   (response: any) => {
-              //     console.log(response);
-              //     this.snackBar.open(response.message, "Close", {
-              //       duration: 5000,
-              //       horizontalPosition: "center",
-              //       verticalPosition: "bottom",
-              //     });
-              //     this.dialogRef.close();
-              //   },
-              //   (error: any) => {
-              //     console.error("Error adding Sales item:", error);
-              //     this.snackBar.open("Failed to add Sales item.", "Close", {
-              //       duration: 5000,
-              //       horizontalPosition: "center",
-              //       verticalPosition: "bottom",
-              //     });
-              //     this.dialogRef.close();
-              //   }
-              // );
+              this.Sales.addSales(this.final_Sales_data).subscribe(
+                (response: any) => {
+                  this.snackBar.open(response?.message || "Sale saved", "Close", {
+                    duration: 3200,
+                    horizontalPosition: "center",
+                    verticalPosition: "bottom",
+                  });
+                  this.dialogRef.close(true);
+                },
+                (error: any) => {
+                  console.error("Error adding Sales item:", error);
+                  this.snackBar.open(error?.error?.message || "Failed to add sales item", "Close", {
+                    duration: 4000,
+                    horizontalPosition: "center",
+                    verticalPosition: "bottom",
+                  });
+                }
+              );
             }
 
 

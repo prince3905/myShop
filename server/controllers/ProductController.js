@@ -2,9 +2,58 @@ const Product = require("../models/Product");
 const slugify = require("slugify");
 const ProductVariation = require("../models/ProductVariation");
 const ProductModel = require("../models/ProductModel");
+const Stock = require("../models/Stock");
+const Sale = require("../models/CustomerSale");
+const Order = require("../models/Order");
+const Purchase = require("../models/Purchase");
+const StockTransaction = require("../models/StockTransaction");
 
 const isSuperAdminGlobal = (req) =>
   req.user?.role === "SUPER_ADMIN" && !req.shopId;
+
+const getProductUsageSummary = async ({ productId, shopId, variationIds = [] }) => {
+  const hasVariationIds = Array.isArray(variationIds) && variationIds.length > 0;
+  const variationClause = hasVariationIds
+    ? { "items.variationId": { $in: variationIds } }
+    : null;
+  const purchaseVariationClause = hasVariationIds
+    ? { "items.variation": { $in: variationIds } }
+    : null;
+
+  const saleQuery = {
+    shop: shopId,
+    $or: [{ "items.item": productId }, ...(variationClause ? [variationClause] : [])],
+  };
+  const orderQuery = {
+    shop: shopId,
+    $or: [{ "items.item": productId }, ...(variationClause ? [variationClause] : [])],
+  };
+  const purchaseQuery = {
+    shop: shopId,
+    $or: [
+      { "items.product": productId },
+      ...(purchaseVariationClause ? [purchaseVariationClause] : []),
+    ],
+  };
+  const stockTxQuery = {
+    shop: shopId,
+    $or: [{ product: productId }, ...(hasVariationIds ? [{ variation: { $in: variationIds } }] : [])],
+  };
+
+  const [saleCount, orderCount, purchaseCount, stockTxCount] = await Promise.all([
+    Sale.countDocuments(saleQuery),
+    Order.countDocuments(orderQuery),
+    Purchase.countDocuments(purchaseQuery),
+    StockTransaction.countDocuments(stockTxQuery),
+  ]);
+
+  return {
+    saleCount: Number(saleCount || 0),
+    orderCount: Number(orderCount || 0),
+    purchaseCount: Number(purchaseCount || 0),
+    stockTxCount: Number(stockTxCount || 0),
+  };
+};
 
 /* =========================
    CREATE PRODUCT
@@ -254,18 +303,67 @@ exports.deleteProduct = async (req, res) => {
       });
     }
 
-    // Delete variations
-    await ProductVariation.deleteMany({ product: id, shop: req.shopId });
+    const [variationDocs, modelDocs] = await Promise.all([
+      ProductVariation.find({ product: id, shop: req.shopId }).select("_id"),
+      ProductModel.find({ product: id, shop: req.shopId }).select("_id"),
+    ]);
+    const variationIds = variationDocs.map((v) => v._id);
+    const modelIds = modelDocs.map((m) => m._id);
 
-    // Delete models
-    await ProductModel.deleteMany({ product: id, shop: req.shopId });
+    const usage = await getProductUsageSummary({
+      productId: product._id,
+      shopId: req.shopId,
+      variationIds,
+    });
+    const hasUsage =
+      usage.saleCount > 0 ||
+      usage.orderCount > 0 ||
+      usage.purchaseCount > 0;
 
-    // Delete product
-    await Product.findOneAndDelete({ _id: id, shop: req.shopId });
+    if (hasUsage) {
+      return res.status(409).json({
+        success: false,
+        message:
+          "Cannot delete this product because transactions exist. Deactivate it instead.",
+        usage,
+      });
+    }
+
+    // Clean stock layer first to avoid orphan rows.
+    await Promise.all([
+      Stock.deleteMany({
+        shop: req.shopId,
+        $or: [{ product: id }, ...(variationIds.length ? [{ variation: { $in: variationIds } }] : [])],
+      }),
+      StockTransaction.deleteMany({
+        shop: req.shopId,
+        $or: [{ product: id }, ...(variationIds.length ? [{ variation: { $in: variationIds } }] : [])],
+      }),
+    ]);
+
+    // Delete linked catalog data.
+    await Promise.all([
+      ProductVariation.deleteMany({
+        product: id,
+        shop: req.shopId,
+      }),
+      ProductModel.deleteMany({
+        product: id,
+        shop: req.shopId,
+      }),
+      Product.findOneAndDelete({
+        _id: id,
+        shop: req.shopId,
+      }),
+    ]);
 
     res.status(200).json({
       success: true,
-      message: "Product and all related data deleted successfully",
+      message: "Product and related records deleted successfully",
+      cleaned: {
+        models: modelIds.length,
+        variations: variationIds.length,
+      },
     });
   } catch (error) {
     res.status(500).json({

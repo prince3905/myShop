@@ -16,9 +16,9 @@ exports.createVariationValidation = [
   body("costPrice")
     .isNumeric().withMessage("Cost price must be number"),
 
-  body("stock")
+  body("quantity")
     .optional()
-    .isNumeric().withMessage("Stock must be number")
+    .isNumeric().withMessage("Quantity must be number")
 ];
 
 exports.updateVariationValidation = [
@@ -30,7 +30,7 @@ exports.updateVariationValidation = [
     .optional()
     .isNumeric().withMessage("Cost price must be number"),
 
-  body("stock")
+  body("quantity")
     .optional()
-    .isNumeric().withMessage("Stock must be number")
+    .isNumeric().withMessage("Quantity must be number")
 ];

@@ -21,6 +21,37 @@ const saleItemSchema = new mongoose.Schema(
       trim: true,
     },
 
+    // Snapshot fields for legacy/UI display stability
+    itemName: {
+      type: String,
+      trim: true,
+    },
+
+    model: {
+      type: String,
+      trim: true,
+    },
+
+    size: {
+      type: String,
+      trim: true,
+    },
+
+    color: {
+      type: String,
+      trim: true,
+    },
+
+    categoryName: {
+      type: String,
+      trim: true,
+    },
+
+    brandName: {
+      type: String,
+      trim: true,
+    },
+
     quantity: {
       type: Number,
       required: true,
@@ -78,6 +109,13 @@ const saleSchema = new mongoose.Schema(
       ref: "Customer",
     },
 
+    // Legacy sales screen uses customerName directly
+    customerName: {
+      type: String,
+      trim: true,
+      index: true,
+    },
+
     items: [saleItemSchema],
 
     totalQuantity: {
@@ -104,8 +142,20 @@ const saleSchema = new mongoose.Schema(
 
     paymentMethod: {
       type: String,
-      enum: ["CASH", "UPI", "CARD", "CREDIT"],
+      enum: ["CASH", "UPI", "CARD", "BANK", "ONLINE", "CREDIT"],
       default: "CASH",
+    },
+
+    paidAmount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
+    dueAmount: {
+      type: Number,
+      default: 0,
+      min: 0,
     },
 
     orderSource: {

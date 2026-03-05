@@ -1,255 +1,602 @@
-import { ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit } from "@angular/core";
+import { PageEvent } from "@angular/material/paginator";
+import { StocksService } from "app/shared/services/stocks.service";
+import { AuthService } from "app/shared/services/auth.service";
+import { Router } from "@angular/router";
+import { ProductService } from "app/shared/services/product.service";
+import { MatSnackBar } from "@angular/material/snack-bar";
+import { DistributorService } from "app/shared/services/distributor.service";
+import { PurchaseService } from "app/shared/services/purchase.service";
+import { firstValueFrom } from "rxjs";
 import { MatDialog } from "@angular/material/dialog";
-
-import { ActivatedRoute, NavigationExtras, Router } from "@angular/router";
-import { FormControl, Validators } from "@angular/forms";
-import { BrandService } from "app/shared/services/brand.service";
-import { CategoryService } from "app/shared/services/category.service";
-import { Subject, forkJoin } from "rxjs";
-import { StocksService } from 'app/shared/services/stocks.service';
-import { ItemService } from 'app/shared/services/item.service';
-import { MatPaginator, PageEvent } from '@angular/material/paginator';
-
+import { StockReorderPreviewDialogComponent } from "./stock-reorder-preview-dialog.component";
 
 @Component({
-  selector: 'stocks',
-  templateUrl: './stocks.component.html',
-  styleUrls: ['./stocks.component.css']
+  selector: "stocks",
+  templateUrl: "./stocks.component.html",
+  styleUrls: ["./stocks.component.css"],
 })
 export class StocksComponent implements OnInit {
-  panelOpenState = false;
-  Category: any = [];
-  Brands: any = [];
-  stocks: any = [];
-  name: string;
-  category: string;
-  brand: string;
-  itemName: string = "";
-  startDate: Date;
-  endDate: Date;
-  searchInput: string;
-  searchInputSubject = new Subject<string>();
-  loading: boolean = true;
+  loading = false;
+  isSuperAdmin = false;
+  currentScopeLabel = "Shop Wise";
 
-  selectedOption: string;
-  selectedCategory: string;
-  selectedBrand: string;
+  rows: any[] = [];
+  totalItems = 0;
 
-  searchParams = {};
-  suggestions: string[] = [];
+  page = 1;
+  pageSize = 20;
+  pageSizeOptions: number[] = [10, 20, 50, 100];
 
-  pageSize = 10; // Number of items per page
-  pageSizeOptions: number[] = [5, 10, 25, 50];
-  paginatedItems: any[] = [];
-  totalItems: number;
+  search = "";
+  lowStockOnly = false;
+  sortBy = "updatedAt";
+  order: "asc" | "desc" = "desc";
 
-  @ViewChild(MatPaginator) paginator: MatPaginator;
+  summary: any = {
+    totalQuantity: 0,
+    totalReserved: 0,
+    totalDamaged: 0,
+    totalCostValue: 0,
+    lowStockCount: 0,
+  };
+
+  txLoading = false;
+  txRows: any[] = [];
+  txTotalItems = 0;
+  txPage = 1;
+  txPageSize = 10;
+  txPageSizeOptions: number[] = [10, 20, 50, 100];
+  txFilters: {
+    search: string;
+    type: string | null;
+    referenceType: string | null;
+  } = {
+    search: "",
+    type: null,
+    referenceType: null,
+  };
+
+  products: any[] = [];
+  distributors: any[] = [];
+  reorderDistributorId: string | null = null;
+  reorderingIds: Record<string, boolean> = {};
+  bulkReorderSaving = false;
+  adjustSaving = false;
+  adjustModelOptions: any[] = [];
+  adjustVariationOptions: any[] = [];
+  adjustForm: {
+    product: string | null;
+    model: string | null;
+    variation: string | null;
+    type: "IN" | "OUT" | "ADJUSTMENT";
+    quantity: number | null;
+    note: string;
+  } = {
+    product: null,
+    model: null,
+    variation: null,
+    type: "ADJUSTMENT",
+    quantity: null,
+    note: "",
+  };
 
   constructor(
-    public dialog: MatDialog,
-    private stock: StocksService,
+    private stocksService: StocksService,
+    private authService: AuthService,
+    private productService: ProductService,
+    private distributorService: DistributorService,
+    private purchaseService: PurchaseService,
+    private dialog: MatDialog,
+    private snackBar: MatSnackBar,
     private router: Router,
-    private Router: ActivatedRoute,
-    private categoryS: CategoryService,
-    private brandS: BrandService,
-    private item: ItemService,
-    private cdr: ChangeDetectorRef
-  ) { }
+  ) {}
 
   ngOnInit(): void {
-    this.getStocks(null)
-    // this.getCategoryAndBrand();
-    this.updatePaginatedItems();
+    const user = this.authService.getCurrentUser() || {};
+    this.isSuperAdmin = user?.role === "SUPER_ADMIN";
+    this.currentScopeLabel =
+      this.isSuperAdmin && !user?.shop ? "Global (All Shops)" : "Shop Wise";
+
+    this.loadStocks();
+    this.loadTransactions();
+    this.loadProductsForAdjust();
+    this.loadDistributorsForReorder();
   }
 
-  ngAfterViewInit(): void {
-    this.paginator.page.subscribe(() => this.updatePaginatedItems());
-    // console.log(this.paginator)
-    this.updatePaginatedItems();
-    // console.log(this.updatePaginatedItems)
+  get canAdjustStock(): boolean {
+    const role = this.authService.getUserRole();
+    return ["SUPER_ADMIN", "ADMIN", "MANAGER"].includes(role || "");
   }
 
-  getQueryParams(): any {
-    let queryParamsObj: any = {
-      page: this.paginator.pageIndex + 1,
-      perPage: this.pageSize,
+  get canCreateReorderDraft(): boolean {
+    const role = this.authService.getUserRole();
+    return ["SUPER_ADMIN", "ADMIN", "MANAGER"].includes(role || "");
+  }
+
+  loadStocks(): void {
+    this.loading = true;
+
+    const params: any = {
+      page: this.page,
+      limit: this.pageSize,
+      search: this.search?.trim() || "",
+      lowStock: this.lowStockOnly,
+      sortBy: this.sortBy,
+      order: this.order,
     };
-    if (this.selectedOption === "name") {
-      queryParamsObj.name = this.itemName;
-      queryParamsObj.category = this.selectedCategory;
-      queryParamsObj.brand = this.selectedBrand;
-    } else if (this.selectedOption === "category") {
-      queryParamsObj.category = this.selectedCategory;
-      queryParamsObj.brand = this.selectedBrand;
-    } else if (this.selectedOption === "brand") {
-      queryParamsObj.brand = this.selectedBrand;
-    } else if (this.selectedOption === "date") {
-      queryParamsObj.startDate = this.startDate.toISOString().slice(0, 10);
-      queryParamsObj.endDate = this.endDate.toISOString().slice(0, 10);
-    }
-    return queryParamsObj;
+
+    this.stocksService.getStocks(params).subscribe({
+      next: (res: any) => {
+        this.rows = Array.isArray(res?.stockReport) ? res.stockReport : [];
+        this.totalItems = Number(res?.total || 0);
+        this.summary = {
+          totalQuantity: Number(res?.summary?.totalQuantity || 0),
+          totalReserved: Number(res?.summary?.totalReserved || 0),
+          totalDamaged: Number(res?.summary?.totalDamaged || 0),
+          totalCostValue: Number(res?.summary?.totalCostValue || 0),
+          lowStockCount: Number(res?.summary?.lowStockCount || 0),
+        };
+        this.loading = false;
+      },
+      error: () => {
+        this.rows = [];
+        this.totalItems = 0;
+        this.loading = false;
+      },
+    });
+  }
+
+  onSearch(): void {
+    this.page = 1;
+    this.loadStocks();
+  }
+
+  onClear(): void {
+    this.search = "";
+    this.lowStockOnly = false;
+    this.sortBy = "updatedAt";
+    this.order = "desc";
+    this.page = 1;
+    this.loadStocks();
   }
 
   onPageChange(event: PageEvent): void {
-    // console.log(event)
+    this.page = event.pageIndex + 1;
     this.pageSize = event.pageSize;
-    const queryParamsObj = this.getQueryParams();
-    this.getStocks(queryParamsObj);
-    const navigationExtras: NavigationExtras = {
-      relativeTo: this.Router,
-      queryParams: queryParamsObj,
-      queryParamsHandling: "merge",
-    };
-    this.router.navigate([], navigationExtras);
-    this.paginatedItems = this.stocks.slice(
-      event.pageIndex * this.pageSize,
-      event.pageIndex * this.pageSize + this.pageSize
-    );
+    this.loadStocks();
   }
 
+  loadTransactions(): void {
+    this.txLoading = true;
 
-  fetchSuggestions(): void {
-    this.item.getItemSuggestion(this.itemName).subscribe(
-      (suggestions: any[]) => {
-        this.suggestions = suggestions;
-        console.log(this.suggestions);
+    const params: any = {
+      page: this.txPage,
+      limit: this.txPageSize,
+      search: this.txFilters.search?.trim() || "",
+      type: this.txFilters.type || undefined,
+      referenceType: this.txFilters.referenceType || undefined,
+    };
+
+    this.stocksService.getTransactions(params).subscribe({
+      next: (res: any) => {
+        this.txRows = Array.isArray(res?.data) ? res.data : [];
+        this.txTotalItems = Number(res?.total || 0);
+        this.txLoading = false;
       },
-      (error: any) => {
-        console.error("Error fetching suggestions:", error);
-      }
-    );
-  }
-
-  // getCategoryAndBrand(): void {
-  //   forkJoin({
-  //     categories: this.categoryS.getCategory(),
-  //     brands: this.brandS.getBrand(),
-  //   }).subscribe(
-  //     (response) => {
-  //       this.Category = response.categories;
-  //       this.Brands = response.brands;
-  //       console.log("All Categories:", this.Category);
-  //       console.log("All Brands:", this.Brands);
-  //     },
-  //     (error) => {
-  //       console.error("Error retrieving data:", error);
-  //     }
-  //   );
-  // }
-
-  selectSuggestion(suggestion: string): void {
-    this.itemName = suggestion;
-    this.suggestions = [];
-  }
-
-  onSearch(page: number, perPage: number) {
-    this.paginator.pageIndex = 0;
-    let queryParamsObj: any = {
-      page: 1,
-      perPage: perPage,
-    };
-
-
-    if (this.selectedOption === "name") {
-      // console.log("Selected Name:", this.itemName);
-      // console.log("Selected Category:", this.selectedCategory);
-      // console.log("Selected Brand:", this.selectedBrand);
-
-      queryParamsObj = {
-        ...queryParamsObj,
-        name: this.itemName,
-        category: this.selectedCategory,
-        brand: this.selectedBrand,
-      };
-    } else if (this.selectedOption === "category") {
-      console.log("Selected Category:", this.selectedCategory);
-      console.log("Selected Brand:", this.selectedBrand);
-
-      queryParamsObj = {
-        ...queryParamsObj,
-        name: null,
-        category: this.selectedCategory,
-        brand: this.selectedBrand,
-      };
-    } else if (this.selectedOption === "brand") {
-      console.log("Selected Brand:", this.selectedBrand);
-
-      queryParamsObj = {
-        ...queryParamsObj,
-        name: null,
-        category: null,
-        brand: this.selectedBrand,
-      };
-    }
-    console.log("Query Parameters:", queryParamsObj);
-
-    // Now navigate with the queryParamsObj
-    const navigationExtras: NavigationExtras = {
-      relativeTo: this.Router,
-      queryParams: queryParamsObj,
-      queryParamsHandling: "merge",
-    };
-
-    this.router.navigate([], navigationExtras);
-    this.getStocks(queryParamsObj);
-  }
-
-  onClear() {
-    // Reset all query parameters to null before setting new ones
-    this.itemName = null;
-    this.selectedCategory = null;
-    this.selectedBrand = null;
-    this.startDate = null;
-    this.endDate = null;
-    this.router.navigate([], {
-      relativeTo: this.Router,
-      queryParams: {
-        name: null,
-        category: null,
-        brand: null,
+      error: () => {
+        this.txRows = [];
+        this.txTotalItems = 0;
+        this.txLoading = false;
       },
-      queryParamsHandling: "merge",
     });
-    this.getStocks(null);
-    this.suggestions = null
   }
 
-  getStocks(queryParamsObj): void {
-    this.loading = true;
-    this.stock.getStocks(queryParamsObj).subscribe(
-      (response: any) => {
-        this.stocks = response.stockReport;
-        console.log("All items here", this.stocks);
-        this.totalItems = response.totalItems;
-        this.paginatedItems = this.stocks.slice(0, this.pageSize);
-        this.loading = false;
-        this.cdr.detectChanges();
+  onTxApply(): void {
+    this.txPage = 1;
+    this.loadTransactions();
+  }
+
+  onTxReset(): void {
+    this.txFilters = {
+      search: "",
+      type: null,
+      referenceType: null,
+    };
+    this.txPage = 1;
+    this.loadTransactions();
+  }
+
+  onTxPageChange(event: PageEvent): void {
+    this.txPage = event.pageIndex + 1;
+    this.txPageSize = event.pageSize;
+    this.loadTransactions();
+  }
+
+  loadProductsForAdjust(): void {
+    this.productService.getAllProducts().subscribe({
+      next: (res: any) => {
+        this.products = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
       },
-
-      (error) => {
-        console.error("Error retrieving stocks:", error);
-        this.loading = true;
-        this.cdr.detectChanges();
-        // Handle error here (e.g., show error message to the user)
-      }
-    );
+      error: () => {
+        this.products = [];
+      },
+    });
   }
 
-  updatePaginatedItems(): void {
-    if (this.paginator) {
-      const startIndex = this.paginator.pageIndex * this.pageSize;
-      // console.log(startIndex)
-      this.paginatedItems = this.stocks.slice(
-        startIndex,
-        startIndex + this.pageSize
-      );
-      // console.log("if",this.paginatedItems)
-      this.cdr.detectChanges();
-    } else {
-      this.paginatedItems = [];
-      // console.log("else",this.paginatedItems)
+  loadDistributorsForReorder(): void {
+    this.distributorService.getDistributor({ page: 1, perPage: 200 }).subscribe({
+      next: (res: any) => {
+        this.distributors = Array.isArray(res?.distributors)
+          ? res.distributors
+          : Array.isArray(res?.distributor)
+            ? res.distributor
+          : Array.isArray(res?.data)
+            ? res.data
+            : [];
+      },
+      error: () => {
+        this.distributors = [];
+      },
+    });
+  }
+
+  onAdjustProductChange(): void {
+    this.adjustForm.model = null;
+    this.adjustForm.variation = null;
+    this.adjustVariationOptions = [];
+
+    const product = this.products.find((p: any) => `${p?._id}` === `${this.adjustForm.product}`);
+    const map = new Map<string, any>();
+    (product?.variations || []).forEach((v: any) => {
+      const modelId = `${v?.model?._id || v?.model || ""}`;
+      if (!modelId || map.has(modelId)) return;
+      map.set(modelId, {
+        _id: modelId,
+        name: v?.model?.name || "Model",
+      });
+    });
+    this.adjustModelOptions = Array.from(map.values());
+  }
+
+  onAdjustModelChange(): void {
+    this.adjustForm.variation = null;
+    const product = this.products.find((p: any) => `${p?._id}` === `${this.adjustForm.product}`);
+
+    this.adjustVariationOptions = (product?.variations || []).filter((v: any) => {
+      const modelId = `${v?.model?._id || v?.model || ""}`;
+      return modelId === `${this.adjustForm.model}`;
+    });
+  }
+
+  submitAdjustment(): void {
+    if (!this.canAdjustStock || this.adjustSaving) return;
+
+    if (!this.adjustForm.variation || !this.adjustForm.type || this.adjustForm.quantity === null) {
+      this.snackBar.open("Variation, type and quantity are required", "Close", { duration: 2600 });
+      return;
     }
+    if (Number(this.adjustForm.quantity) <= 0 && this.adjustForm.type !== "ADJUSTMENT") {
+      this.snackBar.open("Quantity must be greater than 0", "Close", { duration: 2600 });
+      return;
+    }
+
+    this.adjustSaving = true;
+    this.stocksService.manualAdjust({
+      variation: this.adjustForm.variation,
+      type: this.adjustForm.type,
+      quantity: Number(this.adjustForm.quantity || 0),
+      note: this.adjustForm.note || "",
+    }).subscribe({
+      next: () => {
+        this.adjustSaving = false;
+        this.snackBar.open("Stock adjusted successfully", "Close", { duration: 2400 });
+        this.adjustForm = {
+          product: null,
+          model: null,
+          variation: null,
+          type: "ADJUSTMENT",
+          quantity: null,
+          note: "",
+        };
+        this.adjustModelOptions = [];
+        this.adjustVariationOptions = [];
+        this.loadStocks();
+        this.loadTransactions();
+      },
+      error: (err) => {
+        this.adjustSaving = false;
+        this.snackBar.open(err?.error?.message || "Failed to adjust stock", "Close", {
+          duration: 3000,
+        });
+      },
+    });
   }
 
+  getSuggestedReorderQty(row: any): number {
+    const reorder = Number(row?.reorderLevel || 0);
+    const current = Number(row?.quantity || 0);
+    const gap = reorder - current;
+    return gap > 0 ? gap : 1;
+  }
 
+  createReorderDraft(row: any): void {
+    if (!this.canCreateReorderDraft) return;
+
+    if (!this.reorderDistributorId) {
+      this.snackBar.open("Select distributor first for reorder", "Close", { duration: 2600 });
+      return;
+    }
+
+    const variationId = row?.variation?._id || row?.variation;
+    if (!variationId) {
+      this.snackBar.open("Variation not found for selected stock row", "Close", { duration: 2600 });
+      return;
+    }
+
+    const rowId = `${row?._id || variationId}`;
+    if (this.reorderingIds[rowId]) return;
+    this.reorderingIds[rowId] = true;
+
+    const qty = this.getSuggestedReorderQty(row);
+    const purchasePrice = Number(row?.lastPurchasePrice || 0);
+
+    this.purchaseService.createDraft({
+      distributor: this.reorderDistributorId,
+      invoiceNo: "",
+      purchaseDate: new Date(),
+      discountAmount: 0,
+      paidAmount: 0,
+      paymentMethod: "CASH",
+      note: `Auto reorder draft from low stock for SKU ${row?.sku || row?.variation?.sku || "-"}`,
+      items: [
+        {
+          variation: variationId,
+          quantity: qty,
+          freeQuantity: 0,
+          purchasePrice,
+          taxPercent: 0,
+          discountAmount: 0,
+        },
+      ],
+    }).subscribe({
+      next: () => {
+        this.reorderingIds[rowId] = false;
+        this.snackBar.open("Reorder purchase draft created", "Close", { duration: 2600 });
+      },
+      error: (err) => {
+        this.reorderingIds[rowId] = false;
+        this.snackBar.open(err?.error?.message || "Failed to create reorder draft", "Close", {
+          duration: 3000,
+        });
+      },
+    });
+  }
+
+  async createBulkReorderDrafts(): Promise<void> {
+    if (!this.canCreateReorderDraft) return;
+    if (this.bulkReorderSaving) return;
+
+    if (!this.reorderDistributorId) {
+      this.snackBar.open("Select distributor first for bulk reorder", "Close", { duration: 2600 });
+      return;
+    }
+
+    const lowRows = this.rows.filter((r: any) => this.isLowStock(r));
+    if (!lowRows.length) {
+      this.snackBar.open("No low stock rows found for reorder", "Close", { duration: 2400 });
+      return;
+    }
+
+    const previewRows = lowRows.map((row: any) => ({
+      stockId: `${row?._id || row?.variation?._id || ""}`,
+      productName: row?.product?.name || "-",
+      modelName: row?.model?.name || "-",
+      sku: row?.sku || row?.variation?.sku || "-",
+      currentQty: Number(row?.quantity || 0),
+      reorderLevel: Number(row?.reorderLevel || 0),
+      suggestedQty: this.getSuggestedReorderQty(row),
+      selected: true,
+      variationId: row?.variation?._id || row?.variation,
+      purchasePrice: Number(row?.lastPurchasePrice || 0),
+    }));
+
+    const ref = this.dialog.open(StockReorderPreviewDialogComponent, {
+      width: "980px",
+      maxWidth: "96vw",
+      disableClose: true,
+      data: { rows: previewRows },
+    });
+    const result = await firstValueFrom(ref.afterClosed());
+    if (!result?.confirmed) return;
+    const selectedRows = Array.isArray(result?.rows) ? result.rows.filter((r: any) => r?.selected) : [];
+    if (!selectedRows.length) {
+      this.snackBar.open("No row selected for bulk reorder", "Close", { duration: 2400 });
+      return;
+    }
+
+    this.bulkReorderSaving = true;
+    let success = 0;
+    let failed = 0;
+
+    for (const row of selectedRows) {
+      const variationId = row?.variationId;
+      if (!variationId) {
+        failed += 1;
+        continue;
+      }
+
+      const rowId = `${row?.stockId || variationId}`;
+      this.reorderingIds[rowId] = true;
+
+      const qty = Math.max(1, Number(row?.suggestedQty || 1));
+      const purchasePrice = Number(row?.purchasePrice || 0);
+
+      try {
+        await firstValueFrom(
+          this.purchaseService.createDraft({
+            distributor: this.reorderDistributorId,
+            invoiceNo: "",
+            purchaseDate: new Date(),
+            discountAmount: 0,
+            paidAmount: 0,
+            paymentMethod: "CASH",
+            note: `Auto bulk reorder draft from low stock for SKU ${row?.sku || "-"}`,
+            items: [
+              {
+                variation: variationId,
+                quantity: qty,
+                freeQuantity: 0,
+                purchasePrice,
+                taxPercent: 0,
+                discountAmount: 0,
+              },
+            ],
+          }),
+        );
+        success += 1;
+      } catch (e) {
+        failed += 1;
+      } finally {
+        this.reorderingIds[rowId] = false;
+      }
+    }
+
+    this.bulkReorderSaving = false;
+    this.snackBar.open(`Bulk reorder done. Success: ${success}, Failed: ${failed}`, "Close", {
+      duration: 3600,
+    });
+  }
+
+  getAvailableQty(row: any): number {
+    if (typeof row?.availableQuantity === "number") return Number(row.availableQuantity);
+    const qty = Number(row?.quantity || 0);
+    const reserved = Number(row?.reservedQuantity || 0);
+    const damaged = Number(row?.damagedQuantity || 0);
+    return Math.max(0, qty - reserved - damaged);
+  }
+
+  getStockValue(row: any): number {
+    return Number(row?.quantity || 0) * Number(row?.lastPurchasePrice || 0);
+  }
+
+  isLowStock(row: any): boolean {
+    return Number(row?.quantity || 0) <= Number(row?.reorderLevel || 0);
+  }
+
+  goToPurchase(): void {
+    this.router.navigateByUrl("/purchase");
+  }
+
+  goToProducts(): void {
+    this.router.navigateByUrl("/item-list");
+  }
+
+  exportStockCsv(): void {
+    if (!this.rows.length) {
+      this.snackBar.open("No stock rows to export", "Close", { duration: 2200 });
+      return;
+    }
+
+    const headers = [
+      "Product",
+      "Model",
+      "SKU",
+      "Storage",
+      "Color",
+      "Size",
+      "Quantity",
+      "Reserved",
+      "Damaged",
+      "Available",
+      "Reorder",
+      "CostPrice",
+      "StockValue",
+      "Status",
+    ];
+
+    const lines = this.rows.map((row: any) => {
+      const storage = row?.variation?.attributes?.storage || "";
+      const color = row?.variation?.attributes?.color || "";
+      const size = row?.variation?.attributes?.size || "";
+      return [
+        row?.product?.name || "",
+        row?.model?.name || "",
+        row?.sku || row?.variation?.sku || "",
+        storage,
+        color,
+        size,
+        Number(row?.quantity || 0),
+        Number(row?.reservedQuantity || 0),
+        Number(row?.damagedQuantity || 0),
+        this.getAvailableQty(row),
+        Number(row?.reorderLevel || 0),
+        Number(row?.lastPurchasePrice || 0),
+        this.getStockValue(row),
+        this.isLowStock(row) ? "LOW" : "OK",
+      ];
+    });
+
+    this.downloadCsv("stock-report", headers, lines);
+  }
+
+  exportTransactionsCsv(): void {
+    if (!this.txRows.length) {
+      this.snackBar.open("No transactions to export", "Close", { duration: 2200 });
+      return;
+    }
+
+    const headers = [
+      "DateTime",
+      "SKU",
+      "Product",
+      "Model",
+      "Type",
+      "ReferenceType",
+      "ReferenceId",
+      "Quantity",
+      "DeltaQuantity",
+      "PreviousQuantity",
+      "NewQuantity",
+      "CreatedBy",
+      "Note",
+    ];
+
+    const lines = this.txRows.map((tx: any) => [
+      tx?.createdAt ? new Date(tx.createdAt).toISOString() : "",
+      tx?.sku || "",
+      tx?.product?.name || "",
+      tx?.model?.name || "",
+      tx?.type || "",
+      tx?.referenceType || "",
+      tx?.referenceId || "",
+      Number(tx?.quantity || 0),
+      Number(tx?.deltaQuantity || 0),
+      Number(tx?.previousQuantity || 0),
+      Number(tx?.newQuantity || 0),
+      tx?.createdBy?.email || "",
+      tx?.note || "",
+    ]);
+
+    this.downloadCsv("stock-transactions", headers, lines);
+  }
+
+  private downloadCsv(prefix: string, headers: string[], rows: any[][]): void {
+    const escape = (value: any): string => {
+      const raw = `${value ?? ""}`;
+      const safe = raw.replace(/"/g, "\"\"");
+      return `"${safe}"`;
+    };
+    const content = [headers.map(escape).join(","), ...rows.map((r) => r.map(escape).join(","))].join("\n");
+    const blob = new Blob([content], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
+    a.download = `${prefix}-${stamp}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
 }
