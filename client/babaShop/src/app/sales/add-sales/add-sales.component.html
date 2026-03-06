@@ -23,6 +23,9 @@
                     (keyup.enter)="onBarcodeScan()" />
                 </mat-form-field>
                 <button mat-stroked-button color="primary" type="button" (click)="onBarcodeScan()">Scan</button>
+                <mat-checkbox [(ngModel)]="autoAddOnScan" name="autoAddOnScan" [ngModelOptions]="{standalone: true}">
+                  Auto add on scan
+                </mat-checkbox>
               </div>
 
               <div class="section-title">Customer</div>
@@ -53,7 +56,9 @@
                     <mat-label>Model</mat-label>
                     <mat-select [(ngModel)]="selectedModel" name="selectedModel" (selectionChange)="updateSelectedModelVariations()">
                       <mat-option [value]="''">Select Model</mat-option>
-                      <mat-option *ngFor="let m of selectedItemModels" [value]="m.model">{{ m.model }}</mat-option>
+                      <mat-option *ngFor="let m of selectedItemModels" [value]="m.model || m.name || m._id">
+                        {{ m.model || m.name || "-" }}
+                      </mat-option>
                     </mat-select>
                   </mat-form-field>
                 </div>
@@ -62,8 +67,8 @@
                     <mat-label>Variation</mat-label>
                     <mat-select [(ngModel)]="selectedVariation" name="selectedVariation" (selectionChange)="onVariationChange($event.value)">
                       <mat-option [value]="''">Select Variation</mat-option>
-                      <mat-option *ngFor="let v of selectedModelVariations" [value]="v.orderNumber">
-                        {{ v.orderNumber }}
+                      <mat-option *ngFor="let v of selectedModelVariations" [value]="v.orderNumber || v.sku || v._id">
+                        {{ v.orderNumber || v.sku || "-" }}
                       </mat-option>
                     </mat-select>
                   </mat-form-field>

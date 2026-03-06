@@ -7,6 +7,7 @@ const StockTransaction = require("../models/StockTransaction");
 const DistributorLedger = require("../models/DistributorLedger");
 const { applyStockTransaction } = require("../utils/stock.service");
 const { createDistributorLedgerEntry } = require("../utils/distributorLedger.service");
+const { generateInvoiceNo } = require("../utils/invoice.service");
 
 const isSuperAdminGlobal = (req) =>
   req.user?.role === "SUPER_ADMIN" && !req.shopId;
@@ -168,10 +169,12 @@ exports.createDraft = async (req, res) => {
       });
     }
 
+    const normalizedInvoiceNo = `${invoiceNo || ""}`.trim() || (await generateInvoiceNo({ type: "PURCHASE" }));
+
     const purchase = await Purchase.create({
       shop: req.shopId,
       distributor,
-      invoiceNo,
+      invoiceNo: normalizedInvoiceNo,
       purchaseDate: purchaseDate ? new Date(purchaseDate) : new Date(),
       status: "DRAFT",
       items: totals.items,
@@ -192,6 +195,9 @@ exports.createDraft = async (req, res) => {
       data: purchase,
     });
   } catch (error) {
+    if (error?.code === 11000 && error?.keyPattern?.invoiceNo) {
+      return res.status(409).json({ success: false, message: "Invoice number already exists for this shop" });
+    }
     return res.status(500).json({ success: false, message: "Error creating purchase draft", error: error.message });
   }
 };
@@ -223,6 +229,9 @@ exports.confirmPurchase = async (req, res) => {
         success: false,
         message: "Cancelled purchase cannot be confirmed",
       });
+    }
+    if (!`${purchase.invoiceNo || ""}`.trim()) {
+      purchase.invoiceNo = await generateInvoiceNo({ type: "PURCHASE" });
     }
 
     for (const item of purchase.items) {
@@ -503,9 +512,16 @@ exports.listPurchases = async (req, res) => {
 
 exports.getPurchaseById = async (req, res) => {
   try {
+    const ref = `${req.params.id || ""}`.trim();
+    const hasObjectId = mongoose.Types.ObjectId.isValid(ref);
     const query = isSuperAdminGlobal(req)
-      ? { _id: req.params.id }
-      : { _id: req.params.id, shop: req.shopId };
+      ? hasObjectId
+        ? { $or: [{ _id: ref }, { invoiceNo: ref }] }
+        : { invoiceNo: ref }
+      : hasObjectId
+        ? { shop: req.shopId, $or: [{ _id: ref }, { invoiceNo: ref }] }
+        : { shop: req.shopId, invoiceNo: ref };
+
     const purchase = await Purchase.findOne(query)
       .populate("distributor", "name phone currentBalance")
       .populate("shop", "name shopCode")
@@ -612,7 +628,7 @@ exports.updateDraft = async (req, res) => {
     }
 
     purchase.distributor = distributor;
-    purchase.invoiceNo = invoiceNo;
+    purchase.invoiceNo = `${invoiceNo || ""}`.trim() || purchase.invoiceNo || (await generateInvoiceNo({ type: "PURCHASE" }));
     purchase.purchaseDate = purchaseDate ? new Date(purchaseDate) : purchase.purchaseDate;
     purchase.items = totals.items;
     purchase.subtotal = totals.subtotal;
@@ -631,6 +647,9 @@ exports.updateDraft = async (req, res) => {
       data: purchase,
     });
   } catch (error) {
+    if (error?.code === 11000 && error?.keyPattern?.invoiceNo) {
+      return res.status(409).json({ success: false, message: "Invoice number already exists for this shop" });
+    }
     return res.status(500).json({
       success: false,
       message: "Error updating purchase draft",

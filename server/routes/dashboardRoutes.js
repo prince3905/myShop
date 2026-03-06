@@ -22,5 +22,10 @@ router.get(
   authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"),
   dashboardController.getPurchaseAnalytics,
 );
+router.get(
+  "/return-analytics",
+  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"),
+  dashboardController.getReturnAnalytics,
+);
 
 module.exports = router;

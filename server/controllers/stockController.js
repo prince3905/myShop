@@ -4,10 +4,40 @@ const ProductVariation = require("../models/ProductVariation");
 const Product = require("../models/Product");
 const ProductModel = require("../models/ProductModel");
 const StockTransaction = require("../models/StockTransaction");
+const StockReconciliation = require("../models/StockReconciliation");
 const { applyStockTransaction } = require("../utils/stock.service");
 
 const isSuperAdminGlobal = (req) =>
   req.user?.role === "SUPER_ADMIN" && !req.shopId;
+
+const getMonthKey = (value) => {
+  if (!value) {
+    const now = new Date();
+    return `${now.getFullYear()}-${`${now.getMonth() + 1}`.padStart(2, "0")}`;
+  }
+  const v = `${value}`.trim();
+  if (/^\d{4}-\d{2}$/.test(v)) return v;
+  const parsed = new Date(v);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return `${parsed.getFullYear()}-${`${parsed.getMonth() + 1}`.padStart(2, "0")}`;
+};
+
+const buildSummary = (lines = []) => {
+  const totalLines = lines.length;
+  const matchedLines = lines.filter((l) => Number(l?.varianceQty || 0) === 0).length;
+  const mismatchLines = totalLines - matchedLines;
+  const totalSystemQty = lines.reduce((acc, l) => acc + Number(l?.systemQty || 0), 0);
+  const totalCountedQty = lines.reduce((acc, l) => acc + Number(l?.countedQty || 0), 0);
+  const totalVarianceQty = lines.reduce((acc, l) => acc + Number(l?.varianceQty || 0), 0);
+  return {
+    totalLines,
+    matchedLines,
+    mismatchLines,
+    totalSystemQty,
+    totalCountedQty,
+    totalVarianceQty,
+  };
+};
 
 exports.getStockReport = async (req, res) => {
   try {
@@ -16,6 +46,7 @@ exports.getStockReport = async (req, res) => {
       limit = 20,
       search = "",
       lowStock = "false",
+      variation,
       sortBy = "updatedAt",
       order = "desc",
     } = req.query;
@@ -26,6 +57,9 @@ exports.getStockReport = async (req, res) => {
     const sortDir = order === "asc" ? 1 : -1;
 
     const query = isSuperAdminGlobal(req) ? {} : { shop: req.shopId };
+    if (variation && mongoose.Types.ObjectId.isValid(`${variation}`)) {
+      query.variation = variation;
+    }
     if (search) {
       const regex = new RegExp(search, "i");
       const [productMatches, modelMatches] = await Promise.all([
@@ -190,6 +224,278 @@ exports.manualAdjust = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Error adjusting stock",
+      error: error.message,
+    });
+  }
+};
+
+exports.startReconciliation = async (req, res) => {
+  try {
+    if (!req.shopId) {
+      return res.status(400).json({ success: false, message: "Please select a shop first" });
+    }
+
+    const monthKey = getMonthKey(req.body?.monthKey);
+    if (!monthKey) {
+      return res.status(400).json({ success: false, message: "Invalid month format. Use YYYY-MM." });
+    }
+
+    const existing = await StockReconciliation.findOne({
+      shop: req.shopId,
+      monthKey,
+    }).populate("createdBy submittedBy approvedBy", "email role");
+    if (existing) {
+      return res.status(200).json({
+        success: true,
+        message: "Reconciliation already exists",
+        data: existing,
+      });
+    }
+
+    const stockRows = await Stock.find({ shop: req.shopId })
+      .populate("product", "name")
+      .populate("model", "name")
+      .populate("variation", "sku")
+      .sort({ sku: 1 });
+
+    const lines = stockRows.map((row) => {
+      const systemQty = Number(row?.quantity || 0);
+      return {
+        variation: row.variation?._id || row.variation,
+        product: row.product?._id || row.product,
+        model: row.model?._id || row.model,
+        sku: row.sku || row?.variation?.sku || "-",
+        productName: row?.product?.name || "",
+        modelName: row?.model?.name || "",
+        systemQty,
+        countedQty: systemQty,
+        varianceQty: 0,
+        note: "",
+      };
+    });
+
+    const reconciliation = await StockReconciliation.create({
+      shop: req.shopId,
+      monthKey,
+      status: "DRAFT",
+      lines,
+      summary: buildSummary(lines),
+      createdBy: req.user?._id,
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "Stock reconciliation draft created",
+      data: reconciliation,
+    });
+  } catch (error) {
+    if (error?.code === 11000) {
+      return res.status(409).json({
+        success: false,
+        message: "Reconciliation already exists for this month",
+      });
+    }
+    return res.status(500).json({
+      success: false,
+      message: "Error creating stock reconciliation",
+      error: error.message,
+    });
+  }
+};
+
+exports.getCurrentReconciliation = async (req, res) => {
+  try {
+    if (!req.shopId) {
+      return res.status(400).json({ success: false, message: "Please select a shop first" });
+    }
+    const monthKey = getMonthKey(req.query?.monthKey);
+    if (!monthKey) {
+      return res.status(400).json({ success: false, message: "Invalid month format. Use YYYY-MM." });
+    }
+
+    const row = await StockReconciliation.findOne({
+      shop: req.shopId,
+      monthKey,
+    }).populate("createdBy submittedBy approvedBy", "email role");
+
+    return res.status(200).json({
+      success: true,
+      data: row || null,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Error fetching stock reconciliation",
+      error: error.message,
+    });
+  }
+};
+
+exports.saveReconciliationLines = async (req, res) => {
+  try {
+    if (!req.shopId) {
+      return res.status(400).json({ success: false, message: "Please select a shop first" });
+    }
+
+    const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ success: false, message: "Invalid reconciliation id" });
+    }
+
+    const payloadLines = Array.isArray(req.body?.lines) ? req.body.lines : [];
+    if (!payloadLines.length) {
+      return res.status(400).json({ success: false, message: "lines[] is required" });
+    }
+
+    const reconciliation = await StockReconciliation.findOne({ _id: id, shop: req.shopId });
+    if (!reconciliation) {
+      return res.status(404).json({ success: false, message: "Reconciliation not found" });
+    }
+    if (reconciliation.status !== "DRAFT") {
+      return res.status(409).json({ success: false, message: "Only DRAFT reconciliation can be edited" });
+    }
+
+    const incoming = new Map();
+    payloadLines.forEach((line) => {
+      const key = `${line?.variation || ""}`.trim();
+      if (!key) return;
+      incoming.set(key, line);
+    });
+
+    reconciliation.lines = (reconciliation.lines || []).map((line) => {
+      const key = `${line?.variation || ""}`;
+      const inLine = incoming.get(key);
+      if (!inLine) return line;
+      const countedQty = Math.max(0, Number(inLine?.countedQty ?? line.countedQty ?? line.systemQty ?? 0));
+      const systemQty = Number(line?.systemQty || 0);
+      return {
+        ...line.toObject(),
+        countedQty,
+        varianceQty: countedQty - systemQty,
+        note: `${inLine?.note || line?.note || ""}`.trim(),
+      };
+    });
+
+    reconciliation.summary = buildSummary(reconciliation.lines || []);
+    await reconciliation.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Reconciliation draft saved",
+      data: reconciliation,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Error saving reconciliation draft",
+      error: error.message,
+    });
+  }
+};
+
+exports.submitReconciliation = async (req, res) => {
+  try {
+    if (!req.shopId) {
+      return res.status(400).json({ success: false, message: "Please select a shop first" });
+    }
+    const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ success: false, message: "Invalid reconciliation id" });
+    }
+
+    const reconciliation = await StockReconciliation.findOne({ _id: id, shop: req.shopId });
+    if (!reconciliation) {
+      return res.status(404).json({ success: false, message: "Reconciliation not found" });
+    }
+    if (reconciliation.status !== "DRAFT") {
+      return res.status(409).json({ success: false, message: "Only DRAFT can be submitted" });
+    }
+
+    reconciliation.status = "SUBMITTED";
+    reconciliation.submittedAt = new Date();
+    reconciliation.submittedBy = req.user?._id;
+    reconciliation.summary = buildSummary(reconciliation.lines || []);
+    await reconciliation.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Reconciliation submitted for approval",
+      data: reconciliation,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Error submitting reconciliation",
+      error: error.message,
+    });
+  }
+};
+
+exports.approveReconciliation = async (req, res) => {
+  try {
+    if (!req.shopId) {
+      return res.status(400).json({ success: false, message: "Please select a shop first" });
+    }
+    const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ success: false, message: "Invalid reconciliation id" });
+    }
+
+    const reconciliation = await StockReconciliation.findOne({ _id: id, shop: req.shopId });
+    if (!reconciliation) {
+      return res.status(404).json({ success: false, message: "Reconciliation not found" });
+    }
+    if (reconciliation.status === "APPROVED") {
+      return res.status(409).json({ success: false, message: "Reconciliation already approved" });
+    }
+    if (reconciliation.status !== "SUBMITTED") {
+      return res.status(409).json({ success: false, message: "Only SUBMITTED reconciliation can be approved" });
+    }
+
+    const stockRows = await Stock.find({
+      shop: req.shopId,
+      variation: { $in: (reconciliation.lines || []).map((l) => l.variation) },
+    }).select("variation quantity");
+    const stockMap = new Map(stockRows.map((s) => [`${s.variation}`, Number(s.quantity || 0)]));
+
+    for (const line of reconciliation.lines || []) {
+      const countedQty = Math.max(0, Number(line?.countedQty || 0));
+      const currentQty = Number(stockMap.get(`${line?.variation}`) || 0);
+      const delta = countedQty - currentQty;
+      if (delta === 0) continue;
+
+      await applyStockTransaction({
+        shop: req.shopId,
+        product: line.product,
+        model: line.model,
+        variation: line.variation,
+        sku: line.sku,
+        type: "ADJUSTMENT",
+        quantity: delta,
+        referenceType: "MANUAL",
+        referenceId: reconciliation._id,
+        note:
+          `${line?.note || ""}`.trim() ||
+          `Stock reconciliation ${reconciliation.monthKey} (${currentQty} -> ${countedQty})`,
+        createdBy: req.user?._id,
+      });
+    }
+
+    reconciliation.status = "APPROVED";
+    reconciliation.approvedAt = new Date();
+    reconciliation.approvedBy = req.user?._id;
+    reconciliation.summary = buildSummary(reconciliation.lines || []);
+    await reconciliation.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Reconciliation approved and stock adjusted",
+      data: reconciliation,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Error approving reconciliation",
       error: error.message,
     });
   }

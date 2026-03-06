@@ -32,6 +32,7 @@ export class PurchaseConsoleComponent implements OnInit {
   selectedPurchase: any = null;
   purchaseReturns: any[] = [];
   purchaseReturnSummary: any = null;
+  detailInvoiceRef = "";
   drawerOpen = false;
   editingPurchaseId: string | null = null;
   rowModelsByIndex: Record<number, any[]> = {};
@@ -408,12 +409,24 @@ export class PurchaseConsoleComponent implements OnInit {
       next: (res: any) => {
         this.selectedPurchase = res?.data || null;
         this.drawerOpen = !!this.selectedPurchase;
-        this.loadPurchaseReturns(id);
+        const purchaseId = `${this.selectedPurchase?._id || id || ""}`;
+        if (purchaseId) {
+          this.loadPurchaseReturns(purchaseId);
+        }
       },
       error: () => {
         this.snackBar.open("Failed to load purchase details", "Close", { duration: 2500 });
       },
     });
+  }
+
+  openDetailsByReference(): void {
+    const ref = `${this.detailInvoiceRef || ""}`.trim();
+    if (!ref) {
+      this.snackBar.open("Enter invoice no or purchase id", "Close", { duration: 2200 });
+      return;
+    }
+    this.openDetails(ref);
   }
 
   closeDrawer(): void {

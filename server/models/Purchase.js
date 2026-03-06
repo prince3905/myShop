@@ -161,5 +161,9 @@ const purchaseSchema = new mongoose.Schema(
 
 purchaseSchema.index({ shop: 1, distributor: 1, createdAt: -1 });
 purchaseSchema.index({ shop: 1, status: 1, purchaseDate: -1 });
+purchaseSchema.index(
+  { shop: 1, invoiceNo: 1 },
+  { unique: true, partialFilterExpression: { invoiceNo: { $type: "string", $ne: "" } } },
+);
 
 module.exports = mongoose.model("Purchase", purchaseSchema);

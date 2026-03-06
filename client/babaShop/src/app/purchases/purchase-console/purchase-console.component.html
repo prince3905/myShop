@@ -14,6 +14,19 @@
           <div class="context-chip">
             Scope: {{ authService.getShopId() ? 'Shop Wise' : 'Global' }}
           </div>
+          <mat-form-field appearance="outline" class="invoice-open-field">
+            <mat-label>Open Invoice</mat-label>
+            <input
+              matInput
+              [(ngModel)]="detailInvoiceRef"
+              [ngModelOptions]="{ standalone: true }"
+              (keyup.enter)="openDetailsByReference()"
+              placeholder="PINV-2603-0001"
+            />
+          </mat-form-field>
+          <button mat-stroked-button color="accent" type="button" (click)="openDetailsByReference()">
+            Open Detail
+          </button>
           <button mat-stroked-button color="primary" type="button" (click)="addItemRow()">+ Add Item</button>
           <button mat-stroked-button color="warn" type="button" (click)="resetForm()">Reset Form</button>
         </div>
@@ -58,8 +71,8 @@
               </div>
               <div class="col-md-2">
                 <mat-form-field class="w-100" appearance="outline">
-                  <mat-label>Invoice No</mat-label>
-                  <input matInput formControlName="invoiceNo" />
+                  <mat-label>Invoice No (Auto)</mat-label>
+                  <input matInput formControlName="invoiceNo" placeholder="Auto if blank" />
                 </mat-form-field>
               </div>
               <div class="col-md-2">

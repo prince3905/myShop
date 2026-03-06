@@ -14,9 +14,51 @@ router.get(
 );
 
 router.get(
+  "/returns",
+  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"),
+  salesController.listAllSaleReturns,
+);
+
+router.get(
+  "/reports/overview",
+  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"),
+  salesController.getSalesReportOverview,
+);
+
+router.get(
   "/",
   authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"),
   salesController.getSales,
+);
+
+router.get(
+  "/:id/returns",
+  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"),
+  salesController.listSaleReturns,
+);
+
+router.get(
+  "/:id/ledger",
+  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"),
+  salesController.getSaleLedger,
+);
+
+router.post(
+  "/:id/returns",
+  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER"),
+  salesController.createSaleReturn,
+);
+
+router.post(
+  "/:id/payments",
+  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"),
+  salesController.collectSalePayment,
+);
+
+router.get(
+  "/:id",
+  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"),
+  salesController.getSaleById,
 );
 
 router.post(

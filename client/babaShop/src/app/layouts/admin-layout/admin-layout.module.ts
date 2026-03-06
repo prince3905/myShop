@@ -50,6 +50,10 @@ import { ManageShopsComponent } from "app/shops/manage-shops/manage-shops.compon
 import { PurchaseConsoleComponent } from "app/purchases/purchase-console/purchase-console.component";
 import { PurchaseReturnDialogComponent } from "app/purchases/purchase-return-dialog/purchase-return-dialog.component";
 import { HasRoleDirective } from "app/shared/directives/has-role.directive";
+import { PosComponent } from "app/sales/pos/pos.component";
+import { ReturnsComponent } from "app/sales/returns/returns.component";
+import { SalePaymentDialogComponent } from "app/sales/sale-payment-dialog/sale-payment-dialog.component";
+import { SalesReportsComponent } from "app/sales/sales-reports/sales-reports.component";
 
 @NgModule({
   imports: [
@@ -105,6 +109,10 @@ import { HasRoleDirective } from "app/shared/directives/has-role.directive";
     ManageShopsComponent,
     PurchaseConsoleComponent,
     PurchaseReturnDialogComponent,
+    PosComponent,
+    ReturnsComponent,
+    SalePaymentDialogComponent,
+    SalesReportsComponent,
     HasRoleDirective,
   ],
 })

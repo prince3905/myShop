@@ -81,6 +81,14 @@ export class StocksComponent implements OnInit {
     note: "",
   };
 
+  reconciliationLoading = false;
+  reconciliationSaving = false;
+  reconciliationSubmitting = false;
+  reconciliationApproving = false;
+  reconciliationMonthKey = this.getCurrentMonthKey();
+  reconciliationSearch = "";
+  reconciliation: any = null;
+
   constructor(
     private stocksService: StocksService,
     private authService: AuthService,
@@ -102,6 +110,7 @@ export class StocksComponent implements OnInit {
     this.loadTransactions();
     this.loadProductsForAdjust();
     this.loadDistributorsForReorder();
+    this.loadCurrentReconciliation();
   }
 
   get canAdjustStock(): boolean {
@@ -112,6 +121,147 @@ export class StocksComponent implements OnInit {
   get canCreateReorderDraft(): boolean {
     const role = this.authService.getUserRole();
     return ["SUPER_ADMIN", "ADMIN", "MANAGER"].includes(role || "");
+  }
+
+  get canManageReconciliation(): boolean {
+    const role = this.authService.getUserRole();
+    return ["SUPER_ADMIN", "ADMIN", "MANAGER"].includes(role || "");
+  }
+
+  get canApproveReconciliation(): boolean {
+    const role = this.authService.getUserRole();
+    return ["SUPER_ADMIN", "ADMIN"].includes(role || "");
+  }
+
+  get filteredReconciliationLines(): any[] {
+    const lines = Array.isArray(this.reconciliation?.lines) ? this.reconciliation.lines : [];
+    const term = `${this.reconciliationSearch || ""}`.trim().toLowerCase();
+    if (!term) return lines;
+    return lines.filter((line: any) => {
+      const sku = `${line?.sku || ""}`.toLowerCase();
+      const productName = `${line?.productName || ""}`.toLowerCase();
+      const modelName = `${line?.modelName || ""}`.toLowerCase();
+      return sku.includes(term) || productName.includes(term) || modelName.includes(term);
+    });
+  }
+
+  onReconciliationMonthChange(): void {
+    this.loadCurrentReconciliation();
+  }
+
+  loadCurrentReconciliation(): void {
+    this.reconciliationLoading = true;
+    this.stocksService.getCurrentReconciliation(this.reconciliationMonthKey).subscribe({
+      next: (res: any) => {
+        this.reconciliation = res?.data || null;
+        this.reconciliationLoading = false;
+      },
+      error: () => {
+        this.reconciliation = null;
+        this.reconciliationLoading = false;
+      },
+    });
+  }
+
+  startReconciliation(): void {
+    if (!this.canManageReconciliation || this.reconciliationSaving) return;
+    this.reconciliationSaving = true;
+    this.stocksService.startReconciliation(this.reconciliationMonthKey).subscribe({
+      next: (res: any) => {
+        this.reconciliationSaving = false;
+        this.reconciliation = res?.data || null;
+        this.snackBar.open(res?.message || "Reconciliation started", "Close", { duration: 2600 });
+      },
+      error: (err: any) => {
+        this.reconciliationSaving = false;
+        this.snackBar.open(err?.error?.message || "Failed to start reconciliation", "Close", {
+          duration: 3000,
+        });
+      },
+    });
+  }
+
+  onCountedQtyChange(line: any): void {
+    const counted = Math.max(0, Number(line?.countedQty || 0));
+    const system = Number(line?.systemQty || 0);
+    line.countedQty = counted;
+    line.varianceQty = counted - system;
+    this.refreshReconciliationSummary();
+  }
+
+  saveReconciliationDraft(): void {
+    if (!this.canManageReconciliation || this.reconciliationSaving) return;
+    if (!this.reconciliation?._id) {
+      this.snackBar.open("Start reconciliation first", "Close", { duration: 2400 });
+      return;
+    }
+    if (`${this.reconciliation?.status || ""}` !== "DRAFT") {
+      this.snackBar.open("Only draft reconciliation can be saved", "Close", { duration: 2400 });
+      return;
+    }
+
+    const lines = (this.reconciliation?.lines || []).map((line: any) => ({
+      variation: line?.variation,
+      countedQty: Number(line?.countedQty || 0),
+      note: line?.note || "",
+    }));
+
+    this.reconciliationSaving = true;
+    this.stocksService.saveReconciliationLines(this.reconciliation._id, lines).subscribe({
+      next: (res: any) => {
+        this.reconciliationSaving = false;
+        this.reconciliation = res?.data || this.reconciliation;
+        this.snackBar.open("Reconciliation draft saved", "Close", { duration: 2400 });
+      },
+      error: (err: any) => {
+        this.reconciliationSaving = false;
+        this.snackBar.open(err?.error?.message || "Failed to save reconciliation", "Close", {
+          duration: 3000,
+        });
+      },
+    });
+  }
+
+  submitReconciliation(): void {
+    if (!this.canManageReconciliation || this.reconciliationSubmitting) return;
+    if (!this.reconciliation?._id) return;
+    this.reconciliationSubmitting = true;
+    this.stocksService.submitReconciliation(this.reconciliation._id).subscribe({
+      next: (res: any) => {
+        this.reconciliationSubmitting = false;
+        this.reconciliation = res?.data || this.reconciliation;
+        this.snackBar.open("Reconciliation submitted", "Close", { duration: 2500 });
+      },
+      error: (err: any) => {
+        this.reconciliationSubmitting = false;
+        this.snackBar.open(err?.error?.message || "Failed to submit reconciliation", "Close", {
+          duration: 3000,
+        });
+      },
+    });
+  }
+
+  approveReconciliation(): void {
+    if (!this.canApproveReconciliation || this.reconciliationApproving) return;
+    if (!this.reconciliation?._id) return;
+    this.reconciliationApproving = true;
+    this.stocksService.approveReconciliation(this.reconciliation._id).subscribe({
+      next: (res: any) => {
+        this.reconciliationApproving = false;
+        this.reconciliation = res?.data || this.reconciliation;
+        this.snackBar.open("Reconciliation approved and stock updated", "Close", {
+          duration: 2800,
+        });
+        this.loadStocks();
+        this.loadTransactions();
+      },
+      error: (err: any) => {
+        this.reconciliationApproving = false;
+        this.snackBar.open(err?.error?.message || "Failed to approve reconciliation", "Close", {
+          duration: 3200,
+        });
+      },
+    });
   }
 
   loadStocks(): void {
@@ -598,5 +748,28 @@ export class StocksComponent implements OnInit {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+  }
+
+  private refreshReconciliationSummary(): void {
+    const lines = Array.isArray(this.reconciliation?.lines) ? this.reconciliation.lines : [];
+    const totalLines = lines.length;
+    const matchedLines = lines.filter((l: any) => Number(l?.varianceQty || 0) === 0).length;
+    const mismatchLines = totalLines - matchedLines;
+    const totalSystemQty = lines.reduce((acc: number, l: any) => acc + Number(l?.systemQty || 0), 0);
+    const totalCountedQty = lines.reduce((acc: number, l: any) => acc + Number(l?.countedQty || 0), 0);
+    const totalVarianceQty = lines.reduce((acc: number, l: any) => acc + Number(l?.varianceQty || 0), 0);
+    this.reconciliation.summary = {
+      totalLines,
+      matchedLines,
+      mismatchLines,
+      totalSystemQty,
+      totalCountedQty,
+      totalVarianceQty,
+    };
+  }
+
+  private getCurrentMonthKey(): string {
+    const d = new Date();
+    return `${d.getFullYear()}-${`${d.getMonth() + 1}`.padStart(2, "0")}`;
   }
 }

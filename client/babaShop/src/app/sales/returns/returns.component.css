@@ -1,0 +1,166 @@
+.returns-card {
+  margin-top: -18px;
+}
+
+.load-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.invoice-field {
+  min-width: 320px;
+}
+
+.loading-wrap {
+  padding: 18px 0;
+  display: flex;
+  justify-content: center;
+}
+
+.empty-state {
+  border: 1px dashed #cbd5e1;
+  border-radius: 12px;
+  padding: 18px;
+  text-align: center;
+  background: #f8fafc;
+  margin-bottom: 10px;
+}
+
+.empty-state mat-icon {
+  font-size: 30px;
+  height: 30px;
+  width: 30px;
+  color: #475569;
+}
+
+.empty-state h5 {
+  margin: 8px 0 6px;
+  font-weight: 700;
+}
+
+.empty-state p {
+  margin: 0 0 12px;
+  color: #475569;
+  font-size: 13px;
+}
+
+.summary-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0 12px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  padding: 4px 10px;
+  background: #f8fafc;
+  color: #0f172a;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.lock-banner {
+  border: 1px solid #fca5a5;
+  background: #fef2f2;
+  color: #991b1b;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  margin: 6px 0 10px;
+}
+
+.return-table th,
+.history-table th {
+  white-space: nowrap;
+  color: #475569;
+  font-size: 12px;
+}
+
+.return-table td,
+.history-table td {
+  font-size: 13px;
+  vertical-align: middle;
+}
+
+.row-locked {
+  opacity: 0.62;
+}
+
+.sub {
+  display: block;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.qty-col mat-form-field {
+  width: 110px;
+}
+
+.submit-row {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.small-field {
+  min-width: 170px;
+}
+
+.note-field {
+  min-width: 260px;
+}
+
+.total-box {
+  border: 1px solid #fecaca;
+  background: #fff1f2;
+  color: #9f1239;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.total-box.info {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.history-block {
+  margin-top: 16px;
+}
+
+.history-block h5 {
+  margin: 0 0 6px;
+  font-weight: 700;
+}
+
+.summary-line {
+  font-size: 13px;
+  color: #334155;
+  margin-bottom: 8px;
+}
+
+.empty {
+  text-align: center;
+  color: #64748b;
+  padding: 12px 0;
+}
+
+@media (max-width: 991px) {
+  .invoice-field,
+  .small-field,
+  .note-field {
+    min-width: 100%;
+  }
+}

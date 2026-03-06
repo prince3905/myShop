@@ -1,0 +1,38 @@
+<div class="main-content">
+  <div class="container-fluid">
+    <div class="card pos-hero">
+      <div class="card-header card-header-danger">
+        <h4 class="card-title">POS Console</h4>
+        <p class="card-category">Quick billing and checkout flow</p>
+      </div>
+      <div class="card-body hero-body">
+        <div class="hero-copy">
+          <h3>Start a New Bill</h3>
+          <p>
+            Open POS billing dialog to scan/search item, add customer, choose payment mode and complete sale.
+          </p>
+          <div class="hero-actions">
+            <button mat-raised-button color="primary" (click)="openPosSale()">
+              <mat-icon>point_of_sale</mat-icon>
+              Open POS Billing
+            </button>
+            <button mat-stroked-button color="accent" routerLink="/sale-list">
+              <mat-icon>receipt_long</mat-icon>
+              View Sales List
+            </button>
+          </div>
+        </div>
+        <div class="hero-tip">
+          <div class="tip-title">Flow</div>
+          <ol>
+            <li>Select customer</li>
+            <li>Add item/variation</li>
+            <li>Set payment mode</li>
+            <li>Save bill</li>
+            <li>Print invoice</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

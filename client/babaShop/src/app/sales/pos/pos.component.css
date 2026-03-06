@@ -1,0 +1,59 @@
+.pos-hero {
+  margin-top: -18px;
+}
+
+.hero-body {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+  align-items: stretch;
+}
+
+.hero-copy h3 {
+  margin: 0 0 8px;
+  font-weight: 700;
+}
+
+.hero-copy p {
+  margin: 0;
+  color: #475569;
+  font-size: 14px;
+}
+
+.hero-actions {
+  margin-top: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.hero-tip {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px 14px;
+  background: #f8fafc;
+}
+
+.tip-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 8px;
+}
+
+.hero-tip ol {
+  margin: 0;
+  padding-left: 18px;
+  color: #475569;
+  font-size: 13px;
+}
+
+.hero-tip li {
+  margin-bottom: 4px;
+}
+
+@media (max-width: 991px) {
+  .hero-body {
+    grid-template-columns: 1fr;
+  }
+}

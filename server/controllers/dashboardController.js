@@ -5,6 +5,7 @@ const Shop = require("../models/Shop");
 const Stock = require("../models/Stock");
 const Distributor = require("../models/Distributor");
 const Purchase = require("../models/Purchase");
+const SaleReturn = require("../models/SaleReturn");
 
 const isSuperAdminGlobal = (req) =>
   req.user?.role === "SUPER_ADMIN" && !req.shopId;
@@ -18,7 +19,7 @@ exports.getKpis = async (req, res) => {
     const endOfDay = new Date();
     endOfDay.setHours(23, 59, 59, 999);
 
-    const [salesAgg, todayOrders, activeShops, totalCustomers, lowStockCount, distributorDueAgg, todayPurchaseAgg] =
+    const [salesAgg, todayOrders, activeShops, totalCustomers, lowStockCount, distributorDueAgg, todayPurchaseAgg, todayReturnAgg] =
       await Promise.all([
         Sale.aggregate([
           { $match: { ...query, createdAt: { $gte: startOfDay, $lte: endOfDay } } },
@@ -47,6 +48,19 @@ exports.getKpis = async (req, res) => {
           },
           { $group: { _id: null, totalPurchase: { $sum: "$grandTotal" }, count: { $sum: 1 } } },
         ]),
+        SaleReturn.aggregate([
+          { $match: { ...query, createdAt: { $gte: startOfDay, $lte: endOfDay } } },
+          {
+            $group: {
+              _id: null,
+              totalReturnAmount: { $sum: "$totalAmount" },
+              totalRefundAmount: { $sum: "$refundAmount" },
+              totalCreditAmount: { $sum: "$creditAmount" },
+              totalReturnQty: { $sum: "$totalQuantity" },
+              returnCount: { $sum: 1 },
+            },
+          },
+        ]),
       ]);
 
     return res.status(200).json({
@@ -57,6 +71,11 @@ exports.getKpis = async (req, res) => {
         todayOrders: Number(todayOrders || 0),
         todayPurchase: Number(todayPurchaseAgg[0]?.totalPurchase || 0),
         todayPurchaseCount: Number(todayPurchaseAgg[0]?.count || 0),
+        todayReturnAmount: Number(todayReturnAgg[0]?.totalReturnAmount || 0),
+        todayRefundAmount: Number(todayReturnAgg[0]?.totalRefundAmount || 0),
+        todayCreditAmount: Number(todayReturnAgg[0]?.totalCreditAmount || 0),
+        todayReturnQty: Number(todayReturnAgg[0]?.totalReturnQty || 0),
+        todayReturnCount: Number(todayReturnAgg[0]?.returnCount || 0),
         activeShops: Number(activeShops || 0),
         totalCustomers: Number(totalCustomers || 0),
         lowStockCount: Number(lowStockCount || 0),
@@ -68,6 +87,93 @@ exports.getKpis = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to load dashboard KPIs",
+      error: error.message,
+    });
+  }
+};
+
+exports.getReturnAnalytics = async (req, res) => {
+  try {
+    const query = isSuperAdminGlobal(req) ? {} : { shop: req.shopId };
+    const now = new Date();
+
+    const startOfDay = new Date(now);
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - 6);
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    startOfMonth.setHours(0, 0, 0, 0);
+
+    const buildMatch = (start) => ({
+      ...query,
+      createdAt: { $gte: start, $lte: now },
+    });
+
+    const [todayAgg, weekAgg, monthAgg] = await Promise.all([
+      SaleReturn.aggregate([
+        { $match: buildMatch(startOfDay) },
+        {
+          $group: {
+            _id: null,
+            amount: { $sum: "$totalAmount" },
+            refund: { $sum: "$refundAmount" },
+            credit: { $sum: "$creditAmount" },
+            qty: { $sum: "$totalQuantity" },
+            count: { $sum: 1 },
+          },
+        },
+      ]),
+      SaleReturn.aggregate([
+        { $match: buildMatch(startOfWeek) },
+        {
+          $group: {
+            _id: null,
+            amount: { $sum: "$totalAmount" },
+            refund: { $sum: "$refundAmount" },
+            credit: { $sum: "$creditAmount" },
+            qty: { $sum: "$totalQuantity" },
+            count: { $sum: 1 },
+          },
+        },
+      ]),
+      SaleReturn.aggregate([
+        { $match: buildMatch(startOfMonth) },
+        {
+          $group: {
+            _id: null,
+            amount: { $sum: "$totalAmount" },
+            refund: { $sum: "$refundAmount" },
+            credit: { $sum: "$creditAmount" },
+            qty: { $sum: "$totalQuantity" },
+            count: { $sum: 1 },
+          },
+        },
+      ]),
+    ]);
+
+    const normalize = (row) => ({
+      totalAmount: Number(row?.amount || 0),
+      totalRefund: Number(row?.refund || 0),
+      totalCredit: Number(row?.credit || 0),
+      totalQty: Number(row?.qty || 0),
+      count: Number(row?.count || 0),
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        today: normalize(todayAgg[0]),
+        weekly: normalize(weekAgg[0]),
+        monthly: normalize(monthAgg[0]),
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to load return analytics",
       error: error.message,
     });
   }

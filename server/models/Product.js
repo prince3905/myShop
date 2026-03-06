@@ -48,6 +48,19 @@ const productSchema = new mongoose.Schema({
   isActive: {
     type: Boolean,
     default: true
+  },
+
+  isDeleted: {
+    type: Boolean,
+    default: false,
+    index: true,
+  },
+
+  archivedAt: Date,
+
+  archivedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
   }
 
 }, { timestamps: true });

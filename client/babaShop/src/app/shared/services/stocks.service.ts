@@ -38,4 +38,25 @@ export class StocksService {
   manualAdjust(payload: any) {
     return this.http.post(`${this.baseURL}/api/stocks/adjust`, payload);
   }
+
+  getCurrentReconciliation(monthKey: string) {
+    const params = new HttpParams().set("monthKey", monthKey);
+    return this.http.get(`${this.baseURL}/api/stocks/reconciliation/current`, { params });
+  }
+
+  startReconciliation(monthKey: string) {
+    return this.http.post(`${this.baseURL}/api/stocks/reconciliation/start`, { monthKey });
+  }
+
+  saveReconciliationLines(id: string, lines: any[]) {
+    return this.http.put(`${this.baseURL}/api/stocks/reconciliation/${id}`, { lines });
+  }
+
+  submitReconciliation(id: string) {
+    return this.http.post(`${this.baseURL}/api/stocks/reconciliation/${id}/submit`, {});
+  }
+
+  approveReconciliation(id: string) {
+    return this.http.post(`${this.baseURL}/api/stocks/reconciliation/${id}/approve`, {});
+  }
 }

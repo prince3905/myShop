@@ -1,15 +1,17 @@
 const express = require("express");
-
-const customerController = require('../controllers/customerController');
-const authController = require('../controllers/authController');
+const customerController = require("../controllers/customerController");
+const { protect, attachShop, authorizePermission } = require("../middleware/authMiddleware");
 
 const router = express.Router();
-module.exports = authController.protect;
 
-router.get('/', customerController.getAllCustomers);
-router.post('/', customerController.createCustomer);
-router.get('/:id', customerController.getCustomerById);
-router.put('/:id', customerController.updateCustomer);
-router.delete('/:id', customerController.deleteCustomer);
+router.use(protect);
+router.use(attachShop);
+
+router.get("/", customerController.getAllCustomers);
+router.post("/", authorizePermission("MANAGE_CUSTOMERS"), customerController.createCustomer);
+router.get("/:id", customerController.getCustomerById);
+router.put("/:id", authorizePermission("MANAGE_CUSTOMERS"), customerController.updateCustomer);
+router.delete("/:id", authorizePermission("MANAGE_CUSTOMERS"), customerController.deleteCustomer);
+router.patch("/:id/restore", authorizePermission("MANAGE_CUSTOMERS"), customerController.restoreCustomer);
 
 module.exports = router;

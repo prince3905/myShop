@@ -88,6 +88,130 @@
       </div>
     </div>
 
+    <div class="card mt-3" *ngIf="canManageReconciliation">
+      <div class="card-header card-header-info">
+        <h4 class="card-title">Stock Reconciliation</h4>
+        <p class="card-category">Monthly physical count, variance tracking and approval</p>
+      </div>
+      <div class="card-body">
+        <div class="filter-row">
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Month</mat-label>
+            <input
+              matInput
+              type="month"
+              [(ngModel)]="reconciliationMonthKey"
+              (change)="onReconciliationMonthChange()" />
+          </mat-form-field>
+
+          <button mat-stroked-button color="primary" (click)="loadCurrentReconciliation()" [disabled]="reconciliationLoading">
+            Reload
+          </button>
+          <button mat-raised-button color="accent" (click)="startReconciliation()" [disabled]="reconciliationSaving">
+            {{ reconciliationSaving ? 'Starting...' : 'Start / Re-open' }}
+          </button>
+
+          <div class="context-chip" *ngIf="reconciliation">Status: {{ reconciliation?.status }}</div>
+          <div class="context-chip" *ngIf="reconciliation?.summary">Mismatch: {{ reconciliation?.summary?.mismatchLines || 0 }}</div>
+        </div>
+
+        <div class="loading-wrap" *ngIf="reconciliationLoading">
+          <mat-spinner color="primary" diameter="28"></mat-spinner>
+        </div>
+
+        <div *ngIf="!reconciliationLoading && !reconciliation" class="empty">
+          No reconciliation found for selected month. Click <strong>Start / Re-open</strong>.
+        </div>
+
+        <div *ngIf="!reconciliationLoading && reconciliation">
+          <div class="stock-context-row">
+            <div class="context-chip">Lines: {{ reconciliation?.summary?.totalLines || 0 }}</div>
+            <div class="context-chip">System Qty: {{ reconciliation?.summary?.totalSystemQty || 0 }}</div>
+            <div class="context-chip">Counted Qty: {{ reconciliation?.summary?.totalCountedQty || 0 }}</div>
+            <div class="context-chip">Variance: {{ reconciliation?.summary?.totalVarianceQty || 0 }}</div>
+            <mat-form-field appearance="outline" class="filter-field search-field">
+              <mat-label>Search SKU/Product/Model</mat-label>
+              <input matInput [(ngModel)]="reconciliationSearch" />
+            </mat-form-field>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table tx-table">
+              <thead>
+                <tr>
+                  <th>SKU</th>
+                  <th>Product</th>
+                  <th>Model</th>
+                  <th>System Qty</th>
+                  <th>Counted Qty</th>
+                  <th>Variance</th>
+                  <th>Note</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let line of filteredReconciliationLines">
+                  <td>{{ line?.sku || '-' }}</td>
+                  <td>{{ line?.productName || '-' }}</td>
+                  <td>{{ line?.modelName || '-' }}</td>
+                  <td>{{ line?.systemQty || 0 }}</td>
+                  <td>
+                    <input
+                      class="inline-input"
+                      type="number"
+                      min="0"
+                      [disabled]="reconciliation?.status !== 'DRAFT'"
+                      [(ngModel)]="line.countedQty"
+                      (ngModelChange)="onCountedQtyChange(line)" />
+                  </td>
+                  <td>
+                    <span class="tx-pill" [ngClass]="(line?.varianceQty || 0) === 0 ? 'tx-ADJUSTMENT' : ((line?.varianceQty || 0) > 0 ? 'tx-IN' : 'tx-OUT')">
+                      {{ line?.varianceQty || 0 }}
+                    </span>
+                  </td>
+                  <td>
+                    <input
+                      class="inline-input"
+                      type="text"
+                      [disabled]="reconciliation?.status !== 'DRAFT'"
+                      [(ngModel)]="line.note"
+                      placeholder="optional note" />
+                  </td>
+                </tr>
+                <tr *ngIf="filteredReconciliationLines.length === 0">
+                  <td colspan="7" class="empty">No lines found</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="filter-row mt-2">
+            <button
+              mat-stroked-button
+              color="primary"
+              (click)="saveReconciliationDraft()"
+              [disabled]="reconciliation?.status !== 'DRAFT' || reconciliationSaving">
+              {{ reconciliationSaving ? 'Saving...' : 'Save Draft' }}
+            </button>
+            <button
+              mat-raised-button
+              color="warn"
+              (click)="submitReconciliation()"
+              [disabled]="reconciliation?.status !== 'DRAFT' || reconciliationSubmitting">
+              {{ reconciliationSubmitting ? 'Submitting...' : 'Submit For Approval' }}
+            </button>
+            <button
+              *ngIf="canApproveReconciliation"
+              mat-raised-button
+              color="primary"
+              (click)="approveReconciliation()"
+              [disabled]="reconciliation?.status !== 'SUBMITTED' || reconciliationApproving">
+              {{ reconciliationApproving ? 'Approving...' : 'Approve & Apply Variance' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="loading-wrap" *ngIf="loading">
       <mat-spinner color="primary" diameter="40"></mat-spinner>
     </div>

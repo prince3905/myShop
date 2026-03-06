@@ -29,6 +29,11 @@
   align-items: center;
 }
 
+.due-only-check {
+  margin: 0 4px;
+  font-size: 13px;
+}
+
 .filter-field {
   min-width: 180px;
 }
@@ -47,16 +52,97 @@
   padding-top: 10px;
 }
 
+.table-responsive {
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.sales-table {
+  width: 100%;
+  min-width: 1500px;
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
 .sales-table thead th {
-  white-space: nowrap;
   font-size: 12px;
   color: #475569;
+  white-space: nowrap;
+  padding: 10px 8px;
+  vertical-align: middle;
+  background: #f8fafc;
 }
 
 .sales-table tbody td {
   font-size: 13px;
   color: #0f172a;
   vertical-align: middle;
+  padding: 10px 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sales-table th:nth-child(1),
+.sales-table td:nth-child(1) {
+  width: 140px;
+}
+
+.sales-table th:nth-child(2),
+.sales-table td:nth-child(2) {
+  width: 160px;
+}
+
+.sales-table th:nth-child(3),
+.sales-table td:nth-child(3),
+.sales-table th:nth-child(4),
+.sales-table td:nth-child(4),
+.sales-table th:nth-child(5),
+.sales-table td:nth-child(5),
+.sales-table th:nth-child(6),
+.sales-table td:nth-child(6),
+.sales-table th:nth-child(7),
+.sales-table td:nth-child(7),
+.sales-table th:nth-child(8),
+.sales-table td:nth-child(8) {
+  width: 118px;
+}
+
+.sales-table th:nth-child(9),
+.sales-table td:nth-child(9) {
+  width: 70px;
+  text-align: center;
+}
+
+.sales-table th:nth-child(10),
+.sales-table td:nth-child(10) {
+  width: 118px;
+}
+
+.sales-table th:nth-child(11),
+.sales-table td:nth-child(11),
+.sales-table th:nth-child(12),
+.sales-table td:nth-child(12) {
+  width: 90px;
+  text-align: center;
+}
+
+.sales-table th:nth-child(13),
+.sales-table td:nth-child(13) {
+  width: 110px;
+  text-align: center;
+}
+
+.sales-table th:nth-child(14),
+.sales-table td:nth-child(14) {
+  width: 260px;
+}
+
+.sales-table td:nth-child(2) {
+  font-weight: 600;
+  white-space: normal;
+  word-break: break-word;
 }
 
 .money-cell {
@@ -91,15 +177,50 @@
   border-color: #cbd5e1;
 }
 
-.sales-table tbody td:nth-child(2) {
+.return-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  padding: 3px 9px;
+  font-size: 11px;
+  font-weight: 700;
+  border: 1px solid transparent;
+}
+
+.return-pill-qty {
+  opacity: 0.85;
   font-weight: 600;
 }
 
+.return-pill-none {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #334155;
+}
+
+.return-pill-partial {
+  background: #fffbeb;
+  border-color: #fcd34d;
+  color: #92400e;
+}
+
+.return-pill-full {
+  background: #ecfdf3;
+  border-color: #86efac;
+  color: #166534;
+}
+
 .action-col {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 6px;
-  min-width: 180px;
+  align-items: center;
+}
+
+.action-col button {
+  min-width: 0;
+  padding: 0 8px;
 }
 
 .empty {
@@ -132,6 +253,14 @@
   }
 
   .detail-meta {
+    grid-template-columns: 1fr;
+  }
+
+  .sales-table {
+    min-width: 1320px;
+  }
+
+  .action-col {
     grid-template-columns: 1fr;
   }
 }

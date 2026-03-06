@@ -78,6 +78,12 @@ export const ROUTES: RouteInfo[] = [
         icon: "undo",
         roles: ["SUPER_ADMIN", "ADMIN", "MANAGER"],
       },
+      {
+        path: "/sales-reports",
+        title: "Reports",
+        icon: "bar_chart",
+        roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"],
+      },
     ],
   },
 

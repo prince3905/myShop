@@ -40,6 +40,11 @@ export class DashboardComponent implements OnInit {
     weekly: { totalAmount: 0, totalPaid: 0, totalDue: 0, count: 0 },
     monthly: { totalAmount: 0, totalPaid: 0, totalDue: 0, count: 0 },
   };
+  returnAnalytics: any = {
+    today: { totalAmount: 0, totalRefund: 0, totalCredit: 0, totalQty: 0, count: 0 },
+    weekly: { totalAmount: 0, totalRefund: 0, totalCredit: 0, totalQty: 0, count: 0 },
+    monthly: { totalAmount: 0, totalRefund: 0, totalCredit: 0, totalQty: 0, count: 0 },
+  };
   constructor(
     private shopService: ShopService,
     private authService: AuthService,
@@ -122,6 +127,7 @@ export class DashboardComponent implements OnInit {
     this.loadTrends();
     this.loadInventorySummary();
     this.loadPurchaseAnalytics();
+    this.loadReturnAnalytics();
   }
 
   loadShops() {
@@ -142,6 +148,7 @@ export class DashboardComponent implements OnInit {
         this.loadTrends();
         this.loadInventorySummary();
         this.loadPurchaseAnalytics();
+        this.loadReturnAnalytics();
       }
     });
   }
@@ -222,6 +229,26 @@ export class DashboardComponent implements OnInit {
           monthly: { totalAmount: 0, totalPaid: 0, totalDue: 0, count: 0 },
         };
         this.renderPurchaseAnalyticsChart();
+      },
+    });
+  }
+
+  loadReturnAnalytics() {
+    this.dashboardService.getReturnAnalytics().subscribe({
+      next: (res: any) => {
+        const data = res?.data || {};
+        this.returnAnalytics = {
+          today: data.today || this.returnAnalytics.today,
+          weekly: data.weekly || this.returnAnalytics.weekly,
+          monthly: data.monthly || this.returnAnalytics.monthly,
+        };
+      },
+      error: () => {
+        this.returnAnalytics = {
+          today: { totalAmount: 0, totalRefund: 0, totalCredit: 0, totalQty: 0, count: 0 },
+          weekly: { totalAmount: 0, totalRefund: 0, totalCredit: 0, totalQty: 0, count: 0 },
+          monthly: { totalAmount: 0, totalRefund: 0, totalCredit: 0, totalQty: 0, count: 0 },
+        };
       },
     });
   }

@@ -11,10 +11,16 @@
           <div class="context-chip">Total Sales: {{ summary.totalSales }}</div>
           <div class="context-chip">Page Revenue: Rs {{ summary.totalRevenue | number:'1.2-2' }}</div>
           <div class="context-chip">Page Qty: {{ summary.totalQty }}</div>
+          <button mat-stroked-button color="accent" (click)="exportCsv()">Export CSV</button>
           <button mat-raised-button color="primary" (click)="openAddSaleModal()">Add Sale</button>
         </div>
 
         <div class="filter-row">
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Invoice</mat-label>
+            <input matInput [(ngModel)]="filters.invoiceNo" (keyup.enter)="applyFilters()" />
+          </mat-form-field>
+
           <mat-form-field appearance="outline" class="filter-field">
             <mat-label>Customer</mat-label>
             <input matInput [(ngModel)]="filters.customerName" (keyup.enter)="applyFilters()" />
@@ -39,6 +45,31 @@
             <mat-datepicker #toPicker></mat-datepicker>
           </mat-form-field>
 
+          <mat-form-field appearance="outline" class="filter-field date-field">
+            <mat-label>Return Status</mat-label>
+            <mat-select [(ngModel)]="filters.returnStatus">
+              <mat-option value="">All</mat-option>
+              <mat-option value="NONE">None</mat-option>
+              <mat-option value="PARTIAL">Partial</mat-option>
+              <mat-option value="FULL">Full</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="filter-field date-field">
+            <mat-label>Payment Method</mat-label>
+            <mat-select [(ngModel)]="filters.paymentMethod">
+              <mat-option value="">All</mat-option>
+              <mat-option value="CASH">CASH</mat-option>
+              <mat-option value="BANK">BANK</mat-option>
+              <mat-option value="ONLINE">ONLINE</mat-option>
+              <mat-option value="UPI">UPI</mat-option>
+              <mat-option value="CARD">CARD</mat-option>
+              <mat-option value="CREDIT">CREDIT</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-checkbox class="due-only-check" [(ngModel)]="filters.dueOnly">Due Only</mat-checkbox>
+
           <button mat-raised-button color="primary" (click)="applyFilters()">Apply</button>
           <button mat-stroked-button color="warn" (click)="clearFilters()">Reset</button>
         </div>
@@ -60,16 +91,20 @@
                 <th>Total</th>
                 <th>Paid</th>
                 <th>Due</th>
+                <th>Outstanding</th>
+                <th>Returned Amt</th>
+                <th>Refunded Amt</th>
                 <th>Qty</th>
                 <th>Date</th>
                 <th>Payment</th>
                 <th>Status</th>
+                <th>Returned</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               <tr *ngFor="let row of salesRows">
-                <td>{{ row?._id }}</td>
+                <td>{{ row?.invoiceNo || row?._id }}</td>
                 <td>{{ row?.customerName || 'Walk-in' }}</td>
                 <td>Rs {{ row?.totalPurchasePrice | number:'1.2-2' }}</td>
                 <td class="money-cell">
@@ -82,17 +117,46 @@
                     Rs {{ row?.dueAmount | number:'1.2-2' }}
                   </span>
                 </td>
+                <td>Rs {{ row?.dueAmount | number:'1.2-2' }}</td>
+                <td>Rs {{ row?.returnedAmount | number:'1.2-2' }}</td>
+                <td>Rs {{ row?.refundedAmount | number:'1.2-2' }}</td>
                 <td>{{ row?.totalQuantity || 0 }}</td>
                 <td>{{ row?.purchaseDate | date:'dd MMM yyyy' }}</td>
                 <td>{{ row?.paymentMethod || '-' }}</td>
                 <td>{{ row?.status || '-' }}</td>
+                <td class="money-cell">
+                  <span class="return-pill" [ngClass]="'return-pill-' + getReturnBadge(row)">
+                    <ng-container [ngSwitch]="getReturnBadge(row)">
+                      <span *ngSwitchCase="'full'">FULL</span>
+                      <span *ngSwitchCase="'partial'">PARTIAL</span>
+                      <span *ngSwitchDefault>NONE</span>
+                    </ng-container>
+                    <span class="return-pill-qty">{{ row?.returnedQuantity || 0 }}/{{ row?.totalQuantity || 0 }}</span>
+                  </span>
+                </td>
                 <td class="action-col">
                   <button mat-stroked-button color="accent" (click)="showDetails(row)">Details</button>
+                  <button
+                    mat-stroked-button
+                    color="primary"
+                    [disabled]="(row?.dueAmount || 0) <= 0"
+                    [matTooltip]="(row?.dueAmount || 0) > 0 ? 'Collect pending payment' : 'No due'"
+                    (click)="openCollectPayment(row)">
+                    Collect
+                  </button>
+                  <button
+                    mat-stroked-button
+                    color="warn"
+                    [disabled]="isReturnClosed(row)"
+                    [matTooltip]="isReturnClosed(row) ? 'Fully returned - cannot return again' : 'Open return form'"
+                    (click)="openReturn(row)">
+                    Open Return
+                  </button>
                   <button mat-stroked-button color="primary" (click)="printInvoice(row)">Print</button>
                 </td>
               </tr>
               <tr *ngIf="salesRows.length === 0">
-                <td colspan="10" class="empty">No sales found</td>
+                <td colspan="14" class="empty">No sales found</td>
               </tr>
             </tbody>
           </table>
@@ -108,20 +172,26 @@
       </mat-paginator>
     </div>
 
-    <div class="card mt-3" *ngIf="selectedSale">
+    <div class="card mt-3" *ngIf="selectedSale" #saleDetailsCard>
       <div class="card-header card-header-info">
         <h4 class="card-title">Sale Details</h4>
         <button mat-icon-button type="button" (click)="closeDetails()"><mat-icon>close</mat-icon></button>
       </div>
       <div class="card-body">
         <div class="detail-meta">
-          <div><strong>Invoice:</strong> {{ selectedSale?._id }}</div>
+          <div><strong>Invoice:</strong> {{ selectedSale?.invoiceNo || selectedSale?._id }}</div>
           <div><strong>Customer:</strong> {{ selectedSale?.customerName || 'Walk-in' }}</div>
           <div><strong>Date:</strong> {{ selectedSale?.purchaseDate | date:'medium' }}</div>
           <div><strong>Total:</strong> Rs {{ selectedSale?.totalPurchasePrice | number:'1.2-2' }}</div>
           <div><strong>Discount:</strong> Rs {{ selectedSale?.billDiscount | number:'1.2-2' }}</div>
           <div><strong>Paid:</strong> Rs {{ selectedSale?.paidAmount | number:'1.2-2' }}</div>
           <div><strong>Due:</strong> Rs {{ selectedSale?.dueAmount | number:'1.2-2' }}</div>
+          <div><strong>Return Status:</strong> {{ getReturnBadge(selectedSale) | uppercase }}</div>
+          <div><strong>Returned Qty:</strong> {{ selectedSale?.returnedQuantity || 0 }} / {{ selectedSale?.totalQuantity || 0 }}</div>
+          <div><strong>Returned Amount:</strong> Rs {{ selectedSale?.returnedAmount | number:'1.2-2' }}</div>
+          <div><strong>Due Adjusted:</strong> Rs {{ selectedSale?.dueAdjustedAmount | number:'1.2-2' }}</div>
+          <div><strong>Refunded:</strong> Rs {{ selectedSale?.refundedAmount | number:'1.2-2' }}</div>
+          <div><strong>Credit Note:</strong> Rs {{ selectedSale?.creditedAmount | number:'1.2-2' }}</div>
         </div>
 
         <div class="table-responsive">

@@ -89,6 +89,12 @@ const saleItemSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
+
+    returnedQuantity: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
   },
   { _id: true }
 );
@@ -111,6 +117,12 @@ const saleSchema = new mongoose.Schema(
 
     // Legacy sales screen uses customerName directly
     customerName: {
+      type: String,
+      trim: true,
+      index: true,
+    },
+
+    invoiceNo: {
       type: String,
       trim: true,
       index: true,
@@ -158,6 +170,36 @@ const saleSchema = new mongoose.Schema(
       min: 0,
     },
 
+    returnedQuantity: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
+    returnedAmount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
+    refundedAmount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
+    dueAdjustedAmount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
+    creditedAmount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
     orderSource: {
       type: String,
       enum: ["POS", "ONLINE"],
@@ -179,5 +221,9 @@ const saleSchema = new mongoose.Schema(
 
 saleSchema.index({ shop: 1, createdAt: -1 });
 saleSchema.index({ orderSource: 1 });
+saleSchema.index(
+  { shop: 1, invoiceNo: 1 },
+  { unique: true, partialFilterExpression: { invoiceNo: { $type: "string", $ne: "" } } },
+);
 
 module.exports = mongoose.model("Sale", saleSchema);

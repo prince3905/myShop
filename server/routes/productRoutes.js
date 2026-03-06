@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const productController = require("../controllers/ProductController");
-const { protect, attachShop } = require("../middleware/authMiddleware");
+const { protect, attachShop, authorizePermission } = require("../middleware/authMiddleware");
 
 const { validate } = require("../middleware/validate");
 const {
@@ -18,6 +18,7 @@ router.use(attachShop);
 ========================= */
 router.post(
   "/",
+  authorizePermission("MANAGE_PRODUCTS"),
   createProductValidation,
   validate,
   productController.createProduct
@@ -47,6 +48,7 @@ router.get(
 ========================= */
 router.put(
   "/:id",
+  authorizePermission("MANAGE_PRODUCTS"),
   updateProductValidation,
   validate,
   productController.updateProduct
@@ -57,9 +59,18 @@ router.put(
 ========================= */
 router.delete(
   "/:id",
+  authorizePermission("MANAGE_PRODUCTS"),
   updateProductValidation,
   validate,
   productController.deleteProduct
+);
+
+router.patch(
+  "/:id/restore",
+  authorizePermission("MANAGE_PRODUCTS"),
+  updateProductValidation,
+  validate,
+  productController.restoreProduct
 );
 
 module.exports = router;

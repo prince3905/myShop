@@ -19,6 +19,9 @@ import { UserComponent } from "app/all-users/user/user.component";
 import { ManageShopsComponent } from "app/shops/manage-shops/manage-shops.component";
 import { RoleGuard } from "app/shared/guard/role.guard";
 import { PurchaseConsoleComponent } from "app/purchases/purchase-console/purchase-console.component";
+import { PosComponent } from "app/sales/pos/pos.component";
+import { ReturnsComponent } from "app/sales/returns/returns.component";
+import { SalesReportsComponent } from "app/sales/sales-reports/sales-reports.component";
 
 export const AdminLayoutRoutes: Routes = [
   {
@@ -37,6 +40,9 @@ export const AdminLayoutRoutes: Routes = [
   { path: "add-detail/:productId/:id", component: AddDetailsComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ["SUPER_ADMIN", "ADMIN", "MANAGER"] } },
   { path: "item-details/:id", component: ItemDetailsComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"] } },
   { path: "sale-list", component: SalesListComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"] } },
+  { path: "sales-reports", component: SalesReportsComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"] } },
+  { path: "pos", component: PosComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ["SUPER_ADMIN", "ADMIN", "MANAGER"] } },
+  { path: "returns", component: ReturnsComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ["SUPER_ADMIN", "ADMIN", "MANAGER"] } },
   { path: "stocks", component: StocksComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"] } },
   { path: "purchase", component: PurchaseConsoleComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ["SUPER_ADMIN", "ADMIN", "MANAGER"] } },
   { path: "distributor", component: DistributorsComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ["SUPER_ADMIN", "ADMIN"] } },

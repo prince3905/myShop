@@ -60,7 +60,7 @@
                     </div>
                     <div class="card-footer">
                         <div class="stats">
-                            <i class="material-icons">local_offer</i> Distributor due: ₹ {{ kpis?.distributorDue | number:'1.2-2' }}
+                            <i class="material-icons">assignment_return</i> Return today: ₹ {{ kpis?.todayReturnAmount | number:'1.2-2' }}
                         </div>
                     </div>
                 </div>
@@ -76,7 +76,7 @@
                     </div>
                     <div class="card-footer">
                         <div class="stats">
-                            <i class="material-icons">update</i> Active shops: {{ kpis?.activeShops || 0 }}
+                            <i class="material-icons">currency_rupee</i> Credit today: ₹ {{ kpis?.todayCreditAmount | number:'1.2-2' }}
                         </div>
                     </div>
                 </div>
@@ -110,6 +110,42 @@
                             Paid: ₹ {{ purchaseAnalytics?.monthly?.totalPaid | number:'1.2-2' }} |
                             Due: ₹ {{ purchaseAnalytics?.monthly?.totalDue | number:'1.2-2' }} |
                             Count: {{ purchaseAnalytics?.monthly?.count || 0 }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <div class="analytics-strip">
+                    <div class="analytics-card return-card">
+                        <div class="title">Returns Today</div>
+                        <div class="amount">₹ {{ returnAnalytics?.today?.totalAmount | number:'1.2-2' }}</div>
+                        <div class="meta">
+                            Refund: ₹ {{ returnAnalytics?.today?.totalRefund | number:'1.2-2' }} |
+                            Credit: ₹ {{ returnAnalytics?.today?.totalCredit | number:'1.2-2' }} |
+                            Qty: {{ returnAnalytics?.today?.totalQty || 0 }} |
+                            Count: {{ returnAnalytics?.today?.count || 0 }}
+                        </div>
+                    </div>
+                    <div class="analytics-card return-card">
+                        <div class="title">Returns Weekly</div>
+                        <div class="amount">₹ {{ returnAnalytics?.weekly?.totalAmount | number:'1.2-2' }}</div>
+                        <div class="meta">
+                            Refund: ₹ {{ returnAnalytics?.weekly?.totalRefund | number:'1.2-2' }} |
+                            Credit: ₹ {{ returnAnalytics?.weekly?.totalCredit | number:'1.2-2' }} |
+                            Qty: {{ returnAnalytics?.weekly?.totalQty || 0 }} |
+                            Count: {{ returnAnalytics?.weekly?.count || 0 }}
+                        </div>
+                    </div>
+                    <div class="analytics-card return-card">
+                        <div class="title">Returns Monthly</div>
+                        <div class="amount">₹ {{ returnAnalytics?.monthly?.totalAmount | number:'1.2-2' }}</div>
+                        <div class="meta">
+                            Refund: ₹ {{ returnAnalytics?.monthly?.totalRefund | number:'1.2-2' }} |
+                            Credit: ₹ {{ returnAnalytics?.monthly?.totalCredit | number:'1.2-2' }} |
+                            Qty: {{ returnAnalytics?.monthly?.totalQty || 0 }} |
+                            Count: {{ returnAnalytics?.monthly?.count || 0 }}
                         </div>
                     </div>
                 </div>

@@ -30,4 +30,44 @@ export class SalesService {
     });
     return this.http.get(`${this.baseURL}/api/purchase`,{ params: params });
   }
+
+  getSaleById(id: string): Observable<any> {
+    return this.http.get(`${this.baseURL}/api/sales/${id}`);
+  }
+
+  getSaleReturns(id: string): Observable<any> {
+    return this.http.get(`${this.baseURL}/api/sales/${id}/returns`);
+  }
+
+  getSaleLedger(id: string): Observable<any> {
+    return this.http.get(`${this.baseURL}/api/sales/${id}/ledger`);
+  }
+
+  getAllSaleReturns(params?: any): Observable<any> {
+    let query = new HttpParams();
+    Object.keys(params || {}).forEach((key) => {
+      const value = params[key];
+      if (value === null || value === undefined || value === "") return;
+      query = query.set(key, String(value));
+    });
+    return this.http.get(`${this.baseURL}/api/sales/returns`, { params: query });
+  }
+
+  getSalesReportOverview(params?: any): Observable<any> {
+    let query = new HttpParams();
+    Object.keys(params || {}).forEach((key) => {
+      const value = params[key];
+      if (value === null || value === undefined || value === "") return;
+      query = query.set(key, String(value));
+    });
+    return this.http.get(`${this.baseURL}/api/sales/reports/overview`, { params: query });
+  }
+
+  createSaleReturn(id: string, payload: any): Observable<any> {
+    return this.http.post(`${this.baseURL}/api/sales/${id}/returns`, payload);
+  }
+
+  collectSalePayment(id: string, payload: any): Observable<any> {
+    return this.http.post(`${this.baseURL}/api/sales/${id}/payments`, payload);
+  }
 }

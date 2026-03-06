@@ -26,6 +26,10 @@
   font-weight: 600;
 }
 
+.invoice-open-field {
+  min-width: 220px;
+}
+
 .summary-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

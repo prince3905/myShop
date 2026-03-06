@@ -54,6 +54,7 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
   selectedModelId: string = "";
   selectedVariationSku: string = "";
   scannedBarcode: string = "";
+  autoAddOnScan: boolean = true;
   private scanDebounceTimer: any = null;
   private barcodeLookupLoading = false;
   @ViewChild("barcodeInputRef") barcodeInputRef?: ElementRef<HTMLInputElement>;
@@ -139,10 +140,16 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   updateSelectedModelVariations(): void {
-    const selectedModelObject = this.selectedItemModels.find((model) => model.model === this.selectedModel);
+    const selectedModelObject = this.selectedItemModels.find((modelRow: any) => {
+      const modelName = `${modelRow?.model || modelRow?.name || ""}`;
+      const modelId = `${modelRow?._id || modelRow?.id || modelRow?.modelId || ""}`;
+      return modelName === this.selectedModel || modelId === this.selectedModel;
+    });
     if (selectedModelObject) {
-      this.selectedModelVariations = selectedModelObject.variations;
-      this.model = this.selectedModel;
+      this.selectedModelVariations = Array.isArray(selectedModelObject.variations)
+        ? selectedModelObject.variations
+        : [];
+      this.model = `${selectedModelObject?.model || selectedModelObject?.name || this.selectedModel}`;
       console.log("Selected Model:", this.model);
       console.log(this.selectedModelVariations)
     } else {
@@ -153,7 +160,10 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
 
   onVariationChange(selectedVariation: string): void {
     const selectedVariationObject = this.selectedModelVariations.find(
-      (variation) => variation.orderNumber === selectedVariation
+      (variation: any) =>
+        `${variation?.orderNumber || ""}` === `${selectedVariation || ""}` ||
+        `${variation?.sku || ""}` === `${selectedVariation || ""}` ||
+        `${variation?._id || ""}` === `${selectedVariation || ""}`
     );
   
     if (selectedVariationObject) {
@@ -161,7 +171,8 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
       this.size = selectedVariationObject.size;
       this.color = selectedVariationObject.color;
       this.selectedVariationId = selectedVariationObject._id || "";
-      this.selectedVariationSku = selectedVariationObject.sku || selectedVariationObject.orderNumber || "";
+      this.selectedVariationSku =
+        selectedVariationObject.sku || selectedVariationObject.orderNumber || "";
       this.selectedProductId = selectedVariationObject.product?._id || selectedVariationObject.product || "";
       this.selectedModelId =
         selectedVariationObject.model?._id || selectedVariationObject.model || this.selectedModelId;
@@ -212,33 +223,104 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
           return;
         }
 
-        this.itemName = row?.product?.name || this.itemName;
-        this.model = row?.model?.name || this.model;
-        this.color = row?.attributes?.color || "";
-        this.size = row?.attributes?.size || "";
-        this.purchasePrice = Number(row?.sellingPrice || 0);
-        this.selectedVariationId = row?._id || "";
-        this.selectedVariationSku = row?.sku || "";
-        this.selectedProductId = row?.product?._id || row?.product || "";
-        this.selectedModelId = row?.model?._id || row?.model || "";
-        this.variations = row?.sku || "";
-        if (!this.quantity || this.quantity < 1) {
-          this.quantity = 1;
-        }
+        this.stock.getStocks({ variation: row?._id, page: 1, limit: 1 }).subscribe({
+          next: (stockRes: any) => {
+            const stockRow = Array.isArray(stockRes?.stockReport) ? stockRes.stockReport[0] : null;
+            const available = Number(stockRow?.quantity || 0);
+            if (available <= 0) {
+              this.beepError();
+              this.snackBar.open(
+                `Out of stock: ${row?.sku || code}. Cannot add to cart.`,
+                "Close",
+                { duration: 2600 },
+              );
+              this.barcodeLookupLoading = false;
+              this.scannedBarcode = "";
+              this.focusBarcodeInput();
+              return;
+            }
+            const activeCustomer = `${this.customerName || ""}`.trim() || "Walk-in";
+            const existingQty = Number(
+              (
+                this.Sales_added?.[activeCustomer]?.items || []
+              ).find((it: any) => `${it?.variationId || ""}` === `${row?._id || ""}`)?.quantity || 0,
+            );
+            if (existingQty >= available) {
+              this.beepError();
+              this.snackBar.open(
+                `Stock limit reached for ${row?.sku || code}. Available: ${available}`,
+                "Close",
+                { duration: 2600 },
+              );
+              this.barcodeLookupLoading = false;
+              this.scannedBarcode = "";
+              this.focusBarcodeInput();
+              return;
+            }
 
-        this.snackBar.open(`Loaded: ${row?.sku || code}`, "Close", {
-          duration: 1800,
+            this.itemName = row?.product?.name || this.itemName;
+            this.model = row?.model?.name || this.model;
+            this.color = row?.attributes?.color || "";
+            this.size = row?.attributes?.size || "";
+            this.purchasePrice = Number(row?.sellingPrice || 0);
+            this.selectedVariationId = row?._id || "";
+            this.selectedVariationSku = row?.sku || "";
+            this.selectedProductId = row?.product?._id || row?.product || "";
+            this.selectedModelId = row?.model?._id || row?.model || "";
+            this.variations = row?.sku || "";
+            this.applyBarcodeSelection(row);
+            if (!this.quantity || this.quantity < 1) {
+              this.quantity = 1;
+            }
+
+            if (this.autoAddOnScan) {
+              const added = this.addCurrentItemToCart("scan");
+              if (added) {
+                this.snackBar.open(`Added to cart: ${row?.sku || code}`, "Close", {
+                  duration: 1600,
+                });
+              }
+            } else {
+              this.snackBar.open(`Loaded: ${row?.sku || code}`, "Close", {
+                duration: 1800,
+              });
+            }
+            this.barcodeLookupLoading = false;
+            this.scannedBarcode = "";
+            this.focusBarcodeInput();
+          },
+          error: () => {
+            this.beepError();
+            this.snackBar.open("Stock check failed. Please retry.", "Close", { duration: 2600 });
+            this.barcodeLookupLoading = false;
+            this.scannedBarcode = "";
+            this.focusBarcodeInput();
+          },
         });
+      },
+      error: () => {
+        this.beepError();
+        this.snackBar.open("Barcode search failed", "Close", { duration: 2500 });
         this.barcodeLookupLoading = false;
         this.scannedBarcode = "";
         this.focusBarcodeInput();
       },
-      error: () => {
-        this.snackBar.open("Barcode search failed", "Close", { duration: 2500 });
-        this.barcodeLookupLoading = false;
-        this.focusBarcodeInput();
-      },
     });
+  }
+
+  private beepError(): void {
+    try {
+      const audioCtx = new ((window as any).AudioContext || (window as any).webkitAudioContext)();
+      const oscillator = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      oscillator.type = "square";
+      oscillator.frequency.setValueAtTime(220, audioCtx.currentTime);
+      gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
+      oscillator.connect(gain);
+      gain.connect(audioCtx.destination);
+      oscillator.start();
+      oscillator.stop(audioCtx.currentTime + 0.12);
+    } catch (err) {}
   }
 
   onBarcodeInputChange(): void {
@@ -280,11 +362,56 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
     console.log(data)
     this.item.getProductsByName(data).subscribe(
       (response: any) => {
-        this.selectedItemModels = response[0].models;
+        this.selectedItemModels = Array.isArray(response?.[0]?.models) ? response[0].models : [];
         console.log(this.selectedItemModels)
       },
       (error) => console.error("Error retrieving items:", error)
     );
+  }
+
+  private applyBarcodeSelection(row: any): void {
+    const modelName = `${row?.model?.name || row?.modelName || this.model || ""}`.trim();
+    const modelId = `${row?.model?._id || row?.model || ""}`.trim();
+    const sku = `${row?.sku || ""}`.trim();
+    if (!modelName || !sku) return;
+
+    const barcodeVariation = {
+      ...row,
+      orderNumber: sku,
+      size: row?.attributes?.size || "",
+      color: row?.attributes?.color || "",
+    };
+
+    const existingModel = (this.selectedItemModels || []).find((m: any) => {
+      const name = `${m?.model || m?.name || ""}`.trim();
+      const id = `${m?._id || m?.modelId || m?.id || ""}`.trim();
+      return name === modelName || (!!modelId && id === modelId);
+    });
+
+    if (existingModel) {
+      const variations = Array.isArray(existingModel.variations) ? existingModel.variations : [];
+      const hasSku = variations.some(
+        (v: any) => `${v?.sku || v?.orderNumber || v?._id || ""}` === `${sku || ""}`,
+      );
+      if (!hasSku) {
+        existingModel.variations = [...variations, barcodeVariation];
+      }
+    } else {
+      this.selectedItemModels = [
+        ...this.selectedItemModels,
+        {
+          _id: modelId || undefined,
+          modelId: modelId || undefined,
+          model: modelName,
+          variations: [barcodeVariation],
+        },
+      ];
+    }
+
+    this.selectedModel = modelName;
+    this.updateSelectedModelVariations();
+    this.selectedVariation = sku;
+    this.onVariationChange(sku);
   }
   
 
@@ -319,122 +446,122 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
   //     });
   // }
 
-            async onSubmit(): Promise<void> {
-                  // try {
-                  //   const stockInfo: any = await this.stock.getStocks(null).toPromise();
-                  //   console.log(stockInfo);
-                  //   const selectedItemKey = stockInfo.stockReport.find(
-                  //     (stockItem: any) => stockItem.itemName === this.itemName
-                  //   );
-                  //   console.log(selectedItemKey);
+  async onSubmit(): Promise<void> {
+    this.addCurrentItemToCart("manual");
+  }
 
-                  //   if (!selectedItemKey) {
-                  //     console.warn("Selected item not found in stock information.");
-                  //     this.snackBar.open(
-                  //       "Selected item not found in stock information..",
-                  //       "Close",
-                  //       {
-                  //         duration: 5000,
-                  //         horizontalPosition: "center",
-                  //         verticalPosition: "top",
-                  //       }
-                  //     );
-                  //     return;
-                  //   }
+  private addCurrentItemToCart(source: "manual" | "scan"): boolean {
+    const normalizedCustomer = `${this.customerName || ""}`.trim() || "Walk-in";
+    this.customerName = normalizedCustomer;
 
-                  //   if (selectedItemKey.remainingQuantity <= 0) {
-                  //     console.warn("Requested quantity is greater than available stock.");
-                  //     this.snackBar.open(
-                  //       "Requested quantity is greater than available stock.",
-                  //       "Close",
-                  //       {
-                  //         duration: 5000,
-                  //         horizontalPosition: "center",
-                  //         verticalPosition: "top",
-                  //       }
-                  //     );
-                  //     return;
-                  //   }
+    if (!this.itemName || !this.selectedVariationId) {
+      if (source === "manual") {
+        this.snackBar.open("Select item variation first", "Close", { duration: 2200 });
+      }
+      return false;
+    }
+    if (!this.quantity || Number(this.quantity) <= 0) {
+      if (source === "manual") {
+        this.snackBar.open("Quantity must be greater than 0", "Close", { duration: 2200 });
+      }
+      return false;
+    }
+    if (Number(this.purchasePrice || 0) < 0) {
+      if (source === "manual") {
+        this.snackBar.open("Price cannot be negative", "Close", { duration: 2200 });
+      }
+      return false;
+    }
 
-                  //   if (this.quantity > selectedItemKey.remainingQuantity) {
-                  //     console.warn("Requested quantity is greater than available stock.");
-                  //     this.snackBar.open(
-                  //       "Requested quantity is greater than available stock.",
-                  //       "Close",
-                  //       {
-                  //         duration: 5000,
-                  //         horizontalPosition: "center",
-                  //         verticalPosition: "top",
-                  //       }
-                  //     );
-                  //     return;
-                  //   }
-                  // } catch (error) {
-                  //   console.error("Error fetching stock information:", error);
-                  // }
+    let customerSales = this.Sales_added[this.customerName];
+    const itemRow = {
+      itemName: this.itemName,
+      category: this.selectedCategory,
+      brand: this.selectedBrand,
+      quantity: Number(this.quantity || 0),
+      purchasePrice: Number(this.purchasePrice || 0),
+      model: this.model,
+      size: this.size,
+      variations: this.selectedVariationSku || this.variations,
+      variationId: this.selectedVariationId || null,
+      variationSku: this.selectedVariationSku || this.variations || null,
+      productId: this.selectedProductId || null,
+      modelId: this.selectedModelId || null,
+    };
 
-              let customerSales = this.Sales_added[this.customerName];
+    if (!customerSales) {
+      customerSales = {
+        customerName: this.customerName,
+        items: [itemRow],
+        totalPurchasePrice: itemRow.quantity * itemRow.purchasePrice,
+        totalQuantity: itemRow.quantity,
+      };
+      this.Sales_added[this.customerName] = customerSales;
+    } else {
+      const existingIndex =
+        source === "scan"
+          ? customerSales.items.findIndex(
+              (it: any) =>
+                `${it?.variationId || ""}` !== "" &&
+                `${it?.variationId || ""}` === `${itemRow.variationId || ""}`,
+            )
+          : -1;
 
-                  if (!customerSales) {
-                    customerSales = {
-                      customerName: this.customerName,
-                      items: [
-                        {
-                          itemName: this.itemName,
-                          category: this.selectedCategory,
-                          brand: this.selectedBrand,
-                          quantity: this.quantity,
-                          purchasePrice: this.purchasePrice,
-                          model: this.model,
-                          size: this.size,
-                          variations: this.selectedVariationSku || this.variations,
-                          variationId: this.selectedVariationId || null,
-                          variationSku: this.selectedVariationSku || this.variations || null,
-                          productId: this.selectedProductId || null,
-                          modelId: this.selectedModelId || null,
-                        },
-                      ],
-                      totalPurchasePrice: this.quantity * this.purchasePrice,
-                      totalQuantity: this.quantity,
-                    };
+      if (existingIndex >= 0) {
+        const existing = customerSales.items[existingIndex];
+        existing.quantity = Number(existing.quantity || 0) + Number(itemRow.quantity || 0);
+        existing.purchasePrice = Number(itemRow.purchasePrice || existing.purchasePrice || 0);
+        existing.model = itemRow.model || existing.model;
+        existing.size = itemRow.size || existing.size;
+        existing.variationSku = itemRow.variationSku || existing.variationSku;
+        existing.variations = itemRow.variations || existing.variations;
+      } else {
+        customerSales.items.push(itemRow);
+      }
+    }
+    customerSales.totalQuantity = (customerSales.items || []).reduce(
+      (acc: number, it: any) => acc + Number(it?.quantity || 0),
+      0,
+    );
+    customerSales.totalPurchasePrice = (customerSales.items || []).reduce(
+      (acc: number, it: any) =>
+        acc + Number(it?.quantity || 0) * Number(it?.purchasePrice || 0),
+      0,
+    );
 
-                    this.Sales_added[this.customerName] = customerSales;
-                  } else {
-                    customerSales.items.push({
-                      itemName: this.itemName,
-                      category: this.selectedCategory,
-                      brand: this.selectedBrand,
-                      quantity: this.quantity,
-                      purchasePrice: this.purchasePrice,
-                      model: this.model,
-                      size: this.size,
-                      variations: this.selectedVariationSku || this.variations,
-                      variationId: this.selectedVariationId || null,
-                      variationSku: this.selectedVariationSku || this.variations || null,
-                      productId: this.selectedProductId || null,
-                      modelId: this.selectedModelId || null,
-                    });
-                    customerSales.totalPurchasePrice += this.quantity * this.purchasePrice;
-                    customerSales.totalQuantity += this.quantity;
-                  }
-                  this.final_Sales_data = {
-                    customerName: this.customerName,
-                    items: customerSales.items,
-                    billDiscount: Number(this.billDiscount || 0),
-                    paidAmount: Number(this.paidAmount || 0),
-                    paymentMethod: this.paymentMethod || "CASH",
-                  };
+    this.final_Sales_data = {
+      customerName: this.customerName,
+      items: customerSales.items,
+      billDiscount: Number(this.billDiscount || 0),
+      paidAmount: Number(this.paidAmount || 0),
+      paymentMethod: this.paymentMethod || "CASH",
+    };
+    this.Display_items = this.final_Sales_data.items;
+    this.calculateTotals();
 
-              // this.totalPurchasePrice = customerSales.totalPurchasePrice;
-              // this.totalQuantity = customerSales.totalQuantity;
-              this.Display_items = this.final_Sales_data.items;
-              this.calculateTotals();
+    if (source === "scan") {
+      this.resetScanEntryFields();
+    }
+    return true;
+  }
 
-              console.log("Sales Data to be Submitted:", this.final_Sales_data);
-              console.log("Display_items", this.Display_items);
-              console.log("Total Purchase Price:", this.totalPurchasePrice);
-              console.log("Total Quantity:", this.totalQuantity);
-            }
+  private resetScanEntryFields(): void {
+    this.itemName = "";
+    this.model = "";
+    this.variations = "";
+    this.quantity = 1;
+    this.size = "";
+    this.color = "";
+    this.purchasePrice = 0;
+    this.description = "";
+    this.selectedModel = "";
+    this.selectedVariation = "";
+    this.selectedModelVariations = [];
+    this.selectedVariationId = "";
+    this.selectedProductId = "";
+    this.selectedModelId = "";
+    this.selectedVariationSku = "";
+  }
 
 
             

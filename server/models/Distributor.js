@@ -66,9 +66,17 @@ const distributorSchema = new mongoose.Schema(
       default: "active",
     },
     
-     isDeleted: {
+    isDeleted: {
       type: Boolean,
       default: false,
+      index: true,
+    },
+
+    archivedAt: Date,
+
+    archivedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
     },
 
     createdBy: {

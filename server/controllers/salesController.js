@@ -4,10 +4,54 @@ const Product = require("../models/Product");
 const ProductModel = require("../models/ProductModel");
 const ProductVariation = require("../models/ProductVariation");
 const Stock = require("../models/Stock");
+const SaleReturn = require("../models/SaleReturn");
+const SaleLedger = require("../models/SaleLedger");
 const { applyStockTransaction } = require("../utils/stock.service");
+const { createSaleLedgerEntry } = require("../utils/saleLedger.service");
+const { generateInvoiceNo } = require("../utils/invoice.service");
 
 const isSuperAdminGlobal = (req) =>
   req.user?.role === "SUPER_ADMIN" && !req.shopId;
+const ALLOWED_REFUND_METHODS = new Set(["CASH", "BANK", "ONLINE", "UPI", "CARD", "STORE_CREDIT"]);
+const ALLOWED_PAYMENT_METHODS = new Set(["CASH", "BANK", "ONLINE", "UPI", "CARD", "CHEQUE"]);
+
+const sumSaleReturnedByVariation = async ({ shopId, saleId }) => {
+  const rows = await SaleReturn.aggregate([
+    { $match: { shop: shopId, sale: saleId, status: "APPROVED" } },
+    { $unwind: "$items" },
+    { $group: { _id: "$items.variationId", qty: { $sum: "$items.quantity" } } },
+  ]);
+
+  const result = new Map();
+  rows.forEach((r) => {
+    result.set(`${r._id}`, Number(r.qty || 0));
+  });
+  return result;
+};
+
+const getSaleReturnTotals = async ({ shopId, saleId }) => {
+  const rows = await SaleReturn.aggregate([
+    { $match: { shop: shopId, sale: saleId, status: "APPROVED" } },
+    {
+      $group: {
+        _id: null,
+        qty: { $sum: "$totalQuantity" },
+        amount: { $sum: "$totalAmount" },
+        refund: { $sum: "$refundAmount" },
+        dueAdjusted: { $sum: "$dueAdjustedAmount" },
+        credit: { $sum: "$creditAmount" },
+      },
+    },
+  ]);
+
+  return {
+    qty: Number(rows[0]?.qty || 0),
+    amount: Number(rows[0]?.amount || 0),
+    refund: Number(rows[0]?.refund || 0),
+    dueAdjusted: Number(rows[0]?.dueAdjusted || 0),
+    credit: Number(rows[0]?.credit || 0),
+  };
+};
 
 const resolveVariation = async (shopId, rawItem = {}) => {
   const variationId = `${rawItem?.variationId || ""}`.trim();
@@ -155,9 +199,12 @@ exports.createSale = async (req, res) => {
       return output;
     });
 
+    const invoiceNo = await generateInvoiceNo({ type: "SALE" });
     const sale = await Sale.create({
       shop: req.shopId,
+      customer: req.body?.customer || undefined,
       customerName,
+      invoiceNo,
       items: saleDocItems,
       totalQuantity,
       subTotal,
@@ -169,6 +216,32 @@ exports.createSale = async (req, res) => {
       orderSource: "POS",
       status: "COMPLETED",
     });
+
+    await createSaleLedgerEntry({
+      shop: req.shopId,
+      sale: sale._id,
+      customer: sale.customer,
+      customerName: sale.customerName,
+      type: "sale",
+      amount: Number(sale.totalAmount || 0),
+      referenceId: sale._id,
+      note: `Sale ${sale.invoiceNo || sale._id}`,
+      createdBy: req.user?._id,
+    });
+    if (safePaidAmount > 0) {
+      await createSaleLedgerEntry({
+        shop: req.shopId,
+        sale: sale._id,
+        customer: sale.customer,
+        customerName: sale.customerName,
+        type: "payment",
+        amount: safePaidAmount,
+        paymentMethod: normalizedPaymentMethod,
+        referenceId: sale._id,
+        note: `Sale payment (${normalizedPaymentMethod}) ${sale.invoiceNo || sale._id}`,
+        createdBy: req.user?._id,
+      });
+    }
 
     for (const it of normalizedItems) {
       const variation = it._variationRef;
@@ -182,7 +255,7 @@ exports.createSale = async (req, res) => {
         quantity: Number(it.quantity || 0),
         referenceType: "SALE",
         referenceId: sale._id,
-        note: `POS sale ${sale._id}`,
+        note: `POS sale ${sale.invoiceNo || sale._id}`,
         createdBy: req.user?._id,
       });
     }
@@ -193,6 +266,12 @@ exports.createSale = async (req, res) => {
       sale,
     });
   } catch (error) {
+    if (error?.code === 11000 && error?.keyPattern?.invoiceNo) {
+      return res.status(409).json({
+        success: false,
+        message: "Invoice number conflict, please retry sale",
+      });
+    }
     return res.status(500).json({
       success: false,
       message: "Error creating sale",
@@ -203,7 +282,18 @@ exports.createSale = async (req, res) => {
 
 exports.getSales = async (req, res) => {
   try {
-    const { page = 1, perPage = 10, itemName, customerName, startDate, endDate } = req.query;
+    const {
+      page = 1,
+      perPage = 10,
+      invoiceNo,
+      itemName,
+      customerName,
+      startDate,
+      endDate,
+      returnStatus,
+      paymentMethod,
+      dueOnly,
+    } = req.query;
     const safePage = Math.max(1, Number(page || 1));
     const safeLimit = Math.min(100, Math.max(1, Number(perPage || 10)));
     const skip = (safePage - 1) * safeLimit;
@@ -213,9 +303,15 @@ exports.getSales = async (req, res) => {
     if (customerName && customerName !== "null") {
       query.customerName = { $regex: customerName, $options: "i" };
     }
+    if (invoiceNo && invoiceNo !== "null") {
+      query.invoiceNo = { $regex: invoiceNo, $options: "i" };
+    }
 
     if (itemName && itemName !== "null") {
       query["items.itemName"] = { $regex: itemName, $options: "i" };
+    }
+    if (paymentMethod && paymentMethod !== "null") {
+      query.paymentMethod = `${paymentMethod}`.trim().toUpperCase();
     }
 
     if (startDate || endDate) {
@@ -228,6 +324,29 @@ exports.getSales = async (req, res) => {
       }
     }
 
+    const exprConditions = [];
+    const normalizedReturnStatus = `${returnStatus || ""}`.trim().toUpperCase();
+    if (normalizedReturnStatus === "NONE") {
+      query.returnedQuantity = { $lte: 0 };
+    } else if (normalizedReturnStatus === "FULL") {
+      exprConditions.push({ $gt: ["$totalQuantity", 0] });
+      exprConditions.push({ $gte: ["$returnedQuantity", "$totalQuantity"] });
+    } else if (normalizedReturnStatus === "PARTIAL") {
+      exprConditions.push({ $gt: ["$returnedQuantity", 0] });
+      exprConditions.push({ $lt: ["$returnedQuantity", "$totalQuantity"] });
+    }
+
+    const dueOnlyFlag = `${dueOnly || ""}`.trim().toLowerCase();
+    if (dueOnlyFlag === "true" || dueOnlyFlag === "1" || dueOnlyFlag === "yes") {
+      exprConditions.push({ $gt: ["$dueAmount", 0] });
+    }
+
+    if (exprConditions.length === 1) {
+      query.$expr = exprConditions[0];
+    } else if (exprConditions.length > 1) {
+      query.$expr = { $and: exprConditions };
+    }
+
     const [rows, totalItems] = await Promise.all([
       Sale.find(query).sort({ createdAt: -1 }).skip(skip).limit(safeLimit),
       Sale.countDocuments(query),
@@ -235,22 +354,32 @@ exports.getSales = async (req, res) => {
 
     const itemResults = rows.map((s) => ({
       _id: s._id,
+      invoiceNo: s.invoiceNo || null,
       customerName: s.customerName || "Walk-in",
       totalPurchasePrice: Number(s.totalAmount || 0),
       billDiscount: Number(s.billDiscount || 0),
       paidAmount: Number(s.paidAmount || 0),
       dueAmount: Number(s.dueAmount || 0),
       totalQuantity: Number(s.totalQuantity || 0),
+      returnedQuantity: Number(s.returnedQuantity || 0),
+      returnedAmount: Number(s.returnedAmount || 0),
+      refundedAmount: Number(s.refundedAmount || 0),
+      dueAdjustedAmount: Number(s.dueAdjustedAmount || 0),
+      creditedAmount: Number(s.creditedAmount || 0),
       purchaseDate: s.createdAt,
       paymentMethod: s.paymentMethod,
       status: s.status,
       items: (s.items || []).map((it) => ({
+        item: it.item,
+        variationId: it.variationId,
+        variationSku: it.variationSku,
         itemName: it.itemName || "-",
         brand: { name: it.brandName || "-" },
         category: { name: it.categoryName || "-" },
         model: it.model || "-",
         size: it.size || "-",
         quantity: Number(it.quantity || 0),
+        returnedQuantity: Number(it.returnedQuantity || 0),
         purchasePrice: Number(it.sellingPrice || 0),
       })),
     }));
@@ -293,6 +422,635 @@ exports.getCustomerSuggestions = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Error fetching customer suggestions",
+      error: error.message,
+    });
+  }
+};
+
+exports.getSaleById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const hasObjectId = mongoose.Types.ObjectId.isValid(id);
+    const query = isSuperAdminGlobal(req)
+      ? hasObjectId
+        ? { $or: [{ _id: id }, { invoiceNo: id }] }
+        : { invoiceNo: id }
+      : hasObjectId
+        ? { shop: req.shopId, $or: [{ _id: id }, { invoiceNo: id }] }
+        : { shop: req.shopId, invoiceNo: id };
+    const sale = await Sale.findOne(query);
+    if (!sale) {
+      return res.status(404).json({ success: false, message: "Sale not found" });
+    }
+
+    return res.status(200).json({ success: true, data: sale });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Error fetching sale",
+      error: error.message,
+    });
+  }
+};
+
+exports.getSaleLedger = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ success: false, message: "Invalid sale id" });
+    }
+
+    const query = isSuperAdminGlobal(req)
+      ? { sale: id }
+      : { shop: req.shopId, sale: id };
+
+    const rows = await SaleLedger.find(query).sort({ createdAt: 1 });
+    return res.status(200).json({ success: true, data: rows });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Error fetching sale ledger",
+      error: error.message,
+    });
+  }
+};
+
+exports.collectSalePayment = async (req, res) => {
+  try {
+    if (!req.shopId) {
+      return res.status(400).json({ success: false, message: "Please select a shop first" });
+    }
+
+    const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ success: false, message: "Invalid sale id" });
+    }
+
+    const sale = await Sale.findOne({ _id: id, shop: req.shopId });
+    if (!sale) {
+      return res.status(404).json({ success: false, message: "Sale not found for selected shop" });
+    }
+
+    const currentDue = Math.max(0, Number(sale.dueAmount || 0));
+    if (currentDue <= 0) {
+      return res.status(409).json({ success: false, message: "No outstanding due for this sale" });
+    }
+
+    const amount = Math.max(0, Number(req.body?.amount || 0));
+    if (amount <= 0) {
+      return res.status(400).json({ success: false, message: "Payment amount must be greater than 0" });
+    }
+    if (amount > currentDue) {
+      return res.status(400).json({
+        success: false,
+        message: `Payment amount cannot exceed due ${currentDue.toFixed(2)}`,
+      });
+    }
+
+    const paymentMethod = `${req.body?.paymentMethod || "CASH"}`.trim().toUpperCase();
+    if (!ALLOWED_PAYMENT_METHODS.has(paymentMethod)) {
+      return res.status(400).json({ success: false, message: "Invalid payment method" });
+    }
+
+    sale.paidAmount = Number((Number(sale.paidAmount || 0) + amount).toFixed(2));
+    sale.dueAmount = Math.max(0, Number((currentDue - amount).toFixed(2)));
+    await sale.save();
+
+    await createSaleLedgerEntry({
+      shop: req.shopId,
+      sale: sale._id,
+      customer: sale.customer,
+      customerName: sale.customerName,
+      type: "payment",
+      amount,
+      paymentMethod,
+      referenceId: sale._id,
+      note:
+        `${req.body?.note || ""}`.trim() ||
+        `Additional payment (${paymentMethod}) ${sale.invoiceNo || sale._id}`,
+      createdBy: req.user?._id,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Payment collected successfully",
+      data: sale,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Error collecting sale payment",
+      error: error.message,
+    });
+  }
+};
+
+exports.listSaleReturns = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ success: false, message: "Invalid sale id" });
+    }
+
+    const query = isSuperAdminGlobal(req)
+      ? { sale: id }
+      : { shop: req.shopId, sale: id };
+
+    const rows = await SaleReturn.find(query)
+      .sort({ createdAt: -1 })
+      .populate("createdBy", "email role");
+
+    const totalReturnedQty = rows.reduce((acc, r) => acc + Number(r.totalQuantity || 0), 0);
+    const totalReturnedAmount = Number(
+      rows.reduce((acc, r) => acc + Number(r.totalAmount || 0), 0).toFixed(2),
+    );
+    const totalRefundedAmount = Number(
+      rows.reduce((acc, r) => acc + Number(r.refundAmount || 0), 0).toFixed(2),
+    );
+    const totalCreditAmount = Number(
+      rows.reduce((acc, r) => acc + Number(r.creditAmount || 0), 0).toFixed(2),
+    );
+    const totalDueAdjustedAmount = Number(
+      rows.reduce((acc, r) => acc + Number(r.dueAdjustedAmount || 0), 0).toFixed(2),
+    );
+
+    return res.status(200).json({
+      success: true,
+      data: rows,
+      summary: {
+        count: rows.length,
+        totalReturnedQty,
+        totalReturnedAmount,
+        totalRefundedAmount,
+        totalCreditAmount,
+        totalDueAdjustedAmount,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Error fetching sale returns",
+      error: error.message,
+    });
+  }
+};
+
+exports.listAllSaleReturns = async (req, res) => {
+  try {
+    const { page = 1, limit = 20, search = "", dateFrom, dateTo, refundMethod } = req.query;
+    const safePage = Math.max(1, Number(page || 1));
+    const safeLimit = Math.min(100, Math.max(1, Number(limit || 20)));
+    const skip = (safePage - 1) * safeLimit;
+
+    const query = isSuperAdminGlobal(req) ? {} : { shop: req.shopId };
+    if (search) {
+      const saleRows = await Sale.find({
+        ...(isSuperAdminGlobal(req) ? {} : { shop: req.shopId }),
+        invoiceNo: { $regex: search, $options: "i" },
+      })
+        .select("_id")
+        .limit(200)
+        .lean();
+      const saleIds = saleRows.map((s) => s._id);
+
+      query.$or = [{ customerName: { $regex: search, $options: "i" } }, { note: { $regex: search, $options: "i" } }];
+      if (saleIds.length) {
+        query.$or.push({ sale: { $in: saleIds } });
+      }
+    }
+    if (refundMethod && refundMethod !== "null") {
+      query.refundMethod = `${refundMethod}`.trim().toUpperCase();
+    }
+    if (dateFrom || dateTo) {
+      query.createdAt = {};
+      if (dateFrom) {
+        const from = new Date(dateFrom);
+        if (!Number.isNaN(from.getTime())) query.createdAt.$gte = from;
+      }
+      if (dateTo) {
+        const to = new Date(dateTo);
+        if (!Number.isNaN(to.getTime())) {
+          to.setHours(23, 59, 59, 999);
+          query.createdAt.$lte = to;
+        }
+      }
+    }
+
+    const [rows, totalItems] = await Promise.all([
+      SaleReturn.find(query)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(safeLimit)
+        .populate("sale", "_id invoiceNo")
+        .populate("createdBy", "email role"),
+      SaleReturn.countDocuments(query),
+    ]);
+
+    const totalReturnedQty = rows.reduce((acc, r) => acc + Number(r.totalQuantity || 0), 0);
+    const totalReturnedAmount = Number(rows.reduce((acc, r) => acc + Number(r.totalAmount || 0), 0).toFixed(2));
+    const totalRefundedAmount = Number(rows.reduce((acc, r) => acc + Number(r.refundAmount || 0), 0).toFixed(2));
+    const totalCreditAmount = Number(rows.reduce((acc, r) => acc + Number(r.creditAmount || 0), 0).toFixed(2));
+    const totalDueAdjustedAmount = Number(
+      rows.reduce((acc, r) => acc + Number(r.dueAdjustedAmount || 0), 0).toFixed(2),
+    );
+
+    return res.status(200).json({
+      success: true,
+      data: rows,
+      totalItems,
+      page: safePage,
+      limit: safeLimit,
+      summary: {
+        totalReturnedQty,
+        totalReturnedAmount,
+        totalRefundedAmount,
+        totalCreditAmount,
+        totalDueAdjustedAmount,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Error fetching all sale returns",
+      error: error.message,
+    });
+  }
+};
+
+exports.getSalesReportOverview = async (req, res) => {
+  try {
+    const { dateFrom, dateTo, paymentMethod, returnStatus } = req.query;
+    const saleQuery = isSuperAdminGlobal(req) ? {} : { shop: req.shopId };
+    const returnQuery = isSuperAdminGlobal(req) ? {} : { shop: req.shopId };
+
+    if (paymentMethod && paymentMethod !== "null") {
+      saleQuery.paymentMethod = `${paymentMethod}`.trim().toUpperCase();
+    }
+
+    if (dateFrom || dateTo) {
+      saleQuery.createdAt = {};
+      returnQuery.createdAt = {};
+      if (dateFrom) {
+        const from = new Date(dateFrom);
+        if (!Number.isNaN(from.getTime())) {
+          saleQuery.createdAt.$gte = from;
+          returnQuery.createdAt.$gte = from;
+        }
+      }
+      if (dateTo) {
+        const to = new Date(dateTo);
+        if (!Number.isNaN(to.getTime())) {
+          to.setHours(23, 59, 59, 999);
+          saleQuery.createdAt.$lte = to;
+          returnQuery.createdAt.$lte = to;
+        }
+      }
+    }
+
+    const exprConditions = [];
+    const normalizedReturnStatus = `${returnStatus || ""}`.trim().toUpperCase();
+    if (normalizedReturnStatus === "NONE") {
+      saleQuery.returnedQuantity = { $lte: 0 };
+    } else if (normalizedReturnStatus === "FULL") {
+      exprConditions.push({ $gt: ["$totalQuantity", 0] });
+      exprConditions.push({ $gte: ["$returnedQuantity", "$totalQuantity"] });
+    } else if (normalizedReturnStatus === "PARTIAL") {
+      exprConditions.push({ $gt: ["$returnedQuantity", 0] });
+      exprConditions.push({ $lt: ["$returnedQuantity", "$totalQuantity"] });
+    }
+    if (exprConditions.length === 1) saleQuery.$expr = exprConditions[0];
+    if (exprConditions.length > 1) saleQuery.$expr = { $and: exprConditions };
+
+    const [salesAgg, returnAgg] = await Promise.all([
+      Sale.aggregate([
+        { $match: saleQuery },
+        {
+          $group: {
+            _id: null,
+            count: { $sum: 1 },
+            totalAmount: { $sum: "$totalAmount" },
+            totalPaid: { $sum: "$paidAmount" },
+            totalDue: { $sum: "$dueAmount" },
+            totalReturnedQty: { $sum: "$returnedQuantity" },
+            totalReturnedAmount: { $sum: "$returnedAmount" },
+            totalRefundedAmount: { $sum: "$refundedAmount" },
+          },
+        },
+      ]),
+      SaleReturn.aggregate([
+        { $match: returnQuery },
+        {
+          $group: {
+            _id: null,
+            count: { $sum: 1 },
+            totalAmount: { $sum: "$totalAmount" },
+            totalRefund: { $sum: "$refundAmount" },
+            totalCredit: { $sum: "$creditAmount" },
+            totalDueAdjusted: { $sum: "$dueAdjustedAmount" },
+            totalQty: { $sum: "$totalQuantity" },
+          },
+        },
+      ]),
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        sales: {
+          count: Number(salesAgg[0]?.count || 0),
+          totalAmount: Number(salesAgg[0]?.totalAmount || 0),
+          totalPaid: Number(salesAgg[0]?.totalPaid || 0),
+          totalDue: Number(salesAgg[0]?.totalDue || 0),
+          totalReturnedQty: Number(salesAgg[0]?.totalReturnedQty || 0),
+          totalReturnedAmount: Number(salesAgg[0]?.totalReturnedAmount || 0),
+          totalRefundedAmount: Number(salesAgg[0]?.totalRefundedAmount || 0),
+        },
+        returns: {
+          count: Number(returnAgg[0]?.count || 0),
+          totalAmount: Number(returnAgg[0]?.totalAmount || 0),
+          totalRefund: Number(returnAgg[0]?.totalRefund || 0),
+          totalCredit: Number(returnAgg[0]?.totalCredit || 0),
+          totalDueAdjusted: Number(returnAgg[0]?.totalDueAdjusted || 0),
+          totalQty: Number(returnAgg[0]?.totalQty || 0),
+        },
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Error loading sales report overview",
+      error: error.message,
+    });
+  }
+};
+
+exports.createSaleReturn = async (req, res) => {
+  try {
+    if (!req.shopId) {
+      return res.status(400).json({ success: false, message: "Please select a shop first" });
+    }
+
+    const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ success: false, message: "Invalid sale id" });
+    }
+
+    const sale = await Sale.findOne({ _id: id, shop: req.shopId });
+    if (!sale) {
+      return res.status(404).json({ success: false, message: "Sale not found for selected shop" });
+    }
+
+    const payloadItems = Array.isArray(req.body?.items) ? req.body.items : [];
+    if (!payloadItems.length) {
+      return res.status(400).json({ success: false, message: "Return items are required" });
+    }
+
+    const returnedMap = await sumSaleReturnedByVariation({
+      shopId: req.shopId,
+      saleId: sale._id,
+    });
+
+    const hasRemaining = (sale.items || []).some((it) => {
+      const variationKey = `${it?.variationId || ""}`;
+      if (!variationKey) return false;
+      const soldQty = Number(it?.quantity || 0);
+      const alreadyReturned = Number(returnedMap.get(variationKey) || 0);
+      return soldQty - alreadyReturned > 0;
+    });
+    if (!hasRemaining) {
+      return res.status(409).json({
+        success: false,
+        message: "All quantities for this sale are already returned",
+      });
+    }
+
+    const saleItemMap = new Map();
+    (sale.items || []).forEach((it) => {
+      if (it?.variationId) {
+        saleItemMap.set(`${it.variationId}`, it);
+      }
+      if (it?.variationSku) {
+        saleItemMap.set(`sku:${it.variationSku}`, it);
+      }
+    });
+
+    const returnItems = [];
+    for (const raw of payloadItems) {
+      const variationId = `${raw?.variationId || ""}`.trim();
+      const variationSku = `${raw?.variationSku || ""}`.trim();
+      const qty = Math.max(0, Number(raw?.quantity || 0));
+      if (qty <= 0) {
+        return res.status(400).json({
+          success: false,
+          message: "Each return item must have quantity greater than 0",
+        });
+      }
+
+      const saleItem =
+        (variationId && saleItemMap.get(variationId)) ||
+        (variationSku && saleItemMap.get(`sku:${variationSku}`));
+      if (!saleItem) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid sale item/variation for this invoice",
+        });
+      }
+
+      const variationKey = `${saleItem.variationId || ""}`;
+      if (!variationKey) {
+        return res.status(400).json({
+          success: false,
+          message: `Sale item ${saleItem.itemName || ""} does not have variation mapping`,
+        });
+      }
+
+      const soldQty = Number(saleItem.quantity || 0);
+      const alreadyReturned = Number(returnedMap.get(variationKey) || 0);
+      const remainingQty = Math.max(0, soldQty - alreadyReturned);
+      if (qty > remainingQty) {
+        return res.status(400).json({
+          success: false,
+          message: `Return qty exceeds remaining for SKU ${saleItem.variationSku || "-"}. Sold: ${soldQty}, Already Returned: ${alreadyReturned}, Remaining: ${remainingQty}`,
+        });
+      }
+
+      const sellingPrice = Number(saleItem.sellingPrice || 0);
+      returnItems.push({
+        item: saleItem.item,
+        variationId: saleItem.variationId,
+        variationSku: saleItem.variationSku,
+        itemName: saleItem.itemName || "",
+        model: saleItem.model || "",
+        size: saleItem.size || "",
+        color: saleItem.color || "",
+        quantity: qty,
+        sellingPrice,
+        totalAmount: Number((qty * sellingPrice).toFixed(2)),
+        reason: raw?.reason || "OTHER",
+        note: raw?.note || "",
+      });
+    }
+
+    const totalQuantity = returnItems.reduce((acc, it) => acc + Number(it.quantity || 0), 0);
+    const totalAmount = Number(
+      returnItems.reduce((acc, it) => acc + Number(it.totalAmount || 0), 0).toFixed(2),
+    );
+
+    const currentDue = Math.max(0, Number(sale?.dueAmount || 0));
+    const dueAdjustedAmount = Math.min(currentDue, totalAmount);
+    const refundableMax = Math.max(0, Number((totalAmount - dueAdjustedAmount).toFixed(2)));
+
+    const refundMethod = `${req.body?.refundMethod || "CASH"}`.trim().toUpperCase();
+    if (!ALLOWED_REFUND_METHODS.has(refundMethod)) {
+      return res.status(400).json({ success: false, message: "Invalid refund method" });
+    }
+    const refundAmount = Math.max(0, Number(req.body?.refundAmount ?? refundableMax));
+    if (refundAmount > refundableMax) {
+      return res.status(400).json({
+        success: false,
+        message: `Refund amount cannot exceed ${refundableMax.toFixed(2)} after due adjustment`,
+      });
+    }
+    const creditAmount = Math.max(0, Number((refundableMax - refundAmount).toFixed(2)));
+
+    const variationIds = [...new Set(returnItems.map((it) => `${it.variationId}`))];
+    const variations = await ProductVariation.find({
+      _id: { $in: variationIds },
+      shop: req.shopId,
+    }).select("_id product model sku");
+    const variationMap = new Map(variations.map((v) => [`${v._id}`, v]));
+    if (variationMap.size !== variationIds.length) {
+      return res.status(400).json({
+        success: false,
+        message: "One or more return variations are invalid for selected shop",
+      });
+    }
+
+    const saleReturn = await SaleReturn.create({
+      shop: req.shopId,
+      sale: sale._id,
+      customerName: sale.customerName || "Walk-in",
+      items: returnItems,
+      totalQuantity,
+      totalAmount,
+      refundMethod,
+      refundAmount,
+      dueAdjustedAmount,
+      creditAmount,
+      note: req.body?.note || "",
+      status: "APPROVED",
+      createdBy: req.user?._id,
+    });
+
+    for (const item of returnItems) {
+      const variation = variationMap.get(`${item.variationId}`);
+      await applyStockTransaction({
+        shop: req.shopId,
+        product: variation.product,
+        model: variation.model,
+        variation: variation._id,
+        sku: variation.sku || item.variationSku,
+        type: "IN",
+        quantity: Number(item.quantity || 0),
+        referenceType: "RETURN",
+        referenceId: saleReturn._id,
+        note: `Sales return ${sale._id}`,
+        createdBy: req.user?._id,
+      });
+    }
+
+    const mergedReturnedMap = await sumSaleReturnedByVariation({
+      shopId: req.shopId,
+      saleId: sale._id,
+    });
+    const returnTotals = await getSaleReturnTotals({
+      shopId: req.shopId,
+      saleId: sale._id,
+    });
+    const remainingByVariation = new Map();
+    mergedReturnedMap.forEach((qty, key) => {
+      remainingByVariation.set(key, Number(qty || 0));
+    });
+
+    sale.items = (sale.items || []).map((it) => {
+      const variationKey = `${it?.variationId || ""}`;
+      const soldQty = Number(it?.quantity || 0);
+      const currentRemaining = variationKey
+        ? Number(remainingByVariation.get(variationKey) || 0)
+        : 0;
+      const returnedQty = Math.min(soldQty, Math.max(0, currentRemaining));
+      if (variationKey) {
+        remainingByVariation.set(variationKey, Math.max(0, currentRemaining - returnedQty));
+      }
+      return {
+        ...it.toObject(),
+        returnedQuantity: returnedQty,
+      };
+    });
+    sale.returnedQuantity = Math.min(Number(sale.totalQuantity || 0), Number(returnTotals.qty || 0));
+    sale.returnedAmount = Number(returnTotals.amount || 0);
+    sale.refundedAmount = Number(returnTotals.refund || 0);
+    sale.dueAdjustedAmount = Number(returnTotals.dueAdjusted || 0);
+    sale.creditedAmount = Number(returnTotals.credit || 0);
+    sale.dueAmount = Math.max(
+      0,
+      Number((Number(sale.totalAmount || 0) - Number(sale.paidAmount || 0) - Number(sale.dueAdjustedAmount || 0)).toFixed(2)),
+    );
+    const fullyReturned = Number(sale.returnedQuantity || 0) >= Number(sale.totalQuantity || 0);
+    sale.status = fullyReturned ? "RETURNED" : "COMPLETED";
+    await sale.save();
+
+    if (dueAdjustedAmount > 0) {
+      await createSaleLedgerEntry({
+        shop: req.shopId,
+        sale: sale._id,
+        customer: sale.customer,
+        customerName: sale.customerName,
+        type: "return_due_adjustment",
+        amount: dueAdjustedAmount,
+        referenceId: saleReturn._id,
+        note: `Sales return due adjust ${saleReturn._id}`,
+        createdBy: req.user?._id,
+      });
+    }
+    if (refundAmount > 0) {
+      await createSaleLedgerEntry({
+        shop: req.shopId,
+        sale: sale._id,
+        customer: sale.customer,
+        customerName: sale.customerName,
+        type: "return_refund",
+        amount: refundAmount,
+        paymentMethod: refundMethod,
+        referenceId: saleReturn._id,
+        note: `Sales return refund (${refundMethod}) ${saleReturn._id}`,
+        createdBy: req.user?._id,
+      });
+    }
+    if (creditAmount > 0) {
+      await createSaleLedgerEntry({
+        shop: req.shopId,
+        sale: sale._id,
+        customer: sale.customer,
+        customerName: sale.customerName,
+        type: "return_credit",
+        amount: creditAmount,
+        paymentMethod: "STORE_CREDIT",
+        referenceId: saleReturn._id,
+        note: `Sales return credit note ${saleReturn._id}`,
+        createdBy: req.user?._id,
+      });
+    }
+
+    return res.status(201).json({
+      success: true,
+      message: "Sale return created",
+      data: saleReturn,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Error creating sale return",
       error: error.message,
     });
   }

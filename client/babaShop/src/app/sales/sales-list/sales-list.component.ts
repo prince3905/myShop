@@ -1,9 +1,11 @@
-import { Component, OnInit } from "@angular/core";
+import { Component, ElementRef, OnInit, ViewChild } from "@angular/core";
 import { MatDialog } from "@angular/material/dialog";
 import { PageEvent } from "@angular/material/paginator";
 import { MatSnackBar } from "@angular/material/snack-bar";
+import { Router } from "@angular/router";
 import { AddSalesComponent } from "../add-sales/add-sales.component";
 import { SalesService } from "app/shared/services/sales.service";
+import { SalePaymentDialogComponent } from "../sale-payment-dialog/sale-payment-dialog.component";
 
 @Component({
   selector: "sales-list",
@@ -20,17 +22,26 @@ export class SalesListComponent implements OnInit {
   pageSizeOptions: number[] = [5, 10, 25, 50, 100];
 
   selectedSale: any = null;
+  @ViewChild("saleDetailsCard") saleDetailsCard?: ElementRef<HTMLElement>;
 
   filters: {
+    invoiceNo: string;
     customerName: string;
     itemName: string;
     startDate: Date | null;
     endDate: Date | null;
+    returnStatus: string;
+    paymentMethod: string;
+    dueOnly: boolean;
   } = {
+    invoiceNo: "",
     customerName: "",
     itemName: "",
     startDate: null,
     endDate: null,
+    returnStatus: "",
+    paymentMethod: "",
+    dueOnly: false,
   };
 
   summary = {
@@ -43,6 +54,7 @@ export class SalesListComponent implements OnInit {
     public dialog: MatDialog,
     private salesService: SalesService,
     private snackBar: MatSnackBar,
+    private router: Router,
   ) {}
 
   ngOnInit(): void {
@@ -55,10 +67,14 @@ export class SalesListComponent implements OnInit {
     const params: any = {
       page: this.page,
       perPage: this.pageSize,
+      invoiceNo: this.filters.invoiceNo?.trim() || undefined,
       customerName: this.filters.customerName?.trim() || undefined,
       itemName: this.filters.itemName?.trim() || undefined,
       startDate: this.filters.startDate ? this.formatDateForApi(this.filters.startDate) : undefined,
       endDate: this.filters.endDate ? this.formatDateForApi(this.filters.endDate) : undefined,
+      returnStatus: this.filters.returnStatus || undefined,
+      paymentMethod: this.filters.paymentMethod || undefined,
+      dueOnly: this.filters.dueOnly ? "true" : undefined,
     };
 
     this.salesService.getSales(params).subscribe({
@@ -96,9 +112,13 @@ export class SalesListComponent implements OnInit {
   clearFilters(): void {
     this.filters = {
       customerName: "",
+      invoiceNo: "",
       itemName: "",
       startDate: null,
       endDate: null,
+      returnStatus: "",
+      paymentMethod: "",
+      dueOnly: false,
     };
     this.page = 1;
     this.loadSales();
@@ -125,16 +145,146 @@ export class SalesListComponent implements OnInit {
     });
   }
 
+  exportCsv(): void {
+    const params: any = {
+      page: 1,
+      perPage: 5000,
+      invoiceNo: this.filters.invoiceNo?.trim() || undefined,
+      customerName: this.filters.customerName?.trim() || undefined,
+      itemName: this.filters.itemName?.trim() || undefined,
+      startDate: this.filters.startDate ? this.formatDateForApi(this.filters.startDate) : undefined,
+      endDate: this.filters.endDate ? this.formatDateForApi(this.filters.endDate) : undefined,
+      returnStatus: this.filters.returnStatus || undefined,
+      paymentMethod: this.filters.paymentMethod || undefined,
+      dueOnly: this.filters.dueOnly ? "true" : undefined,
+    };
+
+    this.salesService.getSales(params).subscribe({
+      next: (response: any) => {
+        const rows = Array.isArray(response?.itemResults) ? response.itemResults : [];
+        if (!rows.length) {
+          this.snackBar.open("No data found for CSV export", "Close", { duration: 2400 });
+          return;
+        }
+
+        const headers = [
+          "Invoice",
+          "Customer",
+          "Date",
+          "Payment Method",
+          "Status",
+          "Total",
+          "Paid",
+          "Due",
+          "Outstanding",
+          "Returned Qty",
+          "Total Qty",
+          "Returned Amount",
+          "Refunded Amount",
+        ];
+
+        const escapeCsv = (value: any): string => {
+          const text = `${value ?? ""}`.replace(/"/g, '""');
+          return `"${text}"`;
+        };
+
+        const lines = [
+          headers.join(","),
+          ...rows.map((row: any) =>
+            [
+              row?.invoiceNo || row?._id || "",
+              row?.customerName || "Walk-in",
+              row?.purchaseDate ? new Date(row.purchaseDate).toLocaleString() : "",
+              row?.paymentMethod || "",
+              row?.status || "",
+              Number(row?.totalPurchasePrice || 0).toFixed(2),
+              Number(row?.paidAmount || 0).toFixed(2),
+              Number(row?.dueAmount || 0).toFixed(2),
+              Number(row?.dueAmount || 0).toFixed(2),
+              Number(row?.returnedQuantity || 0),
+              Number(row?.totalQuantity || 0),
+              Number(row?.returnedAmount || 0).toFixed(2),
+              Number(row?.refundedAmount || 0).toFixed(2),
+            ]
+              .map(escapeCsv)
+              .join(","),
+          ),
+        ];
+
+        const csv = lines.join("\n");
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
+        a.href = url;
+        a.download = `sales-export-${stamp}.csv`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+
+        this.snackBar.open("Sales CSV exported", "Close", { duration: 2200 });
+      },
+      error: (err) => {
+        this.snackBar.open(err?.error?.message || "Failed to export CSV", "Close", { duration: 2800 });
+      },
+    });
+  }
+
   showDetails(row: any): void {
     this.selectedSale = row;
+    setTimeout(() => {
+      this.saleDetailsCard?.nativeElement?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 0);
   }
 
   closeDetails(): void {
     this.selectedSale = null;
   }
 
+  openReturn(row: any): void {
+    const saleId = `${row?._id || ""}`.trim();
+    if (!saleId) return;
+    this.router.navigate(["/returns"], { queryParams: { saleId } });
+  }
+
+  openCollectPayment(row: any): void {
+    if (Number(row?.dueAmount || 0) <= 0) {
+      this.snackBar.open("No due for this invoice", "Close", { duration: 2200 });
+      return;
+    }
+
+    const ref = this.dialog.open(SalePaymentDialogComponent, {
+      width: "520px",
+      maxWidth: "96vw",
+      disableClose: false,
+      data: { sale: row },
+    });
+    ref.afterClosed().subscribe((ok) => {
+      if (ok) {
+        this.loadSales();
+        if (this.selectedSale?._id === row?._id) {
+          this.selectedSale = null;
+        }
+      }
+    });
+  }
+
+  getReturnBadge(row: any): "none" | "partial" | "full" {
+    const totalQty = Number(row?.totalQuantity || 0);
+    const returnedQty = Number(row?.returnedQuantity || 0);
+    if (returnedQty <= 0) return "none";
+    if (totalQty > 0 && returnedQty >= totalQty) return "full";
+    return "partial";
+  }
+
+  isReturnClosed(row: any): boolean {
+    return this.getReturnBadge(row) === "full";
+  }
+
   printInvoice(row: any): void {
-    const invoiceId = row?._id || "-";
+    const invoiceId = row?.invoiceNo || row?._id || "-";
     const customerName = row?.customerName || "Walk-in";
     const dateStr = row?.purchaseDate ? new Date(row.purchaseDate).toLocaleString() : "-";
     const subTotal = Number(row?.totalPurchasePrice || 0);
@@ -143,6 +293,20 @@ export class SalesListComponent implements OnInit {
     const paidAmount = Number(row?.paidAmount || 0);
     const dueAmount = Number(row?.dueAmount ?? Math.max(grandTotal - paidAmount, 0));
     const paymentMethod = row?.paymentMethod || "-";
+    const taxRates = (row?.items || [])
+      .map((it: any) => Number(it?.taxPercent || 0))
+      .filter((r: number) => Number.isFinite(r) && r > 0);
+    const gstRate = taxRates.length ? Math.max(...taxRates) : 0;
+    const isInterState = !!row?.isInterState;
+    let taxableAmount = grandTotal;
+    let gstAmount = 0;
+    if (gstRate > 0) {
+      taxableAmount = Number((grandTotal * (100 / (100 + gstRate))).toFixed(2));
+      gstAmount = Number((grandTotal - taxableAmount).toFixed(2));
+    }
+    const cgstAmount = isInterState ? 0 : Number((gstAmount / 2).toFixed(2));
+    const sgstAmount = isInterState ? 0 : Number((gstAmount / 2).toFixed(2));
+    const igstAmount = isInterState ? gstAmount : 0;
     const itemRows = (row?.items || [])
       .map(
         (it: any, idx: number) => `
@@ -171,6 +335,7 @@ export class SalesListComponent implements OnInit {
           th, td { border: 1px solid #ddd; padding: 8px; font-size: 12px; text-align: left; }
           th { background: #f8fafc; }
           .tot { margin-top: 10px; font-weight: 700; }
+          .tax-note { margin-top: 8px; font-size: 11px; color: #475569; }
         </style>
       </head>
       <body>
@@ -198,9 +363,16 @@ export class SalesListComponent implements OnInit {
         <div class="tot">Total Qty: ${Number(row?.totalQuantity || 0)}</div>
         <div class="tot">Sub Total: Rs ${subTotal.toFixed(2)}</div>
         <div class="tot">Discount: Rs ${discount.toFixed(2)}</div>
+        <div class="tot">Taxable Amount: Rs ${taxableAmount.toFixed(2)}</div>
+        <div class="tot">CGST ${isInterState ? "0.00" : (gstRate / 2).toFixed(2)}%: Rs ${cgstAmount.toFixed(2)}</div>
+        <div class="tot">SGST ${isInterState ? "0.00" : (gstRate / 2).toFixed(2)}%: Rs ${sgstAmount.toFixed(2)}</div>
+        <div class="tot">IGST ${isInterState ? gstRate.toFixed(2) : "0.00"}%: Rs ${igstAmount.toFixed(2)}</div>
         <div class="tot">Grand Total: Rs ${grandTotal.toFixed(2)}</div>
         <div class="tot">Paid: Rs ${paidAmount.toFixed(2)}</div>
         <div class="tot">Due: Rs ${dueAmount.toFixed(2)}</div>
+        <div class="tax-note">
+          GST breakup is auto-calculated from available item tax rate. If tax rate is not captured in sale items, breakup shows 0.00.
+        </div>
       </body>
       </html>
     `;

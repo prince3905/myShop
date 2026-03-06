@@ -7,6 +7,7 @@ const Sale = require("../models/CustomerSale");
 const Order = require("../models/Order");
 const Purchase = require("../models/Purchase");
 const StockTransaction = require("../models/StockTransaction");
+const { logEntityAudit } = require("../utils/entityAudit.service");
 
 const isSuperAdminGlobal = (req) =>
   req.user?.role === "SUPER_ADMIN" && !req.shopId;
@@ -94,6 +95,14 @@ exports.createProduct = async (req, res) => {
       message: "Product created successfully",
       data: product,
     });
+    await logEntityAudit({
+      shop: req.shopId,
+      entityType: "PRODUCT",
+      entityId: product._id,
+      action: "CREATE",
+      actor: req.user?._id,
+      meta: { name: product.name },
+    });
   } catch (error) {
     if (error.code === 11000) {
       return res.status(400).json({
@@ -116,7 +125,9 @@ exports.createProduct = async (req, res) => {
 exports.getProducts = async (req, res) => {
   try {
     const { limit, skip, sort = "-createdAt", search } = req.query;
-    const query = isSuperAdminGlobal(req) ? {} : { shop: req.shopId };
+    const query = isSuperAdminGlobal(req)
+      ? { isDeleted: { $ne: true } }
+      : { shop: req.shopId, isDeleted: { $ne: true } };
     console.log("[FLOW][PRODUCT][LIST] request", {
       userId: req.user?._id?.toString(),
       role: req.user?.role,
@@ -179,8 +190,8 @@ exports.getProductById = async (req, res) => {
       productId: req.params.id,
     });
     const filter = isSuperAdminGlobal(req)
-      ? { _id: req.params.id }
-      : { _id: req.params.id, shop: req.shopId };
+      ? { _id: req.params.id, isDeleted: { $ne: true } }
+      : { _id: req.params.id, shop: req.shopId, isDeleted: { $ne: true } };
 
     const product = await Product.findOne(filter)
       .populate("category", "name")
@@ -245,7 +256,7 @@ exports.updateProduct = async (req, res) => {
     }
 
     const product = await Product.findOneAndUpdate(
-      { _id: id, shop: req.shopId },
+      { _id: id, shop: req.shopId, isDeleted: { $ne: true } },
       updateData,
       {
       new: true,
@@ -263,6 +274,14 @@ exports.updateProduct = async (req, res) => {
       success: true,
       message: "Product updated successfully",
       data: product,
+    });
+    await logEntityAudit({
+      shop: req.shopId,
+      entityType: "PRODUCT",
+      entityId: product._id,
+      action: "UPDATE",
+      actor: req.user?._id,
+      meta: { updatedFields: Object.keys(updateData) },
     });
   } catch (error) {
     res.status(500).json({
@@ -294,6 +313,7 @@ exports.deleteProduct = async (req, res) => {
     const product = await Product.findOne({
       _id: id,
       shop: req.shopId,
+      isDeleted: { $ne: true },
     });
 
     if (!product) {
@@ -329,46 +349,91 @@ exports.deleteProduct = async (req, res) => {
       });
     }
 
-    // Clean stock layer first to avoid orphan rows.
-    await Promise.all([
-      Stock.deleteMany({
-        shop: req.shopId,
-        $or: [{ product: id }, ...(variationIds.length ? [{ variation: { $in: variationIds } }] : [])],
-      }),
-      StockTransaction.deleteMany({
-        shop: req.shopId,
-        $or: [{ product: id }, ...(variationIds.length ? [{ variation: { $in: variationIds } }] : [])],
-      }),
-    ]);
-
-    // Delete linked catalog data.
-    await Promise.all([
-      ProductVariation.deleteMany({
-        product: id,
-        shop: req.shopId,
-      }),
-      ProductModel.deleteMany({
-        product: id,
-        shop: req.shopId,
-      }),
-      Product.findOneAndDelete({
-        _id: id,
-        shop: req.shopId,
-      }),
-    ]);
+    await Product.findOneAndUpdate(
+      { _id: id, shop: req.shopId },
+      {
+        isDeleted: true,
+        isActive: false,
+        archivedAt: new Date(),
+        archivedBy: req.user?._id,
+      },
+      { new: true },
+    );
+    await ProductVariation.updateMany(
+      { product: id, shop: req.shopId },
+      { isActive: false },
+    );
+    await ProductModel.updateMany(
+      { product: id, shop: req.shopId },
+      { isActive: false },
+    );
+    await logEntityAudit({
+      shop: req.shopId,
+      entityType: "PRODUCT",
+      entityId: id,
+      action: "ARCHIVE",
+      actor: req.user?._id,
+      meta: { name: product.name },
+    });
 
     res.status(200).json({
       success: true,
-      message: "Product and related records deleted successfully",
-      cleaned: {
-        models: modelIds.length,
-        variations: variationIds.length,
-      },
+      message: "Product archived successfully",
     });
   } catch (error) {
     res.status(500).json({
       success: false,
       message: "Error deleting product",
+    });
+  }
+};
+
+exports.restoreProduct = async (req, res) => {
+  try {
+    if (!req.shopId) {
+      return res.status(400).json({
+        success: false,
+        message: "Please select a shop first",
+      });
+    }
+
+    const product = await Product.findOneAndUpdate(
+      { _id: req.params.id, shop: req.shopId, isDeleted: true },
+      {
+        isDeleted: false,
+        isActive: true,
+        archivedAt: null,
+        archivedBy: null,
+      },
+      { new: true },
+    );
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: "Archived product not found",
+      });
+    }
+
+    await logEntityAudit({
+      shop: req.shopId,
+      entityType: "PRODUCT",
+      entityId: product._id,
+      action: "RESTORE",
+      actor: req.user?._id,
+      meta: { name: product.name },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Product restored successfully",
+      data: product,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Error restoring product",
+      error: error.message,
     });
   }
 };
