@@ -1,10 +1,10 @@
-// auth.service.ts
-
 import { Injectable } from "@angular/core";
 import { HttpClient } from "@angular/common/http";
 import { tap, catchError, finalize } from "rxjs/operators";
 import { environment } from "../../../environments/environment";
 import { throwError, BehaviorSubject } from "rxjs";
+import { Router } from "@angular/router";
+import { MatSnackBar } from "@angular/material/snack-bar";
 
 interface LoginResponse {
   success: boolean;
@@ -32,53 +32,66 @@ export class AuthService {
   public showLoader: boolean = false;
   private TOKEN_KEY: string = "token";
   private USER_KEY: string = "user";
+  private readonly IDLE_TIMEOUT_MS = 30 * 60 * 1000;
+  private idleTimer: ReturnType<typeof setTimeout> | null = null;
+  private expiryTimer: ReturnType<typeof setTimeout> | null = null;
+  private activityListenersBound = false;
   private currentShopSubject = new BehaviorSubject<string | null>(null);
   currentShop$ = this.currentShopSubject.asObservable();
 
-  constructor(private http: HttpClient) {
+  constructor(
+    private http: HttpClient,
+    private router: Router,
+    private snackBar: MatSnackBar,
+  ) {
     this.currentShopSubject.next(this.getShopId());
+    this.initializeSessionWatch();
   }
 
   get baseURL(): string {
     return environment.apiBaseURL;
   }
 
- private saveToken(token: string) {
-  localStorage.setItem(this.TOKEN_KEY, token);
-}
+  private saveToken(token: string) {
+    localStorage.setItem(this.TOKEN_KEY, token);
+  }
 
-isLoggedIn(): boolean {
-  return !!this.getToken();
-}
+  isLoggedIn(): boolean {
+    const token = this.getToken();
+    if (!token) {
+      return false;
+    }
 
-login(shopCode: string, email: string, password: string) {
-  this.showLoader = true;
-  console.log("[FLOW][FE][AUTH][LOGIN] request", { email, shopCode });
+    if (this.isTokenExpired(token)) {
+      this.forceLogout("Session expired. Please login again.");
+      return false;
+    }
 
-  return this.http
-    .post<LoginResponse>(`${this.baseURL}/api/auth/login`, {
-      shopCode,
-      email,
-      password,
-    })
-    .pipe(
-      finalize(() => {
-        this.showLoader = false;
-      }),
-      tap((res) => {
-        if (res.success && res.token && res.user) {
-          console.log("[FLOW][FE][AUTH][LOGIN] success", {
-            userId: res.user?.id,
-            role: res.user?.role,
-            shop: res.user?.shop,
-            shopCode: res.user?.shopCode,
-          });
-          this.saveToken(res.token);
-          this.user = res.user;
-        }
+    return true;
+  }
+
+  login(shopCode: string, email: string, password: string) {
+    this.showLoader = true;
+
+    return this.http
+      .post<LoginResponse>(`${this.baseURL}/api/auth/login`, {
+        shopCode,
+        email,
+        password,
       })
-    );
-}
+      .pipe(
+        finalize(() => {
+          this.showLoader = false;
+        }),
+        tap((res) => {
+          if (res.success && res.token && res.user) {
+            this.saveToken(res.token);
+            this.user = res.user;
+            this.startSessionWatch();
+          }
+        })
+      );
+  }
 
   getToken() {
     return localStorage.getItem(this.TOKEN_KEY);
@@ -95,6 +108,11 @@ login(shopCode: string, email: string, password: string) {
   }
 
   removeSelectedShop() {
+    const user = this.getCurrentUser();
+    if (!user) {
+      this.currentShopSubject.next(null);
+      return;
+    }
     this.setActiveShop(null);
   }
 
@@ -121,16 +139,11 @@ login(shopCode: string, email: string, password: string) {
     const user = this.getCurrentUser();
     return user?.shop || null;
   }
-
-
- getUserRole(): string | null {
-  return this.getCurrentUser()?.role || null;
-}
-
-  
+  getUserRole(): string | null {
+    return this.getCurrentUser()?.role || null;
+  }
 
   authenticated() {
-    // this.showLoader = true;
     return this.http
       .get<AuthenticatedResponse>(`${this.baseURL}/api/auth/authenticated`)
       .pipe(
@@ -225,9 +238,7 @@ login(shopCode: string, email: string, password: string) {
   logout() {
     return this.http.get<any>(`${this.baseURL}/api/auth/logout`).pipe(
       finalize(() => {
-        this.removeToken();
-        this.removeUser();
-        this.removeSelectedShop();
+        this.clearLocalSession();
       }),
     );
   }
@@ -237,5 +248,149 @@ login(shopCode: string, email: string, password: string) {
   return user.role === 'SUPER_ADMIN';
 }
 
-  
+  isGlobalReadOnlyMode(): boolean {
+    const user = this.getCurrentUser() || {};
+    return user.role === "SUPER_ADMIN" && !user.shop;
+  }
+
+  canViewSensitivePricing(): boolean {
+    const role = this.getUserRole() || "";
+    return ["SUPER_ADMIN", "ADMIN"].includes(role);
+  }
+
+  getRoleAccessMessage(expectedRoles: string[] = []): string {
+    const role = this.getUserRole() || "USER";
+    const readableExpected = expectedRoles.length ? expectedRoles.join(", ") : "authorized users";
+
+    if (role === "STAFF") {
+      return `STAFF access limited hai. Is page ke liye allowed role: ${readableExpected}.`;
+    }
+
+    if (role === "MANAGER") {
+      return `MANAGER role se is page ka access allowed nahi hai. Required role: ${readableExpected}.`;
+    }
+
+    if (role === "ADMIN") {
+      return `ADMIN role se bhi is page ka access allowed nahi hai. Required role: ${readableExpected}.`;
+    }
+
+    if (role === "SUPER_ADMIN") {
+      return `Current mode me is page ka access blocked hai. Required role: ${readableExpected}.`;
+    }
+
+    return `Aapke current role se is page ka access allowed nahi hai. Required role: ${readableExpected}.`;
+  }
+
+  initializeSessionWatch(): void {
+    this.bindActivityListeners();
+    if (this.getToken()) {
+      this.startSessionWatch();
+    }
+  }
+
+  private startSessionWatch(): void {
+    this.bindActivityListeners();
+    this.resetIdleTimer();
+    this.scheduleExpiryLogout();
+  }
+
+  private bindActivityListeners(): void {
+    if (this.activityListenersBound || typeof window === "undefined") {
+      return;
+    }
+
+    const events = ["click", "mousemove", "keydown", "scroll", "touchstart"];
+    events.forEach((eventName) => {
+      window.addEventListener(eventName, () => this.handleUserActivity(), true);
+    });
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") {
+        this.handleUserActivity();
+      }
+    });
+    this.activityListenersBound = true;
+  }
+
+  private handleUserActivity(): void {
+    if (!this.getToken()) {
+      return;
+    }
+    if (this.isTokenExpired(this.getToken())) {
+      this.forceLogout("Session expired. Please login again.");
+      return;
+    }
+    this.resetIdleTimer();
+  }
+
+  private resetIdleTimer(): void {
+    if (this.idleTimer) {
+      clearTimeout(this.idleTimer);
+    }
+
+    this.idleTimer = setTimeout(() => {
+      this.forceLogout("Session timed out due to inactivity.");
+    }, this.IDLE_TIMEOUT_MS);
+  }
+
+  private scheduleExpiryLogout(): void {
+    if (this.expiryTimer) {
+      clearTimeout(this.expiryTimer);
+    }
+
+    const expiresAt = this.getTokenExpiryTime(this.getToken());
+    if (!expiresAt) {
+      return;
+    }
+
+    const msUntilExpiry = expiresAt - Date.now();
+    if (msUntilExpiry <= 0) {
+      this.forceLogout("Session expired. Please login again.");
+      return;
+    }
+
+    this.expiryTimer = setTimeout(() => {
+      this.forceLogout("Session expired. Please login again.");
+    }, msUntilExpiry);
+  }
+
+  private getTokenExpiryTime(token: string | null): number | null {
+    if (!token) return null;
+
+    try {
+      const payload = JSON.parse(atob(token.split(".")[1] || ""));
+      const exp = Number(payload?.exp || 0);
+      return exp > 0 ? exp * 1000 : null;
+    } catch {
+      return null;
+    }
+  }
+
+  private isTokenExpired(token: string | null): boolean {
+    const expiresAt = this.getTokenExpiryTime(token);
+    return !!expiresAt && Date.now() >= expiresAt;
+  }
+
+  private clearLocalSession(): void {
+    if (this.idleTimer) {
+      clearTimeout(this.idleTimer);
+      this.idleTimer = null;
+    }
+    if (this.expiryTimer) {
+      clearTimeout(this.expiryTimer);
+      this.expiryTimer = null;
+    }
+    this.removeToken();
+    localStorage.removeItem(this.USER_KEY);
+    this.currentShopSubject.next(null);
+  }
+
+  forceLogout(message?: string): void {
+    this.clearLocalSession();
+    if (message) {
+      this.snackBar.open(message, "Close", { duration: 3200 });
+    }
+    if (this.router.url !== "/login") {
+      this.router.navigate(["/login"]);
+    }
+  }
 }

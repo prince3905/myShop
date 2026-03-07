@@ -30,9 +30,7 @@ const rolePermissions = {
     "MANAGE_PRODUCTS",
     "MANAGE_STOCK",
     "MANAGE_CUSTOMERS",
-    "MANAGE_DISTRIBUTORS",
     "VIEW_REPORTS",
-    "CREATE_PURCHASE",
   ],
 
   [ROLES.STAFF]: [

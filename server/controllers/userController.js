@@ -38,7 +38,6 @@ const canAssignRole = (actorRole, targetRole) => {
   if (!actorRole || !targetRole) return false;
   if (actorRole === "SUPER_ADMIN") return ["ADMIN", "MANAGER", "STAFF"].includes(targetRole);
   if (actorRole === "ADMIN") return ["MANAGER", "STAFF"].includes(targetRole);
-  if (actorRole === "MANAGER") return targetRole === "STAFF";
   return false;
 };
 

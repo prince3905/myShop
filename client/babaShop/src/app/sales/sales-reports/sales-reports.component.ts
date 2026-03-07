@@ -1,5 +1,7 @@
 import { Component, OnInit } from "@angular/core";
+import * as Chartist from "chartist";
 import { MatSnackBar } from "@angular/material/snack-bar";
+import { AuthService } from "app/shared/services/auth.service";
 import { SalesService } from "app/shared/services/sales.service";
 
 @Component({
@@ -23,6 +25,9 @@ export class SalesReportsComponent implements OnInit {
     sales: {
       count: 0,
       totalAmount: 0,
+      totalCostAmount: 0,
+      grossProfit: 0,
+      grossMarginPercent: 0,
       totalPaid: 0,
       totalDue: 0,
       totalReturnedQty: 0,
@@ -37,6 +42,15 @@ export class SalesReportsComponent implements OnInit {
       totalDueAdjusted: 0,
       totalQty: 0,
     },
+    profitByItem: [],
+    profitByCustomer: [],
+    profitByCategory: [],
+    profitTrend: {
+      labels: [],
+      sales: [],
+      cost: [],
+      profit: [],
+    },
   };
 
   salesRows: any[] = [];
@@ -45,10 +59,15 @@ export class SalesReportsComponent implements OnInit {
   constructor(
     private salesService: SalesService,
     private snackBar: MatSnackBar,
+    public authService: AuthService,
   ) {}
 
   ngOnInit(): void {
     this.loadAll();
+  }
+
+  get canViewSensitivePricing(): boolean {
+    return this.authService.canViewSensitivePricing();
   }
 
   applyFilters(): void {
@@ -80,12 +99,18 @@ export class SalesReportsComponent implements OnInit {
     this.salesService.getSalesReportOverview(commonParams).subscribe({
       next: (res: any) => {
         this.overview = res?.data || this.overview;
+        if (this.canViewSensitivePricing) {
+          setTimeout(() => this.renderProfitTrendChart(), 0);
+        }
       },
       error: () => {
         this.overview = {
           sales: {
             count: 0,
             totalAmount: 0,
+            totalCostAmount: 0,
+            grossProfit: 0,
+            grossMarginPercent: 0,
             totalPaid: 0,
             totalDue: 0,
             totalReturnedQty: 0,
@@ -99,6 +124,15 @@ export class SalesReportsComponent implements OnInit {
             totalCredit: 0,
             totalDueAdjusted: 0,
             totalQty: 0,
+          },
+          profitByItem: [],
+          profitByCustomer: [],
+          profitByCategory: [],
+          profitTrend: {
+            labels: [],
+            sales: [],
+            cost: [],
+            profit: [],
           },
         };
       },
@@ -150,5 +184,27 @@ export class SalesReportsComponent implements OnInit {
     const mm = `${dt.getMonth() + 1}`.padStart(2, "0");
     const dd = `${dt.getDate()}`.padStart(2, "0");
     return `${yyyy}-${mm}-${dd}`;
+  }
+
+  private renderProfitTrendChart(): void {
+    const chartData = this.overview?.profitTrend || {};
+    const labels = Array.isArray(chartData.labels) && chartData.labels.length ? chartData.labels : ["-"];
+    const sales = Array.isArray(chartData.sales) && chartData.sales.length ? chartData.sales : [0];
+    const cost = Array.isArray(chartData.cost) && chartData.cost.length ? chartData.cost : [0];
+    const profit = Array.isArray(chartData.profit) && chartData.profit.length ? chartData.profit : [0];
+
+    new Chartist.Line(
+      "#profitTrendChart",
+      {
+        labels,
+        series: [sales, cost, profit],
+      },
+      {
+        low: 0,
+        fullWidth: true,
+        chartPadding: { top: 10, right: 16, bottom: 0, left: 0 },
+        lineSmooth: Chartist.Interpolation.cardinal({ tension: 0 }),
+      },
+    );
   }
 }

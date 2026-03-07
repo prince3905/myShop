@@ -23,22 +23,10 @@ exports.protect = async (req, res, next) => {
     if (!token) {
       return res.status(401).json({ message: "Not authorized" });
     }
-    console.log("[FLOW][MW][PROTECT] tokenPresent", true);
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    console.log("[FLOW][MW][PROTECT] decoded", {
-      id: decoded?.id,
-      role: decoded?.role,
-      shop: decoded?.shop,
-    });
 
     const user = await User.findById(decoded.id);
-    console.log("[FLOW][MW][PROTECT] userLookup", {
-      found: !!user,
-      userId: user?._id?.toString(),
-      role: user?.role,
-      shop: user?.shop?.toString(),
-    });
 
     if (!user) {
       return res.status(401).json({ message: "User not found" });
@@ -77,7 +65,6 @@ exports.protect = async (req, res, next) => {
     next();
 
   } catch (error) {
-    console.error("[FLOW][MW][PROTECT] error", error?.message);
     return res.status(401).json({ message: "Invalid token" });
   }
 };
@@ -122,13 +109,6 @@ exports.authorizePermission = (permission) => {
 ========================================= */
 exports.attachShop = async (req, res, next) => {
   try {
-    console.log("[FLOW][MW][ATTACH_SHOP] start", {
-      userId: req.user?._id?.toString(),
-      role: req.user?.role,
-      headerShopId: req.headers["x-shop-id"] || null,
-      userShop: req.user?.shop?.toString?.() || null,
-    });
-
     // SUPER ADMIN
     if (req.user.role === "SUPER_ADMIN") {
 
@@ -141,7 +121,6 @@ exports.attachShop = async (req, res, next) => {
       if (!selectedShopId) {
         req.shop = null;
         req.shopId = null;
-        console.log("[FLOW][MW][ATTACH_SHOP] superAdminGlobal");
         return next();
       }
 
@@ -161,9 +140,6 @@ exports.attachShop = async (req, res, next) => {
 
       req.shop = shop;
       req.shopId = shop._id;
-      console.log("[FLOW][MW][ATTACH_SHOP] superAdminResolved", {
-        shopId: req.shopId.toString(),
-      });
       return next();
     }
 
@@ -193,10 +169,6 @@ exports.attachShop = async (req, res, next) => {
 
     req.shop = shop;
     req.shopId = shop._id;
-    console.log("[FLOW][MW][ATTACH_SHOP] normalResolved", {
-      shopId: req.shopId.toString(),
-      shopCode: req.shop?.shopCode,
-    });
 
     next();
 
@@ -206,4 +178,18 @@ exports.attachShop = async (req, res, next) => {
       message: "Server error while attaching shop",
     });
   }
+};
+
+exports.requireShopSelectionForWrite = (req, res, next) => {
+  const isReadOnlyMethod = ["GET", "HEAD", "OPTIONS"].includes(`${req.method || ""}`.toUpperCase());
+  const isSuperAdminGlobal = req.user?.role === "SUPER_ADMIN" && !req.shopId;
+
+  if (isReadOnlyMethod || !isSuperAdminGlobal) {
+    return next();
+  }
+
+  return res.status(403).json({
+    success: false,
+    message: "Super Admin global mode is read-only. Please select a shop to make changes.",
+  });
 };

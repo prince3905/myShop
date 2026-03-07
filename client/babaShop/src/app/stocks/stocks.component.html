@@ -11,7 +11,7 @@
           <div class="context-chip">Records: {{ totalItems }}</div>
           <button mat-stroked-button color="warn" (click)="exportStockCsv()">Export Stock CSV</button>
           <button mat-stroked-button color="primary" (click)="goToProducts()">Manage Products</button>
-          <button mat-stroked-button color="accent" (click)="goToPurchase()">Create Purchase</button>
+          <button *ngIf="canManagePurchases" mat-stroked-button color="accent" (click)="goToPurchase()">Create Purchase</button>
         </div>
 
         <div class="filter-row" *ngIf="canCreateReorderDraft">
@@ -45,7 +45,7 @@
             <mat-select [(ngModel)]="sortBy">
               <mat-option value="updatedAt">Updated At</mat-option>
               <mat-option value="quantity">Quantity</mat-option>
-              <mat-option value="lastPurchasePrice">Last Purchase Price</mat-option>
+              <mat-option *ngIf="canViewSensitivePricing" value="lastPurchasePrice">Last Purchase Price</mat-option>
             </mat-select>
           </mat-form-field>
 
@@ -82,7 +82,7 @@
         <div class="label">Low Stock SKUs</div>
         <div class="value">{{ summary.lowStockCount }}</div>
       </div>
-      <div class="summary-card valuation">
+      <div class="summary-card valuation" *ngIf="canViewSensitivePricing">
         <div class="label">Total Stock Valuation (Cost)</div>
         <div class="value">₹ {{ summary.totalCostValue | number:'1.2-2' }}</div>
       </div>
@@ -231,8 +231,8 @@
                 <th>Damaged</th>
                 <th>Available</th>
                 <th>Reorder</th>
-                <th>Cost</th>
-                <th>Value</th>
+                <th *ngIf="canViewSensitivePricing">Cost</th>
+                <th *ngIf="canViewSensitivePricing">Value</th>
                 <th>Status</th>
                 <th *ngIf="canCreateReorderDraft">Action</th>
               </tr>
@@ -252,8 +252,8 @@
                 <td>{{ row?.damagedQuantity || 0 }}</td>
                 <td>{{ getAvailableQty(row) }}</td>
                 <td>{{ row?.reorderLevel || 0 }}</td>
-                <td>₹ {{ row?.lastPurchasePrice || 0 | number:'1.2-2' }}</td>
-                <td>₹ {{ getStockValue(row) | number:'1.2-2' }}</td>
+                <td *ngIf="canViewSensitivePricing">₹ {{ row?.lastPurchasePrice || 0 | number:'1.2-2' }}</td>
+                <td *ngIf="canViewSensitivePricing">₹ {{ getStockValue(row) | number:'1.2-2' }}</td>
                 <td>
                   <span class="stock-badge" [ngClass]="isLowStock(row) ? 'low' : 'ok'">
                     {{ isLowStock(row) ? 'LOW' : 'OK' }}
@@ -276,7 +276,7 @@
                 </td>
               </tr>
               <tr *ngIf="rows.length === 0">
-                <td [attr.colspan]="canCreateReorderDraft ? 13 : 12" class="empty">
+                <td [attr.colspan]="(canCreateReorderDraft ? 1 : 0) + (canViewSensitivePricing ? 12 : 10)" class="empty">
                   No stock records found.
                   <span class="empty-help">Create/confirm purchase to auto-generate stock entries.</span>
                 </td>

@@ -98,6 +98,16 @@
     </div>
 
     <div class="detail-item">
+      <label>Credit Limit</label>
+      <span>₹ {{ data?.creditLimit || 0 }}</span>
+    </div>
+
+    <div class="detail-item">
+      <label>Payment Terms</label>
+      <span>{{ data?.paymentTerms || 0 }} days</span>
+    </div>
+
+    <div class="detail-item">
       <label>Created At</label>
       <span>{{ data?.createdAt | date: "medium" }}</span>
     </div>

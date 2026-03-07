@@ -14,11 +14,11 @@ export class SalesService {
     return environment.apiBaseURL;
   }
   getCustomerSuggestion(searchTerm: string) {
-    return this.http.get(`${this.baseURL}/api/purchase/customer-suggestions?term=${searchTerm}`);
+    return this.http.get(`${this.baseURL}/api/sales/customer-suggestions?term=${searchTerm}`);
   }
 
   addSales(data) {
-    return this.http.post(`${this.baseURL}/api/purchase`, data);
+    return this.http.post(`${this.baseURL}/api/sales`, data);
   }
 
   getSales(data:any) {
@@ -28,7 +28,7 @@ export class SalesService {
       if (value === null || value === undefined || value === "") return;
       params = params.set(key, String(value));
     });
-    return this.http.get(`${this.baseURL}/api/purchase`,{ params: params });
+    return this.http.get(`${this.baseURL}/api/sales`,{ params: params });
   }
 
   getSaleById(id: string): Observable<any> {

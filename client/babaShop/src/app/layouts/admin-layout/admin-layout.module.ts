@@ -38,6 +38,9 @@ import { MatCheckboxModule } from "@angular/material/checkbox";
 import { MatSnackBarModule } from "@angular/material/snack-bar";
 import { MatChipsModule } from "@angular/material/chips";
 import { OrdersComponent } from "app/orders/orders.component";
+import { CreateOrderComponent } from "app/orders/create-order.component";
+import { OrderDetailsComponent } from "app/orders/order-details.component";
+import { OrderPaymentDialogComponent } from "app/orders/order-payment-dialog.component";
 import { CustomersComponent } from "app/customers/customers.component";
 import { DistributorsComponent } from "app/all-distributors/distributors/distributors.component";
 import { AddDistributorsComponent } from "app/all-distributors/add-distributors/add-distributors.component";
@@ -54,6 +57,8 @@ import { PosComponent } from "app/sales/pos/pos.component";
 import { ReturnsComponent } from "app/sales/returns/returns.component";
 import { SalePaymentDialogComponent } from "app/sales/sale-payment-dialog/sale-payment-dialog.component";
 import { SalesReportsComponent } from "app/sales/sales-reports/sales-reports.component";
+import { CustomerDetailsComponent } from "app/customers/customer-details/customer-details.component";
+import { AddCustomerDialogComponent } from "app/sales/add-customer-dialog/add-customer-dialog.component";
 
 @NgModule({
   imports: [
@@ -98,7 +103,11 @@ import { SalesReportsComponent } from "app/sales/sales-reports/sales-reports.com
     StocksComponent,
     StockReorderPreviewDialogComponent,
     OrdersComponent,
+    CreateOrderComponent,
+    OrderDetailsComponent,
+    OrderPaymentDialogComponent,
     CustomersComponent,
+    CustomerDetailsComponent,
     AddDistributorsComponent,
     DistributorsComponent,
     ViewDistributorComponent,
@@ -113,6 +122,7 @@ import { SalesReportsComponent } from "app/sales/sales-reports/sales-reports.com
     ReturnsComponent,
     SalePaymentDialogComponent,
     SalesReportsComponent,
+    AddCustomerDialogComponent,
     HasRoleDirective,
   ],
 })

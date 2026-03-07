@@ -44,7 +44,6 @@ export class UserProfileComponent implements OnInit {
 
   loadProfile() {
     this.profileLoading = true;
-    console.log("[FLOW][PROFILE][LOAD] request");
 
     this.authService.getProfile().subscribe({
       next: (res: any) => {
@@ -70,16 +69,9 @@ export class UserProfileComponent implements OnInit {
             : "-",
           isActive: res.user?.isActive ? "Active" : "Disabled",
         });
-        console.log("[FLOW][PROFILE][LOAD] success", {
-          userId: res.user?.id,
-          role: res.user?.role,
-          shop: res.user?.shop,
-          shopCode: res.user?.shopCode,
-        });
         this.profileLoading = false;
       },
-      error: (err) => {
-        console.error("[FLOW][PROFILE][LOAD] error", err);
+      error: () => {
         this.profileLoading = false;
         this.snackBar.open("Failed to load profile", "Close", {
           duration: 3000,
@@ -102,17 +94,10 @@ export class UserProfileComponent implements OnInit {
       phoneNo: this.profileForm.get("phoneNo")?.value,
     };
 
-    console.log("[FLOW][PROFILE][UPDATE] request", payload);
     this.saveLoading = true;
 
     this.authService.updateProfile(payload).subscribe({
       next: (res: any) => {
-        console.log("[FLOW][PROFILE][UPDATE] success", {
-          userId: res.user?.id,
-          role: res.user?.role,
-          shop: res.user?.shop,
-          shopCode: res.user?.shopCode,
-        });
         this.saveLoading = false;
         this.snackBar.open(res?.message || "Profile updated successfully", "Close", {
           duration: 3000,
@@ -120,7 +105,6 @@ export class UserProfileComponent implements OnInit {
         this.loadProfile();
       },
       error: (err) => {
-        console.error("[FLOW][PROFILE][UPDATE] error", err);
         this.saveLoading = false;
         this.snackBar.open(err?.error?.message || "Failed to update profile", "Close", {
           duration: 3000,

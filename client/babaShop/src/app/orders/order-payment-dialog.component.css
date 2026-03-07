@@ -1,0 +1,15 @@
+.meta {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 16px;
+  color: #334155;
+}
+
+.form-wrap {
+  display: grid;
+  gap: 12px;
+}
+
+.full {
+  width: 100%;
+}

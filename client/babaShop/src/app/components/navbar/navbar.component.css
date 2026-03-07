@@ -12,8 +12,8 @@
 .navbar-title-wrap {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  max-width: 460px;
+  gap: 8px;
+  max-width: 560px;
 }
 
 .title-back-btn {
@@ -47,6 +47,27 @@
   text-overflow: ellipsis;
 }
 
+.corner-dashboard-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: #f3f7ff;
+  border: 1px solid #d9e2f2;
+  color: #23457a;
+  text-decoration: none;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+}
+
+.corner-dashboard-link .material-icons {
+  font-size: 15px;
+  line-height: 1;
+}
+
 .breadcrumb-link.active {
   color: #1f1f1f;
   font-weight: 700;
@@ -60,6 +81,43 @@
 
 .navbar .nav-item .nav-link {
   padding: 6px 8px;
+}
+
+.mode-chip,
+.readonly-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.mode-chip {
+  border: 1px solid #d9e2f2;
+  background: #f3f7ff;
+  color: #23457a;
+}
+
+.mode-chip.global {
+  border-color: #ffd7d7;
+  background: #fff5f5;
+  color: #c62828;
+}
+
+.mode-chip-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.readonly-chip {
+  border: 1px solid #ffe1b5;
+  background: #fff7e8;
+  color: #b86b00;
 }
 
 .shop-count-link {
@@ -118,13 +176,25 @@
 .quick-link {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  justify-content: center;
+  gap: 6px;
+  min-height: 34px;
+  border-radius: 10px;
 }
 
 .quick-link-text {
   font-size: 12px;
   font-weight: 600;
   color: #424242;
+  line-height: 1;
+}
+
+.quick-link .material-icons {
+  font-size: 18px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 @media (max-width: 1400px) {
@@ -143,12 +213,22 @@
     max-width: 260px;
     margin-right: 6px;
   }
+
+  .mode-chip,
+  .readonly-chip {
+    padding: 5px 9px;
+  }
 }
 
 @media (max-width: 991px) {
   .shop-chip {
     width: 100%;
     max-width: 100%;
+    border-radius: 8px;
+  }
+
+  .mode-chip,
+  .readonly-chip {
     border-radius: 8px;
   }
 

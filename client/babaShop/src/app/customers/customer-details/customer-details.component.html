@@ -1,0 +1,202 @@
+<div class="main-content">
+  <div class="container-fluid">
+    
+    <!-- Back Button -->
+    <div class="mb-3">
+      <button mat-raised-button color="primary" (click)="goBack()">
+        <mat-icon>arrow_back</mat-icon>
+        Back to Customers
+      </button>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div class="loading" *ngIf="loading">
+      <mat-spinner color="primary" mode="indeterminate"></mat-spinner>
+    </div>
+
+    <div *ngIf="!loading && customer">
+      <!-- Customer Info Card -->
+      <div class="card">
+        <div class="card-header card-header-danger">
+          <h4 class="card-title">Customer Details</h4>
+          <p class="card-category">Full purchase history and ledger</p>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <div class="info-section">
+                <h5>Customer Information</h5>
+                <table class="info-table">
+                  <tr>
+                    <th>Name:</th>
+                    <td>{{ customer.name }}</td>
+                  </tr>
+                  <tr>
+                    <th>Phone:</th>
+                    <td>{{ customer.phone }}</td>
+                  </tr>
+                  <tr>
+                    <th>Email:</th>
+                    <td>{{ customer.email || 'N/A' }}</td>
+                  </tr>
+                  <tr>
+                    <th>Address:</th>
+                    <td>{{ customer.address || 'N/A' }}</td>
+                  </tr>
+                  <tr>
+                    <th>Total Purchases:</th>
+                    <td>{{ customer.purchaseCount || 0 }}</td>
+                  </tr>
+                </table>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="info-section">
+                <h5>Account Summary</h5>
+                <div class="summary-cards">
+                  <div class="summary-card total-purchase">
+                    <div class="label">Total Purchase</div>
+                    <div class="amount">Rs {{ customer.totalPurchase | number:'1.2-2' }}</div>
+                  </div>
+                  <div class="summary-card total-paid">
+                    <div class="label">Total Paid</div>
+                    <div class="amount">Rs {{ customer.totalPaid | number:'1.2-2' }}</div>
+                  </div>
+                  <div class="summary-card total-due">
+                    <div class="label">Total Due</div>
+                    <div class="amount">Rs {{ customer.totalDue | number:'1.2-2' }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sales History Card -->
+      <div class="card mt-3">
+        <div class="card-header card-header-primary">
+          <h4 class="card-title">Account Statement</h4>
+          <p class="card-category">Real ledger history with running balance</p>
+        </div>
+        <div class="card-body">
+          
+          <!-- Date Filter -->
+          <div class="date-filter-section">
+            <div class="row align-items-end">
+              <div class="col-md-3">
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>From Date</mat-label>
+                  <input matInput type="date" [(ngModel)]="startDate" (change)="applyDateFilter()">
+                </mat-form-field>
+              </div>
+              <div class="col-md-3">
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>To Date</mat-label>
+                  <input matInput type="date" [(ngModel)]="endDate" (change)="applyDateFilter()">
+                </mat-form-field>
+              </div>
+              <div class="col-md-3">
+                <button mat-stroked-button color="primary" (click)="clearFilters()">
+                  <mat-icon>clear</mat-icon> Clear
+                </button>
+              </div>
+              <div class="col-md-3 text-right">
+                <div class="filtered-summary">
+                  <span class="summary-label">Closing Balance:</span>
+                  <span class="summary-amount">Rs {{ statementSummary.closingBalance | number:'1.2-2' }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="loading" *ngIf="salesLoading">
+            <mat-spinner diameter="40" color="primary" mode="indeterminate"></mat-spinner>
+          </div>
+
+          <div class="table-responsive" *ngIf="!salesLoading">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Invoice No.</th>
+                  <th>Transaction Type</th>
+                  <th>Items / Note</th>
+                  <th class="text-right">Debit</th>
+                  <th class="text-right">Credit</th>
+                  <th class="text-right">Balance</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let sale of sales">
+                  <td>{{ sale.createdAt | date:'medium' }}</td>
+                  <td>{{ sale.invoiceNo || sale.transactionId }}</td>
+                  <td>
+                    <span class="badge" [ngClass]="getTransactionBadgeClass(sale.transactionType)">
+                      {{ sale.label }}
+                    </span>
+                  </td>
+                  <td>
+                    <div>{{ getTransactionItems(sale) }}</div>
+                    <div class="text-muted" *ngIf="sale.note && sale.items?.length">
+                      {{ sale.note }}
+                    </div>
+                  </td>
+                  <td class="text-right">
+                    <span *ngIf="sale.debit; else noDebitAmount">Rs {{ sale.debit | number:'1.2-2' }}</span>
+                    <ng-template #noDebitAmount>—</ng-template>
+                  </td>
+                  <td class="text-right">
+                    <span *ngIf="sale.credit; else noCreditAmount">Rs {{ sale.credit | number:'1.2-2' }}</span>
+                    <ng-template #noCreditAmount>—</ng-template>
+                  </td>
+                  <td class="text-right">
+                    <span [ngClass]="getBalanceClass(sale.runningBalance)">
+                      Rs {{ sale.runningBalance | number:'1.2-2' }}
+                    </span>
+                  </td>
+                  <td>
+                    <button
+                      mat-icon-button
+                      color="primary"
+                      (click)="viewTransaction(sale)"
+                      [disabled]="!sale.saleId && !sale.orderId"
+                      [title]="sale.orderId ? 'View Order' : 'View Sale'"
+                    >
+                      <mat-icon>visibility</mat-icon>
+                    </button>
+                  </td>
+                </tr>
+                <tr *ngIf="!sales || sales.length === 0">
+                  <td colspan="8" class="text-center">No transactions found</td>
+                </tr>
+              </tbody>
+              <tfoot *ngIf="sales.length > 0">
+                <tr class="total-row">
+                  <td colspan="4"><strong>Total</strong></td>
+                  <td class="text-right"><strong>Rs {{ statementSummary.totalDebit | number:'1.2-2' }}</strong></td>
+                  <td class="text-right"><strong>Rs {{ statementSummary.totalCredit | number:'1.2-2' }}</strong></td>
+                  <td class="text-right"><strong>Rs {{ statementSummary.closingBalance | number:'1.2-2' }}</strong></td>
+                  <td></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+
+          <!-- Pagination -->
+          <mat-paginator 
+            [length]="totalSales" 
+            [pageIndex]="currentPage - 1"
+            [pageSize]="pageSize" 
+            [pageSizeOptions]="pageSizeOptions"
+            (page)="onPageChange($event)">
+          </mat-paginator>
+
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>

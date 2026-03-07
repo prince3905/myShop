@@ -11,6 +11,19 @@ const { applyStockTransaction } = require("../utils/stock.service");
 const isSuperAdminGlobal = (req) =>
   req.user?.role === "SUPER_ADMIN" && !req.shopId;
 
+const canViewSensitivePricing = (req) =>
+  ["SUPER_ADMIN", "ADMIN"].includes(`${req.user?.role || ""}`);
+
+const sanitizeVariationPricing = (variation, req) => {
+  if (!variation || canViewSensitivePricing(req)) {
+    return variation;
+  }
+
+  const plainVariation = variation.toObject?.() || { ...variation };
+  delete plainVariation.costPrice;
+  return plainVariation;
+};
+
 const pushAuditLog = async (userId, action, details = "") => {
   if (!userId) return;
   try {
@@ -169,7 +182,7 @@ exports.getVariations = async (req, res) => {
       success: true,
       count: variations.length,
       total,
-      data: variations
+      data: variations.map((variation) => sanitizeVariationPricing(variation, req))
     });
   } catch (error) {
     res.status(500).json({
@@ -200,7 +213,7 @@ exports.getSingleVariation = async (req, res) => {
 
     res.json({
       success: true,
-      data: variation
+      data: sanitizeVariationPricing(variation, req)
     });
   } catch (error) {
     res.status(500).json({

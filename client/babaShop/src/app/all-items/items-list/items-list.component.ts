@@ -11,6 +11,7 @@ import { MatPaginator, PageEvent } from "@angular/material/paginator";
 import { ProductService } from "app/shared/services/product.service";
 import { CategoryService } from "app/shared/services/category.service";
 import { BrandService } from "app/shared/services/brand.service";
+import { AuthService } from "app/shared/services/auth.service";
 @Component({
   selector: "items-list",
   templateUrl: "./items-list.component.html",
@@ -45,7 +46,7 @@ export class ItemsListComponent implements OnInit {
   selectedBrand: string;
   searchParams = {};
 
-  pageSize = 10; // Number of items per page
+  pageSize = 10;
   pageSizeOptions: number[] = [5, 10, 25, 50];
   paginatedItems: any[] = [];
   totalItems: number;
@@ -57,9 +58,20 @@ export class ItemsListComponent implements OnInit {
     private productService: ProductService,
     private categoryService: CategoryService,
     private brandService: BrandService,
+    public authService: AuthService,
     private router: Router,
     private Router: ActivatedRoute,
   ) {}
+
+  private navigateWithQuery(queryParams: any): void {
+    const navigationExtras: NavigationExtras = {
+      relativeTo: this.Router,
+      queryParams,
+      queryParamsHandling: "merge",
+    };
+
+    this.router.navigate([], navigationExtras);
+  }
 
   ngOnInit() {
     this.getCategoryAndBrand();
@@ -75,7 +87,6 @@ export class ItemsListComponent implements OnInit {
       this.allItems = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
       this.items = [...this.allItems];
       this.summaryCounts.products = this.allItems.length;
-      console.log("All Products", this.items);
 
       this.allItems.forEach((item: any) => {
         item.totalStock =
@@ -120,16 +131,8 @@ export class ItemsListComponent implements OnInit {
   }
 
   onPageChange(event: PageEvent): void {
-    // console.log(event)
     this.pageSize = event.pageSize;
-    const queryParamsObj = this.getQueryParams();
-    // this.getAllItems(queryParamsObj);
-    const navigationExtras: NavigationExtras = {
-      relativeTo: this.Router,
-      queryParams: queryParamsObj,
-      queryParamsHandling: "merge",
-    };
-    this.router.navigate([], navigationExtras);
+    this.navigateWithQuery(this.getQueryParams());
     this.paginatedItems = this.items.slice(
       event.pageIndex * this.pageSize,
       event.pageIndex * this.pageSize + this.pageSize,
@@ -192,7 +195,6 @@ export class ItemsListComponent implements OnInit {
         brand: this.selectedBrand,
       };
     } else if (this.selectedOption === "date") {
-      console.log(this.startDate, this.endDate);
       queryParamsObj = {
         ...queryParamsObj,
         startDate: this.startDate.toISOString().slice(0, 10),
@@ -200,16 +202,7 @@ export class ItemsListComponent implements OnInit {
       };
     }
 
-    console.log("Query Parameters:", queryParamsObj);
-
-    // Now navigate with the queryParamsObj
-    const navigationExtras: NavigationExtras = {
-      relativeTo: this.Router,
-      queryParams: queryParamsObj,
-      queryParamsHandling: "merge",
-    };
-
-    this.router.navigate([], navigationExtras);
+    this.navigateWithQuery(queryParamsObj);
     this.applyFilters();
   }
 
@@ -235,22 +228,17 @@ export class ItemsListComponent implements OnInit {
   }
 
   onClear() {
-    // Reset all query parameters to null before setting new ones
     this.itemName = null;
     this.selectedCategory = null;
     this.selectedBrand = null;
     this.startDate = null;
     this.endDate = null;
-    this.router.navigate([], {
-      relativeTo: this.Router,
-      queryParams: {
-        name: null,
-        category: null,
-        brand: null,
-        startDate: null,
-        endDate: null,
-      },
-      queryParamsHandling: "merge",
+    this.navigateWithQuery({
+      name: null,
+      category: null,
+      brand: null,
+      startDate: null,
+      endDate: null,
     });
     this.selectedOption = null;
     this.items = [...this.allItems];
@@ -266,7 +254,6 @@ export class ItemsListComponent implements OnInit {
   //   this.item.getItem(queryParamsObj).subscribe(
   //     (response: any) => {
   //       this.items = response.items;
-  //       console.log(response)
   //       this.totalItems = response.totalItems;
   //       this.paginatedItems = this.items.slice(0, this.pageSize);
   //       this.loading = false;

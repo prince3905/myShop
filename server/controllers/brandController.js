@@ -22,12 +22,6 @@ const parsePagination = (query) => {
 exports.createBrand = async (req, res) => {
   try {
     const { name, description, logo } = req.body;
-    console.log("[FLOW][BRAND][CREATE]", {
-      userId: req.user?._id?.toString(),
-      role: req.user?.role,
-      shopId: req.shopId?.toString(),
-      name,
-    });
 
     if (!req.shopId) {
       return res.status(400).json({
@@ -94,12 +88,6 @@ exports.getBrands = async (req, res) => {
     const { sort = "-createdAt", search, isActive } = req.query;
     const { limit, skip } = parsePagination(req.query);
     const query = isSuperAdminGlobal(req) ? {} : { shop: req.shopId };
-    console.log("[FLOW][BRAND][LIST] request", {
-      userId: req.user?._id?.toString(),
-      role: req.user?.role,
-      shopId: req.shopId?.toString(),
-      query: { limit, skip, sort, search },
-    });
 
     if (search) {
       query.name = { $regex: search, $options: "i" };
@@ -123,10 +111,6 @@ exports.getBrands = async (req, res) => {
       brandQuery,
       Brand.countDocuments(query),
     ]);
-    console.log("[FLOW][BRAND][LIST] response", {
-      count: brands.length,
-      shopId: req.shopId?.toString(),
-    });
 
     res.status(200).json({
       success: true,
@@ -150,12 +134,6 @@ exports.getBrands = async (req, res) => {
 exports.updateBrand = async (req, res) => {
   try {
     const { id } = req.params;
-    console.log("[FLOW][BRAND][UPDATE]", {
-      userId: req.user?._id?.toString(),
-      role: req.user?.role,
-      shopId: req.shopId?.toString(),
-      brandId: id,
-    });
     if (!req.shopId) {
       return res.status(400).json({
         success: false,
@@ -237,12 +215,6 @@ exports.updateBrand = async (req, res) => {
 exports.deleteBrand = async (req, res) => {
   try {
     const { id } = req.params;
-    console.log("[FLOW][BRAND][DELETE]", {
-      userId: req.user?._id?.toString(),
-      role: req.user?.role,
-      shopId: req.shopId?.toString(),
-      brandId: id,
-    });
     if (!req.shopId) {
       return res.status(400).json({
         success: false,

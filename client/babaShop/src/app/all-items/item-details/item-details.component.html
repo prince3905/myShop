@@ -75,7 +75,7 @@
                 <th>Color</th>
                 <th>Size</th>
                 <th>Qty</th>
-                <th>Cost</th>
+                <th *ngIf="authService.canViewSensitivePricing()">Cost</th>
                 <th>Selling</th>
                 <th>Created At</th>
                 <th>Action</th>
@@ -92,12 +92,12 @@
                   <td>{{ v.attributes?.color || "-" }}</td>
                   <td>{{ v.attributes?.size || "-" }}</td>
                   <td>{{ v.quantity ?? 0 }}</td>
-                  <td>{{ (v.costPrice ?? 0) | currency: "INR":"symbol":"1.2-2":"en-IN" }}</td>
+                  <td *ngIf="authService.canViewSensitivePricing()">{{ (v.costPrice ?? 0) | currency: "INR":"symbol":"1.2-2":"en-IN" }}</td>
                   <td>{{ (v.sellingPrice ?? 0) | currency: "INR":"symbol":"1.2-2":"en-IN" }}</td>
                   <td>{{ v.createdAt ? (v.createdAt | date: "medium") : "-" }}</td>
                   <td class="table-action-col">
                     <button
-                      *hasRole="['SUPER_ADMIN','ADMIN','MANAGER']"
+                      *hasRole="['SUPER_ADMIN','ADMIN']"
                       mat-stroked-button
                       color="primary"
                       type="button"
@@ -115,7 +115,7 @@
 
     <ng-template #noVariations>
       <tr>
-        <td colspan="11" class="empty-row">No SKU variations available.</td>
+        <td [attr.colspan]="authService.canViewSensitivePricing() ? 11 : 10" class="empty-row">No SKU variations available.</td>
       </tr>
     </ng-template>
   </div>

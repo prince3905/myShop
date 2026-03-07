@@ -42,7 +42,7 @@
             <button mat-stroked-button color="primary" (click)="onClear()">
               <mat-icon>clear</mat-icon>
             </button>
-            <button mat-raised-button color="accent" (click)="openAddDistributor()">
+            <button mat-raised-button color="accent" (click)="openAddDistributor()" *ngIf="!isGlobalSuperAdmin">
               <mat-icon>add</mat-icon>
             </button>
           </div>
@@ -92,10 +92,10 @@
                   <button mat-icon-button color="primary" matTooltip="View" (click)="openViewDistributor(item, $event)">
                     <mat-icon>visibility</mat-icon>
                   </button>
-                  <button mat-icon-button color="accent" matTooltip="Edit Distributor" (click)="openEditDistributor(item)">
+                  <button mat-icon-button color="accent" matTooltip="Edit Distributor" (click)="openEditDistributor(item)" *ngIf="!isGlobalSuperAdmin">
                     <mat-icon>edit</mat-icon>
                   </button>
-                  <button mat-stroked-button class="status-btn" [ngClass]="item.status === 'active' ? 'active' : 'disabled'" (click)="toggleStatus(item)">
+                  <button mat-stroked-button class="status-btn" [ngClass]="item.status === 'active' ? 'active' : 'disabled'" (click)="toggleStatus(item)" *ngIf="!isGlobalSuperAdmin">
                     <mat-icon>{{ item.status === 'active' ? 'toggle_on' : 'toggle_off' }}</mat-icon>
                     {{ item.status === 'active' ? 'Disable' : 'Enable' }}
                   </button>
@@ -111,6 +111,7 @@
         <mat-paginator
           #paginator
           [length]="totalItems"
+          [pageIndex]="currentPageIndex"
           [pageSize]="pageSize"
           [pageSizeOptions]="pageSizeOptions"
           (page)="onPageChange($event)">

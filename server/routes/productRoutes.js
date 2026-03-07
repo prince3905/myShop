@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const productController = require("../controllers/ProductController");
-const { protect, attachShop, authorizePermission } = require("../middleware/authMiddleware");
+const { protect, attachShop, authorizePermission, requireShopSelectionForWrite } = require("../middleware/authMiddleware");
 
 const { validate } = require("../middleware/validate");
 const {
@@ -12,6 +12,7 @@ const {
 
 router.use(protect);
 router.use(attachShop);
+router.use(requireShopSelectionForWrite);
 
 /* =========================
    CREATE PRODUCT
@@ -31,6 +32,11 @@ router.post(
 router.get(
   "/",
   productController.getProducts
+);
+
+router.get(
+  "/pos-search",
+  productController.searchProductsForPos
 );
 
 /* =========================

@@ -77,6 +77,18 @@
         <div class="label">Sales Amount</div>
         <div class="val">Rs {{ overview?.sales?.totalAmount | number:'1.2-2' }}</div>
       </div>
+      <div class="kpi profit-kpi" *ngIf="canViewSensitivePricing">
+        <div class="label">Cost Amount</div>
+        <div class="val">Rs {{ overview?.sales?.totalCostAmount | number:'1.2-2' }}</div>
+      </div>
+      <div class="kpi profit-kpi" *ngIf="canViewSensitivePricing">
+        <div class="label">Gross Profit</div>
+        <div class="val">Rs {{ overview?.sales?.grossProfit | number:'1.2-2' }}</div>
+      </div>
+      <div class="kpi profit-kpi" *ngIf="canViewSensitivePricing">
+        <div class="label">Gross Margin</div>
+        <div class="val">{{ overview?.sales?.grossMarginPercent | number:'1.2-2' }}%</div>
+      </div>
       <div class="kpi">
         <div class="label">Collected</div>
         <div class="val">Rs {{ overview?.sales?.totalPaid | number:'1.2-2' }}</div>
@@ -99,6 +111,21 @@
       </div>
     </div>
 
+    <div class="card mt-3" *ngIf="!loading && canViewSensitivePricing">
+      <div class="card-header card-header-success">
+        <h4 class="card-title">Profit Trend</h4>
+        <p class="card-category">Sales vs cost vs gross profit by date</p>
+      </div>
+      <div class="card-body">
+        <div class="ct-chart" id="profitTrendChart"></div>
+        <div class="trend-legend">
+          <span class="legend-pill legend-sales">Sales</span>
+          <span class="legend-pill legend-cost">Cost</span>
+          <span class="legend-pill legend-profit">Profit</span>
+        </div>
+      </div>
+    </div>
+
     <div class="card mt-3" *ngIf="!loading">
       <div class="card-header card-header-info">
         <h4 class="card-title">Recent Sales (Filtered)</h4>
@@ -110,6 +137,9 @@
               <th>Invoice</th>
               <th>Customer</th>
               <th>Total</th>
+              <th *ngIf="canViewSensitivePricing">Cost</th>
+              <th *ngIf="canViewSensitivePricing">Profit</th>
+              <th *ngIf="canViewSensitivePricing">Margin %</th>
               <th>Paid</th>
               <th>Due</th>
               <th>Returned Amt</th>
@@ -121,7 +151,10 @@
             <tr *ngFor="let row of salesRows">
               <td>{{ row?.invoiceNo || row?._id }}</td>
               <td>{{ row?.customerName || 'Walk-in' }}</td>
-              <td>Rs {{ row?.totalPurchasePrice | number:'1.2-2' }}</td>
+              <td>Rs {{ (row?.totalSaleAmount ?? row?.totalPurchasePrice) | number:'1.2-2' }}</td>
+              <td *ngIf="canViewSensitivePricing">Rs {{ row?.totalCostAmount | number:'1.2-2' }}</td>
+              <td *ngIf="canViewSensitivePricing">Rs {{ row?.grossProfit | number:'1.2-2' }}</td>
+              <td *ngIf="canViewSensitivePricing">{{ row?.grossMarginPercent | number:'1.2-2' }}%</td>
               <td>Rs {{ row?.paidAmount | number:'1.2-2' }}</td>
               <td>Rs {{ row?.dueAmount | number:'1.2-2' }}</td>
               <td>Rs {{ row?.returnedAmount | number:'1.2-2' }}</td>
@@ -129,10 +162,116 @@
               <td>{{ row?.purchaseDate | date:'dd MMM yyyy' }}</td>
             </tr>
             <tr *ngIf="salesRows.length === 0">
-              <td colspan="8" class="empty">No sales data</td>
+              <td [attr.colspan]="canViewSensitivePricing ? 11 : 8" class="empty">No sales data</td>
             </tr>
           </tbody>
         </table>
+      </div>
+    </div>
+
+    <div class="card mt-3" *ngIf="!loading && canViewSensitivePricing">
+      <div class="card-header card-header-danger">
+        <h4 class="card-title">Item-wise Profit</h4>
+        <p class="card-category">Top profit generating products for selected filters</p>
+      </div>
+      <div class="card-body table-responsive">
+        <table class="table r-table">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Model</th>
+              <th>Qty</th>
+              <th>Sales</th>
+              <th>Cost</th>
+              <th>Profit</th>
+              <th>Margin %</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let row of overview?.profitByItem || []">
+              <td>{{ row?.itemName || '-' }}</td>
+              <td>{{ row?.modelName || '-' }}</td>
+              <td>{{ row?.soldQty || 0 }}</td>
+              <td>Rs {{ row?.saleAmount | number:'1.2-2' }}</td>
+              <td>Rs {{ row?.costAmount | number:'1.2-2' }}</td>
+              <td>Rs {{ row?.grossProfit | number:'1.2-2' }}</td>
+              <td>{{ row?.grossMarginPercent | number:'1.2-2' }}%</td>
+            </tr>
+            <tr *ngIf="(overview?.profitByItem || []).length === 0">
+              <td colspan="7" class="empty">No profit rows found</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="profit-grid" *ngIf="!loading && canViewSensitivePricing">
+      <div class="card mt-3">
+        <div class="card-header card-header-warning">
+          <h4 class="card-title">Customer-wise Profit</h4>
+          <p class="card-category">Most profitable customers for selected filters</p>
+        </div>
+        <div class="card-body table-responsive">
+          <table class="table r-table">
+            <thead>
+              <tr>
+                <th>Customer</th>
+                <th>Bills</th>
+                <th>Sales</th>
+                <th>Cost</th>
+                <th>Profit</th>
+                <th>Margin %</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let row of overview?.profitByCustomer || []">
+                <td>{{ row?.customerName || 'Walk-in' }}</td>
+                <td>{{ row?.billCount || 0 }}</td>
+                <td>Rs {{ row?.saleAmount | number:'1.2-2' }}</td>
+                <td>Rs {{ row?.costAmount | number:'1.2-2' }}</td>
+                <td>Rs {{ row?.grossProfit | number:'1.2-2' }}</td>
+                <td>{{ row?.grossMarginPercent | number:'1.2-2' }}%</td>
+              </tr>
+              <tr *ngIf="(overview?.profitByCustomer || []).length === 0">
+                <td colspan="6" class="empty">No customer profit rows found</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card mt-3">
+        <div class="card-header card-header-primary">
+          <h4 class="card-title">Category-wise Profit</h4>
+          <p class="card-category">Most profitable categories for selected filters</p>
+        </div>
+        <div class="card-body table-responsive">
+          <table class="table r-table">
+            <thead>
+              <tr>
+                <th>Category</th>
+                <th>Qty</th>
+                <th>Sales</th>
+                <th>Cost</th>
+                <th>Profit</th>
+                <th>Margin %</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let row of overview?.profitByCategory || []">
+                <td>{{ row?.categoryName || 'Uncategorized' }}</td>
+                <td>{{ row?.soldQty || 0 }}</td>
+                <td>Rs {{ row?.saleAmount | number:'1.2-2' }}</td>
+                <td>Rs {{ row?.costAmount | number:'1.2-2' }}</td>
+                <td>Rs {{ row?.grossProfit | number:'1.2-2' }}</td>
+                <td>{{ row?.grossMarginPercent | number:'1.2-2' }}%</td>
+              </tr>
+              <tr *ngIf="(overview?.profitByCategory || []).length === 0">
+                <td colspan="6" class="empty">No category profit rows found</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
 

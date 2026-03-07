@@ -1,0 +1,27 @@
+.add-customer-dialog {
+  min-width: 350px;
+}
+
+.add-customer-dialog h2 {
+  margin-bottom: 16px;
+  color: #333;
+}
+
+.add-customer-dialog mat-dialog-content {
+  padding-top: 10px;
+}
+
+.full-width {
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+mat-dialog-actions {
+  padding: 16px 0;
+  gap: 8px;
+}
+
+button[mat-raised-button] {
+  min-width: 100px;
+}
+

@@ -4,6 +4,8 @@ const User = require("../models/User");
 const Shop = require("../models/Shop");
 const rolePermissions = require("../config/permissions");
 
+const SESSION_TTL = process.env.JWT_EXPIRES_IN || "12h";
+
 const pushAuditLog = async (userId, action, details = "") => {
   await User.findByIdAndUpdate(userId, {
     $push: {
@@ -24,7 +26,6 @@ exports.login = async (req, res) => {
   try {
     const { shopCode, email, password } = req.body;
     const normalizedShopCode = shopCode?.trim()?.toUpperCase() || null;
-    console.log("[FLOW][AUTH][LOGIN] request", { email, shopCode });
 
     if (!email || !password) {
       return res.status(400).json({
@@ -34,12 +35,6 @@ exports.login = async (req, res) => {
 
     const user = await User.findOne({ email })
       .select("+password");
-    console.log("[FLOW][AUTH][LOGIN] userLookup", {
-      email,
-      found: !!user,
-      userId: user?._id?.toString(),
-      role: user?.role,
-    });
 
     if (!user) {
       return res.status(400).json({
@@ -53,11 +48,6 @@ exports.login = async (req, res) => {
       selectedShop = await Shop.findOne({
         shopCode: normalizedShopCode,
         isActive: true,
-      });
-      console.log("[FLOW][AUTH][LOGIN] shopLookup", {
-        shopCode: normalizedShopCode,
-        found: !!selectedShop,
-        shopId: selectedShop?._id?.toString(),
       });
 
       if (!selectedShop) {
@@ -97,10 +87,6 @@ exports.login = async (req, res) => {
 
     // Check password
     const isMatch = await user.comparePassword(password);
-    console.log("[FLOW][AUTH][LOGIN] passwordCheck", {
-      userId: user._id.toString(),
-      isMatch,
-    });
 
     if (!isMatch) {
       return res.status(400).json({
@@ -143,14 +129,8 @@ exports.login = async (req, res) => {
         sid: sessionId,
       },
       process.env.JWT_SECRET,
-      { expiresIn: "7d" },
+      { expiresIn: SESSION_TTL },
     );
-    console.log("[FLOW][AUTH][LOGIN] success", {
-      userId: user._id.toString(),
-      role: user.role,
-      shopId: sessionShop?.toString?.() || null,
-      shopCode: sessionShopCode,
-    });
 
     res.status(200).json({
       success: true,
@@ -224,11 +204,6 @@ exports.updateProfile = async (req, res) => {
       }
     }
 
-    console.log("[FLOW][AUTH][PROFILE][UPDATE] request", {
-      userId: req.user?._id?.toString(),
-      keys: Object.keys(updateData),
-    });
-
     const updatedUser = await User.findByIdAndUpdate(
       req.user._id,
       updateData,
@@ -271,7 +246,6 @@ exports.updateProfile = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("[FLOW][AUTH][PROFILE][UPDATE] error", error.message);
     return res.status(500).json({
       success: false,
       message: "Failed to update profile",
@@ -311,7 +285,6 @@ exports.register = async (req, res) => {
 exports.protect = async (req, res, next) => {
   try {
     const token = req.headers.authorization?.split(" ")[1];
-    console.log("[FLOW][AUTH][PROTECT] tokenPresent", !!token);
 
     if (!token) {
       return res.status(401).json({
@@ -321,19 +294,8 @@ exports.protect = async (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    console.log("[FLOW][AUTH][PROTECT] decoded", {
-      id: decoded?.id,
-      role: decoded?.role,
-      shop: decoded?.shop,
-    });
 
     const user = await User.findById(decoded.id);
-    console.log("[FLOW][AUTH][PROTECT] userLookup", {
-      found: !!user,
-      userId: user?._id?.toString(),
-      role: user?.role,
-      shop: user?.shop?.toString(),
-    });
 
     if (!user) {
       return res.status(401).json({

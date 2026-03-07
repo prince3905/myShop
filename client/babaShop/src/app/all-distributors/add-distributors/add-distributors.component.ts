@@ -55,10 +55,7 @@ export class AddDistributorsComponent implements OnInit {
       pincode: [""],
     });
 
-    //  EDIT MODE
     if (this.data && this.data._id) {
-      console.log("Edit Mode Activated");
-
       this.isEditMode = true;
       this.distributorId = this.data._id;
 
@@ -68,6 +65,8 @@ export class AddDistributorsComponent implements OnInit {
         telephone: this.data.telephone,
         email: this.data.email,
         gstNumber: this.data.gstNumber,
+        creditLimit: this.data.creditLimit ?? 0,
+        paymentTerms: this.data.paymentTerms ?? 0,
         addressLine1: this.data.address?.addressLine1,
         addressLine2: this.data.address?.addressLine2,
         city: this.data.address?.city,
@@ -79,13 +78,8 @@ export class AddDistributorsComponent implements OnInit {
             ? this.data.shop._id
             : this.data?.shop || "",
       });
-      //  Disable after patch
       this.distributorForm.get("openingBalance")?.disable();
-      this.distributorForm.get("creditLimit")?.disable();
-      this.distributorForm.get("paymentTerms")?.disable();
       this.distributorForm.get("shop")?.disable();
-    } else {
-      console.log("Add Mode Activated");
     }
 
     this.isSuperAdmin = this.authService.isSuperAdmin();
@@ -130,7 +124,7 @@ export class AddDistributorsComponent implements OnInit {
 
   onSubmit() {
     if (this.distributorForm.invalid) {
-      console.warn("Form Invalid");
+      this.distributorForm.markAllAsTouched();
       return;
     }
 
@@ -154,14 +148,13 @@ export class AddDistributorsComponent implements OnInit {
       telephone: this.distributorForm.value.telephone,
       email: this.distributorForm.value.email,
       gstNumber: this.distributorForm.value.gstNumber,
-      // 🔥 Only include in ADD
       ...(this.isEditMode
         ? {}
         : {
             openingBalance: this.distributorForm.value.openingBalance,
-            creditLimit: this.distributorForm.value.creditLimit,
-            paymentTerms: this.distributorForm.value.paymentTerms,
           }),
+      creditLimit: this.distributorForm.value.creditLimit,
+      paymentTerms: this.distributorForm.value.paymentTerms,
       address: {
         addressLine1: this.distributorForm.value.addressLine1,
         addressLine2: this.distributorForm.value.addressLine2,
@@ -172,16 +165,11 @@ export class AddDistributorsComponent implements OnInit {
       },
     };
 
-    console.log("Payload:", payload);
-
     if (this.isEditMode) {
-      // 🔥 UPDATE API
       this.distributor
         .updateDistributor(this.distributorId, payload)
         .subscribe({
           next: (res: any) => {
-            console.log("Update Success:", res);
-
             this.snackBar.open(
               res?.message || "Distributor updated successfully",
               "Close",
@@ -191,8 +179,6 @@ export class AddDistributorsComponent implements OnInit {
             this.dialogRef.close(true);
           },
           error: (err) => {
-            console.error("Update Error:", err);
-
             this.snackBar.open(
               err?.error?.message || "Error updating distributor",
               "Close",
@@ -203,11 +189,8 @@ export class AddDistributorsComponent implements OnInit {
           },
         });
     } else {
-      // 🔥 ADD API
       this.distributor.addDistributor(payload).subscribe({
         next: (res: any) => {
-          console.log("Add Success:", res);
-
           this.snackBar.open(
             res?.message || "Distributor added successfully",
             "Close",
@@ -217,8 +200,6 @@ export class AddDistributorsComponent implements OnInit {
           this.dialogRef.close(true);
         },
         error: (err) => {
-          console.error("Add Error:", err);
-
           this.snackBar.open(
             err?.error?.message || "Error adding distributor",
             "Close",

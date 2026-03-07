@@ -15,10 +15,18 @@ router.get("/admin/all", auth.protect, shop.getAllShops);
 router.use(auth.protect);
 router.use(auth.attachShop);
 
-router.post("/", shop.createShop);
-router.get("/", shop.getMyShops);
-router.get("/:id", shop.getShopById);
-router.put("/:id", shop.updateShop);
-router.delete("/:id", shop.deleteShop);
+router.get(
+  "/",
+  auth.authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"),
+  shop.getMyShops,
+);
+router.get(
+  "/:id",
+  auth.authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"),
+  shop.getShopById,
+);
+router.post("/", auth.authorizeRoles("SUPER_ADMIN"), shop.createShop);
+router.put("/:id", auth.authorizeRoles("SUPER_ADMIN"), shop.updateShop);
+router.delete("/:id", auth.authorizeRoles("SUPER_ADMIN"), shop.deleteShop);
 
 module.exports = router;

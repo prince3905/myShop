@@ -17,15 +17,9 @@ import { AuthService } from "app/shared/services/auth.service";
 })
 export class DistributorsComponent implements OnInit, OnDestroy {
   panelOpenState = false;
-  // Category: any = [];
-  // Brands: any = [];
   items: any[] = [];
   name: string;
   phone: any;
-  // category: string;
-  // brand: string;
-  // startDate: Date;
-  // endDate: Date;
   searchInput: string;
   searchInputSubject = new Subject<string>();
   loading: boolean = true;
@@ -33,9 +27,6 @@ export class DistributorsComponent implements OnInit, OnDestroy {
   Distributors: any[] = [];
 
   selectedOption: string = "name";
-  // selectedCategory: string;
-  // selectedBrand: string;
-
   searchParams = {};
   suggestions: any[] = [];
 
@@ -43,6 +34,7 @@ export class DistributorsComponent implements OnInit, OnDestroy {
   pageSizeOptions: number[] = [5, 10, 25, 50];
   paginatedItems: any[] = [];
   totalItems: number;
+  currentPageIndex = 0;
 
   @ViewChild(MatPaginator) paginator: MatPaginator;
   isEditMode: boolean;
@@ -63,6 +55,15 @@ export class DistributorsComponent implements OnInit, OnDestroy {
     private authService: AuthService,
   ) {}
 
+  private navigateWithQuery(queryParams: any): void {
+    const navigationExtras: NavigationExtras = {
+      relativeTo: this.Router,
+      queryParams,
+    };
+
+    this.router.navigate([], navigationExtras);
+  }
+
   ngOnInit(): void {
     this.isGlobalSuperAdmin =
       this.authService.getUserRole() === "SUPER_ADMIN" &&
@@ -73,12 +74,27 @@ export class DistributorsComponent implements OnInit, OnDestroy {
         this.authService.getUserRole() === "SUPER_ADMIN" && !shopId;
       if (this.lastShopId === shopId) return;
       this.lastShopId = shopId;
+      this.navigateWithQuery({
+        page: 1,
+        perPage: this.pageSize,
+        name: this.name || null,
+        phone: this.phone || null,
+      });
+    });
 
-      if (this.paginator) {
-        this.paginator.pageIndex = 0;
-      }
-
-      this.getAllDistributors(null);
+    this.Router.queryParams.subscribe((params) => {
+      const page = Math.max(1, Number(params.page || 1));
+      const perPage = Math.max(1, Number(params.perPage || this.pageSize));
+      this.name = params.name || null;
+      this.phone = params.phone || null;
+      this.pageSize = perPage;
+      this.currentPageIndex = page - 1;
+      this.getAllDistributors({
+        page,
+        perPage,
+        ...(this.name ? { name: this.name } : {}),
+        ...(this.phone ? { phone: this.phone } : {}),
+      });
     });
   }
 
@@ -101,22 +117,22 @@ export class DistributorsComponent implements OnInit, OnDestroy {
     this.distributor.getDistributor(queryParamsObj).subscribe(
       (response: any) => {
         this.Distributors = response.distributors || [];
-        console.log(response);
         this.totalItems = response.totalItems || 0;
-        this.paginatedItems = this.Distributors.slice(0, this.pageSize);
+        this.paginatedItems = [...this.Distributors];
         this.loading = false;
         this.cdr.detectChanges();
       },
-      (error) => console.error("Error retrieving items:", error),
+      (error) => {
+        this.loading = false;
+        this.Distributors = [];
+        this.paginatedItems = [];
+      },
     );
-    this.loading = true;
-    this.cdr.detectChanges();
   }
 
-  getQueryParams(): any {
-    const pageIndex = this.paginator?.pageIndex ?? 0;
+  getQueryParams(page = this.currentPageIndex + 1): any {
     let queryParamsObj: any = {
-      page: pageIndex + 1,
+      page,
       perPage: this.pageSize,
     };
     if (this.selectedOption === "name") {
@@ -128,20 +144,8 @@ export class DistributorsComponent implements OnInit, OnDestroy {
   }
 
   onPageChange(event: PageEvent): void {
-    // console.log(event)
     this.pageSize = event.pageSize;
-    const queryParamsObj = this.getQueryParams();
-    this.getAllDistributors(queryParamsObj);
-    const navigationExtras: NavigationExtras = {
-      relativeTo: this.Router,
-      queryParams: queryParamsObj,
-      queryParamsHandling: "merge",
-    };
-    this.router.navigate([], navigationExtras);
-    this.paginatedItems = this.Distributors.slice(
-      event.pageIndex * this.pageSize,
-      event.pageIndex * this.pageSize + this.pageSize,
-    );
+    this.navigateWithQuery(this.getQueryParams(event.pageIndex + 1));
   }
 
   fetchSuggestionsName(): void {
@@ -169,18 +173,14 @@ export class DistributorsComponent implements OnInit, OnDestroy {
       });
       return;
     }
-    console.log("Opening Add Distributor Modal");
-
     this.dialog
       .open(AddDistributorsComponent, {
         width: "40%",
         height: "80%",
-        data: null, // 🔥 MUST BE NULL
+        data: null,
       })
       .afterClosed()
       .subscribe((res) => {
-        console.log("Dialog Closed:", res);
-
         if (res === true) {
           this.getAllDistributors(null);
           this.snackBar.open("Distributor list refreshed", "Close", {
@@ -201,20 +201,14 @@ export class DistributorsComponent implements OnInit, OnDestroy {
   }
 
   onClear() {
-    // Reset all query parameters to null before setting new ones
     this.name = null;
     this.phone = null;
-    this.router.navigate([], {
-      relativeTo: this.Router,
-      queryParams: {
-        name: null,
-        phone: null,
-        // category: null,
-        // brand: null,
-      },
-      queryParamsHandling: "merge",
+    this.navigateWithQuery({
+      page: 1,
+      perPage: this.pageSize,
+      name: null,
+      phone: null,
     });
-    this.getAllDistributors(null);
     this.suggestions = null;
   }
 
@@ -227,12 +221,10 @@ export class DistributorsComponent implements OnInit, OnDestroy {
       this.phone = null;
       this.suggestions = [];
     }
-    this.getAllDistributors(this.getQueryParams());
+    this.navigateWithQuery(this.getQueryParams(1));
   }
 
   onSearch(page: number, perPage: number) {
-    this.paginator.pageIndex = 0;
-
     let queryParamsObj: any = {
       page: 1,
       perPage: this.pageSize,
@@ -246,30 +238,17 @@ export class DistributorsComponent implements OnInit, OnDestroy {
       queryParamsObj.phone = this.phone;
     }
 
-    console.log("Search Params:", queryParamsObj);
-
-    const navigationExtras: NavigationExtras = {
-      relativeTo: this.Router,
-      queryParams: queryParamsObj,
-      queryParamsHandling: "merge",
-    };
-
-    this.router.navigate([], navigationExtras);
-    this.getAllDistributors(queryParamsObj);
+    this.navigateWithQuery(queryParamsObj);
   }
 
   fetchSuggestionsPhone(): void {
-    // console.log(this.phone)
     this.distributor
       .getDistributorSuggestionPhone(this.phone || this.phone)
       .subscribe(
         (suggestions: any[]) => {
           this.suggestions = suggestions;
-          console.log(this.suggestions);
         },
-        (error: any) => {
-          console.error("Error fetching suggestions:", error);
-        },
+        () => {},
       );
   }
 
@@ -280,8 +259,6 @@ export class DistributorsComponent implements OnInit, OnDestroy {
       });
       return;
     }
-    console.log("Editing Distributor:", row);
-
     this.dialog
       .open(AddDistributorsComponent, {
         width: "650px",
@@ -289,8 +266,6 @@ export class DistributorsComponent implements OnInit, OnDestroy {
       })
       .afterClosed()
       .subscribe((res) => {
-        console.log("Dialog Closed:", res);
-
         if (res === true) {
           this.getAllDistributors("null");
           this.snackBar.open("Distributor updated successfully", "Close", {
@@ -318,12 +293,8 @@ export class DistributorsComponent implements OnInit, OnDestroy {
     item.status = newStatus;
 
     this.distributor.updateDistributorStatus(item._id, newStatus).subscribe({
-      next: (res) => {
-        // success — server applied change, optionally refresh or show toast
-        // console.log('Status updated', res);
-      },
+      next: () => {},
       error: (err) => {
-        // revert on error
         item.status = oldStatus;
         console.error("Failed to update status", err);
         this.snackBar.open("Failed to update status. Try again.", "Close", {
@@ -336,16 +307,13 @@ export class DistributorsComponent implements OnInit, OnDestroy {
   updatePaginatedItems(): void {
     if (this.paginator) {
       const startIndex = this.paginator.pageIndex * this.pageSize;
-      // console.log(startIndex)
       this.paginatedItems = this.Distributors.slice(
         startIndex,
         startIndex + this.pageSize,
       );
-      // console.log("if",this.paginatedItems)
       this.cdr.detectChanges();
     } else {
       this.paginatedItems = [];
-      // console.log("else",this.paginatedItems)
     }
   }
 }

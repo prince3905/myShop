@@ -5,6 +5,7 @@ import { MatDialog } from "@angular/material/dialog";
 import { AddItemsComponent } from "../add-items/add-items.component";
 import { Router } from "@angular/router";
 import { MatSnackBar } from "@angular/material/snack-bar";
+import { AuthService } from "app/shared/services/auth.service";
 import {
   ConfirmDialogComponent,
   ConfirmDialogData,
@@ -27,6 +28,7 @@ export class ItemDetailsComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private productService: ProductService,
+    public authService: AuthService,
     private snackBar: MatSnackBar,
     public dialog: MatDialog,
   ) {}
@@ -74,7 +76,6 @@ export class ItemDetailsComponent implements OnInit {
         this.loading = false;
       },
       error: (error: any) => {
-        console.error("[FLOW][ITEM_DETAILS][LOAD] error", error);
         this.item = null;
         this.errorMessage = error?.error?.message || "Unable to load product details.";
         this.loading = false;
@@ -90,7 +91,7 @@ export class ItemDetailsComponent implements OnInit {
 
     dialogRef.afterClosed().subscribe((result) => {
       if (result) {
-        this.fetchItemDetails(item._id); // 🔥 reload updated data
+        this.fetchItemDetails(item._id);
       }
     });
   }

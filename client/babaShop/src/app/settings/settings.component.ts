@@ -66,6 +66,38 @@ export class SettingsComponent implements OnInit {
     private router: Router,
   ) {}
 
+  private showMessage(message: string): void {
+    this.snackBar.open(message, "Close", { duration: 3000 });
+  }
+
+  private setLoadingState(key: keyof SettingsComponent, value: boolean): void {
+    (this[key] as boolean) = value;
+  }
+
+  private handleRequest(options: {
+    stateKey: keyof SettingsComponent;
+    request$: any;
+    successMessage: string;
+    errorMessage: string;
+    onSuccess?: (res?: any) => void;
+    onError?: () => void;
+  }): void {
+    this.setLoadingState(options.stateKey, true);
+
+    options.request$.subscribe({
+      next: (res: any) => {
+        this.setLoadingState(options.stateKey, false);
+        this.showMessage(res?.message || options.successMessage);
+        options.onSuccess?.(res);
+      },
+      error: (err: any) => {
+        this.setLoadingState(options.stateKey, false);
+        options.onError?.();
+        this.showMessage(err?.error?.message || options.errorMessage);
+      },
+    });
+  }
+
   ngOnInit(): void {
     const user = this.authService.getCurrentUser();
     this.twoFactorEnabled = !!user?.twoFactorEnabled;
@@ -135,7 +167,6 @@ export class SettingsComponent implements OnInit {
 
   loadOverview() {
     this.loadingOverview = true;
-    console.log("[FLOW][SETTINGS][OVERVIEW] request");
     this.authService.getSettingsOverview().subscribe({
       next: (res: any) => {
         const data = res?.data || {};
@@ -174,11 +205,9 @@ export class SettingsComponent implements OnInit {
             ? new Date(data.shop.backupSettings.lastBackupAt).toLocaleString()
             : "Never",
         });
-        console.log("[FLOW][SETTINGS][OVERVIEW] success");
         this.loadingOverview = false;
       },
-      error: (err) => {
-        console.error("[FLOW][SETTINGS][OVERVIEW] error", err);
+      error: () => {
         this.loadingOverview = false;
         this.snackBar.open("Failed to load settings overview", "Close", { duration: 3000 });
       },
@@ -187,56 +216,34 @@ export class SettingsComponent implements OnInit {
 
   saveProfileSettings() {
     if (this.profileForm.invalid || this.savingProfile) return;
-    this.savingProfile = true;
-    console.log("[FLOW][SETTINGS][PROFILE] request");
-    this.authService.updateProfile(this.profileForm.value).subscribe({
-      next: (res: any) => {
-        this.savingProfile = false;
-        this.snackBar.open(res?.message || "Profile settings updated", "Close", { duration: 3000 });
-        this.loadOverview();
-      },
-      error: (err) => {
-        console.error("[FLOW][SETTINGS][PROFILE] error", err);
-        this.savingProfile = false;
-        this.snackBar.open(err?.error?.message || "Failed to update profile settings", "Close", { duration: 3000 });
-      },
+    this.handleRequest({
+      stateKey: "savingProfile",
+      request$: this.authService.updateProfile(this.profileForm.value),
+      successMessage: "Profile settings updated",
+      errorMessage: "Failed to update profile settings",
+      onSuccess: () => this.loadOverview(),
     });
   }
 
   saveNotificationSettings() {
-    this.savingNotifications = true;
-    console.log("[FLOW][SETTINGS][NOTIFICATIONS] request", this.notificationForm.value);
-    this.authService.updateNotificationSettings(this.notificationForm.value).subscribe({
-      next: (res: any) => {
-        this.savingNotifications = false;
-        this.snackBar.open(res?.message || "Notification settings updated", "Close", { duration: 3000 });
-      },
-      error: (err) => {
-        console.error("[FLOW][SETTINGS][NOTIFICATIONS] error", err);
-        this.savingNotifications = false;
-        this.snackBar.open(err?.error?.message || "Failed to update notifications", "Close", { duration: 3000 });
-      },
+    this.handleRequest({
+      stateKey: "savingNotifications",
+      request$: this.authService.updateNotificationSettings(this.notificationForm.value),
+      successMessage: "Notification settings updated",
+      errorMessage: "Failed to update notifications",
     });
   }
 
   savePreferences() {
-    this.savingPreferences = true;
-    console.log("[FLOW][SETTINGS][PREFERENCES] request", this.preferencesForm.value);
-    this.authService.updateAppPreferences(this.preferencesForm.value).subscribe({
-      next: (res: any) => {
-        this.savingPreferences = false;
-        this.snackBar.open(res?.message || "Preferences updated", "Close", { duration: 3000 });
-      },
-      error: (err) => {
-        console.error("[FLOW][SETTINGS][PREFERENCES] error", err);
-        this.savingPreferences = false;
-        this.snackBar.open(err?.error?.message || "Failed to update preferences", "Close", { duration: 3000 });
-      },
+    this.handleRequest({
+      stateKey: "savingPreferences",
+      request$: this.authService.updateAppPreferences(this.preferencesForm.value),
+      successMessage: "Preferences updated",
+      errorMessage: "Failed to update preferences",
     });
   }
 
   saveShopSettings() {
-    this.savingShop = true;
     const payload = {
       name: this.shopForm.value.name,
       contactNumber: this.shopForm.value.contactNumber,
@@ -250,125 +257,90 @@ export class SettingsComponent implements OnInit {
         pincode: this.shopForm.value.pincode,
       },
     };
-    console.log("[FLOW][SETTINGS][SHOP] request", payload);
-    this.authService.updateShopSettings(payload).subscribe({
-      next: (res: any) => {
-        this.savingShop = false;
-        this.snackBar.open(res?.message || "Shop settings updated", "Close", { duration: 3000 });
-        this.loadOverview();
-      },
-      error: (err) => {
-        console.error("[FLOW][SETTINGS][SHOP] error", err);
-        this.savingShop = false;
-        this.snackBar.open(err?.error?.message || "Failed to update shop settings", "Close", { duration: 3000 });
-      },
+    this.handleRequest({
+      stateKey: "savingShop",
+      request$: this.authService.updateShopSettings(payload),
+      successMessage: "Shop settings updated",
+      errorMessage: "Failed to update shop settings",
+      onSuccess: () => this.loadOverview(),
     });
   }
 
   saveIntegrations() {
-    this.savingIntegrations = true;
-    console.log("[FLOW][SETTINGS][INTEGRATIONS] request", this.integrationForm.value);
-    this.authService.updateIntegrations(this.integrationForm.value).subscribe({
-      next: (res: any) => {
-        this.savingIntegrations = false;
-        this.snackBar.open(res?.message || "Integrations updated", "Close", { duration: 3000 });
-      },
-      error: (err) => {
-        console.error("[FLOW][SETTINGS][INTEGRATIONS] error", err);
-        this.savingIntegrations = false;
-        this.snackBar.open(err?.error?.message || "Failed to update integrations", "Close", { duration: 3000 });
-      },
+    this.handleRequest({
+      stateKey: "savingIntegrations",
+      request$: this.authService.updateIntegrations(this.integrationForm.value),
+      successMessage: "Integrations updated",
+      errorMessage: "Failed to update integrations",
     });
   }
 
   saveBackupSettings() {
-    this.savingBackup = true;
-    console.log("[FLOW][SETTINGS][BACKUP] request", this.backupForm.value);
-    this.authService.updateBackupSettings({
-      autoBackup: this.backupForm.value.autoBackup,
-      frequency: this.backupForm.value.frequency,
-    }).subscribe({
-      next: (res: any) => {
-        this.savingBackup = false;
-        this.snackBar.open(res?.message || "Backup settings updated", "Close", { duration: 3000 });
-      },
-      error: (err) => {
-        console.error("[FLOW][SETTINGS][BACKUP] error", err);
-        this.savingBackup = false;
-        this.snackBar.open(err?.error?.message || "Failed to update backup settings", "Close", { duration: 3000 });
-      },
+    this.handleRequest({
+      stateKey: "savingBackup",
+      request$: this.authService.updateBackupSettings({
+        autoBackup: this.backupForm.value.autoBackup,
+        frequency: this.backupForm.value.frequency,
+      }),
+      successMessage: "Backup settings updated",
+      errorMessage: "Failed to update backup settings",
     });
   }
 
   runBackupNowAction() {
-    this.runningBackup = true;
-    console.log("[FLOW][SETTINGS][BACKUP_RUN] request");
-    this.authService.runBackupNow().subscribe({
-      next: (res: any) => {
-        this.runningBackup = false;
-        this.snackBar.open(res?.message || "Backup completed", "Close", { duration: 3000 });
-        this.loadOverview();
-      },
-      error: (err) => {
-        console.error("[FLOW][SETTINGS][BACKUP_RUN] error", err);
-        this.runningBackup = false;
-        this.snackBar.open(err?.error?.message || "Failed to run backup", "Close", { duration: 3000 });
-      },
+    this.handleRequest({
+      stateKey: "runningBackup",
+      request$: this.authService.runBackupNow(),
+      successMessage: "Backup completed",
+      errorMessage: "Failed to run backup",
+      onSuccess: () => this.loadOverview(),
     });
   }
 
   loadAuditLogs() {
     this.loadingAudit = true;
-    console.log("[FLOW][SETTINGS][AUDIT] request");
     this.authService.getAuditLogs().subscribe({
       next: (res: any) => {
         this.auditLogs = res.logs || [];
         this.loadingAudit = false;
       },
-      error: (err) => {
-        console.error("[FLOW][SETTINGS][AUDIT] error", err);
+      error: () => {
         this.loadingAudit = false;
-        this.snackBar.open("Failed to load audit logs", "Close", { duration: 3000 });
+        this.showMessage("Failed to load audit logs");
       },
     });
   }
 
   loadSessions() {
     this.loadingSessions = true;
-    console.log("[FLOW][SETTINGS][SESSIONS] request");
     this.authService.getActiveSessions().subscribe({
       next: (res: any) => {
         this.sessions = res.sessions || [];
-        console.log("[FLOW][SETTINGS][SESSIONS] success", { count: this.sessions.length });
         this.loadingSessions = false;
       },
-      error: (err) => {
-        console.error("[FLOW][SETTINGS][SESSIONS] error", err);
+      error: () => {
         this.loadingSessions = false;
-        this.snackBar.open("Failed to load active sessions", "Close", { duration: 3000 });
+        this.showMessage("Failed to load active sessions");
       },
     });
   }
 
   onToggle2FA() {
     this.updating2FA = true;
-    console.log("[FLOW][SETTINGS][2FA] request", { enabled: this.twoFactorEnabled });
     this.authService.updateTwoFactor(this.twoFactorEnabled).subscribe({
       next: (res: any) => {
-        console.log("[FLOW][SETTINGS][2FA] success", res);
         const user = this.authService.getCurrentUser();
         if (user) {
           user.twoFactorEnabled = this.twoFactorEnabled;
           this.authService.user = user;
         }
         this.updating2FA = false;
-        this.snackBar.open(res?.message || "2FA updated", "Close", { duration: 3000 });
+        this.showMessage(res?.message || "2FA updated");
       },
       error: (err) => {
-        console.error("[FLOW][SETTINGS][2FA] error", err);
         this.twoFactorEnabled = !this.twoFactorEnabled;
         this.updating2FA = false;
-        this.snackBar.open(err?.error?.message || "Failed to update 2FA", "Close", { duration: 3000 });
+        this.showMessage(err?.error?.message || "Failed to update 2FA");
       },
     });
   }
@@ -384,31 +356,22 @@ export class SettingsComponent implements OnInit {
     const confirmPassword = this.passwordForm.get("confirmPassword")?.value;
 
     if (newPassword !== confirmPassword) {
-      this.snackBar.open("New password and confirm password must match", "Close", {
-        duration: 3000,
-      });
+      this.showMessage("New password and confirm password must match");
       return;
     }
 
     this.changingPassword = true;
-    console.log("[FLOW][SETTINGS][PASSWORD] request");
     this.authService.changePassword({ currentPassword, newPassword }).subscribe({
       next: (res: any) => {
-        console.log("[FLOW][SETTINGS][PASSWORD] success");
         this.changingPassword = false;
-        this.snackBar.open(res?.message || "Password changed successfully", "Close", {
-          duration: 3500,
-        });
+        this.showMessage(res?.message || "Password changed successfully");
         this.authService.removeToken();
         this.authService.removeUser();
         this.router.navigate(["/login"]);
       },
       error: (err) => {
-        console.error("[FLOW][SETTINGS][PASSWORD] error", err);
         this.changingPassword = false;
-        this.snackBar.open(err?.error?.message || "Failed to change password", "Close", {
-          duration: 3000,
-        });
+        this.showMessage(err?.error?.message || "Failed to change password");
       },
     });
   }
@@ -416,24 +379,17 @@ export class SettingsComponent implements OnInit {
   onLogoutAllDevices() {
     if (this.loggingOutAll) return;
     this.loggingOutAll = true;
-    console.log("[FLOW][SETTINGS][LOGOUT_ALL] request");
     this.authService.logoutAllDevices().subscribe({
       next: (res: any) => {
-        console.log("[FLOW][SETTINGS][LOGOUT_ALL] success");
         this.loggingOutAll = false;
-        this.snackBar.open(res?.message || "Logged out from all devices", "Close", {
-          duration: 3000,
-        });
+        this.showMessage(res?.message || "Logged out from all devices");
         this.authService.removeToken();
         this.authService.removeUser();
         this.router.navigate(["/login"]);
       },
       error: (err) => {
-        console.error("[FLOW][SETTINGS][LOGOUT_ALL] error", err);
         this.loggingOutAll = false;
-        this.snackBar.open(err?.error?.message || "Failed to logout all devices", "Close", {
-          duration: 3000,
-        });
+        this.showMessage(err?.error?.message || "Failed to logout all devices");
       },
     });
   }
@@ -441,19 +397,17 @@ export class SettingsComponent implements OnInit {
   deactivateAccount() {
     if (this.deactivatingAccount) return;
     this.deactivatingAccount = true;
-    console.log("[FLOW][SETTINGS][DANGER][ACCOUNT] request");
     this.authService.deactivateAccount().subscribe({
       next: (res: any) => {
         this.deactivatingAccount = false;
-        this.snackBar.open(res?.message || "Account deactivated", "Close", { duration: 3000 });
+        this.showMessage(res?.message || "Account deactivated");
         this.authService.removeToken();
         this.authService.removeUser();
         this.router.navigate(["/login"]);
       },
       error: (err) => {
         this.deactivatingAccount = false;
-        console.error("[FLOW][SETTINGS][DANGER][ACCOUNT] error", err);
-        this.snackBar.open(err?.error?.message || "Failed to deactivate account", "Close", { duration: 3000 });
+        this.showMessage(err?.error?.message || "Failed to deactivate account");
       },
     });
   }
@@ -461,17 +415,15 @@ export class SettingsComponent implements OnInit {
   deactivateShop() {
     if (this.deactivatingShop) return;
     this.deactivatingShop = true;
-    console.log("[FLOW][SETTINGS][DANGER][SHOP] request");
     this.authService.deactivateShop().subscribe({
       next: (res: any) => {
         this.deactivatingShop = false;
-        this.snackBar.open(res?.message || "Shop deactivated", "Close", { duration: 3000 });
+        this.showMessage(res?.message || "Shop deactivated");
         this.loadOverview();
       },
       error: (err) => {
         this.deactivatingShop = false;
-        console.error("[FLOW][SETTINGS][DANGER][SHOP] error", err);
-        this.snackBar.open(err?.error?.message || "Failed to deactivate shop", "Close", { duration: 3000 });
+        this.showMessage(err?.error?.message || "Failed to deactivate shop");
       },
     });
   }

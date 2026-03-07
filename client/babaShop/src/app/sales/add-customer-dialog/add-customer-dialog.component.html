@@ -1,0 +1,54 @@
+<div class="add-customer-dialog">
+  <h2 mat-dialog-title>Add New Customer</h2>
+  
+  <mat-dialog-content>
+    <form [formGroup]="customerForm" (ngSubmit)="onSubmit()">
+      
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Customer Name *</mat-label>
+        <input matInput formControlName="name" placeholder="Enter customer name" />
+        <mat-error *ngIf="customerForm.get('name')?.hasError('required')">
+          Name is required
+        </mat-error>
+        <mat-error *ngIf="customerForm.get('name')?.hasError('minlength')">
+          Name must be at least 2 characters
+        </mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Phone Number *</mat-label>
+        <input matInput formControlName="phone" placeholder="Enter 10-digit phone number" maxlength="10" />
+        <mat-error *ngIf="customerForm.get('phone')?.hasError('required')">
+          Phone is required
+        </mat-error>
+        <mat-error *ngIf="customerForm.get('phone')?.hasError('pattern')">
+          Enter valid 10-digit phone number
+        </mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Email</mat-label>
+        <input matInput formControlName="email" placeholder="Enter email (optional)" />
+        <mat-error *ngIf="customerForm.get('email')?.hasError('email')">
+          Enter valid email address
+        </mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Address</mat-label>
+        <textarea matInput formControlName="address" rows="2" placeholder="Enter address (optional)"></textarea>
+      </mat-form-field>
+
+    </form>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button (click)="onCancel()" type="button">Cancel</button>
+    <button mat-raised-button color="primary" 
+            (click)="onSubmit()" 
+            [disabled]="customerForm.invalid || loading">
+      {{ loading ? 'Adding...' : 'Add Customer' }}
+    </button>
+  </mat-dialog-actions>
+</div>
+

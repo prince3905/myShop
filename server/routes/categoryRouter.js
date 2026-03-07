@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const categoryController = require("../controllers/categoryController");
-const { protect, attachShop } = require("../middleware/authMiddleware");
+const { protect, attachShop, requireShopSelectionForWrite } = require("../middleware/authMiddleware");
 
 const { validate } = require("../middleware/validate");
 const {
@@ -12,6 +12,7 @@ const {
 
 router.use(protect);
 router.use(attachShop);
+router.use(requireShopSelectionForWrite);
 
 /* =========================
    CREATE CATEGORY

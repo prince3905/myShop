@@ -1,2 +1,16 @@
 /* You can add global styles to this file, and also import other style files */
 @import '~@angular/material/prebuilt-themes/indigo-pink.css';
+
+.pos-billing-dialog .mat-dialog-container {
+  padding: 0 !important;
+  overflow: hidden !important;
+  border-radius: 20px !important;
+  background: #eef2f7 !important;
+}
+
+.cdk-overlay-pane.pos-billing-dialog {
+  width: 99vw !important;
+  max-width: 99vw !important;
+  height: 96vh !important;
+  max-height: 96vh !important;
+}

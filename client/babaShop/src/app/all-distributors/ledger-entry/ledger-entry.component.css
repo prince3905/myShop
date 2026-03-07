@@ -1,14 +1,3 @@
-.dialog-title {
-  font-weight: 600;
-  font-size: 20px;
-  margin-bottom: 8px;
-}
-
-.dialog-content {
-  padding-top: 8px;
-  padding-bottom: 0;
-}
-
 .ledger-form {
   display: flex;
   flex-direction: column;
@@ -18,8 +7,4 @@
 
 .full-width {
   width: 100%;
-}
-
-.dialog-actions {
-  padding: 16px 24px;
 }

@@ -10,9 +10,215 @@ const SaleReturn = require("../models/SaleReturn");
 const isSuperAdminGlobal = (req) =>
   req.user?.role === "SUPER_ADMIN" && !req.shopId;
 
+const canViewSensitiveFinancials = (req) =>
+  ["SUPER_ADMIN", "ADMIN"].includes(`${req.user?.role || ""}`);
+
+const canViewOperationalAmounts = (req) =>
+  ["SUPER_ADMIN", "ADMIN", "MANAGER"].includes(`${req.user?.role || ""}`);
+
+exports.getOverview = async (req, res) => {
+  try {
+    const query = isSuperAdminGlobal(req) ? {} : { shop: req.shopId };
+    const allowFinancials = canViewSensitiveFinancials(req);
+    const allowOperationalAmounts = canViewOperationalAmounts(req);
+
+    const [
+      lowStockItems,
+      recentOrders,
+      recentSales,
+      topSellingProducts,
+      recentSalePayments,
+      recentOrderPayments,
+      salesDueAgg,
+      orderDueAgg,
+      customerDueAgg,
+    ] = await Promise.all([
+      Stock.find(query)
+        .populate("product", "name")
+        .sort({ quantity: 1, updatedAt: -1 })
+        .limit(5)
+        .lean(),
+      Order.find(query)
+        .select("orderNo totalAmount dueAmount orderStatus orderSource createdAt paymentStatus customer")
+        .populate("customer", "name")
+        .sort({ createdAt: -1 })
+        .limit(5)
+        .lean(),
+      Sale.find(query)
+        .select("invoiceNo customerName totalAmount dueAmount paymentMethod status createdAt")
+        .sort({ createdAt: -1 })
+        .limit(5)
+        .lean(),
+      Sale.aggregate([
+        { $match: { ...query, status: { $ne: "CANCELLED" } } },
+        { $unwind: "$items" },
+        {
+          $group: {
+            _id: {
+              item: "$items.item",
+              itemName: "$items.itemName",
+              model: "$items.model",
+            },
+            totalQty: { $sum: "$items.quantity" },
+            totalRevenue: { $sum: "$items.total" },
+            orders: { $sum: 1 },
+          },
+        },
+        { $sort: { totalQty: -1, totalRevenue: -1 } },
+        { $limit: 5 },
+      ]),
+      Sale.find({ ...query, paidAmount: { $gt: 0 }, status: { $ne: "CANCELLED" } })
+        .select("invoiceNo customerName paidAmount paymentMethod createdAt")
+        .sort({ createdAt: -1 })
+        .limit(5)
+        .lean(),
+      Order.find({ ...query, paidAmount: { $gt: 0 } })
+        .select("orderNo paidAmount paymentMethod paymentCollectedAt createdAt customer")
+        .populate("customer", "name")
+        .sort({ paymentCollectedAt: -1, createdAt: -1 })
+        .limit(5)
+        .lean(),
+      allowFinancials
+        ? Sale.aggregate([
+            { $match: { ...query, dueAmount: { $gt: 0 }, status: { $ne: "CANCELLED" } } },
+            {
+              $group: {
+                _id: null,
+                totalDue: { $sum: "$dueAmount" },
+                count: { $sum: 1 },
+              },
+            },
+          ])
+        : Promise.resolve([]),
+      allowFinancials
+        ? Order.aggregate([
+            {
+              $match: {
+                ...query,
+                dueAmount: { $gt: 0 },
+                orderStatus: { $nin: ["CANCELLED", "RETURNED"] },
+              },
+            },
+            {
+              $group: {
+                _id: null,
+                totalDue: { $sum: "$dueAmount" },
+                count: { $sum: 1 },
+              },
+            },
+          ])
+        : Promise.resolve([]),
+      allowFinancials
+        ? Customer.aggregate([
+            {
+              $match: {
+                ...query,
+                isDeleted: { $ne: true },
+                totalDue: { $gt: 0 },
+              },
+            },
+            {
+              $group: {
+                _id: null,
+                totalDue: { $sum: "$totalDue" },
+                count: { $sum: 1 },
+              },
+            },
+          ])
+        : Promise.resolve([]),
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        lowStockItems: lowStockItems.map((stock) => ({
+          id: stock._id,
+          productName: stock.product?.name || "Unnamed Product",
+          sku: stock.sku || "-",
+          quantity: Number(stock.quantity || 0),
+          reservedQuantity: Number(stock.reservedQuantity || 0),
+          damagedQuantity: Number(stock.damagedQuantity || 0),
+          reorderLevel: Number(stock.reorderLevel || 0),
+          availableQuantity: Math.max(
+            0,
+            Number(stock.quantity || 0) -
+              Number(stock.reservedQuantity || 0) -
+              Number(stock.damagedQuantity || 0),
+          ),
+        })),
+        recentOrders: recentOrders.map((order) => ({
+          id: order._id,
+          orderNo: order.orderNo || "-",
+          customerName: order.customer?.name || "Walk-in",
+          totalAmount: allowOperationalAmounts ? Number(order.totalAmount || 0) : 0,
+          dueAmount: allowOperationalAmounts ? Number(order.dueAmount || 0) : 0,
+          orderStatus: order.orderStatus || "PENDING",
+          paymentStatus: order.paymentStatus || "PENDING",
+          orderSource: order.orderSource || "ONLINE",
+          createdAt: order.createdAt,
+        })),
+        recentSales: recentSales.map((sale) => ({
+          id: sale._id,
+          invoiceNo: sale.invoiceNo || "-",
+          customerName: sale.customerName || "Walk-in",
+          totalAmount: allowOperationalAmounts ? Number(sale.totalAmount || 0) : 0,
+          dueAmount: allowOperationalAmounts ? Number(sale.dueAmount || 0) : 0,
+          paymentMethod: sale.paymentMethod || "CASH",
+          status: sale.status || "COMPLETED",
+          createdAt: sale.createdAt,
+        })),
+        topSellingProducts: topSellingProducts.map((item) => ({
+          id: item._id?.item || `${item._id?.itemName || "item"}-${item._id?.model || ""}`,
+          productName: item._id?.itemName || "Unnamed Product",
+          modelName: item._id?.model || "",
+          totalQty: Number(item.totalQty || 0),
+          totalRevenue: allowOperationalAmounts ? Number(item.totalRevenue || 0) : 0,
+          orders: Number(item.orders || 0),
+        })),
+        recentPayments: allowFinancials ? [...recentSalePayments.map((sale) => ({
+          id: `sale-${sale._id}`,
+          referenceNo: sale.invoiceNo || "-",
+          customerName: sale.customerName || "Walk-in",
+          amount: Number(sale.paidAmount || 0),
+          method: sale.paymentMethod || "CASH",
+          source: "SALE",
+          createdAt: sale.createdAt,
+        })), ...recentOrderPayments.map((order) => ({
+          id: `order-${order._id}`,
+          referenceNo: order.orderNo || "-",
+          customerName: order.customer?.name || "Walk-in",
+          amount: Number(order.paidAmount || 0),
+          method: order.paymentMethod || "CASH",
+          source: "ORDER",
+          createdAt: order.paymentCollectedAt || order.createdAt,
+        }))]
+          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+          .slice(0, 6) : [],
+        dueSummary: allowFinancials
+          ? {
+              salesDue: Number(salesDueAgg[0]?.totalDue || 0),
+              salesDueCount: Number(salesDueAgg[0]?.count || 0),
+              orderDue: Number(orderDueAgg[0]?.totalDue || 0),
+              orderDueCount: Number(orderDueAgg[0]?.count || 0),
+              customerDue: Number(customerDueAgg[0]?.totalDue || 0),
+              customerDueCount: Number(customerDueAgg[0]?.count || 0),
+            }
+          : null,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to load dashboard overview",
+      error: error.message,
+    });
+  }
+};
+
 exports.getKpis = async (req, res) => {
   try {
     const query = isSuperAdminGlobal(req) ? {} : { shop: req.shopId };
+    const allowFinancials = canViewSensitiveFinancials(req);
 
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
@@ -69,7 +275,9 @@ exports.getKpis = async (req, res) => {
         todaySales: Number(salesAgg[0]?.totalRevenue || 0),
         todaySalesCount: Number(salesAgg[0]?.salesCount || 0),
         todayOrders: Number(todayOrders || 0),
-        todayPurchase: Number(todayPurchaseAgg[0]?.totalPurchase || 0),
+        todayPurchase: allowFinancials
+          ? Number(todayPurchaseAgg[0]?.totalPurchase || 0)
+          : 0,
         todayPurchaseCount: Number(todayPurchaseAgg[0]?.count || 0),
         todayReturnAmount: Number(todayReturnAgg[0]?.totalReturnAmount || 0),
         todayRefundAmount: Number(todayReturnAgg[0]?.totalRefundAmount || 0),
@@ -79,7 +287,9 @@ exports.getKpis = async (req, res) => {
         activeShops: Number(activeShops || 0),
         totalCustomers: Number(totalCustomers || 0),
         lowStockCount: Number(lowStockCount || 0),
-        distributorDue: Number(distributorDueAgg[0]?.totalDue || 0),
+        distributorDue: allowFinancials
+          ? Number(distributorDueAgg[0]?.totalDue || 0)
+          : 0,
         mode: isSuperAdminGlobal(req) ? "GLOBAL" : "SHOP_WISE",
       },
     });
@@ -256,7 +466,9 @@ exports.getTrends = async (req, res) => {
       data: {
         labels,
         sales: dateKeys.map((k) => salesMap.get(k) || 0),
-        purchase: dateKeys.map((k) => purchaseMap.get(k) || 0),
+        purchase: canViewSensitiveFinancials(req)
+          ? dateKeys.map((k) => purchaseMap.get(k) || 0)
+          : dateKeys.map(() => 0),
         orders: dateKeys.map((k) => orderMap.get(k) || 0),
       },
     });
@@ -336,12 +548,14 @@ exports.getPurchaseAnalytics = async (req, res) => {
       count: Number(row?.count || 0),
     });
 
+    const empty = { totalAmount: 0, totalPaid: 0, totalDue: 0, count: 0 };
+
     return res.status(200).json({
       success: true,
       data: {
-        today: normalize(todayAgg[0]),
-        weekly: normalize(weekAgg[0]),
-        monthly: normalize(monthAgg[0]),
+        today: canViewSensitiveFinancials(req) ? normalize(todayAgg[0]) : empty,
+        weekly: canViewSensitiveFinancials(req) ? normalize(weekAgg[0]) : empty,
+        monthly: canViewSensitiveFinancials(req) ? normalize(monthAgg[0]) : empty,
       },
     });
   } catch (error) {

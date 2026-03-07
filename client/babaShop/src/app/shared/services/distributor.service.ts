@@ -20,7 +20,6 @@ export class DistributorService {
     if (selectedShop) {
       params = params.set("shopId", selectedShop);
     }
-    // console.log(params);
     return this.http.get(`${this.baseURL}/api/distributor`, { params: params });
   }
 
@@ -29,7 +28,6 @@ export class DistributorService {
   }
 
   getDistributorSuggestionName(searchTerm: string) {
-    console.log(searchTerm);
     const selectedShop = this.authService.getShopId();
     const shopQuery = selectedShop ? `&shopId=${selectedShop}` : "";
     return this.http.get(
@@ -38,7 +36,6 @@ export class DistributorService {
   }
 
   getDistributorSuggestionPhone(searchTerm: number) {
-    console.log(searchTerm);
     const selectedShop = this.authService.getShopId();
     const shopQuery = selectedShop ? `&shopId=${selectedShop}` : "";
     return this.http.get(
@@ -58,17 +55,16 @@ export class DistributorService {
   }
 
   getItemSuggestion(searchTerm: string) {
-    console.log(searchTerm);
     return this.http.get(
       `${this.baseURL}/api/item/item-suggestions?term=${searchTerm}`,
     );
   }
 
   getDistributorLedger(distributorId: string): Observable<any> {
-  return this.http.get(
-    `${this.baseURL}/api/distributor-ledger/${distributorId}`
-  );
-}
+    return this.http.get(
+      `${this.baseURL}/api/distributor-ledger/${distributorId}`
+    );
+  }
 
   createLedgerEntry(payload: any): Observable<any> {
     return this.http.post(`${this.baseURL}/api/distributor-ledger`, payload);

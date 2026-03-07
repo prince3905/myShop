@@ -3,9 +3,9 @@ import { MatDialog } from "@angular/material/dialog";
 import { PageEvent } from "@angular/material/paginator";
 import { MatSnackBar } from "@angular/material/snack-bar";
 import { Router } from "@angular/router";
-import { AddSalesComponent } from "../add-sales/add-sales.component";
 import { SalesService } from "app/shared/services/sales.service";
 import { SalePaymentDialogComponent } from "../sale-payment-dialog/sale-payment-dialog.component";
+import { AuthService } from "app/shared/services/auth.service";
 
 @Component({
   selector: "sales-list",
@@ -55,6 +55,7 @@ export class SalesListComponent implements OnInit {
     private salesService: SalesService,
     private snackBar: MatSnackBar,
     private router: Router,
+    public authService: AuthService,
   ) {}
 
   ngOnInit(): void {
@@ -131,18 +132,7 @@ export class SalesListComponent implements OnInit {
   }
 
   openAddSaleModal(): void {
-    const dialogRef = this.dialog.open(AddSalesComponent, {
-      width: "1080px",
-      maxWidth: "96vw",
-      disableClose: false,
-    });
-
-    dialogRef.afterClosed().subscribe((result) => {
-      if (result) {
-        this.page = 1;
-        this.loadSales();
-      }
-    });
+    this.router.navigate(["/pos"]);
   }
 
   exportCsv(): void {

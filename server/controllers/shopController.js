@@ -143,13 +143,13 @@ exports.updateShop = async (req, res) => {
   });
 
   try {
+    const filter = getShopFilter(req);
     const updatedShop = await Shop.findOneAndUpdate(
-      
       {
         _id: req.params.id,
-        owner: req.user._id,
+        ...filter,
       },
-      req.body,
+      updateData,
       {
         new: true,
         runValidators: true,

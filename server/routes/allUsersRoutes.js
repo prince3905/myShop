@@ -12,7 +12,7 @@ router.post("/login", authController.login);
 router.get(
   "/",
   protect,
-  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER"),
+  authorizeRoles("SUPER_ADMIN", "ADMIN"),
   userController.getAllUsers
 );
 
@@ -20,7 +20,7 @@ router.get(
 router.post(
   "/",
   protect,
-  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER"),
+  authorizeRoles("SUPER_ADMIN", "ADMIN"),
   userController.createUser
 );
 
@@ -28,7 +28,7 @@ router.post(
 router.put(
   "/:id",
   protect,
-  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER"),
+  authorizeRoles("SUPER_ADMIN", "ADMIN"),
   userController.updateUser
 );
 

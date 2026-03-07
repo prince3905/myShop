@@ -60,6 +60,18 @@ const distributorSchema = new mongoose.Schema(
       default: 0,
     },
 
+    creditLimit: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
+    paymentTerms: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
     status: {
       type: String,
       enum: ["active", "disabled"],

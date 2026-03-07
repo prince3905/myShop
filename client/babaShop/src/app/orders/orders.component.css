@@ -1,131 +1,117 @@
-.card-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 16px;
-    background-color: #f44336; /* Red color for the card header */
-    color: #fff; 
-    border-radius: 5px;
-    height: 100px;
+.card-plain {
+  margin-top: -30px;
+}
+
+.orders-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: minmax(240px, 2fr) repeat(2, minmax(180px, 1fr)) auto;
+  gap: 16px;
+  align-items: start;
+  margin-bottom: 20px;
+}
+
+.filter-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding-top: 4px;
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 220px;
+}
+
+.table-responsive {
+  overflow-x: auto;
+}
+
+.order-table {
+  width: 100%;
+  margin-bottom: 0;
+}
+
+.order-table th {
+  font-weight: 600;
+  color: #334155;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.order-table td {
+  vertical-align: middle;
+  border-bottom: 1px solid #eef2f7;
+}
+
+.order-link {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #0f172a;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: left;
+}
+
+.order-link:hover {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
+.shop-meta {
+  color: #64748b;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.source-pill {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.status-field {
+  width: 150px;
+  margin-bottom: -1.25em;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.empty-state {
+  text-align: center;
+  color: #64748b;
+  padding: 32px 12px;
+}
+
+@media (max-width: 960px) {
+  .filters {
+    grid-template-columns: 1fr;
   }
-  .card-plain {
-    margin-top: -30px;
+
+  .filter-actions {
+    padding-top: 0;
   }
-  
-  .card-title {
-    font-size: 24px;
+
+  .status-field {
+    width: 130px;
   }
-  
-  .dropdown {
-    flex: 1;
-    margin-right: 16px;
-  }
-  
-  .mat-option {
-    background-color: rgb(3 0 0 / 80%) !important;
-    color: white !important;
-    font-size: small !important;
-    height: 38px !important;
-  }
-  .suggesion{
-    position: absolute;
-    margin-top: 35%;
-  }
-  .option2{
-    margin-left: 194px !important;
-  }
-  
-  .name-filter {
-    display: flex;
-    align-items: center;
-  }
-  
-  .name-filter mat-form-field {
-    margin-right: 16px;
-  }
-  
-  .button-container {
-    display: flex;
-    align-items: center;
-  }
-  
-  .button-container button {
-    margin-right: 10px;
-  }
-  
-  .material-icons {
-    font-size: 24px;
-    margin-right: 8px;
-  }
-  .btn add {
-    margin-left: 10px;
-  }
-  .div.mat-content {
-    display: flex !important; 
-    flex: 1 !important;
-    overflow: hidden !important;
-    flex-direction: column !important;
-  }
-  .mat-content {
-    align-items:center
-  }
-  .title{
-    margin-top: -20px;
-    margin-bottom: 10px;
-    color: #2c0808;
-    font-size: 15px;
-    font-weight: 500;
-    width: 100%;
-    margin-left: 0%;
-    height: 35px;
-    border-radius: 3px;
-  }
-  .title2{
-    margin-bottom: 10px;
-    color: #2c0808;
-    font-size: 15px;
-    font-weight: 500;
-    width: 102%;
-    text-decoration-line: underline
-  }
-  
-  .loading{
-    margin-left: 36% !important;
-    position: absolute !important;
-    margin-top: 100px;
-  }
-  
-  @media (max-width: 412px) {
-    .mat-form-field {
-      width: 78px !important;
-      margin-left: -13px;
-      font-size: 12px;
-      text-align: center;
-      color: white;
-    }
-    .card-plain .card-header {
-      margin-left: -30px !important;
-      margin-right: 0px !important;
-      width: 119% !important;
-    }
-  
-    .add {
-      height: 35px;
-      margin-left: 2px;
-      margin-right: -13px;
-      width: 73px;
-      font-size: 10px;
-    }
-  
-    .button-container button {
-      margin-right: 2px;
-    }
-    
-  
-  
-  
-  
-  
-    
-  }
-  
+}

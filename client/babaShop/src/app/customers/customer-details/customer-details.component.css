@@ -1,0 +1,228 @@
+.mb-3 {
+  margin-bottom: 1rem;
+}
+
+.mt-3 {
+  margin-top: 1rem;
+}
+
+.info-section {
+  padding: 10px;
+}
+
+.info-section h5 {
+  margin-bottom: 15px;
+  font-weight: 600;
+  color: #333;
+}
+
+.info-table {
+  width: 100%;
+}
+
+.info-table tr {
+  border-bottom: 1px solid #eee;
+}
+
+.info-table th {
+  padding: 10px;
+  text-align: left;
+  font-weight: 500;
+  color: #666;
+  width: 40%;
+}
+
+.info-table td {
+  padding: 10px;
+  font-weight: 600;
+  color: #333;
+}
+
+.summary-cards {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.summary-card {
+  flex: 1;
+  min-width: 120px;
+  padding: 15px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.summary-card .label {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 5px;
+}
+
+.summary-card .amount {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.total-purchase {
+  background-color: #e3f2fd;
+  border-left: 4px solid #2196f3;
+}
+
+.total-paid {
+  background-color: #e8f5e9;
+  border-left: 4px solid #4caf50;
+}
+
+.total-due {
+  background-color: #ffebee;
+  border-left: 4px solid #f44336;
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.table-responsive {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+}
+
+.table th {
+  background-color: #f5f5f5;
+  font-weight: 600;
+  padding: 12px;
+  text-align: left;
+}
+
+.table td {
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+}
+
+/* Account Statement Styles */
+.date-filter-section {
+  background: #f8fafc;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+}
+
+.date-filter-section .mat-form-field {
+  margin-bottom: -1.25em;
+}
+
+.filtered-summary {
+  padding: 10px;
+  background: #fff;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+}
+
+.filtered-summary .summary-label {
+  font-size: 12px;
+  color: #64748b;
+  margin-right: 8px;
+}
+
+.filtered-summary .summary-amount {
+  font-size: 16px;
+  font-weight: bold;
+  color: #1e293b;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.text-success {
+  color: #16a34a;
+  font-weight: 600;
+}
+
+.text-danger {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.badge-purchase {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.badge-payment {
+  background: #e8f5e9;
+  color: #388e3c;
+}
+
+.badge-return {
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+.badge-refund {
+  background: #f3e8ff;
+  color: #7e22ce;
+}
+
+.text-muted {
+  color: #64748b;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.total-row {
+  background: #f8fafc;
+}
+
+.total-row td {
+  border-top: 2px solid #e2e8f0;
+  padding: 15px 12px;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .summary-cards {
+    flex-direction: column;
+  }
+  
+  .summary-card {
+    min-width: 100%;
+  }
+  
+  .date-filter-section .row {
+    flex-direction: column;
+  }
+  
+  .date-filter-section .col-md-3 {
+    width: 100%;
+    margin-bottom: 8px;
+  }
+  
+  .table th,
+  .table td {
+    padding: 8px 6px;
+    font-size: 12px;
+  }
+  
+  .table {
+    font-size: 11px;
+  }
+}

@@ -1,0 +1,220 @@
+<div class="main-content">
+  <div class="container-fluid">
+    <div class="card order-create-card">
+      <div class="card-header card-header-danger create-header">
+        <div>
+          <h4 class="card-title">Create Order</h4>
+          <p class="card-category">Create offline and online orders from one screen</p>
+        </div>
+        <button mat-stroked-button routerLink="/order">Back to Orders</button>
+      </div>
+
+      <div class="card-body create-layout">
+        <div class="create-form-panel">
+          <div class="form-grid">
+            <mat-form-field appearance="outline">
+              <mat-label>Order Type</mat-label>
+              <mat-select [(ngModel)]="source">
+                <mat-option *ngFor="let sourceOption of sourceOptions" [value]="sourceOption.value">
+                  {{ sourceOption.label }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Payment Method</mat-label>
+              <mat-select [(ngModel)]="paymentMethod">
+                <mat-option *ngFor="let method of paymentMethods" [value]="method">{{ method }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Payment Status</mat-label>
+              <mat-select [(ngModel)]="paymentStatus" (selectionChange)="onPaymentStatusChange()">
+                <mat-option *ngFor="let status of paymentStatuses" [value]="status">{{ status }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+
+          <div class="customer-box">
+            <mat-form-field appearance="outline" class="customer-field">
+              <mat-label>Customer</mat-label>
+              <input matInput [(ngModel)]="customerSearch" (input)="searchCustomers()" placeholder="Search customer name or phone" />
+            </mat-form-field>
+            <button mat-stroked-button color="warn" type="button" (click)="clearCustomer()" *ngIf="selectedCustomer">Clear</button>
+          </div>
+
+          <div class="suggestion-strip" *ngIf="customerSuggestions.length">
+            <button mat-stroked-button type="button" *ngFor="let customer of customerSuggestions" (click)="selectCustomer(customer)">
+              {{ customer?.name }} <span *ngIf="customer?.phone">({{ customer.phone }})</span>
+            </button>
+          </div>
+
+          <div class="selected-customer" *ngIf="selectedCustomer">
+            {{ selectedCustomer?.name }} <span *ngIf="selectedCustomer?.phone">• {{ selectedCustomer.phone }}</span>
+          </div>
+
+          <div class="delivery-grid">
+            <mat-form-field appearance="outline">
+              <mat-label>Delivery Contact</mat-label>
+              <input matInput [(ngModel)]="deliveryContactName" placeholder="Receiver name" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Delivery Phone</mat-label>
+              <input matInput [(ngModel)]="deliveryPhone" placeholder="Receiver phone" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Expected Delivery</mat-label>
+              <input matInput type="date" [(ngModel)]="expectedDeliveryDate" />
+            </mat-form-field>
+          </div>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Delivery Address</mat-label>
+            <textarea matInput rows="3" [(ngModel)]="deliveryAddress" placeholder="Delivery address"></textarea>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Delivery Note</mat-label>
+            <input matInput [(ngModel)]="deliveryNote" placeholder="Optional delivery note" />
+          </mat-form-field>
+
+          <div class="item-box">
+            <div class="item-search-row">
+              <mat-form-field appearance="outline" class="item-search-field">
+                <mat-label>Search Product</mat-label>
+                <input matInput [(ngModel)]="itemSearch" (input)="searchProducts()" placeholder="Product, model, SKU, barcode" />
+              </mat-form-field>
+            </div>
+
+            <div class="suggestion-grid" *ngIf="productSuggestions.length">
+              <button type="button" class="product-suggestion-card" *ngFor="let suggestion of productSuggestions" (click)="selectProductSuggestion(suggestion)">
+                <div class="suggestion-title">{{ suggestion?.label || suggestion?.name }}</div>
+                <div class="suggestion-meta">{{ suggestion?.matchedBy?.join(' • ') }}</div>
+              </button>
+            </div>
+
+            <div class="line-grid">
+              <mat-form-field appearance="outline">
+                <mat-label>Model</mat-label>
+                <mat-select [(ngModel)]="selectedModel" (selectionChange)="onModelChange()">
+                  <mat-option [value]="''">Select Model</mat-option>
+                  <mat-option *ngFor="let model of selectedItemModels" [value]="model.model || model.name || model._id">
+                    {{ model.model || model.name || '-' }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Variation</mat-label>
+                <mat-select [(ngModel)]="selectedVariation" (selectionChange)="onVariationChange($event.value)">
+                  <mat-option [value]="''">Select Variation</mat-option>
+                  <mat-option *ngFor="let variation of selectedModelVariations" [value]="variation.sku || variation.orderNumber || variation._id">
+                    {{ variation.sku || variation.orderNumber || '-' }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Qty</mat-label>
+                <input matInput type="number" [(ngModel)]="quantity" min="1" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Price</mat-label>
+                <input matInput type="number" [ngModel]="selectedPrice" readonly />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Line Discount</mat-label>
+                <input matInput type="number" [(ngModel)]="lineDiscount" min="0" />
+              </mat-form-field>
+
+              <button mat-raised-button color="primary" type="button" class="add-item-btn" (click)="addItem()">Add Item</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="order-summary-panel">
+          <div class="summary-title">Order Items</div>
+
+          <div class="order-item-list" *ngIf="items.length; else emptyItems">
+            <div class="order-item-card" *ngFor="let item of items; let i = index">
+              <div class="order-item-top">
+                <div>
+                  <div class="order-item-name">{{ item.productName }}</div>
+                  <div class="order-item-sub">{{ item.modelName }} <span *ngIf="item.sku">• {{ item.sku }}</span></div>
+                </div>
+                <button mat-icon-button color="warn" type="button" (click)="removeItem(i)">
+                  <mat-icon>close</mat-icon>
+                </button>
+              </div>
+
+              <div class="order-item-chips">
+                <span class="mini-chip">Qty: {{ item.quantity }}</span>
+                <span class="mini-chip">Rate: {{ item.sellingPrice | currency:'INR':'symbol':'1.0-0' }}</span>
+                <span class="mini-chip" *ngIf="item.size">Size: {{ item.size }}</span>
+                <span class="mini-chip" *ngIf="item.color">Color: {{ item.color }}</span>
+              </div>
+            </div>
+          </div>
+
+          <ng-template #emptyItems>
+            <div class="empty-order-box">No items added yet</div>
+          </ng-template>
+
+          <div class="totals-box">
+            <div class="total-row">
+              <span>Sub Total</span>
+              <strong>{{ getSubTotal() | currency:'INR':'symbol':'1.2-2' }}</strong>
+            </div>
+
+            <div class="total-input-row">
+              <span>Extra Discount</span>
+              <mat-form-field appearance="outline" class="mini-input">
+                <input matInput type="number" [(ngModel)]="additionalDiscount" min="0" />
+              </mat-form-field>
+            </div>
+
+            <div class="total-input-row">
+              <span>Tax</span>
+              <mat-form-field appearance="outline" class="mini-input">
+                <input matInput type="number" [(ngModel)]="taxAmount" min="0" />
+              </mat-form-field>
+            </div>
+
+            <div class="total-input-row">
+              <span>Paid Now</span>
+              <mat-form-field appearance="outline" class="mini-input">
+                <input
+                  matInput
+                  type="number"
+                  [ngModel]="paymentStatus === 'PAID' ? getGrandTotal() : paidAmount"
+                  (ngModelChange)="paidAmount = $event"
+                  min="0"
+                  [readonly]="paymentStatus === 'PAID'"
+                />
+              </mat-form-field>
+            </div>
+
+            <div class="total-row grand">
+              <span>Total Amount</span>
+              <strong>{{ getGrandTotal() | currency:'INR':'symbol':'1.2-2' }}</strong>
+            </div>
+
+            <div class="total-row">
+              <span>Due Amount</span>
+              <strong>{{ getDueAmount() | currency:'INR':'symbol':'1.2-2' }}</strong>
+            </div>
+          </div>
+
+          <button mat-raised-button color="primary" class="create-order-btn" [disabled]="saving || !items.length" (click)="createOrder()">
+            {{ saving ? 'Creating...' : 'Create Order' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

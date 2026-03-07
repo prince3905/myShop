@@ -22,12 +22,6 @@ const parsePagination = (query) => {
 exports.createCategory = async (req, res) => {
   try {
     const { name, description, image } = req.body;
-    console.log("[FLOW][CATEGORY][CREATE]", {
-      userId: req.user?._id?.toString(),
-      role: req.user?.role,
-      shopId: req.shopId?.toString(),
-      name,
-    });
 
     if (!req.shopId) {
       return res.status(400).json({
@@ -93,12 +87,6 @@ exports.getCategories = async (req, res) => {
     const { sort = "-createdAt", search, isActive } = req.query;
     const { limit, skip } = parsePagination(req.query);
     const query = isSuperAdminGlobal(req) ? {} : { shop: req.shopId };
-    console.log("[FLOW][CATEGORY][LIST] request", {
-      userId: req.user?._id?.toString(),
-      role: req.user?.role,
-      shopId: req.shopId?.toString(),
-      query: { limit, skip, sort, search },
-    });
 
     if (search) {
       query.name = { $regex: search, $options: "i" };
@@ -122,10 +110,6 @@ exports.getCategories = async (req, res) => {
       categoryQuery,
       Category.countDocuments(query),
     ]);
-    console.log("[FLOW][CATEGORY][LIST] response", {
-      count: categories.length,
-      shopId: req.shopId?.toString(),
-    });
 
     res.status(200).json({
       success: true,
@@ -230,12 +214,6 @@ exports.updateCategory = async (req, res) => {
 exports.deleteCategory = async (req, res) => {
   try {
     const { id } = req.params;
-    console.log("[FLOW][CATEGORY][DELETE]", {
-      userId: req.user?._id?.toString(),
-      role: req.user?.role,
-      shopId: req.shopId?.toString(),
-      categoryId: id,
-    });
     if (!req.shopId) {
       return res.status(400).json({
         success: false,

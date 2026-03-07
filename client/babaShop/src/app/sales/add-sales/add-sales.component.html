@@ -1,177 +1,247 @@
-<div class="main-content">
-  <div class="container-fluid">
-    <div class="card sales-form-card">
-      <div class="card-header card-header-danger">
-        <h4 class="card-title">Add Sale</h4>
-        <p class="card-category">Scan barcode or select product variation and build sale cart</p>
-      </div>
-
-      <div class="card-body">
-        <div class="sales-grid">
-          <div class="entry-panel">
-            <form (ngSubmit)="onSubmit()" #addItemForm="ngForm">
-              <div class="section-title">Quick Scan</div>
-              <div class="scan-row">
-                <mat-form-field appearance="outline" class="full-width">
-                  <mat-label>Scan Barcode</mat-label>
-                  <input
-                    #barcodeInputRef
-                    matInput
-                    name="scanBarcode"
-                    [(ngModel)]="scannedBarcode"
-                    (input)="onBarcodeInputChange()"
-                    (keyup.enter)="onBarcodeScan()" />
-                </mat-form-field>
-                <button mat-stroked-button color="primary" type="button" (click)="onBarcodeScan()">Scan</button>
-                <mat-checkbox [(ngModel)]="autoAddOnScan" name="autoAddOnScan" [ngModelOptions]="{standalone: true}">
-                  Auto add on scan
-                </mat-checkbox>
-              </div>
-
-              <div class="section-title">Customer</div>
-              <mat-form-field appearance="outline" class="full-width">
-                <mat-label>Customer Name</mat-label>
-                <input matInput name="customerName" [(ngModel)]="customerName" (input)="fetchCusSuggestions()" required />
-              </mat-form-field>
-              <div class="suggestion-list" *ngIf="cus_suggestions?.length">
-                <button mat-stroked-button type="button" *ngFor="let suggestion of cus_suggestions" (click)="selectCusSuggestion(suggestion)">
-                  {{ suggestion }}
-                </button>
-              </div>
-
-              <div class="section-title">Item</div>
-              <mat-form-field appearance="outline" class="full-width">
-                <mat-label>Item Name</mat-label>
-                <input matInput name="itemName" [(ngModel)]="itemName" (input)="fetchSuggestions()" required />
-              </mat-form-field>
-              <div class="suggestion-list" *ngIf="suggestions?.length">
-                <button mat-stroked-button type="button" *ngFor="let suggestion of suggestions" (click)="selectSuggestion(suggestion)">
-                  {{ suggestion }}
-                </button>
-              </div>
-
-              <div class="row">
-                <div class="col-md-6">
-                  <mat-form-field appearance="outline" class="full-width">
-                    <mat-label>Model</mat-label>
-                    <mat-select [(ngModel)]="selectedModel" name="selectedModel" (selectionChange)="updateSelectedModelVariations()">
-                      <mat-option [value]="''">Select Model</mat-option>
-                      <mat-option *ngFor="let m of selectedItemModels" [value]="m.model || m.name || m._id">
-                        {{ m.model || m.name || "-" }}
-                      </mat-option>
-                    </mat-select>
-                  </mat-form-field>
-                </div>
-                <div class="col-md-6">
-                  <mat-form-field appearance="outline" class="full-width">
-                    <mat-label>Variation</mat-label>
-                    <mat-select [(ngModel)]="selectedVariation" name="selectedVariation" (selectionChange)="onVariationChange($event.value)">
-                      <mat-option [value]="''">Select Variation</mat-option>
-                      <mat-option *ngFor="let v of selectedModelVariations" [value]="v.orderNumber || v.sku || v._id">
-                        {{ v.orderNumber || v.sku || "-" }}
-                      </mat-option>
-                    </mat-select>
-                  </mat-form-field>
-                </div>
-              </div>
-
-              <div class="row">
-                <div class="col-md-6">
-                  <mat-form-field appearance="outline" class="full-width">
-                    <mat-label>Quantity</mat-label>
-                    <input type="number" matInput name="quantity" [(ngModel)]="quantity" required />
-                  </mat-form-field>
-                </div>
-                <div class="col-md-6">
-                  <mat-form-field appearance="outline" class="full-width">
-                    <mat-label>Selling Price</mat-label>
-                    <input type="number" matInput name="purchasePrice" [(ngModel)]="purchasePrice" required />
-                  </mat-form-field>
-                </div>
-              </div>
-
-              <mat-form-field appearance="outline" class="full-width">
-                <mat-label>Description</mat-label>
-                <textarea matInput name="description" rows="2" [(ngModel)]="description"></textarea>
-              </mat-form-field>
-
-              <div class="section-title">Billing</div>
-              <div class="row">
-                <div class="col-md-4">
-                  <mat-form-field appearance="outline" class="full-width">
-                    <mat-label>Bill Discount</mat-label>
-                    <input type="number" matInput name="billDiscount" [(ngModel)]="billDiscount" min="0" />
-                  </mat-form-field>
-                </div>
-                <div class="col-md-4">
-                  <mat-form-field appearance="outline" class="full-width">
-                    <mat-label>Payment Mode</mat-label>
-                    <mat-select name="paymentMethod" [(ngModel)]="paymentMethod">
-                      <mat-option *ngFor="let pm of paymentMethods" [value]="pm">{{ pm }}</mat-option>
-                    </mat-select>
-                  </mat-form-field>
-                </div>
-                <div class="col-md-4">
-                  <mat-form-field appearance="outline" class="full-width">
-                    <mat-label>Paid Amount</mat-label>
-                    <input type="number" matInput name="paidAmount" [(ngModel)]="paidAmount" min="0" />
-                  </mat-form-field>
-                </div>
-              </div>
-
-              <div class="actions-row">
-                <button mat-raised-button type="submit" color="primary" [disabled]="!addItemForm.valid">Add Item</button>
-                <button mat-raised-button type="button" color="accent" [disabled]="!addItemForm.valid" (click)="onSales()">Save Sale</button>
-              </div>
-            </form>
-          </div>
-
-          <div class="cart-panel">
-            <div class="section-title">Sale Cart</div>
-
-            <div class="table-responsive">
-              <table class="table cart-table">
-                <thead>
-                  <tr>
-                    <th>Item</th>
-                    <th>Model</th>
-                    <th>Size</th>
-                    <th>Qty</th>
-                    <th>Price</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let item of Display_items; let i = index">
-                    <td>{{ item?.itemName }}</td>
-                    <td>{{ item?.model }}</td>
-                    <td>{{ item?.size }}</td>
-                    <td>{{ item?.quantity }}</td>
-                    <td>Rs {{ item?.purchasePrice | number:'1.2-2' }}</td>
-                    <td>
-                      <button mat-icon-button color="warn" type="button" (click)="removeItem(i)">
-                        <mat-icon>close</mat-icon>
-                      </button>
-                    </td>
-                  </tr>
-                  <tr *ngIf="!Display_items || Display_items.length === 0">
-                    <td colspan="6" class="empty">No items added yet</td>
-                  </tr>
-                </tbody>
-              </table>
+<div class="pos-shell">
+  <div class="card sales-form-card">
+      <div class="card-body pos-layout">
+        <div class="catalog-panel">
+          <div class="search-strip">
+            <div class="search-box">
+              <mat-icon>search</mat-icon>
+              <input
+                matInput
+                name="itemName"
+                [(ngModel)]="itemName"
+                (input)="fetchSuggestions()"
+                placeholder="Search Product / Scan Barcode"
+              />
+              <button
+                mat-icon-button
+                type="button"
+                class="barcode-button"
+                (click)="onBarcodeScan()"
+                [disabled]="barcodeLookupLoading"
+              >
+                <mat-icon>qr_code_scanner</mat-icon>
+              </button>
             </div>
 
-            <div class="totals-card">
-              <div><span>Total Qty:</span><strong>{{ totalQuantity || 0 }}</strong></div>
-              <div><span>Sub Total:</span><strong>Rs {{ totalPurchasePrice || 0 | number:'1.2-2' }}</strong></div>
-              <div><span>Bill Discount:</span><strong>Rs {{ billDiscount || 0 | number:'1.2-2' }}</strong></div>
-              <div><span>Net Total:</span><strong>Rs {{ getNetTotal() | number:'1.2-2' }}</strong></div>
-              <div><span>Paid:</span><strong>Rs {{ paidAmount || 0 | number:'1.2-2' }}</strong></div>
-              <div><span>Due:</span><strong>Rs {{ getDueAmount() | number:'1.2-2' }}</strong></div>
+            <div class="scan-inline">
+              <input
+                #barcodeInputRef
+                matInput
+                name="scanBarcode"
+                [(ngModel)]="scannedBarcode"
+                (input)="onBarcodeInputChange()"
+                (keyup.enter)="onBarcodeScan()"
+                placeholder="Barcode"
+              />
+            </div>
+          </div>
+
+          <div class="customer-bar">
+            <mat-form-field appearance="outline" class="customer-name-field">
+              <mat-label>Customer</mat-label>
+              <input matInput name="customerName" [(ngModel)]="customerName" (input)="fetchCusSuggestions()" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="customer-phone-field">
+              <mat-label>Phone</mat-label>
+              <input matInput name="customerPhone" [(ngModel)]="customerPhone" />
+            </mat-form-field>
+
+            <button mat-stroked-button color="primary" type="button" (click)="openAddCustomerDialog()">
+              <mat-icon>person_add</mat-icon>
+              Add
+            </button>
+          </div>
+
+          <div class="suggestion-list customer-suggestion-list" *ngIf="cus_suggestions?.length">
+            <button mat-stroked-button type="button" *ngFor="let suggestion of cus_suggestions" (click)="selectCusSuggestion(suggestion)">
+              {{ suggestion }}
+            </button>
+          </div>
+
+          <div class="selector-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Model</mat-label>
+              <mat-select [(ngModel)]="selectedModel" name="selectedModel" (selectionChange)="updateSelectedModelVariations()">
+                <mat-option [value]="''">Select Model</mat-option>
+                <mat-option *ngFor="let m of selectedItemModels" [value]="m.model || m.name || m._id">
+                  {{ m.model || m.name || "-" }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Variation</mat-label>
+              <mat-select [(ngModel)]="selectedVariation" name="selectedVariation" (selectionChange)="onVariationChange($event.value)">
+                <mat-option [value]="''">Select Variation</mat-option>
+                <mat-option *ngFor="let v of selectedModelVariations" [value]="v.orderNumber || v.sku || v._id">
+                  {{ v.orderNumber || v.sku || "-" }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="qty-field">
+              <mat-label>Qty</mat-label>
+              <input type="number" matInput name="quantity" [(ngModel)]="quantity" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="price-field">
+              <mat-label>Price</mat-label>
+              <input
+                type="number"
+                matInput
+                name="purchasePrice"
+                [(ngModel)]="purchasePrice"
+                readonly
+              />
+            </mat-form-field>
+
+            <button mat-raised-button color="primary" type="button" class="add-line-button" (click)="onSubmit()">
+              Add
+            </button>
+          </div>
+
+          <div class="catalog-grid" *ngIf="suggestions?.length; else emptyCatalog">
+            <button
+              type="button"
+              class="product-card"
+              *ngFor="let suggestion of suggestions"
+              (click)="selectSuggestion(suggestion)"
+            >
+              <div class="product-image">
+                <mat-icon>inventory_2</mat-icon>
+              </div>
+              <div class="product-name">{{ suggestion?.label || suggestion?.name }}</div>
+              <div class="product-meta">{{ suggestion?.matchedBy?.join(' • ') || 'Tap to load models' }}</div>
+            </button>
+          </div>
+
+          <ng-template #emptyCatalog>
+            <div class="catalog-empty">
+              <mat-icon>point_of_sale</mat-icon>
+              <div>Search item name or scan barcode to start billing.</div>
+            </div>
+          </ng-template>
+        </div>
+
+        <div class="cart-panel shot-panel">
+          <div class="cart-title">Cart</div>
+
+          <div class="cart-table-wrap">
+            <div class="cart-line-list" *ngIf="Display_items?.length; else emptyCartState">
+              <div class="cart-line-card" *ngFor="let item of Display_items; let i = index">
+                <div class="cart-line-top">
+                  <div>
+                    <div class="cart-item-name">{{ item?.itemName }}</div>
+                    <div class="cart-item-subtitle">{{ item?.model || 'Model not selected' }}</div>
+                  </div>
+                  <button mat-icon-button color="warn" type="button" (click)="removeItem(i)">
+                    <mat-icon>close</mat-icon>
+                  </button>
+                </div>
+
+                <div class="cart-line-meta">
+                  <span class="cart-chip" *ngIf="item?.variationSku">SKU: {{ item?.variationSku }}</span>
+                  <span class="cart-chip" *ngIf="item?.size">Size: {{ item?.size }}</span>
+                  <span class="cart-chip" *ngIf="item?.color">Color: {{ item?.color }}</span>
+                  <span class="cart-chip">Qty: {{ item?.quantity }}</span>
+                </div>
+
+                <div class="cart-line-bottom">
+                  <div class="cart-rate">{{ item?.quantity }} x {{ item?.purchasePrice | currency:'INR':'symbol':'1.0-0' }}</div>
+                  <div class="cart-total">{{ getLineTotal(item) | currency:'INR':'symbol':'1.0-0' }}</div>
+                </div>
+              </div>
+            </div>
+
+            <ng-template #emptyCartState>
+              <div class="empty">Cart is empty</div>
+            </ng-template>
+          </div>
+
+          <div class="billing-summary">
+            <div class="summary-row compact">
+              <span>Discount:</span>
+              <mat-form-field appearance="outline" class="summary-input">
+                <input type="number" matInput name="billDiscount" [(ngModel)]="billDiscount" min="0" />
+              </mat-form-field>
+            </div>
+
+            <div class="summary-row compact">
+              <span>Paid:</span>
+              <mat-form-field appearance="outline" class="summary-input">
+                <input type="number" matInput name="paidAmount" [(ngModel)]="paidAmount" min="0" />
+              </mat-form-field>
+            </div>
+
+            <div class="summary-row">
+              <span>Sub Total:</span>
+              <strong>{{ totalPurchasePrice || 0 | currency:'INR':'symbol':'1.2-2' }}</strong>
+            </div>
+
+            <div class="summary-row">
+              <span>Due:</span>
+              <strong>{{ getDueAmount() | currency:'INR':'symbol':'1.2-2' }}</strong>
+            </div>
+
+            <div class="summary-row total-row">
+              <span>Total Amount:</span>
+              <strong>{{ getNetTotal() | currency:'INR':'symbol':'1.2-2' }}</strong>
+            </div>
+          </div>
+
+          <div class="payment-buttons">
+            <button type="button" class="pay-button cash" [class.active]="paymentMethod === 'CASH'" (click)="setPaymentMethod('CASH')">
+              <mat-icon>payments</mat-icon>
+              <span class="pay-label">Cash</span>
+            </button>
+            <button type="button" class="pay-button card" [class.active]="paymentMethod === 'CARD'" (click)="setPaymentMethod('CARD')">
+              <mat-icon>credit_card</mat-icon>
+              <span class="pay-label">Card</span>
+            </button>
+            <button type="button" class="pay-button upi" [class.active]="paymentMethod === 'UPI'" (click)="setPaymentMethod('UPI')">
+              <mat-icon>qr_code_2</mat-icon>
+              <span class="pay-label">UPI</span>
+            </button>
+          </div>
+
+          <div class="cart-actions">
+            <button mat-stroked-button type="button" class="hold-action" (click)="holdBill()" [disabled]="!Display_items?.length">
+              Hold
+            </button>
+            <button mat-stroked-button color="warn" type="button" class="clear-action" (click)="clearCart()" [disabled]="!Display_items?.length">
+              Clear
+            </button>
+            <button
+              mat-raised-button
+              color="primary"
+              type="button"
+              class="save-action"
+              [disabled]="!canSaveSale() || isSavingSale"
+              (click)="onSales()"
+            >
+              {{ isSavingSale ? 'Saving Bill...' : 'Print Bill & Save' }}
+            </button>
+          </div>
+
+          <div class="held-bills-list compact-held" *ngIf="heldBills?.length">
+            <h5>Held Bills</h5>
+            <div class="held-bill-item" *ngFor="let bill of heldBills">
+              <div class="held-bill-info">
+                <strong>{{ bill.name }}</strong>
+                <span>{{ bill.items?.length }} items - {{ getBillTotal(bill) | currency:'INR':'symbol':'1.0-0' }}</span>
+              </div>
+              <div class="held-bill-actions">
+                <button mat-mini-fab color="primary" (click)="recallBill(bill)" title="Recall">
+                  <mat-icon>play_arrow</mat-icon>
+                </button>
+                <button mat-mini-fab color="warn" (click)="deleteHeldBill(bill.id)" title="Delete">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
   </div>
 </div>

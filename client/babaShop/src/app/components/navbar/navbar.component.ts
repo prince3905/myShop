@@ -91,6 +91,17 @@ export class NavbarComponent implements OnInit {
     window.location.reload();
   }
 
+  isGlobalReadOnlyMode(): boolean {
+    return this.authService.isGlobalReadOnlyMode();
+  }
+
+  getScopeModeLabel(): string {
+    if (this.isSuperAdmin && !this.selectedShop) {
+      return "Global Mode";
+    }
+    return "Shop Mode";
+  }
+
   getCurrentShopLabel(): string {
     if (!this.selectedShop) {
       return this.isSuperAdmin ? "Global View" : "No Shop";
@@ -108,20 +119,18 @@ export class NavbarComponent implements OnInit {
   private getRoleBasedLinks(): NavbarLink[] {
     if (this.isSuperAdmin) {
       return [
-        { title: "Dashboard", path: "/dashboard", icon: "dashboard" },
         { title: "Subscriptions", path: "/settings", icon: "credit_card" },
-        { title: "Reports", path: "/sale-list", icon: "analytics" },
+        { title: "Sales & Profit", path: "/sales-reports", icon: "analytics" },
         { title: "Settings", path: "/settings", icon: "settings" },
       ];
     }
 
     return [
-      { title: "Dashboard", path: "/dashboard", icon: "dashboard" },
       { title: "Products", path: "/item-list", icon: "inventory_2" },
       { title: "Sales", path: "/sale-list", icon: "point_of_sale" },
       { title: "Purchase", path: "/stocks", icon: "shopping_cart" },
       { title: "Customers", path: "/customer", icon: "people" },
-      { title: "Reports", path: "/sale-list", icon: "analytics" },
+      { title: "Sales & Profit", path: "/sales-reports", icon: "analytics" },
     ];
   }
 

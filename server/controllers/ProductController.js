@@ -12,6 +12,73 @@ const { logEntityAudit } = require("../utils/entityAudit.service");
 const isSuperAdminGlobal = (req) =>
   req.user?.role === "SUPER_ADMIN" && !req.shopId;
 
+const canViewSensitivePricing = (req) =>
+  ["SUPER_ADMIN", "ADMIN"].includes(`${req.user?.role || ""}`);
+
+const sanitizeVariationPricing = (variation, req) => {
+  if (!variation || canViewSensitivePricing(req)) {
+    return variation;
+  }
+
+  const plainVariation = variation.toObject?.() || { ...variation };
+  delete plainVariation.costPrice;
+  return plainVariation;
+};
+
+const sanitizeProductPricing = (product, req) => {
+  if (!product || canViewSensitivePricing(req)) {
+    return product;
+  }
+
+  const plainProduct = product.toObject?.() || { ...product };
+  plainProduct.variations = Array.isArray(plainProduct.variations)
+    ? plainProduct.variations.map((variation) => sanitizeVariationPricing(variation, req))
+    : [];
+  return plainProduct;
+};
+
+const groupVariationsByModel = (variations = [], req = null) => {
+  const grouped = new Map();
+
+  for (const variation of variations) {
+    const modelId = `${variation?.model?._id || variation?.model || ""}`.trim();
+    const modelName = `${variation?.model?.name || variation?.modelName || ""}`.trim();
+    const key = modelId || modelName || `${variation?._id || ""}`;
+
+    if (!grouped.has(key)) {
+      grouped.set(key, {
+        _id: variation?.model?._id || variation?.model || undefined,
+        modelId: variation?.model?._id || variation?.model || undefined,
+        model: modelName,
+        name: modelName,
+        variations: [],
+      });
+    }
+
+    const variationDoc = variation.toObject?.() || { ...variation };
+    if (req && !canViewSensitivePricing(req)) {
+      delete variationDoc.costPrice;
+    }
+
+    grouped.get(key).variations.push({
+      ...variationDoc,
+      orderNumber: variation?.sku || variation?.orderNumber || "",
+      size: variation?.attributes?.size || variation?.size || "",
+      color: variation?.attributes?.color || variation?.color || "",
+    });
+  }
+
+  return Array.from(grouped.values());
+};
+
+const mapProductForPosSearch = (productDoc, matchedBy = [], req = null) => ({
+  productId: productDoc?._id,
+  name: productDoc?.name || "",
+  label: productDoc?.name || "",
+  matchedBy,
+  models: groupVariationsByModel(Array.isArray(productDoc?.variations) ? productDoc.variations : [], req),
+});
+
 const getProductUsageSummary = async ({ productId, shopId, variationIds = [] }) => {
   const hasVariationIds = Array.isArray(variationIds) && variationIds.length > 0;
   const variationClause = hasVariationIds
@@ -62,14 +129,6 @@ const getProductUsageSummary = async ({ productId, shopId, variationIds = [] }) 
 exports.createProduct = async (req, res) => {
   try {
     const { name, category, brand, description, images } = req.body;
-    console.log("[FLOW][PRODUCT][CREATE]", {
-      userId: req.user?._id?.toString(),
-      role: req.user?.role,
-      shopId: req.shopId?.toString(),
-      name,
-      category,
-      brand,
-    });
 
     if (!req.shopId) {
       return res.status(400).json({
@@ -128,12 +187,6 @@ exports.getProducts = async (req, res) => {
     const query = isSuperAdminGlobal(req)
       ? { isDeleted: { $ne: true } }
       : { shop: req.shopId, isDeleted: { $ne: true } };
-    console.log("[FLOW][PRODUCT][LIST] request", {
-      userId: req.user?._id?.toString(),
-      role: req.user?.role,
-      shopId: req.shopId?.toString(),
-      query: { limit, skip, sort, search },
-    });
 
     if (search) {
       query.name = { $regex: search, $options: "i" };
@@ -160,15 +213,12 @@ exports.getProducts = async (req, res) => {
     }
 
     const products = await productQuery;
-    console.log("[FLOW][PRODUCT][LIST] response", {
-      count: products.length,
-      shopId: req.shopId?.toString(),
-    });
+    const safeProducts = products.map((product) => sanitizeProductPricing(product, req));
 
     res.json({
       success: true,
-      count: products.length,
-      data: products,
+      count: safeProducts.length,
+      data: safeProducts,
     });
   } catch (error) {
     res.status(500).json({
@@ -178,17 +228,106 @@ exports.getProducts = async (req, res) => {
   }
 };
 
+exports.searchProductsForPos = async (req, res) => {
+  try {
+    const term = `${req.query.term || ""}`.trim();
+    if (!term) {
+      return res.json({
+        success: true,
+        data: [],
+      });
+    }
+
+    const regex = new RegExp(term, "i");
+    const productFilter = isSuperAdminGlobal(req)
+      ? { isDeleted: { $ne: true } }
+      : { shop: req.shopId, isDeleted: { $ne: true } };
+    const shopScopedFilter = isSuperAdminGlobal(req) ? {} : { shop: req.shopId };
+
+    const [productMatches, modelMatches, variationMatches] = await Promise.all([
+      Product.find({
+        ...productFilter,
+        name: { $regex: regex },
+      }).select("_id name").limit(12),
+      ProductModel.find({
+        ...shopScopedFilter,
+        name: { $regex: regex },
+      }).select("_id product name").limit(12),
+      ProductVariation.find({
+        ...shopScopedFilter,
+        $or: [{ sku: { $regex: regex } }, { barcode: { $regex: regex } }],
+      })
+        .select("_id product model sku barcode")
+        .populate("model", "name")
+        .limit(12),
+    ]);
+
+    const matchMeta = new Map();
+    const addMatch = (productId, label) => {
+      const key = `${productId || ""}`;
+      if (!key) return;
+      if (!matchMeta.has(key)) {
+        matchMeta.set(key, new Set());
+      }
+      matchMeta.get(key).add(label);
+    };
+
+    productMatches.forEach((row) => addMatch(row._id, "Name"));
+    modelMatches.forEach((row) => addMatch(row.product, `Model: ${row.name}`));
+    variationMatches.forEach((row) => {
+      addMatch(row.product, `SKU: ${row.sku}`);
+      if (row.barcode && regex.test(row.barcode)) {
+        addMatch(row.product, `Barcode: ${row.barcode}`);
+      }
+      if (row.model?.name && regex.test(row.model.name)) {
+        addMatch(row.product, `Model: ${row.model.name}`);
+      }
+    });
+
+    const productIds = Array.from(matchMeta.keys()).slice(0, 20);
+    if (!productIds.length) {
+      return res.json({
+        success: true,
+        data: [],
+      });
+    }
+
+    const products = await Product.find({
+      ...productFilter,
+      _id: { $in: productIds },
+    })
+      .populate({
+        path: "variations",
+        populate: {
+          path: "model",
+          select: "name",
+        },
+      })
+      .select("_id name variations");
+
+    const orderMap = new Map(productIds.map((id, index) => [String(id), index]));
+    const rows = products
+      .sort((a, b) => (orderMap.get(String(a._id)) ?? 999) - (orderMap.get(String(b._id)) ?? 999))
+      .map((product) => mapProductForPosSearch(product, Array.from(matchMeta.get(String(product._id)) || []), req));
+
+    return res.json({
+      success: true,
+      data: rows,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Error searching products for POS",
+      error: error.message,
+    });
+  }
+};
+
 /* =========================
    GET SINGLE PRODUCT
 ========================= */
 exports.getProductById = async (req, res) => {
   try {
-    console.log("[FLOW][PRODUCT][GET_ONE]", {
-      userId: req.user?._id?.toString(),
-      role: req.user?.role,
-      shopId: req.shopId?.toString(),
-      productId: req.params.id,
-    });
     const filter = isSuperAdminGlobal(req)
       ? { _id: req.params.id, isDeleted: { $ne: true } }
       : { _id: req.params.id, shop: req.shopId, isDeleted: { $ne: true } };
@@ -213,7 +352,7 @@ exports.getProductById = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      data: product,
+      data: sanitizeProductPricing(product, req),
     });
   } catch (error) {
     res.status(500).json({
@@ -229,12 +368,6 @@ exports.getProductById = async (req, res) => {
 exports.updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
-    console.log("[FLOW][PRODUCT][UPDATE]", {
-      userId: req.user?._id?.toString(),
-      role: req.user?.role,
-      shopId: req.shopId?.toString(),
-      productId: id,
-    });
     if (!req.shopId) {
       return res.status(400).json({
         success: false,
@@ -297,12 +430,6 @@ exports.updateProduct = async (req, res) => {
 exports.deleteProduct = async (req, res) => {
   try {
     const { id } = req.params;
-    console.log("[FLOW][PRODUCT][DELETE]", {
-      userId: req.user?._id?.toString(),
-      role: req.user?.role,
-      shopId: req.shopId?.toString(),
-      productId: id,
-    });
     if (!req.shopId) {
       return res.status(400).json({
         success: false,

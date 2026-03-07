@@ -1,5 +1,10 @@
 const Customer = require("../models/Customer");
 const { logEntityAudit } = require("../utils/entityAudit.service");
+const {
+  buildCustomerLedger,
+  buildCustomerPayload,
+  getCustomerDuplicateMessage,
+} = require("../utils/customerAccount.service");
 
 const isSuperAdminGlobal = (req) =>
   req.user?.role === "SUPER_ADMIN" && !req.shopId;
@@ -20,7 +25,11 @@ exports.getAllCustomers = async (req, res) => {
     const skipItems = (currentPage - 1) * itemsPerPage;
 
     const [customers, totalItems] = await Promise.all([
-      Customer.find(query).sort({ createdAt: -1 }).skip(skipItems).limit(itemsPerPage),
+      Customer.find(query)
+        .sort({ createdAt: -1 })
+        .skip(skipItems)
+        .limit(itemsPerPage)
+        .select("name phone email address totalPurchase totalPaid totalDue purchaseCount createdAt isActive"),
       Customer.countDocuments(query),
     ]);
 
@@ -30,14 +39,57 @@ exports.getAllCustomers = async (req, res) => {
   }
 };
 
+exports.searchCustomers = async (req, res) => {
+  try {
+    const { q, limit = 20 } = req.query;
+    const searchTerm = (q || "").trim();
+    
+    if (!searchTerm) {
+      return res.status(200).json({ success: true, customers: [] });
+    }
+
+    const query = isSuperAdminGlobal(req)
+      ? { isDeleted: { $ne: true } }
+      : { shop: req.shopId, isDeleted: { $ne: true } };
+
+    // Clean search term for phone - remove non-digits
+    const cleanSearch = searchTerm.replace(/\D/g, '');
+    
+    // Search by name OR phone number
+    // If user entered digits, search in phone as well
+    if (cleanSearch.length > 0) {
+      query.$or = [
+        { name: { $regex: searchTerm, $options: "i" } },
+        { phone: { $regex: cleanSearch, $options: "i" } }
+      ];
+    } else {
+      // Only search by name if no digits entered
+      query.name = { $regex: searchTerm, $options: "i" };
+    }
+
+    const customers = await Customer.find(query)
+      .sort({ name: 1 })
+      .limit(Math.min(100, Number(limit || 20)))
+      .select('name phone email address totalPurchase totalPaid totalDue purchaseCount');
+
+    return res.status(200).json({ success: true, customers });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: "Error searching customers" });
+  }
+};
+
 exports.createCustomer = async (req, res) => {
   try {
     if (!req.shopId) {
       return res.status(400).json({ success: false, message: "Please select a shop first" });
     }
 
-    const payload = { ...req.body, shop: req.shopId };
-    const customer = await Customer.create(payload);
+    const payload = await buildCustomerPayload({
+      shopId: req.shopId,
+      body: req.body,
+      requirePhone: true,
+    });
+    const customer = await Customer.create({ ...payload, shop: req.shopId });
     await logEntityAudit({
       shop: req.shopId,
       entityType: "CUSTOMER",
@@ -52,6 +104,13 @@ exports.createCustomer = async (req, res) => {
       customer,
     });
   } catch (err) {
+    if (err.statusCode) {
+      return res.status(err.statusCode).json({ success: false, message: err.message });
+    }
+    const duplicateMessage = getCustomerDuplicateMessage(err);
+    if (duplicateMessage) {
+      return res.status(err.statusCode || 409).json({ success: false, message: duplicateMessage });
+    }
     return res.status(500).json({ success: false, error: "Error saving customer" });
   }
 };
@@ -71,15 +130,57 @@ exports.getCustomerById = async (req, res) => {
   }
 };
 
+exports.getCustomerSales = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { page = 1, perPage = 10, dateFrom, dateTo } = req.query;
+    
+    // First check if customer exists
+    const customerQuery = isSuperAdminGlobal(req)
+      ? { _id: id, isDeleted: { $ne: true } }
+      : { _id: id, shop: req.shopId, isDeleted: { $ne: true } };
+    
+    const customer = await Customer.findOne(customerQuery).lean();
+    if (!customer) {
+      return res.status(404).json({ success: false, error: "Customer not found" });
+    }
+
+    const ledger = await buildCustomerLedger({
+      shopId: customer.shop,
+      customerId: customer._id,
+      dateFrom,
+      dateTo,
+      page,
+      perPage,
+    });
+
+    return res.status(200).json({
+      success: true,
+      sales: ledger.rows,
+      totalItems: ledger.totalItems,
+      summary: ledger.summary,
+    });
+  } catch (err) {
+    console.error("Error getting customer sales:", err);
+    return res.status(500).json({ success: false, error: "Error retrieving customer sales" });
+  }
+};
+
 exports.updateCustomer = async (req, res) => {
   try {
     if (!req.shopId) {
       return res.status(400).json({ success: false, message: "Please select a shop first" });
     }
 
+    const payload = await buildCustomerPayload({
+      shopId: req.shopId,
+      body: req.body,
+      excludeCustomerId: req.params.id,
+    });
+
     const updatedCustomer = await Customer.findOneAndUpdate(
       { _id: req.params.id, shop: req.shopId, isDeleted: { $ne: true } },
-      req.body,
+      payload,
       { new: true, runValidators: true },
     );
     if (!updatedCustomer) {
@@ -91,7 +192,7 @@ exports.updateCustomer = async (req, res) => {
       entityId: updatedCustomer._id,
       action: "UPDATE",
       actor: req.user?._id,
-      meta: { updatedFields: Object.keys(req.body || {}) },
+      meta: { updatedFields: Object.keys(payload || {}) },
     });
     return res.status(200).json({
       success: true,
@@ -99,6 +200,13 @@ exports.updateCustomer = async (req, res) => {
       customer: updatedCustomer,
     });
   } catch (err) {
+    if (err.statusCode) {
+      return res.status(err.statusCode).json({ success: false, message: err.message });
+    }
+    const duplicateMessage = getCustomerDuplicateMessage(err);
+    if (duplicateMessage) {
+      return res.status(err.statusCode || 409).json({ success: false, message: duplicateMessage });
+    }
     return res.status(500).json({ success: false, error: "Error updating customer" });
   }
 };

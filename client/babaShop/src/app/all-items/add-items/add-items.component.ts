@@ -1,11 +1,11 @@
-import { Component, OnInit } from "@angular/core";
+import { Component, OnInit, Optional } from "@angular/core";
 import { MatDialog, MatDialogRef } from "@angular/material/dialog";
 import { MatSnackBar } from "@angular/material/snack-bar";
 import { BrandService } from "app/shared/services/brand.service";
 import { CategoryService } from "app/shared/services/category.service";
 import { DistributorService } from "app/shared/services/distributor.service";
 import { ProductService } from "app/shared/services/product.service";
-import { Router } from "@angular/router";
+import { ActivatedRoute, Router } from "@angular/router";
 import { forkJoin } from "rxjs";
 import { MAT_DIALOG_DATA } from "@angular/material/dialog";
 import { Inject } from "@angular/core";
@@ -26,6 +26,7 @@ export class AddItemsComponent implements OnInit {
   brands: any[] = [];
 
   isLoading = false;
+  private returnTo: string | null = null;
 
   showConfirmationDialog = false;
   isEditMode: boolean = false;
@@ -36,15 +37,17 @@ export class AddItemsComponent implements OnInit {
     private Product: ProductService,
     private snackBar: MatSnackBar,
     private distributor: DistributorService,
-    public dialogRef: MatDialogRef<AddItemsComponent>,
+    @Optional() public dialogRef: MatDialogRef<AddItemsComponent>,
     private dialog: MatDialog,
     private router: Router,
+    private route: ActivatedRoute,
     private productService: ProductService,
     @Inject(MAT_DIALOG_DATA) public data: any,
   ) {}
 
   ngOnInit(): void {
     this.loadDropdownData();
+    this.returnTo = this.route.snapshot.queryParamMap.get("returnTo");
     if (this.data?.product) {
       this.product = {
         name: this.data.product.name,
@@ -61,7 +64,6 @@ export class AddItemsComponent implements OnInit {
     this.category.getAllCategories().subscribe(
       (res: any) => {
         this.categories = res.data || [];
-        console.log("Loaded Categories:", this.categories);
       },
       (err) => console.error("Category Load Error:", err),
     );
@@ -69,81 +71,91 @@ export class AddItemsComponent implements OnInit {
     this.brand.getAllBrands().subscribe(
       (res: any) => {
         this.brands = res.data || [];
-        console.log("Loaded Brands:", this.brands);
       },
       (err) => console.error("Brand Load Error:", err),
     );
   }
 
+  cancel(): void {
+    if (this.dialogRef) {
+      this.dialogRef.close();
+      return;
+    }
+
+    this.router.navigate([this.returnTo || "/item-list"]);
+  }
+
   saveProduct() {
-
-  if (!this.product.name || !this.product.category || !this.product.brand) {
-    this.snackBar.open("⚠ Please fill all required fields", "Close", {
-      duration: 2500,
-      panelClass: ['snackbar-error']
-    });
-    return;
-  }
-
-  this.isLoading = true;
-
-  if (this.isEditMode) {
-
-    this.productService
-      .updateProduct(this.data.product._id, this.product)
-      .subscribe({
-
-        next: () => {
-          this.isLoading = false;
-
-          this.snackBar.open("✅ Product updated successfully!", "Close", {
-            duration: 3000,
-            panelClass: ['snackbar-success']
-          });
-
-          this.dialogRef.close(true);
-        },
-
-        error: (err) => {
-          console.error(err);
-          this.isLoading = false;
-
-          this.snackBar.open("❌ Failed to update product!", "Close", {
-            duration: 3000,
-            panelClass: ['snackbar-error']
-          });
-        }
-
+    if (!this.product.name || !this.product.category || !this.product.brand) {
+      this.snackBar.open("Please fill all required fields", "Close", {
+        duration: 2500,
+        panelClass: ["snackbar-error"]
       });
+      return;
+    }
 
-  } else {
+    this.isLoading = true;
 
-    this.productService
-      .addProduct(this.product)
-      .subscribe({
+    if (this.isEditMode) {
+      this.productService
+        .updateProduct(this.data.product._id, this.product)
+        .subscribe({
+          next: () => {
+            this.isLoading = false;
 
-        next: () => {
-          this.isLoading = false;
+            this.snackBar.open("Product updated successfully", "Close", {
+              duration: 3000,
+              panelClass: ["snackbar-success"]
+            });
 
-          this.snackBar.open("✅ Product added successfully!", "Close", {
-            duration: 3000,
-            panelClass: ['snackbar-success']
-          });
+            if (this.dialogRef) {
+              this.dialogRef.close(true);
+              return;
+            }
 
-          this.dialogRef.close(true);
-        },
+            this.router.navigate([this.returnTo || "/item-list"], {
+              queryParams: this.returnTo ? { refresh: Date.now(), productName: this.product.name } : undefined,
+            });
+          },
+          error: () => {
+            this.isLoading = false;
 
-        error: (err) => {
-          console.error(err);
-          this.isLoading = false;
+            this.snackBar.open("Failed to update product", "Close", {
+              duration: 3000,
+              panelClass: ["snackbar-error"]
+            });
+          }
+        });
+    } else {
+      this.productService
+        .addProduct(this.product)
+        .subscribe({
+          next: () => {
+            this.isLoading = false;
 
-          this.snackBar.open("❌ Failed to add product!", "Close", {
-            duration: 3000,
-            panelClass: ['snackbar-error']
-          });
-        }
+            this.snackBar.open("Product added successfully", "Close", {
+              duration: 3000,
+              panelClass: ["snackbar-success"]
+            });
 
-      });
+            if (this.dialogRef) {
+              this.dialogRef.close(true);
+              return;
+            }
+
+            this.router.navigate([this.returnTo || "/item-list"], {
+              queryParams: this.returnTo ? { refresh: Date.now(), productName: this.product.name } : undefined,
+            });
+          },
+          error: () => {
+            this.isLoading = false;
+
+            this.snackBar.open("Failed to add product", "Close", {
+              duration: 3000,
+              panelClass: ["snackbar-error"]
+            });
+          }
+        });
+    }
   }
-}
 }

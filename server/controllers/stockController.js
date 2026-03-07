@@ -10,6 +10,19 @@ const { applyStockTransaction } = require("../utils/stock.service");
 const isSuperAdminGlobal = (req) =>
   req.user?.role === "SUPER_ADMIN" && !req.shopId;
 
+const canViewSensitivePricing = (req) =>
+  ["SUPER_ADMIN", "ADMIN"].includes(`${req.user?.role || ""}`);
+
+const sanitizeStockRow = (row, req) => {
+  if (!row || canViewSensitivePricing(req)) {
+    return row;
+  }
+
+  const plainRow = row.toObject?.() || { ...row };
+  delete plainRow.lastPurchasePrice;
+  return plainRow;
+};
+
 const getMonthKey = (value) => {
   if (!value) {
     const now = new Date();
@@ -115,12 +128,12 @@ exports.getStockReport = async (req, res) => {
       page: safePage,
       limit: safeLimit,
       total,
-      stockReport: rows,
+      stockReport: rows.map((row) => sanitizeStockRow(row, req)),
       summary: {
         totalQuantity: Number(summary.totalQuantity || 0),
         totalReserved: Number(summary.totalReserved || 0),
         totalDamaged: Number(summary.totalDamaged || 0),
-        totalCostValue: Number(summary.totalCostValue || 0),
+        totalCostValue: canViewSensitivePricing(req) ? Number(summary.totalCostValue || 0) : 0,
         lowStockCount: Number(summary.lowStockCount || 0),
       },
     });

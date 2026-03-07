@@ -1,11 +1,12 @@
 const express = require("express");
 const stockController = require("../controllers/stockController");
-const { protect, attachShop, authorizeRoles } = require("../middleware/authMiddleware");
+const { protect, attachShop, authorizeRoles, requireShopSelectionForWrite } = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
 router.use(protect);
 router.use(attachShop);
+router.use(requireShopSelectionForWrite);
 
 router.get(
   "/",

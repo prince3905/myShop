@@ -14,15 +14,6 @@ const resolveModeFromNote = (note = "") => {
 // CREATE LEDGER ENTRY
 exports.createLedger = async (req, res) => {
   try {
-    console.log("[FLOW][LEDGER][CREATE] request", {
-      userId: req.user?._id?.toString(),
-      role: req.user?.role,
-      shopId: req.shopId?.toString(),
-      distributorId: req.body?.distributorId,
-      type: req.body?.type,
-      amount: req.body?.amount,
-    });
-
     if (!req.shopId) {
       return res.status(400).json({
         success: false,
@@ -56,13 +47,6 @@ exports.createLedger = async (req, res) => {
 // GET LEDGER
 exports.getDistributorLedger = async (req, res) => {
   try {
-    console.log("[FLOW][LEDGER][LIST] request", {
-      userId: req.user?._id?.toString(),
-      role: req.user?.role,
-      shopId: req.shopId?.toString(),
-      distributorId: req.params.distributorId,
-    });
-
     const filter = {
       distributor: req.params.distributorId,
       isDeleted: false,
@@ -99,12 +83,6 @@ exports.getDistributorLedger = async (req, res) => {
       obj.paymentMethod = resolved;
       return obj;
     });
-    console.log("[FLOW][LEDGER][LIST] response", {
-      count: enrichedLedger.length,
-      shopId: req.shopId?.toString(),
-      global: isSuperAdminGlobal(req),
-    });
-
     res.json({
       success: true,
       ledger: enrichedLedger,

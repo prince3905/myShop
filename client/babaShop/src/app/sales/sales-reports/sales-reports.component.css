@@ -33,6 +33,52 @@
   padding: 10px 12px;
 }
 
+.profit-kpi {
+  border-color: #bbf7d0;
+  background: linear-gradient(180deg, #f0fdf4 0%, #ffffff 100%);
+}
+
+#profitTrendChart {
+  height: 260px;
+}
+
+.trend-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.profit-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.legend-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.legend-sales {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.legend-cost {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.legend-profit {
+  background: #dcfce7;
+  color: #15803d;
+}
+
 .kpi .label {
   font-size: 12px;
   color: #64748b;
@@ -67,6 +113,10 @@
   }
 
   .kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .profit-grid {
     grid-template-columns: 1fr;
   }
 }

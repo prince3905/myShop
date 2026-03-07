@@ -21,9 +21,9 @@ const {
   deactivateAccount,
   deactivateCurrentShop,
 } = require("../controllers/authController");
-const { protect } = require("../middleware/authMiddleware");
+const { protect, authorizeRoles } = require("../middleware/authMiddleware");
 
-router.post("/register", register);
+router.post("/register", protect, authorizeRoles("SUPER_ADMIN"), register);
 router.post("/login", login);
 router.get("/authenticated", protect, authenticated);
 router.put("/profile", protect, updateProfile);

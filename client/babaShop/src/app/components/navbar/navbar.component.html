@@ -11,8 +11,15 @@
                     aria-label="Go back">
                     <i class="material-icons">arrow_back</i>
                 </button>
+                <a
+                    class="corner-dashboard-link"
+                    href="javascript:void(0)"
+                    (click)="onBreadcrumbClick('/dashboard')">
+                    <i class="material-icons">dashboard</i>
+                    <span>DASHBOARD</span>
+                </a>
                 <div class="navbar-breadcrumb">
-                    <ng-container *ngFor="let crumb of getBreadcrumbs(); let last = last">
+                    <ng-container *ngFor="let crumb of getBreadcrumbs().slice(1); let last = last">
                         <a
                             class="breadcrumb-link"
                             [class.active]="crumb.active"
@@ -32,6 +39,15 @@
             <span class="navbar-toggler-icon icon-bar"></span>
         </button>
         <div class="collapse navbar-collapse justify-content-end" id="navigation">
+            <div class="mode-chip" [class.global]="isGlobalReadOnlyMode()" [class.shop-mode]="!isGlobalReadOnlyMode()">
+                <span class="mode-chip-dot"></span>
+                <span>{{ getScopeModeLabel() }}</span>
+            </div>
+
+            <div class="readonly-chip" *ngIf="isGlobalReadOnlyMode()">
+                Read Only
+            </div>
+
             <div class="shop-chip">
                 <span class="shop-chip-label">Current Shop:</span>
                 <span class="shop-chip-value">{{ getCurrentShopLabel() }}</span>

@@ -134,7 +134,7 @@
                       <th>Color</th>
                       <th>Size</th>
                       <th>Qty</th>
-                      <th>Cost</th>
+                      <th *ngIf="authService.canViewSensitivePricing()">Cost</th>
                       <th>Selling</th>
                       <th>Action</th>
                     </tr>
@@ -148,7 +148,7 @@
                         <td>{{ v.attributes?.color || '-' }}</td>
                         <td>{{ v.attributes?.size || '-' }}</td>
                         <td>{{ v.quantity ?? 0 }}</td>
-                        <td>₹ {{ v.costPrice || 0 }}</td>
+                        <td *ngIf="authService.canViewSensitivePricing()">₹ {{ v.costPrice || 0 }}</td>
                         <td>₹ {{ v.sellingPrice || 0 }}</td>
                         <td (click)="$event.stopPropagation()" class="action-col">
                           <button
@@ -164,7 +164,7 @@
                     </ng-container>
                     <ng-template #noVariationRow>
                       <tr>
-                        <td colspan="8" class="text-muted no-variation-msg">No variations added yet.</td>
+                        <td [attr.colspan]="authService.canViewSensitivePricing() ? 8 : 7" class="text-muted no-variation-msg">No variations added yet.</td>
                         <td (click)="$event.stopPropagation()" class="action-col">
                           <button
                             mat-icon-button

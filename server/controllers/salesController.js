@@ -6,14 +6,22 @@ const ProductVariation = require("../models/ProductVariation");
 const Stock = require("../models/Stock");
 const SaleReturn = require("../models/SaleReturn");
 const SaleLedger = require("../models/SaleLedger");
+const Customer = require("../models/Customer");
 const { applyStockTransaction } = require("../utils/stock.service");
 const { createSaleLedgerEntry } = require("../utils/saleLedger.service");
+const {
+  getCustomerDuplicateMessage,
+  normalizeCustomerPhone,
+  syncCustomerAccountSnapshot,
+} = require("../utils/customerAccount.service");
 const { generateInvoiceNo } = require("../utils/invoice.service");
 
 const isSuperAdminGlobal = (req) =>
   req.user?.role === "SUPER_ADMIN" && !req.shopId;
 const ALLOWED_REFUND_METHODS = new Set(["CASH", "BANK", "ONLINE", "UPI", "CARD", "STORE_CREDIT"]);
 const ALLOWED_PAYMENT_METHODS = new Set(["CASH", "BANK", "ONLINE", "UPI", "CARD", "CHEQUE"]);
+const canViewSensitiveFinancials = (req) =>
+  ["SUPER_ADMIN", "ADMIN"].includes(`${req.user?.role || ""}`);
 
 const sumSaleReturnedByVariation = async ({ shopId, saleId }) => {
   const rows = await SaleReturn.aggregate([
@@ -50,6 +58,32 @@ const getSaleReturnTotals = async ({ shopId, saleId }) => {
     refund: Number(rows[0]?.refund || 0),
     dueAdjusted: Number(rows[0]?.dueAdjusted || 0),
     credit: Number(rows[0]?.credit || 0),
+  };
+};
+
+const buildVariationSnapshot = (variation, rawItem = {}) => {
+  const qty = Math.max(0, Number(rawItem?.quantity || 0));
+  const sellingPrice = Number(rawItem?.purchasePrice || variation?.sellingPrice || 0);
+  const costPrice = Number(variation?.costPrice || 0);
+  const lineTotal = Number((qty * sellingPrice).toFixed(2));
+
+  return {
+    item: variation.product?._id || variation.product,
+    variationId: variation._id,
+    variationSku: variation.sku,
+    itemName: variation.product?.name || rawItem?.itemName || "Item",
+    model: variation.model?.name || rawItem?.model || "",
+    size: variation.attributes?.size || rawItem?.size || "",
+    color: variation.attributes?.color || rawItem?.color || "",
+    categoryName: "",
+    brandName: "",
+    quantity: qty,
+    purchasePrice: costPrice,
+    sellingPrice,
+    discount: 0,
+    discountType: "FLAT",
+    total: lineTotal,
+    _variationRef: variation,
   };
 };
 
@@ -114,6 +148,8 @@ exports.createSale = async (req, res) => {
 
     const {
       customerName = "Walk-in",
+      customerPhone = "",
+      customerAddress = "",
       items = [],
       paymentMethod = "CASH",
       billDiscount = 0,
@@ -124,7 +160,86 @@ exports.createSale = async (req, res) => {
       return res.status(400).json({ success: false, message: "items[] is required" });
     }
 
+    // Find or create customer
+    let customerDoc = null;
+    const normalizedCustomerName = `${customerName || ""}`.trim();
+    const normalizedPhone = normalizeCustomerPhone(customerPhone);
+    
+    if (normalizedCustomerName && normalizedCustomerName !== "Walk-in" && normalizedPhone && normalizedPhone.length === 10) {
+      customerDoc = await Customer.findOne({ 
+        shop: req.shopId, 
+        phone: normalizedPhone,
+      });
+
+      if (!customerDoc) {
+        customerDoc = await Customer.findOne({ 
+          shop: req.shopId, 
+          name: { $regex: new RegExp(`^${normalizedCustomerName}$`, 'i') }
+        });
+      }
+
+      if (!customerDoc) {
+        const normalizedAddress = `${customerAddress || ""}`.trim();
+        try {
+          customerDoc = await Customer.create({
+            shop: req.shopId,
+            name: normalizedCustomerName,
+            phone: normalizedPhone,
+            address: normalizedAddress || "",
+            createdBy: req.user?._id
+          });
+        } catch (err) {
+          if (err.code === 11000) {
+            customerDoc = await Customer.findOne({ 
+              shop: req.shopId, 
+              phone: normalizedPhone,
+            });
+          } else {
+            const duplicateMessage = getCustomerDuplicateMessage(err);
+            if (duplicateMessage) {
+              return res.status(err.statusCode || 409).json({
+                success: false,
+                message: duplicateMessage,
+              });
+            }
+          }
+        }
+      }
+    } else if (normalizedCustomerName && normalizedCustomerName !== "Walk-in") {
+      customerDoc = await Customer.findOne({ 
+        shop: req.shopId, 
+        name: { $regex: new RegExp(`^${normalizedCustomerName}$`, 'i') }
+      });
+    }
+
     const normalizedItems = [];
+    const fastLookupItems = items.filter((raw) => raw?.variationId || raw?.variationSku || raw?.variations);
+    const variationIds = fastLookupItems
+      .map((raw) => `${raw?.variationId || ""}`.trim())
+      .filter((value) => value && mongoose.Types.ObjectId.isValid(value));
+    const variationSkus = fastLookupItems
+      .map((raw) => `${raw?.variationSku || raw?.variations || ""}`.trim())
+      .filter(Boolean);
+
+    const [variationRows, stockRows] = await Promise.all([
+      variationIds.length || variationSkus.length
+        ? ProductVariation.find({
+            shop: req.shopId,
+            $or: [
+              ...(variationIds.length ? [{ _id: { $in: variationIds } }] : []),
+              ...(variationSkus.length ? [{ sku: { $in: variationSkus } }] : []),
+            ],
+          })
+            .populate("product", "name brand category")
+            .populate("model", "name")
+        : [],
+      variationIds.length
+        ? Stock.find({ shop: req.shopId, variation: { $in: variationIds } }).lean()
+        : [],
+    ]);
+    const variationById = new Map(variationRows.map((row) => [`${row._id}`, row]));
+    const variationBySku = new Map(variationRows.map((row) => [`${row.sku}`, row]));
+    const stockByVariation = new Map(stockRows.map((row) => [`${row.variation}`, row]));
 
     for (const raw of items) {
       const qty = Math.max(0, Number(raw?.quantity || 0));
@@ -132,7 +247,15 @@ exports.createSale = async (req, res) => {
         return res.status(400).json({ success: false, message: "Item quantity must be greater than 0" });
       }
 
-      const variation = await resolveVariation(req.shopId, raw);
+      const requestedVariationId = `${raw?.variationId || ""}`.trim();
+      const requestedVariationSku = `${raw?.variationSku || raw?.variations || ""}`.trim();
+      let variation =
+        (requestedVariationId && variationById.get(requestedVariationId)) ||
+        (requestedVariationSku && variationBySku.get(requestedVariationSku)) ||
+        null;
+      if (!variation) {
+        variation = await resolveVariation(req.shopId, raw);
+      }
       if (!variation) {
         return res.status(400).json({
           success: false,
@@ -140,7 +263,9 @@ exports.createSale = async (req, res) => {
         });
       }
 
-      const stock = await Stock.findOne({ shop: req.shopId, variation: variation._id });
+      const stock =
+        stockByVariation.get(`${variation._id}`) ||
+        (await Stock.findOne({ shop: req.shopId, variation: variation._id }).lean());
       const available = Number(stock?.quantity || 0);
       if (available < qty) {
         return res.status(400).json({
@@ -149,28 +274,7 @@ exports.createSale = async (req, res) => {
         });
       }
 
-      const sellingPrice = Number(raw?.purchasePrice || variation?.sellingPrice || 0);
-      const costPrice = Number(variation?.costPrice || 0);
-      const lineTotal = Number((qty * sellingPrice).toFixed(2));
-
-      normalizedItems.push({
-        item: variation.product?._id || variation.product,
-        variationId: variation._id,
-        variationSku: variation.sku,
-        itemName: variation.product?.name || raw?.itemName || "Item",
-        model: variation.model?.name || raw?.model || "",
-        size: variation.attributes?.size || raw?.size || "",
-        color: variation.attributes?.color || raw?.color || "",
-        categoryName: "",
-        brandName: "",
-        quantity: qty,
-        purchasePrice: costPrice,
-        sellingPrice,
-        discount: 0,
-        discountType: "FLAT",
-        total: lineTotal,
-        _variationRef: variation,
-      });
+      normalizedItems.push(buildVariationSnapshot(variation, raw));
     }
 
     const totalQuantity = normalizedItems.reduce((acc, it) => acc + Number(it.quantity || 0), 0);
@@ -202,7 +306,7 @@ exports.createSale = async (req, res) => {
     const invoiceNo = await generateInvoiceNo({ type: "SALE" });
     const sale = await Sale.create({
       shop: req.shopId,
-      customer: req.body?.customer || undefined,
+      customer: customerDoc?._id || req.body?.customer || undefined,
       customerName,
       invoiceNo,
       items: saleDocItems,
@@ -243,9 +347,17 @@ exports.createSale = async (req, res) => {
       });
     }
 
-    for (const it of normalizedItems) {
-      const variation = it._variationRef;
-      await applyStockTransaction({
+    if (sale.customer) {
+      await syncCustomerAccountSnapshot({
+        shopId: req.shopId,
+        customerId: sale.customer,
+      });
+    }
+
+    await Promise.all(
+      normalizedItems.map((it) => {
+        const variation = it._variationRef;
+        return applyStockTransaction({
         shop: req.shopId,
         product: variation.product?._id || variation.product,
         model: variation.model?._id || variation.model,
@@ -258,7 +370,8 @@ exports.createSale = async (req, res) => {
         note: `POS sale ${sale.invoiceNo || sale._id}`,
         createdBy: req.user?._id,
       });
-    }
+      }),
+    );
 
     return res.status(201).json({
       success: true,
@@ -352,11 +465,28 @@ exports.getSales = async (req, res) => {
       Sale.countDocuments(query),
     ]);
 
-    const itemResults = rows.map((s) => ({
+    const itemResults = rows.map((s) => {
+      const totalCostAmount = Number(
+        (s.items || []).reduce(
+          (acc, it) => acc + Number(it?.quantity || 0) * Number(it?.purchasePrice || 0),
+          0,
+        ),
+      );
+      const totalSaleAmount = Number(s.totalAmount || 0);
+      const grossProfit = Number((totalSaleAmount - totalCostAmount).toFixed(2));
+      const grossMarginPercent = totalSaleAmount > 0
+        ? Number(((grossProfit / totalSaleAmount) * 100).toFixed(2))
+        : 0;
+
+      return {
       _id: s._id,
       invoiceNo: s.invoiceNo || null,
       customerName: s.customerName || "Walk-in",
       totalPurchasePrice: Number(s.totalAmount || 0),
+      totalSaleAmount,
+      totalCostAmount,
+      grossProfit,
+      grossMarginPercent,
       billDiscount: Number(s.billDiscount || 0),
       paidAmount: Number(s.paidAmount || 0),
       dueAmount: Number(s.dueAmount || 0),
@@ -380,9 +510,13 @@ exports.getSales = async (req, res) => {
         size: it.size || "-",
         quantity: Number(it.quantity || 0),
         returnedQuantity: Number(it.returnedQuantity || 0),
+        costPrice: Number(it.purchasePrice || 0),
         purchasePrice: Number(it.sellingPrice || 0),
+        lineCost: Number((Number(it.quantity || 0) * Number(it.purchasePrice || 0)).toFixed(2)),
+        lineSale: Number((Number(it.quantity || 0) * Number(it.sellingPrice || 0)).toFixed(2)),
       })),
-    }));
+      };
+    });
 
     return res.status(200).json({
       success: true,
@@ -530,6 +664,13 @@ exports.collectSalePayment = async (req, res) => {
         `Additional payment (${paymentMethod}) ${sale.invoiceNo || sale._id}`,
       createdBy: req.user?._id,
     });
+
+    if (sale.customer) {
+      await syncCustomerAccountSnapshot({
+        shopId: req.shopId,
+        customerId: sale.customer,
+      });
+    }
 
     return res.status(200).json({
       success: true,
@@ -721,14 +862,39 @@ exports.getSalesReportOverview = async (req, res) => {
     if (exprConditions.length === 1) saleQuery.$expr = exprConditions[0];
     if (exprConditions.length > 1) saleQuery.$expr = { $and: exprConditions };
 
-    const [salesAgg, returnAgg] = await Promise.all([
+    const trendStart = dateFrom ? new Date(dateFrom) : new Date();
+    if (!dateFrom) {
+      trendStart.setHours(0, 0, 0, 0);
+      trendStart.setDate(trendStart.getDate() - 6);
+    }
+
+    const [salesAgg, returnAgg, itemProfitAgg, customerProfitAgg, categoryProfitAgg, dailyProfitAgg] = await Promise.all([
       Sale.aggregate([
         { $match: saleQuery },
+        {
+          $addFields: {
+            totalCostAmount: {
+              $sum: {
+                $map: {
+                  input: { $ifNull: ["$items", []] },
+                  as: "item",
+                  in: {
+                    $multiply: [
+                      { $toDouble: { $ifNull: ["$$item.quantity", 0] } },
+                      { $toDouble: { $ifNull: ["$$item.purchasePrice", 0] } },
+                    ],
+                  },
+                },
+              },
+            },
+          },
+        },
         {
           $group: {
             _id: null,
             count: { $sum: 1 },
             totalAmount: { $sum: "$totalAmount" },
+            totalCostAmount: { $sum: "$totalCostAmount" },
             totalPaid: { $sum: "$paidAmount" },
             totalDue: { $sum: "$dueAmount" },
             totalReturnedQty: { $sum: "$returnedQuantity" },
@@ -751,7 +917,195 @@ exports.getSalesReportOverview = async (req, res) => {
           },
         },
       ]),
+      canViewSensitiveFinancials(req)
+        ? Sale.aggregate([
+            { $match: saleQuery },
+            { $unwind: "$items" },
+            {
+              $group: {
+                _id: {
+                  itemName: "$items.itemName",
+                  model: "$items.model",
+                },
+                soldQty: { $sum: { $toDouble: { $ifNull: ["$items.quantity", 0] } } },
+                saleAmount: {
+                  $sum: {
+                    $multiply: [
+                      { $toDouble: { $ifNull: ["$items.quantity", 0] } },
+                      { $toDouble: { $ifNull: ["$items.sellingPrice", 0] } },
+                    ],
+                  },
+                },
+                costAmount: {
+                  $sum: {
+                    $multiply: [
+                      { $toDouble: { $ifNull: ["$items.quantity", 0] } },
+                      { $toDouble: { $ifNull: ["$items.purchasePrice", 0] } },
+                    ],
+                  },
+                },
+              },
+            },
+            {
+              $addFields: {
+                grossProfit: { $subtract: ["$saleAmount", "$costAmount"] },
+              },
+            },
+            { $sort: { grossProfit: -1, soldQty: -1 } },
+            { $limit: 10 },
+          ])
+        : Promise.resolve([]),
+      canViewSensitiveFinancials(req)
+        ? Sale.aggregate([
+            { $match: saleQuery },
+            {
+              $addFields: {
+                totalCostAmount: {
+                  $sum: {
+                    $map: {
+                      input: { $ifNull: ["$items", []] },
+                      as: "item",
+                      in: {
+                        $multiply: [
+                          { $toDouble: { $ifNull: ["$$item.quantity", 0] } },
+                          { $toDouble: { $ifNull: ["$$item.purchasePrice", 0] } },
+                        ],
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            {
+              $group: {
+                _id: { customerName: "$customerName" },
+                billCount: { $sum: 1 },
+                saleAmount: { $sum: "$totalAmount" },
+                costAmount: { $sum: "$totalCostAmount" },
+              },
+            },
+            {
+              $addFields: {
+                grossProfit: { $subtract: ["$saleAmount", "$costAmount"] },
+              },
+            },
+            { $sort: { grossProfit: -1, saleAmount: -1 } },
+            { $limit: 10 },
+          ])
+        : Promise.resolve([]),
+      canViewSensitiveFinancials(req)
+        ? Sale.aggregate([
+            { $match: saleQuery },
+            { $unwind: "$items" },
+            {
+              $group: {
+                _id: { categoryName: "$items.categoryName" },
+                soldQty: { $sum: { $toDouble: { $ifNull: ["$items.quantity", 0] } } },
+                saleAmount: {
+                  $sum: {
+                    $multiply: [
+                      { $toDouble: { $ifNull: ["$items.quantity", 0] } },
+                      { $toDouble: { $ifNull: ["$items.sellingPrice", 0] } },
+                    ],
+                  },
+                },
+                costAmount: {
+                  $sum: {
+                    $multiply: [
+                      { $toDouble: { $ifNull: ["$items.quantity", 0] } },
+                      { $toDouble: { $ifNull: ["$items.purchasePrice", 0] } },
+                    ],
+                  },
+                },
+              },
+            },
+            {
+              $addFields: {
+                grossProfit: { $subtract: ["$saleAmount", "$costAmount"] },
+              },
+            },
+            { $sort: { grossProfit: -1, soldQty: -1 } },
+            { $limit: 10 },
+          ])
+        : Promise.resolve([]),
+      canViewSensitiveFinancials(req)
+        ? Sale.aggregate([
+            {
+              $match: {
+                ...saleQuery,
+                createdAt: { $gte: trendStart, ...(saleQuery.createdAt || {}) },
+              },
+            },
+            {
+              $addFields: {
+                totalCostAmount: {
+                  $sum: {
+                    $map: {
+                      input: { $ifNull: ["$items", []] },
+                      as: "item",
+                      in: {
+                        $multiply: [
+                          { $toDouble: { $ifNull: ["$$item.quantity", 0] } },
+                          { $toDouble: { $ifNull: ["$$item.purchasePrice", 0] } },
+                        ],
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            {
+              $group: {
+                _id: {
+                  y: { $year: "$createdAt" },
+                  m: { $month: "$createdAt" },
+                  d: { $dayOfMonth: "$createdAt" },
+                },
+                saleAmount: { $sum: "$totalAmount" },
+                costAmount: { $sum: "$totalCostAmount" },
+              },
+            },
+            { $sort: { "_id.y": 1, "_id.m": 1, "_id.d": 1 } },
+          ])
+        : Promise.resolve([]),
     ]);
+
+    const profitTrend = canViewSensitiveFinancials(req)
+      ? (() => {
+          const start = new Date(trendStart);
+          start.setHours(0, 0, 0, 0);
+          const endBase = dateTo ? new Date(dateTo) : new Date();
+          endBase.setHours(0, 0, 0, 0);
+          const labels = [];
+          const keys = [];
+          for (
+            let dt = new Date(start);
+            dt.getTime() <= endBase.getTime();
+            dt.setDate(dt.getDate() + 1)
+          ) {
+            labels.push(dt.toLocaleDateString("en-IN", { day: "2-digit", month: "short" }));
+            keys.push(`${dt.getFullYear()}-${dt.getMonth() + 1}-${dt.getDate()}`);
+          }
+
+          const map = new Map(
+            dailyProfitAgg.map((row) => [
+              `${row._id.y}-${row._id.m}-${row._id.d}`,
+              {
+                saleAmount: Number(row.saleAmount || 0),
+                costAmount: Number(row.costAmount || 0),
+                grossProfit: Number((Number(row.saleAmount || 0) - Number(row.costAmount || 0)).toFixed(2)),
+              },
+            ]),
+          );
+
+          return {
+            labels,
+            sales: keys.map((key) => Number(map.get(key)?.saleAmount || 0)),
+            cost: keys.map((key) => Number(map.get(key)?.costAmount || 0)),
+            profit: keys.map((key) => Number(map.get(key)?.grossProfit || 0)),
+          };
+        })()
+      : { labels: [], sales: [], cost: [], profit: [] };
 
     return res.status(200).json({
       success: true,
@@ -759,6 +1113,24 @@ exports.getSalesReportOverview = async (req, res) => {
         sales: {
           count: Number(salesAgg[0]?.count || 0),
           totalAmount: Number(salesAgg[0]?.totalAmount || 0),
+          totalCostAmount: canViewSensitiveFinancials(req)
+            ? Number(salesAgg[0]?.totalCostAmount || 0)
+            : 0,
+          grossProfit: canViewSensitiveFinancials(req)
+            ? Number(
+                (Number(salesAgg[0]?.totalAmount || 0) - Number(salesAgg[0]?.totalCostAmount || 0)).toFixed(2),
+              )
+            : 0,
+          grossMarginPercent:
+            canViewSensitiveFinancials(req) && Number(salesAgg[0]?.totalAmount || 0) > 0
+              ? Number(
+                  (
+                    ((Number(salesAgg[0]?.totalAmount || 0) - Number(salesAgg[0]?.totalCostAmount || 0)) /
+                      Number(salesAgg[0]?.totalAmount || 0)) *
+                    100
+                  ).toFixed(2),
+                )
+              : 0,
           totalPaid: Number(salesAgg[0]?.totalPaid || 0),
           totalDue: Number(salesAgg[0]?.totalDue || 0),
           totalReturnedQty: Number(salesAgg[0]?.totalReturnedQty || 0),
@@ -773,6 +1145,47 @@ exports.getSalesReportOverview = async (req, res) => {
           totalDueAdjusted: Number(returnAgg[0]?.totalDueAdjusted || 0),
           totalQty: Number(returnAgg[0]?.totalQty || 0),
         },
+        profitByItem: canViewSensitiveFinancials(req)
+          ? itemProfitAgg.map((row) => ({
+              itemName: row._id?.itemName || "Unnamed Product",
+              modelName: row._id?.model || "",
+              soldQty: Number(row.soldQty || 0),
+              saleAmount: Number(row.saleAmount || 0),
+              costAmount: Number(row.costAmount || 0),
+              grossProfit: Number(row.grossProfit || 0),
+              grossMarginPercent:
+                Number(row.saleAmount || 0) > 0
+                  ? Number(((Number(row.grossProfit || 0) / Number(row.saleAmount || 0)) * 100).toFixed(2))
+                  : 0,
+            }))
+          : [],
+        profitByCustomer: canViewSensitiveFinancials(req)
+          ? customerProfitAgg.map((row) => ({
+              customerName: row._id?.customerName || "Walk-in",
+              billCount: Number(row.billCount || 0),
+              saleAmount: Number(row.saleAmount || 0),
+              costAmount: Number(row.costAmount || 0),
+              grossProfit: Number(row.grossProfit || 0),
+              grossMarginPercent:
+                Number(row.saleAmount || 0) > 0
+                  ? Number(((Number(row.grossProfit || 0) / Number(row.saleAmount || 0)) * 100).toFixed(2))
+                  : 0,
+            }))
+          : [],
+        profitByCategory: canViewSensitiveFinancials(req)
+          ? categoryProfitAgg.map((row) => ({
+              categoryName: row._id?.categoryName || "Uncategorized",
+              soldQty: Number(row.soldQty || 0),
+              saleAmount: Number(row.saleAmount || 0),
+              costAmount: Number(row.costAmount || 0),
+              grossProfit: Number(row.grossProfit || 0),
+              grossMarginPercent:
+                Number(row.saleAmount || 0) > 0
+                  ? Number(((Number(row.grossProfit || 0) / Number(row.saleAmount || 0)) * 100).toFixed(2))
+                  : 0,
+            }))
+          : [],
+        profitTrend,
       },
     });
   } catch (error) {
@@ -1039,6 +1452,13 @@ exports.createSaleReturn = async (req, res) => {
         referenceId: saleReturn._id,
         note: `Sales return credit note ${saleReturn._id}`,
         createdBy: req.user?._id,
+      });
+    }
+
+    if (sale.customer) {
+      await syncCustomerAccountSnapshot({
+        shopId: req.shopId,
+        customerId: sale.customer,
       });
     }
 

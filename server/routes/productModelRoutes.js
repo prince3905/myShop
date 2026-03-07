@@ -4,10 +4,11 @@ const router = express.Router();
 const productModelController = require("../controllers/productModelController");
 const { createProductModelValidation } = require("../middleware/productModelValidation");
 const { validate } = require("../middleware/validate");
-const { protect, attachShop, authorizeRoles } = require("../middleware/authMiddleware");
+const { protect, attachShop, authorizeRoles, requireShopSelectionForWrite } = require("../middleware/authMiddleware");
 
 router.use(protect);
 router.use(attachShop);
+router.use(requireShopSelectionForWrite);
 
 router.post(
   "/",

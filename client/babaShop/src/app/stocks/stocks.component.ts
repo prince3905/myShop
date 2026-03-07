@@ -91,7 +91,7 @@ export class StocksComponent implements OnInit {
 
   constructor(
     private stocksService: StocksService,
-    private authService: AuthService,
+    public authService: AuthService,
     private productService: ProductService,
     private distributorService: DistributorService,
     private purchaseService: PurchaseService,
@@ -115,22 +115,31 @@ export class StocksComponent implements OnInit {
 
   get canAdjustStock(): boolean {
     const role = this.authService.getUserRole();
-    return ["SUPER_ADMIN", "ADMIN", "MANAGER"].includes(role || "");
+    return ["SUPER_ADMIN", "ADMIN", "MANAGER"].includes(role || "") && !this.authService.isGlobalReadOnlyMode();
+  }
+
+  get canViewSensitivePricing(): boolean {
+    return this.authService.canViewSensitivePricing();
+  }
+
+  get canManagePurchases(): boolean {
+    const role = this.authService.getUserRole();
+    return ["SUPER_ADMIN", "ADMIN"].includes(role || "") && !this.authService.isGlobalReadOnlyMode();
   }
 
   get canCreateReorderDraft(): boolean {
     const role = this.authService.getUserRole();
-    return ["SUPER_ADMIN", "ADMIN", "MANAGER"].includes(role || "");
+    return ["SUPER_ADMIN", "ADMIN", "MANAGER"].includes(role || "") && !this.authService.isGlobalReadOnlyMode();
   }
 
   get canManageReconciliation(): boolean {
     const role = this.authService.getUserRole();
-    return ["SUPER_ADMIN", "ADMIN", "MANAGER"].includes(role || "");
+    return ["SUPER_ADMIN", "ADMIN", "MANAGER"].includes(role || "") && !this.authService.isGlobalReadOnlyMode();
   }
 
   get canApproveReconciliation(): boolean {
     const role = this.authService.getUserRole();
-    return ["SUPER_ADMIN", "ADMIN"].includes(role || "");
+    return ["SUPER_ADMIN", "ADMIN"].includes(role || "") && !this.authService.isGlobalReadOnlyMode();
   }
 
   get filteredReconciliationLines(): any[] {

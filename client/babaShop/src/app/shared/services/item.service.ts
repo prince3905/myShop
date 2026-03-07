@@ -15,22 +15,22 @@ export class ItemService {
 
   getItem(data: any) {
     const params = new HttpParams({ fromObject: data });
-    // console.log(params);
     return this.http.get(`${this.baseURL}/api/item`, { params: params });
   }
 
   getItemSuggestion(searchTerm: string) {
-    console.log(searchTerm);
     return this.http.get(`${this.baseURL}/api/item/item-suggestions?term=${searchTerm}`);
   }
 
+  searchProductsForPos(searchTerm: string) {
+    return this.http.get(`${this.baseURL}/api/products/pos-search?term=${encodeURIComponent(searchTerm)}`);
+  }
+
   getSizeSuggestion(searchTerm: string) {
-    console.log(searchTerm);
     return this.http.get(`${this.baseURL}/api/item/size-suggestions?term=${searchTerm}`);
   }
 
   getModelSuggestion(searchTerm: string) {
-    console.log(searchTerm);
     return this.http.get(`${this.baseURL}/api/item/model-suggestions?term=${searchTerm}`);
   }
 

@@ -12,7 +12,7 @@ declare interface RouteInfo {
   class?: string;
   roles: string[];
   children?: RouteInfo[];
-  expanded?: boolean; // 🔥 YE LINE ADD KARO
+  expanded?: boolean;
 }
 
 export const ROUTES: RouteInfo[] = [
@@ -44,7 +44,7 @@ export const ROUTES: RouteInfo[] = [
         path: "/purchase",
         title: "Purchase",
         icon: "shopping_cart",
-        roles: ["SUPER_ADMIN", "ADMIN", "MANAGER"],
+        roles: ["SUPER_ADMIN", "ADMIN"],
       },
     ],
   },
@@ -80,7 +80,7 @@ export const ROUTES: RouteInfo[] = [
       },
       {
         path: "/sales-reports",
-        title: "Reports",
+        title: "Sales & Profit",
         icon: "bar_chart",
         roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"],
       },
@@ -164,21 +164,32 @@ export class SidebarComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    // Keep layout class in sync when component is recreated.
     this.syncBodyClass();
   }
 
   filterMenuByRole(items: RouteInfo[]): RouteInfo[] {
-    return items
-      .filter((item) => item.roles.includes(this.userRole!))
-      .map((item) => {
-        if (item.children) {
-          item.children = item.children.filter((child) =>
-            child.roles.includes(this.userRole!),
-          );
+    return items.reduce((filtered: RouteInfo[], item) => {
+      if (item.children?.length) {
+        const visibleChildren = item.children.filter((child) =>
+          child.roles.includes(this.userRole!),
+        );
+
+        if (visibleChildren.length > 0) {
+          filtered.push({
+            ...item,
+            children: visibleChildren,
+          });
         }
-        return item;
-      });
+
+        return filtered;
+      }
+
+      if (item.roles.includes(this.userRole!)) {
+        filtered.push({ ...item });
+      }
+
+      return filtered;
+    }, []);
   }
   isMobileMenu() {
     if ($(window).width() > 991) {

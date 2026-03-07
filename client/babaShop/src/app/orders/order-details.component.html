@@ -1,0 +1,94 @@
+<div class="main-content">
+  <div class="container-fluid">
+    <div class="card order-detail-card">
+      <div class="card-header card-header-danger detail-header">
+        <div>
+          <h4 class="card-title">Order Details</h4>
+          <p class="card-category">Full order snapshot, customer info, items and totals</p>
+        </div>
+        <div class="detail-actions">
+          <button
+            mat-raised-button
+            color="primary"
+            type="button"
+            *ngIf="(order?.dueAmount || 0) > 0 && !authService.isGlobalReadOnlyMode()"
+            (click)="collectPayment()"
+          >
+            Collect Payment
+          </button>
+          <button mat-stroked-button routerLink="/order">Back to Orders</button>
+        </div>
+      </div>
+
+      <div class="card-body" *ngIf="!loading && order; else loadingState">
+        <div class="detail-grid">
+          <div class="detail-box">
+            <div class="section-title">Order</div>
+            <div class="kv-row"><span>Order No</span><strong>{{ order?.orderNo || order?._id }}</strong></div>
+            <div class="kv-row"><span>Source</span><strong>{{ order?.orderSource || '-' }}</strong></div>
+            <div class="kv-row"><span>Order Status</span><strong>{{ order?.orderStatus || '-' }}</strong></div>
+            <div class="kv-row"><span>Payment Status</span><strong>{{ order?.paymentStatus || '-' }}</strong></div>
+            <div class="kv-row"><span>Payment Method</span><strong>{{ order?.paymentMethod || '-' }}</strong></div>
+            <div class="kv-row"><span>Paid Amount</span><strong>{{ order?.paidAmount | currency:'INR':'symbol':'1.2-2' }}</strong></div>
+            <div class="kv-row"><span>Due Amount</span><strong>{{ order?.dueAmount | currency:'INR':'symbol':'1.2-2' }}</strong></div>
+            <div class="kv-row"><span>Expected Delivery</span><strong>{{ order?.expectedDeliveryDate ? (order.expectedDeliveryDate | date:'mediumDate') : '-' }}</strong></div>
+            <div class="kv-row"><span>Shipped At</span><strong>{{ order?.shippedAt ? (order.shippedAt | date:'medium') : '-' }}</strong></div>
+            <div class="kv-row"><span>Delivered At</span><strong>{{ order?.deliveredAt ? (order.deliveredAt | date:'medium') : '-' }}</strong></div>
+            <div class="kv-row"><span>Created</span><strong>{{ order?.createdAt | date:'medium' }}</strong></div>
+          </div>
+
+          <div class="detail-box">
+            <div class="section-title">Customer</div>
+            <div class="kv-row"><span>Name</span><strong>{{ order?.customer?.name || 'Walk-in / Guest' }}</strong></div>
+            <div class="kv-row"><span>Phone</span><strong>{{ order?.customer?.phone || '-' }}</strong></div>
+            <div class="kv-row"><span>Email</span><strong>{{ order?.customer?.email || '-' }}</strong></div>
+            <div class="kv-row"><span>Delivery Contact</span><strong>{{ order?.deliveryContactName || '-' }}</strong></div>
+            <div class="kv-row"><span>Delivery Phone</span><strong>{{ order?.deliveryPhone || '-' }}</strong></div>
+            <div class="kv-row"><span>Address</span><strong>{{ order?.deliveryAddress || '-' }}</strong></div>
+            <div class="kv-row"><span>Delivery Note</span><strong>{{ order?.deliveryNote || '-' }}</strong></div>
+            <div class="kv-row"><span>Shop</span><strong>{{ order?.shop?.name || '-' }}</strong></div>
+          </div>
+        </div>
+
+        <div class="detail-box items-box">
+          <div class="section-title">Items</div>
+
+          <div class="item-card" *ngFor="let item of order?.items">
+            <div class="item-top">
+              <div>
+                <div class="item-name">{{ item?.productName || '-' }}</div>
+                <div class="item-sub">{{ item?.modelName || '-' }} <span *ngIf="item?.sku">• {{ item.sku }}</span></div>
+              </div>
+              <div class="item-line-total">{{ getLineTotal(item) | currency:'INR':'symbol':'1.2-2' }}</div>
+            </div>
+
+            <div class="item-chips">
+              <span class="mini-chip">Qty: {{ item?.quantity || 0 }}</span>
+              <span class="mini-chip">Rate: {{ item?.sellingPrice | currency:'INR':'symbol':'1.0-0' }}</span>
+              <span class="mini-chip" *ngIf="item?.discountAmount">Discount: {{ item?.discountAmount | currency:'INR':'symbol':'1.0-0' }}</span>
+              <span class="mini-chip" *ngIf="item?.variation?.size">Size: {{ item?.variation?.size }}</span>
+              <span class="mini-chip" *ngIf="item?.variation?.color">Color: {{ item?.variation?.color }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-box totals-box">
+          <div class="section-title">Totals</div>
+          <div class="kv-row"><span>Total Qty</span><strong>{{ order?.totalQuantity || 0 }}</strong></div>
+          <div class="kv-row"><span>Sub Total</span><strong>{{ order?.subTotal | currency:'INR':'symbol':'1.2-2' }}</strong></div>
+          <div class="kv-row"><span>Total Discount</span><strong>{{ order?.totalDiscount | currency:'INR':'symbol':'1.2-2' }}</strong></div>
+          <div class="kv-row"><span>Tax</span><strong>{{ order?.taxAmount | currency:'INR':'symbol':'1.2-2' }}</strong></div>
+          <div class="kv-row"><span>Paid</span><strong>{{ order?.paidAmount | currency:'INR':'symbol':'1.2-2' }}</strong></div>
+          <div class="kv-row"><span>Due</span><strong>{{ order?.dueAmount | currency:'INR':'symbol':'1.2-2' }}</strong></div>
+          <div class="kv-row grand"><span>Total Amount</span><strong>{{ order?.totalAmount | currency:'INR':'symbol':'1.2-2' }}</strong></div>
+        </div>
+      </div>
+
+      <ng-template #loadingState>
+        <div class="loading-state">
+          <mat-spinner color="primary"></mat-spinner>
+        </div>
+      </ng-template>
+    </div>
+  </div>
+</div>

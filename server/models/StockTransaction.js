@@ -56,7 +56,7 @@ const stockTransactionSchema = new mongoose.Schema(
     },
     referenceType: {
       type: String,
-      enum: ["PURCHASE", "SALE", "RETURN", "MANUAL", "RESERVATION"],
+      enum: ["PURCHASE", "SALE", "ORDER", "RETURN", "MANUAL", "RESERVATION"],
       default: "MANUAL",
       index: true,
     },

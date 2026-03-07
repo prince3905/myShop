@@ -40,25 +40,24 @@ export class ViewDistributorComponent implements OnInit {
   }
 
   applyDateFilter() {
+    this.ledger = this.originalLedger.filter((entry) => {
+      const entryDate = new Date(entry.transactionDate);
 
-  this.ledger = this.originalLedger.filter((entry) => {
-    const entryDate = new Date(entry.transactionDate);
+      if (this.fromDate && entryDate < new Date(this.fromDate)) {
+        return false;
+      }
 
-    if (this.fromDate && entryDate < new Date(this.fromDate)) {
-      return false;
-    }
+      if (this.toDate) {
+        const to = new Date(this.toDate);
+        to.setHours(23, 59, 59, 999);
+        if (entryDate > to) return false;
+      }
 
-    if (this.toDate) {
-      const to = new Date(this.toDate);
-      to.setHours(23,59,59,999);
-      if (entryDate > to) return false;
-    }
+      return true;
+    });
 
-    return true;
-  });
-
-  this.calculateSummary();
-}
+    this.calculateSummary();
+  }
 
   resetFilter() {
     this.fromDate = null;
@@ -74,21 +73,16 @@ export class ViewDistributorComponent implements OnInit {
 
     this.distributorService.getDistributorLedger(this.data._id).subscribe({
       next: (res: any) => {
-        // Sort oldest first
         this.ledger = (res.ledger || []).sort(
           (a: any, b: any) =>
             new Date(a.transactionDate).getTime() -
             new Date(b.transactionDate).getTime(),
         );
-        this.ledger = this.ledger;
-      this.originalLedger = [...this.ledger]; 
+        this.originalLedger = [...this.ledger];
         this.calculateSummary();
-        console.log("Distributor Details:", this.data);
-        console.log("Ledger data:", this.ledger);
         this.ledgerLoading = false;
       },
-      error: (err) => {
-        console.error("Ledger fetch error:", err);
+      error: () => {
         this.ledgerLoading = false;
       },
     });

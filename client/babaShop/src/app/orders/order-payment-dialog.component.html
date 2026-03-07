@@ -1,0 +1,36 @@
+<h2 mat-dialog-title>Collect Order Payment</h2>
+
+<mat-dialog-content>
+  <div class="meta">
+    <div>Order: <strong>{{ data?.order?.orderNo || data?.order?._id }}</strong></div>
+    <div>Customer: <strong>{{ data?.order?.customer?.name || 'Walk-in / Guest' }}</strong></div>
+    <div>Total Amount: <strong>Rs {{ data?.order?.totalAmount | number:'1.2-2' }}</strong></div>
+    <div>Due Amount: <strong>Rs {{ data?.order?.dueAmount | number:'1.2-2' }}</strong></div>
+  </div>
+
+  <form [formGroup]="form" class="form-wrap">
+    <mat-form-field appearance="outline">
+      <mat-label>Amount</mat-label>
+      <input matInput type="number" formControlName="amount" min="0.01" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Payment Method</mat-label>
+      <mat-select formControlName="paymentMethod">
+        <mat-option *ngFor="let method of methods" [value]="method">{{ method }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full">
+      <mat-label>Note (optional)</mat-label>
+      <input matInput formControlName="note" />
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" mat-dialog-close>Cancel</button>
+  <button mat-flat-button color="primary" type="button" [disabled]="saving || form.invalid" (click)="submit()">
+    {{ saving ? "Saving..." : "Collect Payment" }}
+  </button>
+</mat-dialog-actions>

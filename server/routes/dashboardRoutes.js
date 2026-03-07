@@ -8,6 +8,11 @@ router.use(protect);
 router.use(attachShop);
 
 router.get(
+  "/overview",
+  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"),
+  dashboardController.getOverview,
+);
+router.get(
   "/kpis",
   authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"),
   dashboardController.getKpis,

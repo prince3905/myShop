@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const productVariationController = require("../controllers/productVariationController");
-const { protect, attachShop, authorizeRoles } = require("../middleware/authMiddleware");
+const { protect, attachShop, authorizeRoles, requireShopSelectionForWrite } = require("../middleware/authMiddleware");
 
 const { validate } = require("../middleware/validate");
 const {
@@ -12,13 +12,14 @@ const {
 
 router.use(protect);
 router.use(attachShop);
+router.use(requireShopSelectionForWrite);
 
 /* =========================
    CREATE PRODUCT VARIATION
 ========================= */
 router.post(
   "/",
-  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER"),
+  authorizeRoles("SUPER_ADMIN", "ADMIN"),
   createVariationValidation,
   validate,
   productVariationController.createVariation
@@ -57,7 +58,7 @@ router.get(
 ========================= */
 router.put(
   "/:id",
-  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER"),
+  authorizeRoles("SUPER_ADMIN", "ADMIN"),
   updateVariationValidation,
   validate,
   productVariationController.updateVariation
@@ -65,7 +66,7 @@ router.put(
 
 router.post(
   "/:id/print-log",
-  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER"),
+  authorizeRoles("SUPER_ADMIN", "ADMIN"),
   productVariationController.logVariationPrint
 );
 
@@ -74,7 +75,7 @@ router.post(
 ========================= */
 router.delete(
   "/:id",
-  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER"),
+  authorizeRoles("SUPER_ADMIN", "ADMIN"),
   productVariationController.deleteVariation
 );
 

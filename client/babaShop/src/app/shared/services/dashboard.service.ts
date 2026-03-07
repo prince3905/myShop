@@ -17,6 +17,10 @@ export class DashboardService {
     return this.http.get(`${this.baseURL}/api/dashboard/kpis`);
   }
 
+  getOverview(): Observable<any> {
+    return this.http.get(`${this.baseURL}/api/dashboard/overview`);
+  }
+
   getTrends(days = 7): Observable<any> {
     return this.http.get(`${this.baseURL}/api/dashboard/trends`, {
       params: { days },
