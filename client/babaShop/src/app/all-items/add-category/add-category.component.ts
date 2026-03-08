@@ -6,6 +6,7 @@ import { MAT_DIALOG_DATA } from "@angular/material/dialog";
 import { Inject } from "@angular/core";
 import { AuthService } from "app/shared/services/auth.service";
 import { PageEvent } from "@angular/material/paginator";
+import { BrandService } from "app/shared/services/brand.service";
 
 @Component({
   selector: "add-category",
@@ -27,9 +28,12 @@ export class AddCategoryComponent {
   pageSize = 5;
   pageIndex = 0;
   totalItems = 0;
+  allBrands: any[] = [];
+  selectedBrands: string[] = [];
 
   constructor(
     private categoryService: CategoryService,
+    private brandService: BrandService,
     private snackBar: MatSnackBar,
     private authService: AuthService,
     public dialogRef: MatDialogRef<any>,
@@ -46,6 +50,18 @@ export class AddCategoryComponent {
     }
 
     this.loadCategories();
+    this.loadBrands();
+  }
+
+  loadBrands(): void {
+    this.brandService.getAllBrands({ limit: 500 }).subscribe({
+      next: (res: any) => {
+        this.allBrands = res?.data || [];
+      },
+      error: () => {
+        this.snackBar.open("Failed to load brands", "Close", { duration: 2500 });
+      },
+    });
   }
 
   loadCategories(): void {
@@ -91,6 +107,9 @@ export class AddCategoryComponent {
     this.categoryId = category?._id;
     this.name = category?.name || "";
     this.description = category?.description || "";
+    this.selectedBrands = Array.isArray(category?.brands)
+      ? category.brands.map((brand: any) => (typeof brand === "string" ? brand : `${brand?._id || ""}`))
+      : [];
   }
 
   resetForm(): void {
@@ -98,6 +117,7 @@ export class AddCategoryComponent {
     this.categoryId = "";
     this.name = "";
     this.description = "";
+    this.selectedBrands = [];
   }
 
   toggleStatus(category: any): void {
@@ -159,6 +179,7 @@ export class AddCategoryComponent {
     const payload = {
       name: this.name.trim(),
       description: this.description?.trim(),
+      brands: this.selectedBrands,
     };
 
     const req$ = this.isEditMode

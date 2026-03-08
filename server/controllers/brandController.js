@@ -1,5 +1,6 @@
 const Brand = require("../models/Brand");
 const Product = require("../models/Product");
+const Category = require("../models/Category");
 const mongoose = require("mongoose");
 
 const isSuperAdminGlobal = (req) =>
@@ -238,6 +239,18 @@ exports.deleteBrand = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "Cannot delete brand. It is used in products."
+      });
+    }
+
+    const categoryUsingBrand = await Category.findOne({
+      shop: req.shopId,
+      brands: id,
+    });
+
+    if (categoryUsingBrand) {
+      return res.status(400).json({
+        success: false,
+        message: "Cannot delete brand. It is mapped inside categories.",
       });
     }
 

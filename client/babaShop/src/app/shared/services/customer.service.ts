@@ -45,4 +45,8 @@ export class CustomerService {
   createCustomer(customerData: any) {
     return this.http.post(`${this.baseURL}/api/customer`, customerData);
   }
+
+  updateCustomer(id: string, customerData: any) {
+    return this.http.put(`${this.baseURL}/api/customer/${id}`, customerData);
+  }
 }

@@ -133,8 +133,10 @@ exports.getStockReport = async (req, res) => {
         totalQuantity: Number(summary.totalQuantity || 0),
         totalReserved: Number(summary.totalReserved || 0),
         totalDamaged: Number(summary.totalDamaged || 0),
-        totalCostValue: canViewSensitivePricing(req) ? Number(summary.totalCostValue || 0) : 0,
         lowStockCount: Number(summary.lowStockCount || 0),
+        ...(canViewSensitivePricing(req)
+          ? { totalCostValue: Number(summary.totalCostValue || 0) }
+          : {}),
       },
     });
   } catch (error) {

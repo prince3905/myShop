@@ -85,7 +85,8 @@ export class ItemDetailsComponent implements OnInit {
 
   openEditProduct(item: any) {
     const dialogRef = this.dialog.open(AddItemsComponent, {
-      width: "500px",
+      width: "820px",
+      maxWidth: "94vw",
       data: { product: item },
     });
 

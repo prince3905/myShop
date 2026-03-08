@@ -7,6 +7,16 @@
         <mat-icon>arrow_back</mat-icon>
         Back to Customers
       </button>
+      <button
+        mat-stroked-button
+        color="primary"
+        class="ml-2"
+        *ngIf="!authService.isGlobalReadOnlyMode()"
+        (click)="editCustomer()"
+      >
+        <mat-icon>edit</mat-icon>
+        Edit Customer
+      </button>
     </div>
 
     <!-- Loading Spinner -->

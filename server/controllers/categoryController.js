@@ -1,5 +1,6 @@
 const Category = require("../models/Category");
 const Product = require("../models/Product");
+const Brand = require("../models/Brand");
 const mongoose = require("mongoose");
 
 const isSuperAdminGlobal = (req) =>
@@ -21,7 +22,7 @@ const parsePagination = (query) => {
 ========================= */
 exports.createCategory = async (req, res) => {
   try {
-    const { name, description, image } = req.body;
+    const { name, description, image, brands = [] } = req.body;
 
     if (!req.shopId) {
       return res.status(400).json({
@@ -50,10 +51,29 @@ exports.createCategory = async (req, res) => {
       });
     }
 
+    const normalizedBrandIds = Array.isArray(brands)
+      ? [...new Set(brands.map((id) => `${id || ""}`.trim()).filter(Boolean))]
+      : [];
+
+    if (normalizedBrandIds.length) {
+      const validBrands = await Brand.countDocuments({
+        _id: { $in: normalizedBrandIds },
+        shop: req.shopId,
+      });
+
+      if (validBrands !== normalizedBrandIds.length) {
+        return res.status(400).json({
+          success: false,
+          message: "One or more selected brands are invalid for this shop",
+        });
+      }
+    }
+
     const category = await Category.create({
       name: cleanName,
       description,
       image,
+      brands: normalizedBrandIds,
       shop: req.shopId,
     });
 
@@ -96,7 +116,7 @@ exports.getCategories = async (req, res) => {
       query.isActive = `${isActive}` === "true";
     }
 
-    let categoryQuery = Category.find(query).sort(sort);
+    let categoryQuery = Category.find(query).populate("brands", "name").sort(sort);
 
     if (limit) {
       categoryQuery = categoryQuery.limit(Number(limit) || 0);
@@ -147,7 +167,7 @@ exports.updateCategory = async (req, res) => {
       });
     }
 
-    const allowedFields = ["name", "description", "image", "isActive"];
+    const allowedFields = ["name", "description", "image", "isActive", "brands"];
     const updateData = {};
 
     for (const field of allowedFields) {
@@ -178,6 +198,28 @@ exports.updateCategory = async (req, res) => {
           message: "Category already exists for this shop",
         });
       }
+    }
+
+    if (updateData.brands !== undefined) {
+      const normalizedBrandIds = Array.isArray(updateData.brands)
+        ? [...new Set(updateData.brands.map((brandId) => `${brandId || ""}`.trim()).filter(Boolean))]
+        : [];
+
+      if (normalizedBrandIds.length) {
+        const validBrands = await Brand.countDocuments({
+          _id: { $in: normalizedBrandIds },
+          shop: req.shopId,
+        });
+
+        if (validBrands !== normalizedBrandIds.length) {
+          return res.status(400).json({
+            success: false,
+            message: "One or more selected brands are invalid for this shop",
+          });
+        }
+      }
+
+      updateData.brands = normalizedBrandIds;
     }
 
     const category = await Category.findOneAndUpdate(

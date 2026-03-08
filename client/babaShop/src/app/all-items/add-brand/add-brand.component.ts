@@ -5,6 +5,7 @@ import { BrandService } from "app/shared/services/brand.service";
 import { Inject } from "@angular/core";
 import { AuthService } from "app/shared/services/auth.service";
 import { PageEvent } from "@angular/material/paginator";
+import { CategoryService } from "app/shared/services/category.service";
 
 @Component({
   selector: "add-brand",
@@ -26,9 +27,11 @@ export class AddBrandComponent {
   pageSize = 5;
   pageIndex = 0;
   totalItems = 0;
+  allCategories: any[] = [];
 
   constructor(
     private brandService: BrandService,
+    private categoryService: CategoryService,
     private snackBar: MatSnackBar,
     private authService: AuthService,
     public dialogRef: MatDialogRef<any>,
@@ -45,6 +48,18 @@ export class AddBrandComponent {
     }
 
     this.loadBrands();
+    this.loadCategories();
+  }
+
+  loadCategories(): void {
+    this.categoryService.getAllCategories({ limit: 500 }).subscribe({
+      next: (res: any) => {
+        this.allCategories = res?.data || [];
+      },
+      error: () => {
+        this.allCategories = [];
+      },
+    });
   }
 
   loadBrands(): void {
@@ -134,6 +149,15 @@ export class AddBrandComponent {
         });
       },
     });
+  }
+
+  getLinkedCategoryNames(brandId: string): string[] {
+    return this.allCategories
+      .filter((category: any) =>
+        Array.isArray(category?.brands) &&
+        category.brands.some((brand: any) => `${typeof brand === "string" ? brand : brand?._id || ""}` === `${brandId}`),
+      )
+      .map((category: any) => category.name);
   }
 
   onSubmit(): void {

@@ -7,6 +7,8 @@ const Sale = require("../models/CustomerSale");
 const Order = require("../models/Order");
 const Purchase = require("../models/Purchase");
 const StockTransaction = require("../models/StockTransaction");
+const Category = require("../models/Category");
+const Brand = require("../models/Brand");
 const { logEntityAudit } = require("../utils/entityAudit.service");
 
 const isSuperAdminGlobal = (req) =>
@@ -79,6 +81,38 @@ const mapProductForPosSearch = (productDoc, matchedBy = [], req = null) => ({
   models: groupVariationsByModel(Array.isArray(productDoc?.variations) ? productDoc.variations : [], req),
 });
 
+const validateCategoryBrandMapping = async ({ shopId, categoryId, brandId }) => {
+  if (!shopId || !categoryId || !brandId) {
+    return { valid: false, message: "Category and brand are required" };
+  }
+
+  const [category, brand] = await Promise.all([
+    Category.findOne({ _id: categoryId, shop: shopId }).select("_id name brands").lean(),
+    Brand.findOne({ _id: brandId, shop: shopId }).select("_id name").lean(),
+  ]);
+
+  if (!category) {
+    return { valid: false, message: "Selected category not found for this shop" };
+  }
+
+  if (!brand) {
+    return { valid: false, message: "Selected brand not found for this shop" };
+  }
+
+  const mappedBrandIds = Array.isArray(category.brands)
+    ? category.brands.map((row) => `${row}`)
+    : [];
+
+  if (mappedBrandIds.length && !mappedBrandIds.includes(`${brand._id}`)) {
+    return {
+      valid: false,
+      message: `Brand "${brand.name}" is not mapped to category "${category.name}"`,
+    };
+  }
+
+  return { valid: true, category, brand };
+};
+
 const getProductUsageSummary = async ({ productId, shopId, variationIds = [] }) => {
   const hasVariationIds = Array.isArray(variationIds) && variationIds.length > 0;
   const variationClause = hasVariationIds
@@ -134,6 +168,19 @@ exports.createProduct = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "Please select a shop first",
+      });
+    }
+
+    const mappingCheck = await validateCategoryBrandMapping({
+      shopId: req.shopId,
+      categoryId: category,
+      brandId: brand,
+    });
+
+    if (!mappingCheck.valid) {
+      return res.status(400).json({
+        success: false,
+        message: mappingCheck.message,
       });
     }
 
@@ -386,6 +433,37 @@ exports.updateProduct = async (req, res) => {
 
     if (updateData.name) {
       updateData.slug = slugify(updateData.name, { lower: true, strict: true });
+    }
+
+    if (updateData.category !== undefined || updateData.brand !== undefined) {
+      const existingProduct = await Product.findOne({
+        _id: id,
+        shop: req.shopId,
+        isDeleted: { $ne: true },
+      }).select("category brand");
+
+      if (!existingProduct) {
+        return res.status(404).json({
+          success: false,
+          message: "Product not found",
+        });
+      }
+
+      const nextCategory = updateData.category !== undefined ? updateData.category : existingProduct.category;
+      const nextBrand = updateData.brand !== undefined ? updateData.brand : existingProduct.brand;
+
+      const mappingCheck = await validateCategoryBrandMapping({
+        shopId: req.shopId,
+        categoryId: nextCategory,
+        brandId: nextBrand,
+      });
+
+      if (!mappingCheck.valid) {
+        return res.status(400).json({
+          success: false,
+          message: mappingCheck.message,
+        });
+      }
     }
 
     const product = await Product.findOneAndUpdate(

@@ -299,6 +299,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return !this.isStaff;
   }
 
+  get canViewReturnAmounts(): boolean {
+    return !this.isStaff;
+  }
+
   get dashboardTitle(): string {
     if (this.isStaff) {
       return "Daily Workboard";

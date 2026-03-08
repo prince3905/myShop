@@ -24,6 +24,7 @@ export class AddItemsComponent implements OnInit {
   };
   categories: any[] = [];
   brands: any[] = [];
+  filteredBrands: any[] = [];
 
   isLoading = false;
   private returnTo: string | null = null;
@@ -64,6 +65,7 @@ export class AddItemsComponent implements OnInit {
     this.category.getAllCategories().subscribe(
       (res: any) => {
         this.categories = res.data || [];
+        this.updateFilteredBrands();
       },
       (err) => console.error("Category Load Error:", err),
     );
@@ -71,9 +73,38 @@ export class AddItemsComponent implements OnInit {
     this.brand.getAllBrands().subscribe(
       (res: any) => {
         this.brands = res.data || [];
+        this.updateFilteredBrands();
       },
       (err) => console.error("Brand Load Error:", err),
     );
+  }
+
+  onCategoryChange(): void {
+    this.updateFilteredBrands();
+  }
+
+  private updateFilteredBrands(): void {
+    const selectedCategory = this.categories.find(
+      (category) => `${category?._id || ""}` === `${this.product.category || ""}`,
+    );
+
+    const categoryBrandIds = Array.isArray(selectedCategory?.brands)
+      ? selectedCategory.brands.map((brand: any) =>
+          typeof brand === "string" ? brand : `${brand?._id || ""}`,
+        )
+      : [];
+
+    this.filteredBrands = categoryBrandIds.length
+      ? this.brands.filter((brand) => categoryBrandIds.includes(`${brand?._id || ""}`))
+      : this.brands;
+
+    const selectedBrandStillValid = this.filteredBrands.some(
+      (brand) => `${brand?._id || ""}` === `${this.product.brand || ""}`,
+    );
+
+    if (this.product.brand && !selectedBrandStillValid) {
+      this.product.brand = "";
+    }
   }
 
   cancel(): void {

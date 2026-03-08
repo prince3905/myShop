@@ -21,6 +21,7 @@ export class ItemsListComponent implements OnInit {
   panelOpenState = false;
   Category: any = [];
   Brands: any = [];
+  filteredBrands: any[] = [];
   allItems: any[] = [];
   items: any[] = [];
   name: string;
@@ -157,6 +158,7 @@ export class ItemsListComponent implements OnInit {
       next: (response: any) => {
         this.Category = this.extractList(response?.categories);
         this.Brands = this.extractList(response?.brands);
+        this.updateFilteredBrands();
         this.summaryCounts.categories = this.Category.length;
         this.summaryCounts.brands = this.Brands.length;
       },
@@ -217,6 +219,7 @@ export class ItemsListComponent implements OnInit {
     if (this.paginator) {
       this.paginator.pageIndex = 0;
     }
+    this.updateFilteredBrands();
     this.updatePaginatedItems();
   }
 
@@ -224,6 +227,7 @@ export class ItemsListComponent implements OnInit {
     if (this.paginator) {
       this.paginator.pageIndex = 0;
     }
+    this.updateFilteredBrands();
     this.applyFilters();
   }
 
@@ -246,6 +250,7 @@ export class ItemsListComponent implements OnInit {
     if (this.paginator) {
       this.paginator.pageIndex = 0;
     }
+    this.updateFilteredBrands();
     this.updatePaginatedItems();
   }
 
@@ -335,6 +340,30 @@ export class ItemsListComponent implements OnInit {
     return [];
   }
 
+  private updateFilteredBrands(): void {
+    const selectedCategoryObj = this.Category.find(
+      (category: any) => `${category?._id || ""}` === `${this.selectedCategory || ""}`,
+    );
+
+    const mappedBrandIds = Array.isArray(selectedCategoryObj?.brands)
+      ? selectedCategoryObj.brands.map((brand: any) =>
+          typeof brand === "string" ? brand : `${brand?._id || ""}`,
+        )
+      : [];
+
+    this.filteredBrands = mappedBrandIds.length
+      ? this.Brands.filter((brand: any) => mappedBrandIds.includes(`${brand?._id || ""}`))
+      : [...this.Brands];
+
+    const isSelectedBrandValid = this.filteredBrands.some(
+      (brand: any) => `${brand?._id || ""}` === `${this.selectedBrand || ""}`,
+    );
+
+    if (this.selectedBrand && !isSelectedBrandValid) {
+      this.selectedBrand = null;
+    }
+  }
+
   openAddItemModal(): void {
     const dialogRef = this.dialog.open(AddItemsComponent, {
       width: "500px",
@@ -349,9 +378,9 @@ export class ItemsListComponent implements OnInit {
 
   openAddCategoryModal(): void {
     const dialogRef = this.dialog.open(AddCategoryComponent, {
-      width: "960px",
+      width: "1240px",
       maxWidth: "96vw",
-      height: "86vh",
+      height: "90vh",
     });
 
     dialogRef.afterClosed().subscribe((result) => {
@@ -363,9 +392,9 @@ export class ItemsListComponent implements OnInit {
 
   openAddBrandModal(): void {
     const dialogRef = this.dialog.open(AddBrandComponent, {
-      width: "960px",
+      width: "1240px",
       maxWidth: "96vw",
-      height: "86vh",
+      height: "90vh",
     });
 
     dialogRef.afterClosed().subscribe((result) => {

@@ -1,5 +1,8 @@
 import { Component, OnInit } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
+import { AddCustomerDialogComponent } from 'app/sales/add-customer-dialog/add-customer-dialog.component';
+import { AuthService } from 'app/shared/services/auth.service';
 import { CustomerService } from 'app/shared/services/customer.service';
 
 @Component({
@@ -31,7 +34,9 @@ export class CustomerDetailsComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private customerService: CustomerService
+    private customerService: CustomerService,
+    private dialog: MatDialog,
+    public authService: AuthService,
   ) { }
 
   ngOnInit(): void {
@@ -150,6 +155,25 @@ export class CustomerDetailsComponent implements OnInit {
 
   goBack(): void {
     this.router.navigate(['/customer']);
+  }
+
+  editCustomer(): void {
+    if (this.authService.isGlobalReadOnlyMode() || !this.customer?._id) {
+      return;
+    }
+
+    const dialogRef = this.dialog.open(AddCustomerDialogComponent, {
+      width: '420px',
+      disableClose: true,
+      data: { customer: this.customer },
+    });
+
+    dialogRef.afterClosed().subscribe((updatedCustomer) => {
+      if (!updatedCustomer?._id) {
+        return;
+      }
+      this.loadCustomer(updatedCustomer._id);
+    });
   }
 
   viewTransaction(entry: any): void {

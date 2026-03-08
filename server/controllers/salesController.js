@@ -23,6 +23,9 @@ const ALLOWED_PAYMENT_METHODS = new Set(["CASH", "BANK", "ONLINE", "UPI", "CARD"
 const canViewSensitiveFinancials = (req) =>
   ["SUPER_ADMIN", "ADMIN"].includes(`${req.user?.role || ""}`);
 
+const getNetSaleItemQuantity = (item = {}) =>
+  Math.max(0, Number(item?.quantity || 0) - Number(item?.returnedQuantity || 0));
+
 const sumSaleReturnedByVariation = async ({ shopId, saleId }) => {
   const rows = await SaleReturn.aggregate([
     { $match: { shop: shopId, sale: saleId, status: "APPROVED" } },
@@ -465,56 +468,67 @@ exports.getSales = async (req, res) => {
       Sale.countDocuments(query),
     ]);
 
+    const allowFinancials = canViewSensitiveFinancials(req);
     const itemResults = rows.map((s) => {
       const totalCostAmount = Number(
         (s.items || []).reduce(
-          (acc, it) => acc + Number(it?.quantity || 0) * Number(it?.purchasePrice || 0),
+          (acc, it) => acc + getNetSaleItemQuantity(it) * Number(it?.purchasePrice || 0),
           0,
         ),
       );
-      const totalSaleAmount = Number(s.totalAmount || 0);
+      const totalSaleAmount = Number(
+        (Number(s.totalAmount || 0) - Number(s.returnedAmount || 0)).toFixed(2),
+      );
       const grossProfit = Number((totalSaleAmount - totalCostAmount).toFixed(2));
       const grossMarginPercent = totalSaleAmount > 0
         ? Number(((grossProfit / totalSaleAmount) * 100).toFixed(2))
         : 0;
 
       return {
-      _id: s._id,
-      invoiceNo: s.invoiceNo || null,
-      customerName: s.customerName || "Walk-in",
-      totalPurchasePrice: Number(s.totalAmount || 0),
-      totalSaleAmount,
-      totalCostAmount,
-      grossProfit,
-      grossMarginPercent,
-      billDiscount: Number(s.billDiscount || 0),
-      paidAmount: Number(s.paidAmount || 0),
-      dueAmount: Number(s.dueAmount || 0),
-      totalQuantity: Number(s.totalQuantity || 0),
-      returnedQuantity: Number(s.returnedQuantity || 0),
-      returnedAmount: Number(s.returnedAmount || 0),
-      refundedAmount: Number(s.refundedAmount || 0),
-      dueAdjustedAmount: Number(s.dueAdjustedAmount || 0),
-      creditedAmount: Number(s.creditedAmount || 0),
-      purchaseDate: s.createdAt,
-      paymentMethod: s.paymentMethod,
-      status: s.status,
-      items: (s.items || []).map((it) => ({
-        item: it.item,
-        variationId: it.variationId,
-        variationSku: it.variationSku,
-        itemName: it.itemName || "-",
-        brand: { name: it.brandName || "-" },
-        category: { name: it.categoryName || "-" },
-        model: it.model || "-",
-        size: it.size || "-",
-        quantity: Number(it.quantity || 0),
-        returnedQuantity: Number(it.returnedQuantity || 0),
-        costPrice: Number(it.purchasePrice || 0),
-        purchasePrice: Number(it.sellingPrice || 0),
-        lineCost: Number((Number(it.quantity || 0) * Number(it.purchasePrice || 0)).toFixed(2)),
-        lineSale: Number((Number(it.quantity || 0) * Number(it.sellingPrice || 0)).toFixed(2)),
-      })),
+        _id: s._id,
+        invoiceNo: s.invoiceNo || null,
+        customerName: s.customerName || "Walk-in",
+        totalPurchasePrice: Number(s.totalAmount || 0),
+        totalSaleAmount,
+        ...(allowFinancials
+          ? {
+              totalCostAmount,
+              grossProfit,
+              grossMarginPercent,
+            }
+          : {}),
+        billDiscount: Number(s.billDiscount || 0),
+        paidAmount: Number(s.paidAmount || 0),
+        dueAmount: Number(s.dueAmount || 0),
+        totalQuantity: Number(s.totalQuantity || 0),
+        returnedQuantity: Number(s.returnedQuantity || 0),
+        returnedAmount: Number(s.returnedAmount || 0),
+        refundedAmount: Number(s.refundedAmount || 0),
+        dueAdjustedAmount: Number(s.dueAdjustedAmount || 0),
+        creditedAmount: Number(s.creditedAmount || 0),
+        purchaseDate: s.createdAt,
+        paymentMethod: s.paymentMethod,
+        status: s.status,
+        items: (s.items || []).map((it) => ({
+          item: it.item,
+          variationId: it.variationId,
+          variationSku: it.variationSku,
+          itemName: it.itemName || "-",
+          brand: { name: it.brandName || "-" },
+          category: { name: it.categoryName || "-" },
+          model: it.model || "-",
+          size: it.size || "-",
+          quantity: Number(it.quantity || 0),
+          returnedQuantity: Number(it.returnedQuantity || 0),
+          purchasePrice: Number(it.sellingPrice || 0),
+          lineSale: Number((Number(it.quantity || 0) * Number(it.sellingPrice || 0)).toFixed(2)),
+          ...(allowFinancials
+            ? {
+                costPrice: Number(it.purchasePrice || 0),
+                lineCost: Number((Number(it.quantity || 0) * Number(it.purchasePrice || 0)).toFixed(2)),
+              }
+            : {}),
+        })),
       };
     });
 
@@ -873,6 +887,30 @@ exports.getSalesReportOverview = async (req, res) => {
         { $match: saleQuery },
         {
           $addFields: {
+            totalReturnedCostAmount: {
+              $sum: {
+                $map: {
+                  input: { $ifNull: ["$items", []] },
+                  as: "item",
+                  in: {
+                    $multiply: [
+                      {
+                        $max: [
+                          {
+                            $subtract: [
+                              { $toDouble: { $ifNull: ["$$item.quantity", 0] } },
+                              { $toDouble: { $ifNull: ["$$item.returnedQuantity", 0] } },
+                            ],
+                          },
+                          0,
+                        ],
+                      },
+                      { $toDouble: { $ifNull: ["$$item.purchasePrice", 0] } },
+                    ],
+                  },
+                },
+              },
+            },
             totalCostAmount: {
               $sum: {
                 $map: {
@@ -893,8 +931,15 @@ exports.getSalesReportOverview = async (req, res) => {
           $group: {
             _id: null,
             count: { $sum: 1 },
-            totalAmount: { $sum: "$totalAmount" },
-            totalCostAmount: { $sum: "$totalCostAmount" },
+            totalAmount: {
+              $sum: {
+                $subtract: [
+                  { $ifNull: ["$totalAmount", 0] },
+                  { $ifNull: ["$returnedAmount", 0] },
+                ],
+              },
+            },
+            totalCostAmount: { $sum: "$totalReturnedCostAmount" },
             totalPaid: { $sum: "$paidAmount" },
             totalDue: { $sum: "$dueAmount" },
             totalReturnedQty: { $sum: "$returnedQuantity" },
@@ -927,11 +972,33 @@ exports.getSalesReportOverview = async (req, res) => {
                   itemName: "$items.itemName",
                   model: "$items.model",
                 },
-                soldQty: { $sum: { $toDouble: { $ifNull: ["$items.quantity", 0] } } },
+                soldQty: {
+                  $sum: {
+                    $max: [
+                      {
+                        $subtract: [
+                          { $toDouble: { $ifNull: ["$items.quantity", 0] } },
+                          { $toDouble: { $ifNull: ["$items.returnedQuantity", 0] } },
+                        ],
+                      },
+                      0,
+                    ],
+                  },
+                },
                 saleAmount: {
                   $sum: {
                     $multiply: [
-                      { $toDouble: { $ifNull: ["$items.quantity", 0] } },
+                      {
+                        $max: [
+                          {
+                            $subtract: [
+                              { $toDouble: { $ifNull: ["$items.quantity", 0] } },
+                              { $toDouble: { $ifNull: ["$items.returnedQuantity", 0] } },
+                            ],
+                          },
+                          0,
+                        ],
+                      },
                       { $toDouble: { $ifNull: ["$items.sellingPrice", 0] } },
                     ],
                   },
@@ -939,7 +1006,17 @@ exports.getSalesReportOverview = async (req, res) => {
                 costAmount: {
                   $sum: {
                     $multiply: [
-                      { $toDouble: { $ifNull: ["$items.quantity", 0] } },
+                      {
+                        $max: [
+                          {
+                            $subtract: [
+                              { $toDouble: { $ifNull: ["$items.quantity", 0] } },
+                              { $toDouble: { $ifNull: ["$items.returnedQuantity", 0] } },
+                            ],
+                          },
+                          0,
+                        ],
+                      },
                       { $toDouble: { $ifNull: ["$items.purchasePrice", 0] } },
                     ],
                   },
@@ -960,6 +1037,12 @@ exports.getSalesReportOverview = async (req, res) => {
             { $match: saleQuery },
             {
               $addFields: {
+                totalNetAmount: {
+                  $subtract: [
+                    { $ifNull: ["$totalAmount", 0] },
+                    { $ifNull: ["$returnedAmount", 0] },
+                  ],
+                },
                 totalCostAmount: {
                   $sum: {
                     $map: {
@@ -967,7 +1050,17 @@ exports.getSalesReportOverview = async (req, res) => {
                       as: "item",
                       in: {
                         $multiply: [
-                          { $toDouble: { $ifNull: ["$$item.quantity", 0] } },
+                          {
+                            $max: [
+                              {
+                                $subtract: [
+                                  { $toDouble: { $ifNull: ["$$item.quantity", 0] } },
+                                  { $toDouble: { $ifNull: ["$$item.returnedQuantity", 0] } },
+                                ],
+                              },
+                              0,
+                            ],
+                          },
                           { $toDouble: { $ifNull: ["$$item.purchasePrice", 0] } },
                         ],
                       },
@@ -980,7 +1073,7 @@ exports.getSalesReportOverview = async (req, res) => {
               $group: {
                 _id: { customerName: "$customerName" },
                 billCount: { $sum: 1 },
-                saleAmount: { $sum: "$totalAmount" },
+                saleAmount: { $sum: "$totalNetAmount" },
                 costAmount: { $sum: "$totalCostAmount" },
               },
             },
@@ -1000,11 +1093,33 @@ exports.getSalesReportOverview = async (req, res) => {
             {
               $group: {
                 _id: { categoryName: "$items.categoryName" },
-                soldQty: { $sum: { $toDouble: { $ifNull: ["$items.quantity", 0] } } },
+                soldQty: {
+                  $sum: {
+                    $max: [
+                      {
+                        $subtract: [
+                          { $toDouble: { $ifNull: ["$items.quantity", 0] } },
+                          { $toDouble: { $ifNull: ["$items.returnedQuantity", 0] } },
+                        ],
+                      },
+                      0,
+                    ],
+                  },
+                },
                 saleAmount: {
                   $sum: {
                     $multiply: [
-                      { $toDouble: { $ifNull: ["$items.quantity", 0] } },
+                      {
+                        $max: [
+                          {
+                            $subtract: [
+                              { $toDouble: { $ifNull: ["$items.quantity", 0] } },
+                              { $toDouble: { $ifNull: ["$items.returnedQuantity", 0] } },
+                            ],
+                          },
+                          0,
+                        ],
+                      },
                       { $toDouble: { $ifNull: ["$items.sellingPrice", 0] } },
                     ],
                   },
@@ -1012,7 +1127,17 @@ exports.getSalesReportOverview = async (req, res) => {
                 costAmount: {
                   $sum: {
                     $multiply: [
-                      { $toDouble: { $ifNull: ["$items.quantity", 0] } },
+                      {
+                        $max: [
+                          {
+                            $subtract: [
+                              { $toDouble: { $ifNull: ["$items.quantity", 0] } },
+                              { $toDouble: { $ifNull: ["$items.returnedQuantity", 0] } },
+                            ],
+                          },
+                          0,
+                        ],
+                      },
                       { $toDouble: { $ifNull: ["$items.purchasePrice", 0] } },
                     ],
                   },
@@ -1038,6 +1163,12 @@ exports.getSalesReportOverview = async (req, res) => {
             },
             {
               $addFields: {
+                totalNetAmount: {
+                  $subtract: [
+                    { $ifNull: ["$totalAmount", 0] },
+                    { $ifNull: ["$returnedAmount", 0] },
+                  ],
+                },
                 totalCostAmount: {
                   $sum: {
                     $map: {
@@ -1045,7 +1176,17 @@ exports.getSalesReportOverview = async (req, res) => {
                       as: "item",
                       in: {
                         $multiply: [
-                          { $toDouble: { $ifNull: ["$$item.quantity", 0] } },
+                          {
+                            $max: [
+                              {
+                                $subtract: [
+                                  { $toDouble: { $ifNull: ["$$item.quantity", 0] } },
+                                  { $toDouble: { $ifNull: ["$$item.returnedQuantity", 0] } },
+                                ],
+                              },
+                              0,
+                            ],
+                          },
                           { $toDouble: { $ifNull: ["$$item.purchasePrice", 0] } },
                         ],
                       },
@@ -1061,7 +1202,7 @@ exports.getSalesReportOverview = async (req, res) => {
                   m: { $month: "$createdAt" },
                   d: { $dayOfMonth: "$createdAt" },
                 },
-                saleAmount: { $sum: "$totalAmount" },
+                saleAmount: { $sum: "$totalNetAmount" },
                 costAmount: { $sum: "$totalCostAmount" },
               },
             },

@@ -17,6 +17,16 @@
           <textarea matInput name="description" [(ngModel)]="description"></textarea>
         </mat-form-field>
 
+        <mat-form-field class="example-full-width">
+          <mat-label>Linked Brands</mat-label>
+          <mat-select name="selectedBrands" [(ngModel)]="selectedBrands" multiple>
+            <mat-option *ngFor="let brand of allBrands" [value]="brand._id">
+              {{ brand.name }}
+            </mat-option>
+          </mat-select>
+          <mat-hint>Sirf yehi brands is category ke products me selectable honge.</mat-hint>
+        </mat-form-field>
+
         <div class="form-actions">
           <button mat-raised-button type="submit" class="btn btn-danger" [disabled]="!categoryForm.valid || isLoading">
             {{ isLoading ? "Saving..." : (isEditMode ? "Update Category" : "Add Category") }}
@@ -51,6 +61,7 @@
             <tr>
               <th>Name</th>
               <th>Description</th>
+              <th>Brands</th>
               <th>Status</th>
               <th>Action</th>
             </tr>
@@ -59,6 +70,7 @@
             <tr *ngFor="let category of categories">
               <td>{{ category.name }}</td>
               <td>{{ category.description || "-" }}</td>
+              <td>{{ category.brands?.length || 0 }} brands</td>
               <td>
                 <span class="status-pill" [ngClass]="category.isActive ? 'active' : 'inactive'">
                   {{ category.isActive ? "Active" : "Inactive" }}
@@ -77,7 +89,7 @@
               </td>
             </tr>
             <tr *ngIf="categories.length === 0">
-              <td colspan="4" class="text-center">No categories found</td>
+              <td colspan="5" class="text-center">No categories found</td>
             </tr>
           </tbody>
         </table>

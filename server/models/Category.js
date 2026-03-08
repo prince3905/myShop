@@ -13,6 +13,11 @@ const categorySchema = new mongoose.Schema({
 
   image: String,
 
+  brands: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Brand",
+  }],
+
   shop: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Shop",

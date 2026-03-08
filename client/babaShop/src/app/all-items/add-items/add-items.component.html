@@ -21,7 +21,7 @@
       <!-- Category -->
       <mat-form-field appearance="outline" class="full-width">
         <mat-label>Select Category</mat-label>
-        <mat-select [(ngModel)]="product.category" name="category" required>
+        <mat-select [(ngModel)]="product.category" name="category" required (selectionChange)="onCategoryChange()">
           <mat-option *ngFor="let cat of categories" [value]="cat._id">
             {{ cat.name }}
           </mat-option>
@@ -31,11 +31,14 @@
       <!-- Brand -->
       <mat-form-field appearance="outline" class="full-width">
         <mat-label>Select Brand</mat-label>
-        <mat-select [(ngModel)]="product.brand" name="brand" required>
-          <mat-option *ngFor="let b of brands" [value]="b._id">
+        <mat-select [(ngModel)]="product.brand" name="brand" required [disabled]="!product.category">
+          <mat-option *ngFor="let b of filteredBrands" [value]="b._id">
             {{ b.name }}
           </mat-option>
         </mat-select>
+        <mat-hint *ngIf="product.category && !filteredBrands.length">
+          No brands mapped to this category
+        </mat-hint>
       </mat-form-field>
 
       <!-- Description -->

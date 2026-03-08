@@ -77,6 +77,30 @@ export class CustomersComponent implements OnInit {
     });
   }
 
+  openEditCustomerDialog(customer: any): void {
+    if (this.authService.isGlobalReadOnlyMode() || !customer?._id) {
+      return;
+    }
+
+    const dialogRef = this.dialog.open(AddCustomerDialogComponent, {
+      width: '420px',
+      disableClose: true,
+      data: { customer },
+    });
+
+    dialogRef.afterClosed().subscribe((updatedCustomer) => {
+      if (!updatedCustomer) {
+        return;
+      }
+
+      this.getAllCustomer({
+        page: this.currentPageIndex + 1,
+        perPage: this.pageSize,
+        ...(this.name.trim() ? { name: this.name.trim() } : {}),
+      });
+    });
+  }
+
   getAllCustomer(queryParamsObj: any): void {
     this.loading = true;
     this.customerService.getCustomer(queryParamsObj).subscribe(

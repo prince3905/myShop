@@ -46,12 +46,15 @@
           <ng-container *ngIf="selectedOption === 'name' || selectedOption === 'category' || selectedOption === 'brand'">
             <mat-form-field appearance="outline" class="filter-field">
               <mat-label>Brand</mat-label>
-              <mat-select [(ngModel)]="selectedBrand" (ngModelChange)="onFilterInputChange()">
+              <mat-select [(ngModel)]="selectedBrand" (ngModelChange)="onFilterInputChange()" [disabled]="(selectedOption === 'name' || selectedOption === 'category') && !selectedCategory">
                 <mat-option [value]="null">All Brands</mat-option>
-                <mat-option *ngFor="let brand of Brands" [value]="brand._id">
+                <mat-option *ngFor="let brand of filteredBrands" [value]="brand._id">
                   {{ brand.name }}
                 </mat-option>
               </mat-select>
+              <mat-hint *ngIf="(selectedOption === 'name' || selectedOption === 'category') && selectedCategory && !filteredBrands.length">
+                No brands mapped to this category
+              </mat-hint>
             </mat-form-field>
           </ng-container>
 

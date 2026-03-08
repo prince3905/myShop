@@ -1,8 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { MatDialogRef } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { CustomerService } from 'app/shared/services/customer.service';
+import { Inject } from '@angular/core';
 
 @Component({
   selector: 'app-add-customer-dialog',
@@ -17,7 +18,8 @@ export class AddCustomerDialogComponent implements OnInit {
     private fb: FormBuilder,
     private customerService: CustomerService,
     private snackBar: MatSnackBar,
-    private dialogRef: MatDialogRef<AddCustomerDialogComponent>
+    private dialogRef: MatDialogRef<AddCustomerDialogComponent>,
+    @Inject(MAT_DIALOG_DATA) public data: any,
   ) {
     this.customerForm = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(2)]],
@@ -27,7 +29,23 @@ export class AddCustomerDialogComponent implements OnInit {
     });
   }
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    const customer = this.data?.customer || null;
+    if (!customer) {
+      return;
+    }
+
+    this.customerForm.patchValue({
+      name: customer.name || '',
+      phone: customer.phone || '',
+      email: customer.email || '',
+      address: customer.address || '',
+    });
+  }
+
+  get isEditMode(): boolean {
+    return !!this.data?.customer?._id;
+  }
 
   onSubmit(): void {
     if (this.customerForm.invalid) {
@@ -37,23 +55,27 @@ export class AddCustomerDialogComponent implements OnInit {
     this.loading = true;
     const customerData = this.customerForm.value;
 
-    this.customerService.createCustomer(customerData).subscribe(
+    const request$ = this.isEditMode
+      ? this.customerService.updateCustomer(this.data.customer._id, customerData)
+      : this.customerService.createCustomer(customerData);
+
+    request$.subscribe(
       (response: any) => {
         this.loading = false;
         if (response.success) {
-          this.snackBar.open('Customer added successfully!', 'Close', {
+          this.snackBar.open(this.isEditMode ? 'Customer updated successfully!' : 'Customer added successfully!', 'Close', {
             duration: 3000
           });
           this.dialogRef.close(response.customer);
         } else {
-          this.snackBar.open(response.message || 'Error adding customer', 'Close', {
+          this.snackBar.open(response.message || (this.isEditMode ? 'Error updating customer' : 'Error adding customer'), 'Close', {
             duration: 3000
           });
         }
       },
       (error: any) => {
         this.loading = false;
-        this.snackBar.open(error?.error?.message || 'Error adding customer', 'Close', {
+        this.snackBar.open(error?.error?.message || (this.isEditMode ? 'Error updating customer' : 'Error adding customer'), 'Close', {
           duration: 3000
         });
       }
@@ -64,4 +86,3 @@ export class AddCustomerDialogComponent implements OnInit {
     this.dialogRef.close();
   }
 }
-

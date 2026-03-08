@@ -131,33 +131,54 @@
                 <div class="analytics-strip">
                     <div class="analytics-card return-card dashboard-click-card" (click)="openReturns()">
                         <div class="title">{{ isManager ? 'Returns Today' : 'Returns Today' }}</div>
-                        <div class="amount">₹ {{ returnAnalytics?.today?.totalAmount | number:'1.2-2' }}</div>
-                        <div class="meta">
+                        <div class="amount" *ngIf="canViewReturnAmounts; else todayReturnOpsOnly">₹ {{ returnAnalytics?.today?.totalAmount | number:'1.2-2' }}</div>
+                        <ng-template #todayReturnOpsOnly>
+                            <div class="amount">{{ returnAnalytics?.today?.count || 0 }}</div>
+                        </ng-template>
+                        <div class="meta" *ngIf="canViewReturnAmounts; else todayReturnOpsMeta">
                             Refund: ₹ {{ returnAnalytics?.today?.totalRefund | number:'1.2-2' }} |
                             Credit: ₹ {{ returnAnalytics?.today?.totalCredit | number:'1.2-2' }} |
                             Qty: {{ returnAnalytics?.today?.totalQty || 0 }} |
                             Count: {{ returnAnalytics?.today?.count || 0 }}
                         </div>
+                        <ng-template #todayReturnOpsMeta>
+                            Qty: {{ returnAnalytics?.today?.totalQty || 0 }} |
+                            Count: {{ returnAnalytics?.today?.count || 0 }}
+                        </ng-template>
                     </div>
                     <div class="analytics-card return-card dashboard-click-card" (click)="openReturns()">
                         <div class="title">Returns Weekly</div>
-                        <div class="amount">₹ {{ returnAnalytics?.weekly?.totalAmount | number:'1.2-2' }}</div>
-                        <div class="meta">
+                        <div class="amount" *ngIf="canViewReturnAmounts; else weeklyReturnOpsOnly">₹ {{ returnAnalytics?.weekly?.totalAmount | number:'1.2-2' }}</div>
+                        <ng-template #weeklyReturnOpsOnly>
+                            <div class="amount">{{ returnAnalytics?.weekly?.count || 0 }}</div>
+                        </ng-template>
+                        <div class="meta" *ngIf="canViewReturnAmounts; else weeklyReturnOpsMeta">
                             Refund: ₹ {{ returnAnalytics?.weekly?.totalRefund | number:'1.2-2' }} |
                             Credit: ₹ {{ returnAnalytics?.weekly?.totalCredit | number:'1.2-2' }} |
                             Qty: {{ returnAnalytics?.weekly?.totalQty || 0 }} |
                             Count: {{ returnAnalytics?.weekly?.count || 0 }}
                         </div>
+                        <ng-template #weeklyReturnOpsMeta>
+                            Qty: {{ returnAnalytics?.weekly?.totalQty || 0 }} |
+                            Count: {{ returnAnalytics?.weekly?.count || 0 }}
+                        </ng-template>
                     </div>
                     <div class="analytics-card return-card dashboard-click-card" (click)="openReturns()">
                         <div class="title">Returns Monthly</div>
-                        <div class="amount">₹ {{ returnAnalytics?.monthly?.totalAmount | number:'1.2-2' }}</div>
-                        <div class="meta">
+                        <div class="amount" *ngIf="canViewReturnAmounts; else monthlyReturnOpsOnly">₹ {{ returnAnalytics?.monthly?.totalAmount | number:'1.2-2' }}</div>
+                        <ng-template #monthlyReturnOpsOnly>
+                            <div class="amount">{{ returnAnalytics?.monthly?.count || 0 }}</div>
+                        </ng-template>
+                        <div class="meta" *ngIf="canViewReturnAmounts; else monthlyReturnOpsMeta">
                             Refund: ₹ {{ returnAnalytics?.monthly?.totalRefund | number:'1.2-2' }} |
                             Credit: ₹ {{ returnAnalytics?.monthly?.totalCredit | number:'1.2-2' }} |
                             Qty: {{ returnAnalytics?.monthly?.totalQty || 0 }} |
                             Count: {{ returnAnalytics?.monthly?.count || 0 }}
                         </div>
+                        <ng-template #monthlyReturnOpsMeta>
+                            Qty: {{ returnAnalytics?.monthly?.totalQty || 0 }} |
+                            Count: {{ returnAnalytics?.monthly?.count || 0 }}
+                        </ng-template>
                     </div>
                 </div>
             </div>
