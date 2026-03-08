@@ -20,6 +20,12 @@ router.post(
   orderController.createOrder,
 );
 
+router.put(
+  "/:id",
+  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER"),
+  orderController.updateOrder,
+);
+
 router.get(
   "/:id",
   authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"),

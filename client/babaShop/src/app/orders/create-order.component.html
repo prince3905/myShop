@@ -3,8 +3,10 @@
     <div class="card order-create-card">
       <div class="card-header card-header-danger create-header">
         <div>
-          <h4 class="card-title">Create Order</h4>
-          <p class="card-category">Create offline and online orders from one screen</p>
+          <h4 class="card-title">{{ isEditMode ? 'Edit Order' : 'Create Order' }}</h4>
+          <p class="card-category">
+            {{ isEditMode ? 'Update pending order items, payment, customer and delivery details' : 'Create offline and online orders from one screen' }}
+          </p>
         </div>
         <button mat-stroked-button routerLink="/order">Back to Orders</button>
       </div>
@@ -42,6 +44,10 @@
               <input matInput [(ngModel)]="customerSearch" (input)="searchCustomers()" placeholder="Search customer name or phone" />
             </mat-form-field>
             <button mat-stroked-button color="warn" type="button" (click)="clearCustomer()" *ngIf="selectedCustomer">Clear</button>
+          </div>
+
+          <div class="selected-customer required-note" *ngIf="!selectedCustomer">
+            Customer required before order create/update
           </div>
 
           <div class="suggestion-strip" *ngIf="customerSuggestions.length">
@@ -210,8 +216,8 @@
             </div>
           </div>
 
-          <button mat-raised-button color="primary" class="create-order-btn" [disabled]="saving || !items.length" (click)="createOrder()">
-            {{ saving ? 'Creating...' : 'Create Order' }}
+          <button mat-raised-button color="primary" class="create-order-btn" [disabled]="saving || !items.length || loading || !selectedCustomer" (click)="createOrder()">
+            {{ saving ? (isEditMode ? 'Updating...' : 'Creating...') : (isEditMode ? 'Update Order' : 'Create Order') }}
           </button>
         </div>
       </div>

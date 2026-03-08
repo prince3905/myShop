@@ -22,6 +22,8 @@ export class CreateOrderComponent implements OnInit, OnDestroy {
 
   loading = false;
   saving = false;
+  isEditMode = false;
+  editingOrderId = "";
 
   source = "POS";
   paymentMethod = "CASH";
@@ -73,6 +75,15 @@ export class CreateOrderComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    this.route.paramMap.pipe(takeUntil(this.destroy$)).subscribe((params) => {
+      const id = `${params.get("id") || ""}`.trim();
+      this.isEditMode = !!id;
+      this.editingOrderId = id;
+      if (id) {
+        this.loadOrderForEdit(id);
+      }
+    });
+
     this.itemSearch$
       .pipe(
         debounceTime(180),
@@ -257,6 +268,11 @@ export class CreateOrderComponent implements OnInit, OnDestroy {
   }
 
   createOrder(): void {
+    if (!this.selectedCustomer?._id) {
+      this.snackBar.open("Customer is required for orders", "Close", { duration: 2400 });
+      return;
+    }
+
     if (!this.items.length) {
       this.snackBar.open("Add at least one item", "Close", { duration: 2200 });
       return;
@@ -294,18 +310,30 @@ export class CreateOrderComponent implements OnInit, OnDestroy {
       deliveryAddress: `${this.deliveryAddress || ""}`.trim(),
       deliveryNote: `${this.deliveryNote || ""}`.trim(),
       expectedDeliveryDate: this.expectedDeliveryDate || undefined,
-      orderStatus: this.source === "POS" ? "CONFIRMED" : "PENDING",
+      orderStatus: this.isEditMode ? "PENDING" : this.source === "POS" ? "CONFIRMED" : "PENDING",
     };
 
-    this.orderService.createOrder(payload).subscribe({
+    const request$ = this.isEditMode && this.editingOrderId
+      ? this.orderService.updateOrder(this.editingOrderId, payload)
+      : this.orderService.createOrder(payload);
+
+    request$.subscribe({
       next: (res: any) => {
         this.saving = false;
-        this.snackBar.open(res?.message || "Order created successfully", "Close", { duration: 2400 });
+        this.snackBar.open(
+          res?.message || (this.isEditMode ? "Order updated successfully" : "Order created successfully"),
+          "Close",
+          { duration: 2400 },
+        );
         this.router.navigate(["/order"], { queryParams: { refresh: Date.now() } });
       },
       error: (err) => {
         this.saving = false;
-        this.snackBar.open(err?.error?.message || "Failed to create order", "Close", { duration: 3000 });
+        this.snackBar.open(
+          err?.error?.message || (this.isEditMode ? "Failed to update order" : "Failed to create order"),
+          "Close",
+          { duration: 3000 },
+        );
       },
     });
   }
@@ -350,5 +378,77 @@ export class CreateOrderComponent implements OnInit, OnDestroy {
     this.selectedPrice = null;
     this.quantity = 1;
     this.lineDiscount = 0;
+  }
+
+  private loadOrderForEdit(id: string): void {
+    this.loading = true;
+    this.orderService.getOrderById(id).subscribe({
+      next: (res: any) => {
+        const order = res?.order || null;
+        if (!order) {
+          throw new Error("Order not found");
+        }
+        if (`${order.orderStatus || ""}`.toUpperCase() !== "PENDING") {
+          this.snackBar.open("Only pending orders can be edited", "Close", { duration: 2800 });
+          this.router.navigate(["/order", id]);
+          return;
+        }
+
+        this.source = `${order.orderSource || "ONLINE"}`.toUpperCase();
+        this.paymentMethod = `${order.paymentMethod || "CASH"}`.toUpperCase();
+        this.paymentStatus = `${order.paymentStatus || "PENDING"}`.toUpperCase();
+        this.additionalDiscount = Math.max(0, Number(order.totalDiscount || 0) - this.getExistingItemDiscountTotal(order.items));
+        this.taxAmount = Number(order.taxAmount || 0);
+        this.paidAmount = Number(order.paidAmount || 0);
+        this.deliveryContactName = order.deliveryContactName || "";
+        this.deliveryPhone = order.deliveryPhone || "";
+        this.deliveryAddress = order.deliveryAddress || "";
+        this.deliveryNote = order.deliveryNote || "";
+        this.expectedDeliveryDate = order.expectedDeliveryDate
+          ? new Date(order.expectedDeliveryDate).toISOString().slice(0, 10)
+          : "";
+
+        this.selectedCustomer = order.customer
+          ? {
+              _id: order.customer._id,
+              name: order.customer.name,
+              phone: order.customer.phone,
+            }
+          : null;
+        this.customerSearch = this.selectedCustomer
+          ? `${this.selectedCustomer.name || ""}${this.selectedCustomer.phone ? ` (${this.selectedCustomer.phone})` : ""}`
+          : "";
+
+        this.items = Array.isArray(order.items)
+          ? order.items.map((item: any) => ({
+              productName: item.productName,
+              productId: item.item,
+              modelName: item.modelName,
+              modelId: item.modelId,
+              variationId: item.variationId,
+              sku: item.sku,
+              quantity: Number(item.quantity || 0),
+              sellingPrice: Number(item.sellingPrice || 0),
+              discountAmount: Number(item.discountAmount || 0),
+              color: item?.variation?.color || "",
+              size: item?.variation?.size || "",
+            }))
+          : [];
+
+        this.loading = false;
+      },
+      error: (err) => {
+        this.loading = false;
+        this.snackBar.open(err?.error?.message || "Unable to load order for edit", "Close", { duration: 3000 });
+        this.router.navigate(["/order"]);
+      },
+    });
+  }
+
+  private getExistingItemDiscountTotal(items: any[] = []): number {
+    return (Array.isArray(items) ? items : []).reduce(
+      (sum, item) => sum + Number(item?.discountAmount || 0),
+      0,
+    );
   }
 }

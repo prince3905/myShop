@@ -5,8 +5,21 @@
         <div>
           <h4 class="card-title">Order Details</h4>
           <p class="card-category">Full order snapshot, customer info, items and totals</p>
+          <div class="edit-availability-note">
+            {{ canEditOrder() ? 'Pending order: editable' : getEditOrderHint() }}
+          </div>
         </div>
         <div class="detail-actions">
+          <button
+            mat-stroked-button
+            color="primary"
+            type="button"
+            [disabled]="!canEditOrder()"
+            [matTooltip]="getEditOrderHint()"
+            (click)="editOrder()"
+          >
+            Edit Order
+          </button>
           <button
             mat-raised-button
             color="primary"
@@ -21,6 +34,33 @@
       </div>
 
       <div class="card-body" *ngIf="!loading && order; else loadingState">
+        <div class="summary-strip">
+          <div class="summary-pill">
+            <span class="summary-label">Order No</span>
+            <strong>{{ order?.orderNo || order?._id }}</strong>
+          </div>
+          <div class="summary-pill">
+            <span class="summary-label">Advance Paid</span>
+            <strong>{{ getAdvanceAmount() | currency:'INR':'symbol':'1.2-2' }}</strong>
+          </div>
+          <div class="summary-pill" *ngIf="(order?.refundedAmount || 0) > 0">
+            <span class="summary-label">Refunded</span>
+            <strong>{{ order?.refundedAmount | currency:'INR':'symbol':'1.2-2' }}</strong>
+          </div>
+          <div class="summary-pill">
+            <span class="summary-label">Balance Due</span>
+            <strong>{{ getBalanceAmount() | currency:'INR':'symbol':'1.2-2' }}</strong>
+          </div>
+          <div class="summary-pill">
+            <span class="summary-label">Payment Entries</span>
+            <strong>{{ getPaymentHistoryCount() }}</strong>
+          </div>
+          <div class="summary-pill status-pill">
+            <span class="summary-label">Current State</span>
+            <strong>{{ getOrderStateLabel() }}</strong>
+          </div>
+        </div>
+
         <div class="detail-grid">
           <div class="detail-box">
             <div class="section-title">Order</div>
@@ -30,6 +70,7 @@
             <div class="kv-row"><span>Payment Status</span><strong>{{ order?.paymentStatus || '-' }}</strong></div>
             <div class="kv-row"><span>Payment Method</span><strong>{{ order?.paymentMethod || '-' }}</strong></div>
             <div class="kv-row"><span>Paid Amount</span><strong>{{ order?.paidAmount | currency:'INR':'symbol':'1.2-2' }}</strong></div>
+            <div class="kv-row" *ngIf="(order?.refundedAmount || 0) > 0"><span>Refunded Amount</span><strong>{{ order?.refundedAmount | currency:'INR':'symbol':'1.2-2' }}</strong></div>
             <div class="kv-row"><span>Due Amount</span><strong>{{ order?.dueAmount | currency:'INR':'symbol':'1.2-2' }}</strong></div>
             <div class="kv-row"><span>Expected Delivery</span><strong>{{ order?.expectedDeliveryDate ? (order.expectedDeliveryDate | date:'mediumDate') : '-' }}</strong></div>
             <div class="kv-row"><span>Shipped At</span><strong>{{ order?.shippedAt ? (order.shippedAt | date:'medium') : '-' }}</strong></div>
@@ -47,6 +88,24 @@
             <div class="kv-row"><span>Address</span><strong>{{ order?.deliveryAddress || '-' }}</strong></div>
             <div class="kv-row"><span>Delivery Note</span><strong>{{ order?.deliveryNote || '-' }}</strong></div>
             <div class="kv-row"><span>Shop</span><strong>{{ order?.shop?.name || '-' }}</strong></div>
+          </div>
+        </div>
+
+        <div class="detail-box payment-box">
+          <div class="section-title">Payment History</div>
+          <div class="payment-empty" *ngIf="getPaymentHistoryCount() === 0">No payment collected yet.</div>
+          <div class="payment-entry" *ngFor="let payment of getPaymentHistory(); let i = index">
+            <div class="payment-step">{{ i + 1 }}</div>
+            <div class="payment-content">
+              <div class="payment-top">
+                <div class="payment-amount">{{ payment?.amount | currency:'INR':'symbol':'1.2-2' }}</div>
+                <div class="payment-meta">
+                  {{ payment?.paymentMethod || '-' }}
+                  <span *ngIf="payment?.collectedAt">• {{ payment.collectedAt | date:'medium' }}</span>
+                </div>
+              </div>
+              <div class="payment-note">{{ payment?.note || 'Payment collected' }}</div>
+            </div>
           </div>
         </div>
 
@@ -79,6 +138,7 @@
           <div class="kv-row"><span>Total Discount</span><strong>{{ order?.totalDiscount | currency:'INR':'symbol':'1.2-2' }}</strong></div>
           <div class="kv-row"><span>Tax</span><strong>{{ order?.taxAmount | currency:'INR':'symbol':'1.2-2' }}</strong></div>
           <div class="kv-row"><span>Paid</span><strong>{{ order?.paidAmount | currency:'INR':'symbol':'1.2-2' }}</strong></div>
+          <div class="kv-row" *ngIf="(order?.refundedAmount || 0) > 0"><span>Refunded</span><strong>{{ order?.refundedAmount | currency:'INR':'symbol':'1.2-2' }}</strong></div>
           <div class="kv-row"><span>Due</span><strong>{{ order?.dueAmount | currency:'INR':'symbol':'1.2-2' }}</strong></div>
           <div class="kv-row grand"><span>Total Amount</span><strong>{{ order?.totalAmount | currency:'INR':'symbol':'1.2-2' }}</strong></div>
         </div>

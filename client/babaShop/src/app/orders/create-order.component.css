@@ -97,6 +97,12 @@
   background: #eff6ff;
 }
 
+.selected-customer.required-note {
+  background: #fff1f2;
+  color: #b91c1c;
+  font-weight: 700;
+}
+
 .item-box {
   margin-top: 16px;
 }

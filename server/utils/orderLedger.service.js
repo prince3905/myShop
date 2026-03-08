@@ -108,7 +108,7 @@ const syncOrderLedger = async ({ order, createdBy = null }) => {
       customer,
       customerName,
       type: "refund",
-      amount,
+      amount: roundAmount(order.refundedAmount || order.paidAmount || 0),
       paymentMethod: order.paymentMethod || undefined,
       note: `Order refund ${order.orderNo || orderId}`,
       createdBy,

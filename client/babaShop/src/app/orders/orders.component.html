@@ -10,6 +10,57 @@
       </div>
 
       <div class="card-body">
+        <div class="orders-overview-grid">
+          <div class="overview-card">
+            <div class="overview-label">Total Orders</div>
+            <div class="overview-value">{{ overview.totalOrders || 0 }}</div>
+          </div>
+          <div class="overview-card">
+            <div class="overview-label">Offline Orders</div>
+            <div class="overview-value">{{ overview.offlineOrders || 0 }}</div>
+          </div>
+          <div class="overview-card">
+            <div class="overview-label">Online Orders</div>
+            <div class="overview-value">{{ overview.onlineOrders || 0 }}</div>
+          </div>
+          <div class="overview-card">
+            <div class="overview-label">Total Qty</div>
+            <div class="overview-value">{{ overview.totalQuantity || 0 }}</div>
+          </div>
+          <div class="overview-card">
+            <div class="overview-label">Order Value</div>
+            <div class="overview-value">Rs {{ overview.totalAmount | number:'1.2-2' }}</div>
+          </div>
+          <div class="overview-card">
+            <div class="overview-label">Collection</div>
+            <div class="overview-value">Rs {{ overview.totalCollected | number:'1.2-2' }}</div>
+          </div>
+          <div class="overview-card">
+            <div class="overview-label">Due</div>
+            <div class="overview-value">Rs {{ overview.totalDue | number:'1.2-2' }}</div>
+          </div>
+          <div class="overview-card">
+            <div class="overview-label">Delivery Pending</div>
+            <div class="overview-value">{{ overview.deliveryPendingCount || 0 }}</div>
+          </div>
+          <div class="overview-card">
+            <div class="overview-label">Today Orders</div>
+            <div class="overview-value">{{ overview.todayOrders || 0 }}</div>
+          </div>
+          <div class="overview-card">
+            <div class="overview-label">Today Collection</div>
+            <div class="overview-value">Rs {{ overview.todayCollection | number:'1.2-2' }}</div>
+          </div>
+          <div class="overview-card">
+            <div class="overview-label">Overdue Delivery</div>
+            <div class="overview-value">{{ overview.overdueDeliveryCount || 0 }}</div>
+          </div>
+          <div class="overview-card" *ngIf="canViewSensitivePricing()">
+            <div class="overview-label">Profit</div>
+            <div class="overview-value">Rs {{ overview.totalProfit | number:'1.2-2' }}</div>
+          </div>
+        </div>
+
         <div class="filters">
           <mat-form-field appearance="outline">
             <mat-label>Search</mat-label>
@@ -39,6 +90,16 @@
                 {{ status }}
               </mat-option>
             </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>From</mat-label>
+            <input matInput type="date" [(ngModel)]="dateFrom" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>To</mat-label>
+            <input matInput type="date" [(ngModel)]="dateTo" />
           </mat-form-field>
 
           <div class="filter-actions">
@@ -72,6 +133,19 @@
                   <button type="button" class="order-link" (click)="openOrder(order)">
                     {{ order.orderNo || order._id }}
                   </button>
+                  <div class="order-actions-inline">
+                    <button
+                      mat-stroked-button
+                      color="primary"
+                      type="button"
+                      class="edit-order-btn"
+                      [disabled]="!canEditOrder(order)"
+                      [matTooltip]="getEditOrderHint(order)"
+                      (click)="editOrder(order)"
+                    >
+                      Edit Order
+                    </button>
+                  </div>
                   <div class="shop-meta" *ngIf="order.shop?.name">
                     {{ order.shop.name }} <span *ngIf="order.shop?.shopCode">({{ order.shop.shopCode }})</span>
                   </div>

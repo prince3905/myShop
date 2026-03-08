@@ -51,6 +51,31 @@ const orderItemSchema = new mongoose.Schema(
   { _id: false },
 );
 
+const orderPaymentEntrySchema = new mongoose.Schema(
+  {
+    amount: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+    paymentMethod: {
+      type: String,
+      enum: ["CASH", "UPI", "CARD", "BANK_TRANSFER"],
+      default: "CASH",
+    },
+    note: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    collectedAt: {
+      type: Date,
+      default: Date.now,
+    },
+  },
+  { _id: false },
+);
+
 const orderSchema = new mongoose.Schema(
   {
     shop: {
@@ -116,6 +141,10 @@ const orderSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    refundedAmount: {
+      type: Number,
+      default: 0,
+    },
     dueAmount: {
       type: Number,
       default: 0,
@@ -147,6 +176,10 @@ const orderSchema = new mongoose.Schema(
     paymentCollectedAt: {
       type: Date,
       default: null,
+    },
+    paymentHistory: {
+      type: [orderPaymentEntrySchema],
+      default: [],
     },
     stockApplied: {
       type: Boolean,

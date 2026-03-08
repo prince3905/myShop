@@ -31,6 +31,10 @@ export class OrderService {
     return this.http.post(`${this.baseURL}/api/order`, payload);
   }
 
+  updateOrder(id: string, payload: any): Observable<any> {
+    return this.http.put(`${this.baseURL}/api/order/${id}`, payload);
+  }
+
   collectOrderPayment(id: string, payload: any): Observable<any> {
     return this.http.post(`${this.baseURL}/api/order/${id}/collect-payment`, payload);
   }

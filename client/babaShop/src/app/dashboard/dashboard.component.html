@@ -23,7 +23,7 @@
         </div>
         <div class="row">
             <div class="col-lg-3 col-md-6 col-sm-6" *ngIf="!isStaff">
-                <div class="card card-stats">
+                <div class="card card-stats dashboard-click-card" (click)="openSale()">
                     <div class="card-header card-header-success card-header-icon">
                         <div class="card-icon">
                             <i class="material-icons">store</i>
@@ -39,7 +39,7 @@
                 </div>
             </div>
             <div class="col-lg-3 col-md-6 col-sm-6">
-                <div class="card card-stats">
+                <div class="card card-stats dashboard-click-card" (click)="openOrders()">
                     <div class="card-header card-header-warning card-header-icon">
                         <div class="card-icon">
                             <i class="material-icons">content_copy</i>
@@ -56,7 +56,7 @@
                 </div>
             </div>
             <div class="col-lg-3 col-md-6 col-sm-6" *ngIf="canViewSensitivePricing">
-                <div class="card card-stats">
+                <div class="card card-stats dashboard-click-card" (click)="openPurchase()">
                     <div class="card-header card-header-danger card-header-icon">
                         <div class="card-icon">
                             <i class="material-icons">info_outline</i>
@@ -72,7 +72,7 @@
                 </div>
             </div>
             <div class="col-lg-3 col-md-6 col-sm-6">
-                <div class="card card-stats">
+                <div class="card card-stats dashboard-click-card" (click)="openStocks()">
                     <div class="card-header card-header-info card-header-icon">
                         <div class="card-icon">
                             <i class="fa fa-twitter"></i>
@@ -96,7 +96,7 @@
         <div class="row" *ngIf="canViewSensitivePricing">
             <div class="col-12">
                 <div class="analytics-strip">
-                    <div class="analytics-card">
+                    <div class="analytics-card dashboard-click-card" (click)="openPurchase()">
                         <div class="title">Purchase Today</div>
                         <div class="amount">₹ {{ purchaseAnalytics?.today?.totalAmount | number:'1.2-2' }}</div>
                         <div class="meta">
@@ -105,7 +105,7 @@
                             Count: {{ purchaseAnalytics?.today?.count || 0 }}
                         </div>
                     </div>
-                    <div class="analytics-card">
+                    <div class="analytics-card dashboard-click-card" (click)="openPurchase()">
                         <div class="title">Purchase Weekly</div>
                         <div class="amount">₹ {{ purchaseAnalytics?.weekly?.totalAmount | number:'1.2-2' }}</div>
                         <div class="meta">
@@ -114,7 +114,7 @@
                             Count: {{ purchaseAnalytics?.weekly?.count || 0 }}
                         </div>
                     </div>
-                    <div class="analytics-card">
+                    <div class="analytics-card dashboard-click-card" (click)="openPurchase()">
                         <div class="title">Purchase Monthly</div>
                         <div class="amount">₹ {{ purchaseAnalytics?.monthly?.totalAmount | number:'1.2-2' }}</div>
                         <div class="meta">
@@ -129,7 +129,7 @@
         <div class="row">
             <div class="col-12">
                 <div class="analytics-strip">
-                    <div class="analytics-card return-card">
+                    <div class="analytics-card return-card dashboard-click-card" (click)="openReturns()">
                         <div class="title">{{ isManager ? 'Returns Today' : 'Returns Today' }}</div>
                         <div class="amount">₹ {{ returnAnalytics?.today?.totalAmount | number:'1.2-2' }}</div>
                         <div class="meta">
@@ -139,7 +139,7 @@
                             Count: {{ returnAnalytics?.today?.count || 0 }}
                         </div>
                     </div>
-                    <div class="analytics-card return-card">
+                    <div class="analytics-card return-card dashboard-click-card" (click)="openReturns()">
                         <div class="title">Returns Weekly</div>
                         <div class="amount">₹ {{ returnAnalytics?.weekly?.totalAmount | number:'1.2-2' }}</div>
                         <div class="meta">
@@ -149,7 +149,7 @@
                             Count: {{ returnAnalytics?.weekly?.count || 0 }}
                         </div>
                     </div>
-                    <div class="analytics-card return-card">
+                    <div class="analytics-card return-card dashboard-click-card" (click)="openReturns()">
                         <div class="title">Returns Monthly</div>
                         <div class="amount">₹ {{ returnAnalytics?.monthly?.totalAmount | number:'1.2-2' }}</div>
                         <div class="meta">
@@ -164,7 +164,7 @@
         </div>
         <div class="row" *ngIf="canViewSensitivePricing">
             <div class="col-md-12">
-                <div class="card card-chart">
+                <div class="card card-chart dashboard-click-card" (click)="openPurchase()">
                     <div class="card-header card-header-info">
                         <div class="ct-chart" id="purchaseAnalyticsChart"></div>
                     </div>
@@ -177,7 +177,7 @@
         </div>
         <div class="row">
             <div class="col-md-4">
-                <div class="card card-chart">
+                <div class="card card-chart dashboard-click-card" (click)="openSale()">
                     <div class="card-header card-header-success">
                         <div class="ct-chart" id="dailySalesChart"></div>
                     </div>
@@ -193,7 +193,7 @@
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="card card-chart">
+                <div class="card card-chart dashboard-click-card" (click)="openOrders()">
                     <div class="card-header card-header-warning">
                         <div class="ct-chart" id="websiteViewsChart"></div>
                     </div>
@@ -209,7 +209,7 @@
                 </div>
             </div>
             <div class="col-md-4" *ngIf="canViewSensitivePricing">
-                <div class="card card-chart">
+                <div class="card card-chart dashboard-click-card" (click)="openPurchase()">
                     <div class="card-header card-header-danger">
                         <div class="ct-chart" id="completedTasksChart"></div>
                     </div>
@@ -227,7 +227,7 @@
         </div>
         <div class="row">
             <div class="col-lg-6 col-md-12" *ngIf="canViewSensitivePricing">
-                <div class="card dashboard-detail-card">
+                <div class="card dashboard-detail-card dashboard-click-card" (click)="openStocks()">
                     <div class="card-header card-header-danger">
                         <h4 class="card-title">{{ isStaff ? 'Stock Watch' : 'Low Stock Alerts' }}</h4>
                         <p class="card-category">{{ isStaff ? 'Items needing quick stock attention' : 'Top items that need reorder attention' }}</p>
@@ -252,7 +252,7 @@
                 </div>
             </div>
             <div class="col-lg-6 col-md-12">
-                <div class="card dashboard-detail-card">
+                <div class="card dashboard-detail-card dashboard-click-card" (click)="canViewSensitivePricing ? openOrders() : null">
                     <div class="card-header card-header-info">
                         <h4 class="card-title">Outstanding Summary</h4>
                         <p class="card-category">Live due visibility across billing and orders</p>
@@ -284,7 +284,7 @@
         </div>
         <div class="row">
             <div class="col-lg-6 col-md-12">
-                <div class="card dashboard-detail-card">
+                <div class="card dashboard-detail-card dashboard-click-card" (click)="openSale()">
                     <div class="card-header card-header-success">
                         <h4 class="card-title">{{ isStaff ? 'Latest Bills' : 'Recent Sales' }}</h4>
                         <p class="card-category">{{ isStaff ? 'Latest billing activity from current scope' : 'Latest completed bills from current scope' }}</p>
@@ -310,14 +310,14 @@
                 </div>
             </div>
             <div class="col-lg-6 col-md-12">
-                <div class="card dashboard-detail-card">
+                <div class="card dashboard-detail-card dashboard-click-card" (click)="openOrders()">
                     <div class="card-header card-header-warning">
                         <h4 class="card-title">{{ isStaff ? 'Latest Orders' : 'Recent Orders' }}</h4>
                         <p class="card-category">{{ isStaff ? 'Latest order activity and status' : 'Latest orders with delivery/payment status' }}</p>
                     </div>
                     <div class="card-body">
                         <div class="dashboard-list" *ngIf="overview.recentOrders?.length; else noRecentOrders">
-                            <div class="dashboard-list-row" *ngFor="let order of overview.recentOrders; trackBy: trackById">
+                            <div class="dashboard-list-row dashboard-click-card" *ngFor="let order of overview.recentOrders; trackBy: trackById" (click)="openOrder(order); $event.stopPropagation()">
                                 <div class="dashboard-list-main">
                                     <div class="dashboard-list-title">{{ order.orderNo }}</div>
                                     <div class="dashboard-list-meta">{{ order.customerName }} | {{ order.orderSource }} | {{ order.createdAt | date:'dd MMM, hh:mm a' }}</div>
@@ -337,7 +337,7 @@
         </div>
         <div class="row">
             <div class="col-lg-6 col-md-12">
-                <div class="card dashboard-detail-card">
+                <div class="card dashboard-detail-card dashboard-click-card" (click)="openReports()">
                     <div class="card-header card-header-rose">
                         <h4 class="card-title">{{ isStaff ? 'Fast Moving Products' : 'Top Selling Products' }}</h4>
                         <p class="card-category">{{ isStaff ? 'Best moving items from recent billing' : 'Best moving items from current billing data' }}</p>
@@ -363,7 +363,7 @@
                 </div>
             </div>
             <div class="col-lg-6 col-md-12" *ngIf="canViewSensitivePricing">
-                <div class="card dashboard-detail-card">
+                <div class="card dashboard-detail-card dashboard-click-card" (click)="openReports()">
                     <div class="card-header card-header-primary">
                         <h4 class="card-title">Recent Payments</h4>
                         <p class="card-category">Latest collected amounts from sales and orders</p>

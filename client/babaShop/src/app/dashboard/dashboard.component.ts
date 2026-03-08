@@ -511,6 +511,51 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.loadReturnAnalytics();
   }
 
+  goToRoute(path: string): void {
+    this.router.navigateByUrl(path);
+  }
+
+  openOrder(order: any): void {
+    const id = `${order?._id || order?.id || ""}`.trim();
+    if (!id) {
+      this.goToRoute("/order");
+      return;
+    }
+    this.router.navigate(["/order", id]);
+  }
+
+  openSale(): void {
+    this.goToRoute("/sale-list");
+  }
+
+  openProducts(): void {
+    this.goToRoute("/item-list");
+  }
+
+  openStocks(): void {
+    this.goToRoute("/stocks");
+  }
+
+  openPurchase(): void {
+    this.goToRoute("/purchase");
+  }
+
+  openOrders(): void {
+    this.goToRoute("/order");
+  }
+
+  openReturns(): void {
+    this.goToRoute("/returns");
+  }
+
+  openCustomers(): void {
+    this.goToRoute("/customer");
+  }
+
+  openReports(): void {
+    this.goToRoute("/sales-reports");
+  }
+
   goToProducts(): void {
     this.router.navigateByUrl("/item-list");
   }
