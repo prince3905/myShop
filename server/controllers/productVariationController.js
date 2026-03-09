@@ -60,7 +60,6 @@ exports.createVariation = async (req, res) => {
       attributes,
       sellingPrice,
       costPrice,
-      quantity,
       discount,
       images,
       isActive,
@@ -80,7 +79,6 @@ exports.createVariation = async (req, res) => {
       });
     }
 
-    const safeQty = Math.max(0, Number(quantity || 0));
     const variation = await ProductVariation.create({
       product,
       model,
@@ -89,7 +87,7 @@ exports.createVariation = async (req, res) => {
       attributes,
       sellingPrice,
       costPrice,
-      quantity: safeQty,
+      quantity: 0,
       discount,
       images,
       isActive,
@@ -112,21 +110,6 @@ exports.createVariation = async (req, res) => {
       },
       { upsert: true },
     );
-
-    if (safeQty > 0) {
-      await applyStockTransaction({
-        shop: req.shopId,
-        product,
-        model,
-        variation: variation._id,
-        sku,
-        type: "IN",
-        quantity: safeQty,
-        referenceType: "MANUAL",
-        note: `Opening stock for new variation ${sku}`,
-        createdBy: req.user?._id,
-      });
-    }
 
     await pushAuditLog(
       req.user?._id,
@@ -265,12 +248,6 @@ exports.updateVariation = async (req, res) => {
       }
     }
 
-    const hasQuantityUpdate = req.body.quantity !== undefined;
-    let targetQuantity = existing.quantity;
-    if (hasQuantityUpdate) {
-      targetQuantity = Math.max(0, Number(req.body.quantity || 0));
-    }
-
     const variation = await ProductVariation.findByIdAndUpdate(
       existing._id,
       updateData,
@@ -293,22 +270,6 @@ exports.updateVariation = async (req, res) => {
       },
       { upsert: true },
     );
-
-    if (hasQuantityUpdate && Number(existing.quantity || 0) !== targetQuantity) {
-      const delta = targetQuantity - Number(existing.quantity || 0);
-      await applyStockTransaction({
-        shop: req.shopId,
-        product: variation.product,
-        model: variation.model,
-        variation: variation._id,
-        sku: variation.sku,
-        type: "ADJUSTMENT",
-        quantity: delta,
-        referenceType: "MANUAL",
-        note: `Quantity adjusted from ${existing.quantity} to ${targetQuantity}`,
-        createdBy: req.user?._id,
-      });
-    }
 
     await pushAuditLog(
       req.user?._id,

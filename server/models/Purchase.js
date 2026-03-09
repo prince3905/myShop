@@ -65,6 +65,38 @@ const purchaseItemSchema = new mongoose.Schema(
   { _id: false },
 );
 
+const purchasePaymentSchema = new mongoose.Schema(
+  {
+    ledgerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "DistributorLedger",
+    },
+
+    amount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
+    paymentMethod: {
+      type: String,
+      enum: ["CASH", "BANK", "ONLINE", "UPI", "CARD", "CHEQUE"],
+      default: "CASH",
+    },
+
+    note: {
+      type: String,
+      trim: true,
+    },
+
+    collectedAt: {
+      type: Date,
+      default: Date.now,
+    },
+  },
+  { _id: false },
+);
+
 const purchaseSchema = new mongoose.Schema(
   {
     shop: {
@@ -137,6 +169,16 @@ const purchaseSchema = new mongoose.Schema(
     dueAmount: {
       type: Number,
       default: 0,
+    },
+
+    returnedAmount: {
+      type: Number,
+      default: 0,
+    },
+
+    paymentHistory: {
+      type: [purchasePaymentSchema],
+      default: [],
     },
 
     note: {

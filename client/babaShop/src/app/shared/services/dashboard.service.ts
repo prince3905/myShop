@@ -34,4 +34,8 @@ export class DashboardService {
   getReturnAnalytics(): Observable<any> {
     return this.http.get(`${this.baseURL}/api/dashboard/return-analytics`);
   }
+
+  getPurchaseReturnAnalytics(): Observable<any> {
+    return this.http.get(`${this.baseURL}/api/dashboard/purchase-return-analytics`);
+  }
 }

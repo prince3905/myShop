@@ -370,9 +370,11 @@ export class ItemsListComponent implements OnInit {
     });
 
     dialogRef.afterClosed().subscribe((result) => {
-      if (result && result.data && result.data.itemName) {
-        const newItemName = result.data.itemName;
+      if (result?.created && result?.productId) {
+        this.router.navigate(["/add-detail", result.productId]);
+        return;
       }
+      this.loadProducts();
     });
   }
 

@@ -461,31 +461,102 @@
 
     <div class="purchase-drawer" *ngIf="drawerOpen && selectedPurchase">
       <div class="drawer-head">
-        <h5>Purchase Detail</h5>
+        <div class="drawer-head-copy">
+          <div class="drawer-kicker">Purchase Detail</div>
+          <h5>{{ selectedPurchase.invoiceNo || selectedPurchase._id }}</h5>
+          <div class="drawer-head-meta">
+            <span class="head-chip">{{ selectedPurchase.distributor?.name || '-' }}</span>
+            <span class="head-chip">{{ getPurchaseItemCount(selectedPurchase) }} items</span>
+            <span class="head-chip">{{ getPurchaseTotalQty(selectedPurchase) }} qty</span>
+            <span class="head-chip status" [ngClass]="selectedPurchase.status === 'CONFIRMED' ? 'ok' : 'draft'">
+              {{ selectedPurchase.status }}
+            </span>
+          </div>
+        </div>
         <button mat-icon-button (click)="closeDrawer()"><mat-icon>close</mat-icon></button>
       </div>
+
+      <div class="scenario-banner">
+        <div class="scenario-copy">
+          <div class="scenario-title">{{ getPurchasePaymentStatus(selectedPurchase) }} • {{ getPurchaseReturnStatusLabel(selectedPurchase) }}</div>
+          <div class="scenario-text">{{ getPurchaseScenarioSummary(selectedPurchase) }}</div>
+        </div>
+      </div>
+
+      <div class="drawer-hero-grid">
+        <div class="hero-card total">
+          <span class="meta-label">Grand Total</span>
+          <span class="hero-value">₹ {{ selectedPurchase.grandTotal | number:'1.2-2' }}</span>
+        </div>
+        <div class="hero-card paid">
+          <span class="meta-label">Paid</span>
+          <span class="hero-value">₹ {{ selectedPurchase.paidAmount | number:'1.2-2' }}</span>
+        </div>
+        <div class="hero-card due">
+          <span class="meta-label">Due</span>
+          <span class="hero-value">₹ {{ selectedPurchase.dueAmount | number:'1.2-2' }}</span>
+        </div>
+      </div>
+
       <div class="drawer-meta-grid">
-        <div class="meta-card"><span class="meta-label">Invoice</span><span class="meta-value">{{ selectedPurchase.invoiceNo || selectedPurchase._id }}</span></div>
-        <div class="meta-card"><span class="meta-label">Status</span><span class="meta-value">{{ selectedPurchase.status }}</span></div>
-        <div class="meta-card"><span class="meta-label">Distributor</span><span class="meta-value">{{ selectedPurchase.distributor?.name || '-' }}</span></div>
-        <div class="meta-card"><span class="meta-label">Grand Total</span><span class="meta-value">₹ {{ selectedPurchase.grandTotal | number:'1.2-2' }}</span></div>
         <div class="meta-card"><span class="meta-label">Subtotal</span><span class="meta-value">₹ {{ selectedPurchase.subtotal | number:'1.2-2' }}</span></div>
         <div class="meta-card"><span class="meta-label">Tax Amount</span><span class="meta-value">₹ {{ selectedPurchase.taxAmount | number:'1.2-2' }}</span></div>
         <div class="meta-card"><span class="meta-label">Bill Discount</span><span class="meta-value">₹ {{ selectedPurchase.discountAmount | number:'1.2-2' }}</span></div>
         <div class="meta-card"><span class="meta-label">Payment Mode</span><span class="meta-value">{{ getPaymentModeLabel(selectedPurchase) }}</span></div>
-        <div class="meta-card"><span class="meta-label">Paid</span><span class="meta-value">₹ {{ selectedPurchase.paidAmount | number:'1.2-2' }}</span></div>
-        <div class="meta-card"><span class="meta-label">Due</span><span class="meta-value">₹ {{ selectedPurchase.dueAmount | number:'1.2-2' }}</span></div>
+        <div class="meta-card"><span class="meta-label">Purchase Date</span><span class="meta-value">{{ selectedPurchase.purchaseDate || selectedPurchase.createdAt | date:'dd MMM yyyy, hh:mm a' }}</span></div>
+        <div class="meta-card"><span class="meta-label">Return Status</span><span class="meta-value">{{ getReturnStatusLabel(selectedPurchase) }}</span></div>
       </div>
 
+      <div class="return-section" *ngIf="getPurchaseTimeline(selectedPurchase).length">
+        <div class="return-head">
+          <h6>Timeline</h6>
+          <div class="return-summary">
+            {{ getPurchasePaymentStatus(selectedPurchase) }}
+          </div>
+        </div>
+
+        <div class="timeline-grid">
+          <div class="timeline-card" *ngFor="let event of getPurchaseTimeline(selectedPurchase)" [ngClass]="event.tone || 'neutral'">
+            <div class="timeline-label">{{ event.label }}</div>
+            <div class="timeline-value">{{ event.value | date:'dd MMM yyyy, hh:mm a' }}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="return-section" *ngIf="selectedPurchase.paymentHistory?.length">
+        <div class="return-head">
+          <h6>Payment History</h6>
+          <div class="return-summary">
+            Paid: ₹ {{ selectedPurchase.paidAmount | number:'1.2-2' }} |
+            Due: ₹ {{ selectedPurchase.dueAmount | number:'1.2-2' }}
+          </div>
+        </div>
+
+        <div class="table-responsive drawer-table-wrap">
+          <table class="table table-sm purchase-items-table">
+            <thead><tr><th>Date</th><th>Mode</th><th>Note</th><th>Amount</th></tr></thead>
+            <tbody>
+              <tr *ngFor="let payment of selectedPurchase.paymentHistory">
+                <td>{{ payment.collectedAt | date:'dd MMM yyyy, hh:mm a' }}</td>
+                <td>{{ payment.paymentMethod || '-' }}</td>
+                <td>{{ payment.note || '-' }}</td>
+                <td>₹ {{ payment.amount | number:'1.2-2' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="section-block-title">Items</div>
       <div class="table-responsive drawer-table-wrap">
-        <table class="table table-sm purchase-items-table">
-          <thead>
-            <tr>
-              <th>Product</th><th>Model</th><th>SKU</th><th>Variant</th><th>Qty</th><th>Free</th><th>Price</th><th>Tax %</th><th>Discount</th><th>Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let it of selectedPurchase.items">
+          <table class="table table-sm purchase-items-table">
+            <thead>
+              <tr>
+              <th>Product</th><th>Model</th><th>SKU</th><th>Variant</th><th>Qty</th><th>Free</th><th>Price</th><th>Tax %</th><th>Discount</th><th>Total</th><th>Current Stock</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let it of selectedPurchase.items">
               <td>{{ it.product?.name || '-' }}</td>
               <td>{{ it.model?.name || '-' }}</td>
               <td>{{ it.sku || it.variation?.sku || '-' }}</td>
@@ -496,6 +567,11 @@
               <td>{{ it.taxPercent || 0 }}</td>
               <td>₹ {{ (it.discountAmount || 0) | number:'1.2-2' }}</td>
               <td>₹ {{ it.totalAmount | number:'1.2-2' }}</td>
+              <td>
+                On Hand: {{ it.stockSnapshot?.quantity || 0 }}<br>
+                Damaged: {{ it.stockSnapshot?.damagedQuantity || 0 }}<br>
+                Sellable: {{ it.stockSnapshot?.availableQuantity || 0 }}
+              </td>
             </tr>
           </tbody>
         </table>
@@ -506,7 +582,8 @@
           <h6>Purchase Returns</h6>
           <div class="return-summary">
             Qty: {{ purchaseReturnSummary?.totalReturnedQty || 0 }} |
-            Amount: ₹ {{ (purchaseReturnSummary?.totalReturnedAmount || 0) | number:'1.2-2' }}
+            Amount: ₹ {{ (purchaseReturnSummary?.totalReturnedAmount || 0) | number:'1.2-2' }} |
+            Status: {{ getPurchaseReturnStatusLabel(selectedPurchase) }}
           </div>
         </div>
 

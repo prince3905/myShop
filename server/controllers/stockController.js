@@ -217,18 +217,79 @@ exports.manualAdjust = async (req, res) => {
       return res.status(404).json({ success: false, message: "Variation not found for selected shop" });
     }
 
-    const { stock, tx } = await applyStockTransaction({
-      shop: req.shopId,
-      product: variationDoc.product,
-      model: variationDoc.model,
-      variation: variationDoc._id,
-      sku: variationDoc.sku,
-      type,
-      quantity: Number(quantity),
-      referenceType: "MANUAL",
-      note,
-      createdBy: req.user?._id,
-    });
+    const normalizedType = `${type || ""}`.trim().toUpperCase();
+    let stock;
+    let tx;
+
+    if (["DAMAGED", "RESTORE_DAMAGE"].includes(normalizedType)) {
+      stock = await Stock.findOne({ shop: req.shopId, variation: variationDoc._id });
+      if (!stock) {
+        stock = await Stock.create({
+          shop: req.shopId,
+          product: variationDoc.product,
+          model: variationDoc.model,
+          variation: variationDoc._id,
+          sku: variationDoc.sku,
+          quantity: Number(variationDoc.quantity || 0),
+          damagedQuantity: 0,
+          reservedQuantity: 0,
+        });
+      }
+
+      const adjustQty = Math.max(0, Number(quantity || 0));
+      const currentDamaged = Number(stock.damagedQuantity || 0);
+      const onHandQty = Number(stock.quantity || 0);
+      const reservedQty = Number(stock.reservedQuantity || 0);
+      const maxDamageable = Math.max(0, onHandQty - reservedQty);
+
+      let nextDamaged = currentDamaged;
+      if (normalizedType === "DAMAGED") {
+        nextDamaged = currentDamaged + adjustQty;
+        if (nextDamaged > maxDamageable) {
+          return res.status(400).json({
+            success: false,
+            message: "Damaged quantity cannot exceed sellable stock",
+          });
+        }
+      } else {
+        nextDamaged = Math.max(0, currentDamaged - adjustQty);
+      }
+
+      stock.product = variationDoc.product;
+      stock.model = variationDoc.model;
+      stock.sku = variationDoc.sku;
+      stock.damagedQuantity = nextDamaged;
+      await stock.save();
+
+      tx = await StockTransaction.create({
+        shop: req.shopId,
+        product: variationDoc.product,
+        model: variationDoc.model,
+        variation: variationDoc._id,
+        sku: variationDoc.sku,
+        type: normalizedType,
+        quantity: adjustQty,
+        deltaQuantity: 0,
+        previousQuantity: onHandQty,
+        newQuantity: onHandQty,
+        referenceType: "MANUAL",
+        note: note || (normalizedType === "DAMAGED" ? "Marked as damaged" : "Restored from damaged"),
+        createdBy: req.user?._id,
+      });
+    } else {
+      ({ stock, tx } = await applyStockTransaction({
+        shop: req.shopId,
+        product: variationDoc.product,
+        model: variationDoc.model,
+        variation: variationDoc._id,
+        sku: variationDoc.sku,
+        type: normalizedType,
+        quantity: Number(quantity),
+        referenceType: "MANUAL",
+        note,
+        createdBy: req.user?._id,
+      }));
+    }
 
     return res.status(200).json({
       success: true,

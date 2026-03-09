@@ -52,7 +52,6 @@ export class AddDetailsComponent implements OnInit {
     storage: "",
     costPrice: 0,
     sellingPrice: 0,
-    quantity: 0,
     isActive: true,
   };
 
@@ -155,13 +154,20 @@ export class AddDetailsComponent implements OnInit {
           storage: v.attributes?.storage || "",
           costPrice: Number(v.costPrice || 0),
           sellingPrice: Number(v.sellingPrice || 0),
-          quantity: Number(v.quantity || 0),
           isActive: v.isActive !== false,
         };
         this.allowCodeRegenerationInEdit = false;
         this.loadVariationUsage(v._id);
       },
-      error: () => {
+      error: (err) => {
+        if (Number(err?.status || 0) === 404) {
+          this.snackBar.open("Variation not found. Switched to create mode.", "Close", {
+            duration: 2800,
+          });
+          this.resetForm();
+          this.router.navigate(["/add-detail", this.productId], { replaceUrl: true });
+          return;
+        }
         this.snackBar.open("Failed to load variation", "Close", { duration: 2500 });
       },
     });
@@ -201,7 +207,6 @@ export class AddDetailsComponent implements OnInit {
       },
       costPrice: Number(this.variation.costPrice || 0),
       sellingPrice: Number(this.variation.sellingPrice || 0),
-      quantity: Number(this.variation.quantity || 0),
       isActive: !!this.variation.isActive,
     };
 
@@ -222,6 +227,15 @@ export class AddDetailsComponent implements OnInit {
       },
       error: (err) => {
         this.isLoading = false;
+        if (Number(err?.status || 0) === 404 && this.isEditMode) {
+          this.snackBar.open("Variation no longer exists. Switched to create mode.", "Close", {
+            duration: 3000,
+          });
+          this.resetForm();
+          this.router.navigate(["/add-detail", this.productId], { replaceUrl: true });
+          this.loadVariations();
+          return;
+        }
         this.snackBar.open(err?.error?.message || "Operation failed", "Close", {
           duration: 3000,
         });
@@ -259,7 +273,6 @@ export class AddDetailsComponent implements OnInit {
       storage: v.attributes?.storage || "",
       costPrice: Number(v.costPrice || 0),
       sellingPrice: Number(v.sellingPrice || 0),
-      quantity: Number(v.quantity || 0),
       isActive: v.isActive !== false,
     };
     this.allowCodeRegenerationInEdit = false;
@@ -392,6 +405,7 @@ export class AddDetailsComponent implements OnInit {
     }
 
     const productName = this.product?.name || "Product";
+    const brandName = this.product?.brand?.name || "";
     const modelName = v?.model?.name || "-";
     const sku = v?.sku || "-";
     const sellingPrice = Number(v?.sellingPrice || 0);
@@ -409,6 +423,7 @@ export class AddDetailsComponent implements OnInit {
         () => `
         <div class="label">
           <div class="shop">${this.escapeHtml(shopName)}</div>
+          ${brandName ? `<div class="brand">${this.escapeHtml(brandName)}</div>` : ""}
           <div class="name">${this.escapeHtml(productName)}</div>
           <div class="meta">${this.escapeHtml(modelName)}</div>
           <div class="meta">SKU: ${this.escapeHtml(sku)}</div>
@@ -444,6 +459,7 @@ export class AddDetailsComponent implements OnInit {
             page-break-inside: avoid;
           }
           .shop { font-size: ${page.shopFont}px; font-weight: 700; line-height: 1.2; }
+          .brand { font-size: ${Math.max(page.shopFont - 1, 7)}px; font-weight: 700; line-height: 1.2; margin-top: 1px; }
           .name { font-size: ${page.nameFont}px; font-weight: 700; line-height: 1.2; }
           .meta { font-size: ${page.metaFont}px; margin-top: 1px; line-height: 1.2; }
           .barcode-wrap { margin-top: 2px; text-align: center; }
@@ -495,7 +511,6 @@ export class AddDetailsComponent implements OnInit {
       storage: "",
       costPrice: 0,
       sellingPrice: 0,
-      quantity: 0,
       isActive: true,
     };
     this.allowCodeRegenerationInEdit = false;

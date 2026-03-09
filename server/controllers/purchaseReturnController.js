@@ -2,6 +2,7 @@ const Purchase = require("../models/Purchase");
 const PurchaseReturn = require("../models/PurchaseReturn");
 const { applyStockTransaction } = require("../utils/stock.service");
 const { createDistributorLedgerEntry } = require("../utils/distributorLedger.service");
+const { syncPurchaseSnapshot } = require("../utils/purchaseAccount.service");
 
 const isSuperAdminGlobal = (req) =>
   req.user?.role === "SUPER_ADMIN" && !req.shopId;
@@ -165,6 +166,11 @@ exports.createPurchaseReturn = async (req, res) => {
         createdBy: req.user?._id,
       });
     }
+
+    await syncPurchaseSnapshot({
+      purchaseId: purchase._id,
+      shopId: req.shopId,
+    });
 
     return res.status(201).json({
       success: true,

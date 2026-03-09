@@ -45,6 +45,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
     weekly: { totalAmount: 0, totalRefund: 0, totalCredit: 0, totalQty: 0, count: 0 },
     monthly: { totalAmount: 0, totalRefund: 0, totalCredit: 0, totalQty: 0, count: 0 },
   };
+  purchaseReturnAnalytics: any = {
+    today: { totalAmount: 0, totalQty: 0, count: 0 },
+    weekly: { totalAmount: 0, totalQty: 0, count: 0 },
+    monthly: { totalAmount: 0, totalQty: 0, count: 0 },
+  };
   overview: any = {
     lowStockItems: [],
     recentOrders: [],
@@ -228,6 +233,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       this.loadPurchaseAnalytics();
     }
     this.loadReturnAnalytics();
+    this.loadPurchaseReturnAnalytics();
   }
 
   ngOnDestroy(): void {
@@ -259,6 +265,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
           this.loadPurchaseAnalytics();
         }
         this.loadReturnAnalytics();
+        this.loadPurchaseReturnAnalytics();
       }
     });
   }
@@ -276,6 +283,18 @@ export class DashboardComponent implements OnInit, OnDestroy {
       error: () => {
         this.loadingKpis = false;
       },
+    });
+  }
+
+  loadPurchaseReturnAnalytics() {
+    this.dashboardService.getPurchaseReturnAnalytics().subscribe({
+      next: (res: any) => {
+        this.purchaseReturnAnalytics = {
+          ...this.purchaseReturnAnalytics,
+          ...(res?.data || {}),
+        };
+      },
+      error: () => {},
     });
   }
 

@@ -4,6 +4,7 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { DistributorService } from '../../shared/services/distributor.service';
 import { AuthService } from 'app/shared/services/auth.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { PurchaseService } from 'app/shared/services/purchase.service';
 
 @Component({
   selector: 'app-ledger-entry',
@@ -17,10 +18,12 @@ export class LedgerEntryComponent implements OnInit {
   loading = false;
   canSubmit = true;
   readonly paymentModes = ["CASH", "BANK", "ONLINE", "UPI", "CARD", "CHEQUE"];
+  purchaseOptions: any[] = [];
 
   constructor(
     private fb: FormBuilder,
     private distributorService: DistributorService,
+    private purchaseService: PurchaseService,
     private authService: AuthService,
     private snackBar: MatSnackBar,
     private dialogRef: MatDialogRef<LedgerEntryComponent>,
@@ -34,6 +37,7 @@ export class LedgerEntryComponent implements OnInit {
     this.form = this.fb.group({
       amount: [null, [Validators.required, Validators.min(1)]],
       paymentMode: ['CASH'],
+      referenceId: [''],
       note: ['']
     });
 
@@ -51,6 +55,28 @@ export class LedgerEntryComponent implements OnInit {
     if (!this.canSubmit) {
       this.form.disable();
     }
+
+    if (this.type === 'payment' && this.data?.distributorId) {
+      this.loadPendingPurchases();
+    }
+  }
+
+  loadPendingPurchases(): void {
+    this.purchaseService
+      .listPurchases({
+        distributor: this.data.distributorId,
+        status: 'CONFIRMED',
+        limit: 100,
+      })
+      .subscribe({
+        next: (res: any) => {
+          const rows = Array.isArray(res?.data) ? res.data : [];
+          this.purchaseOptions = rows.filter((row: any) => Number(row?.dueAmount || 0) > 0);
+        },
+        error: () => {
+          this.purchaseOptions = [];
+        },
+      });
   }
 
   submit() {
@@ -69,6 +95,7 @@ export class LedgerEntryComponent implements OnInit {
       type: this.type,
       amount: this.form.value.amount,
       paymentMode: this.form.value.paymentMode,
+      referenceId: this.form.value.referenceId || undefined,
       note: this.form.value.note
     };
 

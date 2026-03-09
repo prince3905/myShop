@@ -449,6 +449,87 @@ export class PurchaseConsoleComponent implements OnInit {
     return "NONE";
   }
 
+  getPurchaseItemCount(purchase: any): number {
+    return Array.isArray(purchase?.items) ? purchase.items.length : 0;
+  }
+
+  getPurchaseTotalQty(purchase: any): number {
+    if (!Array.isArray(purchase?.items)) return 0;
+    return purchase.items.reduce((sum: number, item: any) => sum + Number(item?.quantity || 0), 0);
+  }
+
+  getPurchasePaymentStatus(purchase: any): string {
+    const due = Number(purchase?.dueAmount || 0);
+    const paid = Number(purchase?.paidAmount || 0);
+    const total = Number(purchase?.grandTotal || 0);
+    if (total <= 0) return "No Value";
+    if (paid <= 0) return "Unpaid";
+    if (due <= 0) return "Fully Paid";
+    return "Partially Paid";
+  }
+
+  getPurchaseReturnStatusLabel(purchase: any): string {
+    const returnedAmount = Number(
+      purchase?.returnedAmount ??
+      this.purchaseReturnSummary?.totalReturnedAmount ??
+      0,
+    );
+    const total = Number(purchase?.grandTotal || 0);
+    if (returnedAmount <= 0) return "No Return";
+    if (total > 0 && returnedAmount >= total) return "Full Return";
+    return "Partial Return";
+  }
+
+  getPurchaseScenarioSummary(purchase: any): string {
+    const totalQty = this.getPurchaseTotalQty(purchase);
+    const total = Number(purchase?.grandTotal || 0);
+    const paid = Number(purchase?.paidAmount || 0);
+    const due = Number(purchase?.dueAmount || 0);
+    const returnedAmount = Number(
+      purchase?.returnedAmount ??
+      this.purchaseReturnSummary?.totalReturnedAmount ??
+      0,
+    );
+    if (returnedAmount > 0) {
+      return `Total maal ${totalQty} qty liya gaya. Kul bill ₹${total.toFixed(2)} tha. Return ₹${returnedAmount.toFixed(2)} ho chuka hai. Ab tak ₹${paid.toFixed(2)} payment aaya, baki ₹${due.toFixed(2)} hai.`;
+    }
+    return `Total maal ${totalQty} qty liya gaya. Kul bill ₹${total.toFixed(2)} hai. Ab tak ₹${paid.toFixed(2)} payment aaya aur baki ₹${due.toFixed(2)} due hai.`;
+  }
+
+  getPurchaseTimeline(purchase: any): Array<{ label: string; value: string; tone?: string }> {
+    const timeline: Array<{ label: string; value: string; tone?: string }> = [];
+    if (purchase?.purchaseDate || purchase?.createdAt) {
+      timeline.push({
+        label: "Purchase Created",
+        value: purchase.purchaseDate || purchase.createdAt,
+        tone: "neutral",
+      });
+    }
+    if (purchase?.confirmedAt) {
+      timeline.push({
+        label: "Purchase Confirmed",
+        value: purchase.confirmedAt,
+        tone: "success",
+      });
+    }
+    const payments = Array.isArray(purchase?.paymentHistory) ? purchase.paymentHistory : [];
+    payments.forEach((payment: any, index: number) => {
+      timeline.push({
+        label: `Payment ${index + 1} • ${payment?.paymentMethod || "PAYMENT"}`,
+        value: payment?.collectedAt,
+        tone: "info",
+      });
+    });
+    if ((this.purchaseReturnSummary?.totalReturnedAmount || 0) > 0) {
+      timeline.push({
+        label: `Return Processed • ₹${Number(this.purchaseReturnSummary?.totalReturnedAmount || 0).toFixed(2)}`,
+        value: this.purchaseReturns?.[0]?.createdAt,
+        tone: "warn",
+      });
+    }
+    return timeline;
+  }
+
   openReturnDialog(purchaseId: string): void {
     if (!this.canMutatePurchase) return;
     const row = this.purchases.find((p: any) => `${p?._id}` === `${purchaseId}`);

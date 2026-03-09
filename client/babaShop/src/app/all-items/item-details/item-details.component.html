@@ -33,6 +33,14 @@
               <p class="detail-line"><strong>Description:</strong> {{ item.description || "-" }}</p>
               <p class="detail-line"><strong>Created:</strong> {{ item.createdAt | date: "medium" }}</p>
               <div class="action-row">
+                <button
+                  *hasRole="['SUPER_ADMIN','ADMIN']"
+                  mat-stroked-button
+                  color="accent"
+                  type="button"
+                  (click)="openVariationConsole(item)">
+                  Add Variation
+                </button>
                 <button mat-icon-button color="primary" matTooltip="Edit Product" (click)="openEditProduct(item)">
                   <mat-icon>edit</mat-icon>
                 </button>
@@ -115,7 +123,18 @@
 
     <ng-template #noVariations>
       <tr>
-        <td [attr.colspan]="authService.canViewSensitivePricing() ? 11 : 10" class="empty-row">No SKU variations available.</td>
+        <td [attr.colspan]="authService.canViewSensitivePricing() ? 11 : 10" class="empty-row">
+          No SKU variations available.
+          <button
+            *hasRole="['SUPER_ADMIN','ADMIN']"
+            mat-stroked-button
+            color="accent"
+            type="button"
+            class="ml-2"
+            (click)="openVariationConsole(item)">
+            Add Variation
+          </button>
+        </td>
       </tr>
     </ng-template>
   </div>

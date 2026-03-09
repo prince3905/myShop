@@ -1,6 +1,7 @@
 const DistributorLedger = require("../models/DistributorLedger");
 const Purchase = require("../models/Purchase");
 const { createDistributorLedgerEntry } = require("../utils/distributorLedger.service");
+const { syncDistributorPurchaseSnapshots } = require("../utils/purchaseAccount.service");
 
 const isSuperAdminGlobal = (req) =>
   req.user?.role === "SUPER_ADMIN" && !req.shopId;
@@ -21,8 +22,32 @@ exports.createLedger = async (req, res) => {
       });
     }
 
-    const { distributorId, type, amount, paymentMode, paymentMethod, note } = req.body;
+    const {
+      distributorId,
+      type,
+      amount,
+      paymentMode,
+      paymentMethod,
+      note,
+      referenceId,
+      purchaseId,
+    } = req.body;
     const normalizedPaymentMethod = `${paymentMethod || paymentMode || ""}`.trim().toUpperCase();
+    const normalizedReferenceId = `${referenceId || purchaseId || ""}`.trim();
+
+    if (normalizedReferenceId) {
+      const purchase = await Purchase.findOne({
+        _id: normalizedReferenceId,
+        distributor: distributorId,
+        shop: req.shopId,
+      }).select("_id");
+      if (!purchase) {
+        return res.status(404).json({
+          success: false,
+          message: "Selected purchase not found for this distributor",
+        });
+      }
+    }
 
     const ledger = await createDistributorLedgerEntry({
       shop: req.shopId,
@@ -30,8 +55,14 @@ exports.createLedger = async (req, res) => {
       type,
       amount,
       paymentMethod: normalizedPaymentMethod || (type === "payment" ? "CASH" : undefined),
+      referenceId: normalizedReferenceId || undefined,
       note,
       createdBy: req.user._id,
+    });
+
+    await syncDistributorPurchaseSnapshots({
+      distributorId,
+      shopId: req.shopId,
     });
 
     res.status(201).json({

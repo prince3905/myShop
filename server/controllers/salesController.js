@@ -69,6 +69,16 @@ const buildVariationSnapshot = (variation, rawItem = {}) => {
   const sellingPrice = Number(rawItem?.purchasePrice || variation?.sellingPrice || 0);
   const costPrice = Number(variation?.costPrice || 0);
   const lineTotal = Number((qty * sellingPrice).toFixed(2));
+  const categoryName =
+    variation?.product?.category?.name ||
+    rawItem?.categoryName ||
+    rawItem?.category?.name ||
+    "";
+  const brandName =
+    variation?.product?.brand?.name ||
+    rawItem?.brandName ||
+    rawItem?.brand?.name ||
+    "";
 
   return {
     item: variation.product?._id || variation.product,
@@ -78,8 +88,8 @@ const buildVariationSnapshot = (variation, rawItem = {}) => {
     model: variation.model?.name || rawItem?.model || "",
     size: variation.attributes?.size || rawItem?.size || "",
     color: variation.attributes?.color || rawItem?.color || "",
-    categoryName: "",
-    brandName: "",
+    categoryName,
+    brandName,
     quantity: qty,
     purchasePrice: costPrice,
     sellingPrice,
@@ -96,14 +106,28 @@ const resolveVariation = async (shopId, rawItem = {}) => {
 
   if (variationId && mongoose.Types.ObjectId.isValid(variationId)) {
     const byId = await ProductVariation.findOne({ _id: variationId, shop: shopId })
-      .populate("product", "name brand category")
+      .populate({
+        path: "product",
+        select: "name brand category",
+        populate: [
+          { path: "brand", select: "name" },
+          { path: "category", select: "name" },
+        ],
+      })
       .populate("model", "name");
     if (byId) return byId;
   }
 
   if (variationSku) {
     const bySku = await ProductVariation.findOne({ shop: shopId, sku: variationSku })
-      .populate("product", "name brand category")
+      .populate({
+        path: "product",
+        select: "name brand category",
+        populate: [
+          { path: "brand", select: "name" },
+          { path: "category", select: "name" },
+        ],
+      })
       .populate("model", "name");
     if (bySku) return bySku;
   }
@@ -139,7 +163,14 @@ const resolveVariation = async (shopId, rawItem = {}) => {
   if (size) variationQuery["attributes.size"] = { $regex: new RegExp(`^${size}$`, "i") };
 
   return ProductVariation.findOne(variationQuery)
-    .populate("product", "name brand category")
+    .populate({
+      path: "product",
+      select: "name brand category",
+      populate: [
+        { path: "brand", select: "name" },
+        { path: "category", select: "name" },
+      ],
+    })
     .populate("model", "name");
 };
 
@@ -233,7 +264,14 @@ exports.createSale = async (req, res) => {
               ...(variationSkus.length ? [{ sku: { $in: variationSkus } }] : []),
             ],
           })
-            .populate("product", "name brand category")
+            .populate({
+              path: "product",
+              select: "name brand category",
+              populate: [
+                { path: "brand", select: "name" },
+                { path: "category", select: "name" },
+              ],
+            })
             .populate("model", "name")
         : [],
       variationIds.length

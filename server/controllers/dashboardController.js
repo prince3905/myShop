@@ -6,6 +6,7 @@ const Stock = require("../models/Stock");
 const Distributor = require("../models/Distributor");
 const Purchase = require("../models/Purchase");
 const SaleReturn = require("../models/SaleReturn");
+const PurchaseReturn = require("../models/PurchaseReturn");
 
 const isSuperAdminGlobal = (req) =>
   req.user?.role === "SUPER_ADMIN" && !req.shopId;
@@ -225,7 +226,7 @@ exports.getKpis = async (req, res) => {
     const endOfDay = new Date();
     endOfDay.setHours(23, 59, 59, 999);
 
-    const [salesAgg, todayOrders, activeShops, totalCustomers, lowStockCount, distributorDueAgg, todayPurchaseAgg, todayReturnAgg] =
+    const [salesAgg, todayOrders, activeShops, totalCustomers, lowStockCount, distributorDueAgg, todayPurchaseAgg, todaySaleReturnAgg, todayPurchaseReturnAgg] =
       await Promise.all([
         Sale.aggregate([
           { $match: { ...query, createdAt: { $gte: startOfDay, $lte: endOfDay } } },
@@ -267,6 +268,17 @@ exports.getKpis = async (req, res) => {
             },
           },
         ]),
+        PurchaseReturn.aggregate([
+          { $match: { ...query, createdAt: { $gte: startOfDay, $lte: endOfDay }, status: "APPROVED" } },
+          {
+            $group: {
+              _id: null,
+              totalAmount: { $sum: "$totalAmount" },
+              totalQty: { $sum: "$totalQuantity" },
+              count: { $sum: 1 },
+            },
+          },
+        ]),
       ]);
 
     return res.status(200).json({
@@ -279,11 +291,14 @@ exports.getKpis = async (req, res) => {
           ? Number(todayPurchaseAgg[0]?.totalPurchase || 0)
           : 0,
         todayPurchaseCount: Number(todayPurchaseAgg[0]?.count || 0),
-        todayReturnAmount: Number(todayReturnAgg[0]?.totalReturnAmount || 0),
-        todayRefundAmount: Number(todayReturnAgg[0]?.totalRefundAmount || 0),
-        todayCreditAmount: Number(todayReturnAgg[0]?.totalCreditAmount || 0),
-        todayReturnQty: Number(todayReturnAgg[0]?.totalReturnQty || 0),
-        todayReturnCount: Number(todayReturnAgg[0]?.returnCount || 0),
+        todaySaleReturnAmount: Number(todaySaleReturnAgg[0]?.totalReturnAmount || 0),
+        todaySaleRefundAmount: Number(todaySaleReturnAgg[0]?.totalRefundAmount || 0),
+        todaySaleCreditAmount: Number(todaySaleReturnAgg[0]?.totalCreditAmount || 0),
+        todaySaleReturnQty: Number(todaySaleReturnAgg[0]?.totalReturnQty || 0),
+        todaySaleReturnCount: Number(todaySaleReturnAgg[0]?.returnCount || 0),
+        todayPurchaseReturnAmount: Number(todayPurchaseReturnAgg[0]?.totalAmount || 0),
+        todayPurchaseReturnQty: Number(todayPurchaseReturnAgg[0]?.totalQty || 0),
+        todayPurchaseReturnCount: Number(todayPurchaseReturnAgg[0]?.count || 0),
         activeShops: Number(activeShops || 0),
         totalCustomers: Number(totalCustomers || 0),
         lowStockCount: Number(lowStockCount || 0),
@@ -384,6 +399,86 @@ exports.getReturnAnalytics = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to load return analytics",
+      error: error.message,
+    });
+  }
+};
+
+exports.getPurchaseReturnAnalytics = async (req, res) => {
+  try {
+    const query = isSuperAdminGlobal(req) ? {} : { shop: req.shopId };
+    const now = new Date();
+
+    const startOfDay = new Date(now);
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - 6);
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    startOfMonth.setHours(0, 0, 0, 0);
+
+    const buildMatch = (start) => ({
+      ...query,
+      status: "APPROVED",
+      createdAt: { $gte: start, $lte: now },
+    });
+
+    const [todayAgg, weekAgg, monthAgg] = await Promise.all([
+      PurchaseReturn.aggregate([
+        { $match: buildMatch(startOfDay) },
+        {
+          $group: {
+            _id: null,
+            amount: { $sum: "$totalAmount" },
+            qty: { $sum: "$totalQuantity" },
+            count: { $sum: 1 },
+          },
+        },
+      ]),
+      PurchaseReturn.aggregate([
+        { $match: buildMatch(startOfWeek) },
+        {
+          $group: {
+            _id: null,
+            amount: { $sum: "$totalAmount" },
+            qty: { $sum: "$totalQuantity" },
+            count: { $sum: 1 },
+          },
+        },
+      ]),
+      PurchaseReturn.aggregate([
+        { $match: buildMatch(startOfMonth) },
+        {
+          $group: {
+            _id: null,
+            amount: { $sum: "$totalAmount" },
+            qty: { $sum: "$totalQuantity" },
+            count: { $sum: 1 },
+          },
+        },
+      ]),
+    ]);
+
+    const normalize = (row) => ({
+      totalAmount: Number(row?.amount || 0),
+      totalQty: Number(row?.qty || 0),
+      count: Number(row?.count || 0),
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        today: normalize(todayAgg[0]),
+        weekly: normalize(weekAgg[0]),
+        monthly: normalize(monthAgg[0]),
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to load purchase return analytics",
       error: error.message,
     });
   }

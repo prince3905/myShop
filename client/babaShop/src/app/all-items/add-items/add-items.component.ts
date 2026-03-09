@@ -161,8 +161,9 @@ export class AddItemsComponent implements OnInit {
       this.productService
         .addProduct(this.product)
         .subscribe({
-          next: () => {
+          next: (res: any) => {
             this.isLoading = false;
+            const createdProductId = res?.data?._id || res?._id || null;
 
             this.snackBar.open("Product added successfully", "Close", {
               duration: 3000,
@@ -170,7 +171,15 @@ export class AddItemsComponent implements OnInit {
             });
 
             if (this.dialogRef) {
-              this.dialogRef.close(true);
+              this.dialogRef.close({
+                created: true,
+                productId: createdProductId,
+              });
+              return;
+            }
+
+            if (createdProductId) {
+              this.router.navigate(["/add-detail", createdProductId]);
               return;
             }
 

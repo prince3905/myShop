@@ -69,6 +69,7 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
   selectedModelId: string = "";
   selectedVariationSku: string = "";
   currentSelectedVariation: any = null;
+  currentAvailableStock: number | null = null;
   scannedBarcode: string = "";
   autoAddOnScan: boolean = true;
   private scanDebounceTimer: any = null;
@@ -259,6 +260,7 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
       if (!this.quantity || this.quantity < 1) {
         this.quantity = 1;
       }
+      this.loadCurrentVariationStock(this.selectedVariationId);
     } else {
       this.currentSelectedVariation = null;
       this.size = '';
@@ -268,6 +270,7 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
       this.selectedProductId = "";
       this.selectedModelId = "";
       this.purchasePrice = null;
+      this.currentAvailableStock = null;
     }
   }
 
@@ -289,7 +292,7 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
         this.stock.getStocks({ variation: row?._id, page: 1, limit: 1 }).subscribe({
           next: (stockRes: any) => {
             const stockRow = Array.isArray(stockRes?.stockReport) ? stockRes.stockReport[0] : null;
-            const available = Number(stockRow?.quantity || 0);
+            const available = this.getAvailableStockFromRow(stockRow);
             if (available <= 0) {
               this.beepError();
               this.snackBar.open(`Out of stock: ${row?.sku || code}`, "Close", { duration: 2600 });
@@ -324,6 +327,7 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
             this.selectedProductId = row?.product?._id || row?.product || "";
             this.selectedModelId = row?.model?._id || row?.model || "";
             this.variations = row?.sku || "";
+            this.currentAvailableStock = available;
             this.applyBarcodeSelection(row);
             if (!this.quantity || this.quantity < 1) {
               this.quantity = 1;
@@ -461,6 +465,31 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
     this.onVariationChange(sku);
   }
 
+  private getAvailableStockFromRow(stockRow: any): number {
+    const onHand = Number(stockRow?.quantity || 0);
+    const reserved = Number(stockRow?.reservedQuantity || 0);
+    const damaged = Number(stockRow?.damagedQuantity || 0);
+    return Math.max(0, onHand - reserved - damaged);
+  }
+
+  private loadCurrentVariationStock(variationId: string): void {
+    const ref = `${variationId || ""}`.trim();
+    if (!ref) {
+      this.currentAvailableStock = null;
+      return;
+    }
+
+    this.stock.getStocks({ variation: ref, page: 1, limit: 1 }).subscribe({
+      next: (stockRes: any) => {
+        const stockRow = Array.isArray(stockRes?.stockReport) ? stockRes.stockReport[0] : null;
+        this.currentAvailableStock = this.getAvailableStockFromRow(stockRow);
+      },
+      error: () => {
+        this.currentAvailableStock = null;
+      },
+    });
+  }
+
   async onSubmit(): Promise<void> {
     this.addCurrentItemToCart("manual");
   }
@@ -485,6 +514,27 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
       if (source === "manual") {
         this.snackBar.open("Price cannot be negative", "Close", { duration: 2200 });
       }
+      return false;
+    }
+
+    const activeCustomerItems = this.Sales_added[normalizedCustomer]?.items || [];
+    const existingQty = Number(
+      activeCustomerItems.find((it: any) => `${it?.variationId || ""}` === `${this.selectedVariationId || ""}`)?.quantity || 0,
+    );
+    const requestedQty = Number(this.quantity || 0);
+    const availableStock = Number(this.currentAvailableStock ?? this.currentSelectedVariation?.quantity ?? 0);
+
+    if (availableStock <= 0) {
+      this.snackBar.open(`Out of stock: ${this.selectedVariationSku || this.selectedVariationId}`, "Close", {
+        duration: 2400,
+      });
+      return false;
+    }
+
+    if (existingQty + requestedQty > availableStock) {
+      this.snackBar.open(`Stock limit reached. Available: ${availableStock}`, "Close", {
+        duration: 2600,
+      });
       return false;
     }
 

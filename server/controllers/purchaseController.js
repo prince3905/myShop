@@ -3,11 +3,13 @@ const Purchase = require("../models/Purchase");
 const PurchaseReturn = require("../models/PurchaseReturn");
 const Distributor = require("../models/Distributor");
 const ProductVariation = require("../models/ProductVariation");
+const Stock = require("../models/Stock");
 const StockTransaction = require("../models/StockTransaction");
 const DistributorLedger = require("../models/DistributorLedger");
 const { applyStockTransaction } = require("../utils/stock.service");
 const { createDistributorLedgerEntry } = require("../utils/distributorLedger.service");
 const { generateInvoiceNo } = require("../utils/invoice.service");
+const { syncPurchaseSnapshot } = require("../utils/purchaseAccount.service");
 
 const isSuperAdminGlobal = (req) =>
   req.user?.role === "SUPER_ADMIN" && !req.shopId;
@@ -318,11 +320,12 @@ exports.confirmPurchase = async (req, res) => {
     purchase.confirmedAt = new Date();
     purchase.confirmedBy = req.user?._id;
     await purchase.save();
+    await syncPurchaseSnapshot({ purchaseId: purchase._id, shopId: req.shopId });
 
     return res.status(200).json({
       success: true,
       message: "Purchase confirmed and stock updated",
-      data: purchase,
+      data: await Purchase.findById(purchase._id),
     });
   } catch (error) {
     return res.status(500).json({ success: false, message: "Error confirming purchase", error: error.message });
@@ -460,7 +463,7 @@ exports.listPurchases = async (req, res) => {
           ...p,
           returnCount: ret.count,
           returnedQty: ret.totalReturnedQty,
-          returnedAmount: ret.totalReturnedAmount,
+          returnedAmount: Number(p?.returnedAmount ?? ret.totalReturnedAmount ?? 0),
           returnStatus: computedReturnStatus,
         };
       });
@@ -522,7 +525,7 @@ exports.getPurchaseById = async (req, res) => {
         ? { shop: req.shopId, $or: [{ _id: ref }, { invoiceNo: ref }] }
         : { shop: req.shopId, invoiceNo: ref };
 
-    const purchase = await Purchase.findOne(query)
+    let purchase = await Purchase.findOne(query)
       .populate("distributor", "name phone currentBalance")
       .populate("shop", "name shopCode")
       .populate("createdBy", "email role")
@@ -534,6 +537,36 @@ exports.getPurchaseById = async (req, res) => {
     if (!purchase) {
       return res.status(404).json({ success: false, message: "Purchase not found" });
     }
+
+    const syncedPurchase = await syncPurchaseSnapshot({
+      purchaseId: purchase._id,
+      shopId: isSuperAdminGlobal(req) ? purchase.shop?._id || purchase.shop : req.shopId,
+    });
+    if (syncedPurchase) {
+      purchase = await Purchase.findById(purchase._id)
+        .populate("distributor", "name phone currentBalance")
+        .populate("shop", "name shopCode")
+        .populate("createdBy", "email role")
+        .populate("confirmedBy", "email role")
+        .populate("items.product", "name")
+        .populate("items.model", "name")
+        .populate("items.variation", "sku attributes");
+    }
+
+    const variationIds = (purchase.items || []).map((item) => item?.variation?._id || item?.variation).filter(Boolean);
+    const stockRows = variationIds.length
+      ? await Stock.find({
+          ...(isSuperAdminGlobal(req) ? {} : { shop: req.shopId }),
+          variation: { $in: variationIds },
+        }).select("variation quantity reservedQuantity damagedQuantity")
+      : [];
+    const stockMap = new Map(
+      stockRows.map((row) => [`${row.variation}`, {
+        quantity: Number(row.quantity || 0),
+        reservedQuantity: Number(row.reservedQuantity || 0),
+        damagedQuantity: Number(row.damagedQuantity || 0),
+      }]),
+    );
 
     let paymentMethodResolved = `${purchase?.paymentMethod || ""}`.trim().toUpperCase();
     if (!paymentMethodResolved) {
@@ -555,6 +588,26 @@ exports.getPurchaseById = async (req, res) => {
       success: true,
       data: {
         ...purchase.toObject(),
+        items: (purchase.items || []).map((item) => {
+          const variationId = `${item?.variation?._id || item?.variation || ""}`;
+          const stockSnapshot = stockMap.get(variationId) || {
+            quantity: 0,
+            reservedQuantity: 0,
+            damagedQuantity: 0,
+          };
+          return {
+            ...item.toObject?.() || item,
+            stockSnapshot: {
+              ...stockSnapshot,
+              availableQuantity: Math.max(
+                0,
+                Number(stockSnapshot.quantity || 0) -
+                Number(stockSnapshot.reservedQuantity || 0) -
+                Number(stockSnapshot.damagedQuantity || 0),
+              ),
+            },
+          };
+        }),
         paymentMethodResolved: paymentMethodResolved || "-",
       },
     });

@@ -32,7 +32,7 @@ const stockTransactionSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ["IN", "OUT", "ADJUSTMENT", "RESERVE", "RELEASE"],
+      enum: ["IN", "OUT", "ADJUSTMENT", "RESERVE", "RELEASE", "DAMAGED", "RESTORE_DAMAGE"],
       required: true,
       index: true,
     },

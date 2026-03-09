@@ -111,31 +111,28 @@
         </div>
 
         <div class="form-section">
-          <div class="section-title">Price and Stock</div>
+          <div class="section-title">Price Setup</div>
           <div class="row">
-            <div class="col-md-3">
+            <div class="col-md-4">
               <mat-form-field appearance="outline" class="w-100">
                 <mat-label>Cost Price</mat-label>
                 <input matInput type="number" [(ngModel)]="variation.costPrice" [ngModelOptions]="{standalone: true}" />
               </mat-form-field>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-4">
               <mat-form-field appearance="outline" class="w-100">
                 <mat-label>Selling Price</mat-label>
                 <input matInput type="number" [(ngModel)]="variation.sellingPrice" [ngModelOptions]="{standalone: true}" />
               </mat-form-field>
             </div>
-            <div class="col-md-3">
-              <mat-form-field appearance="outline" class="w-100">
-                <mat-label>Opening / New Quantity</mat-label>
-                <input matInput type="number" [(ngModel)]="variation.quantity" [ngModelOptions]="{standalone: true}" />
-              </mat-form-field>
-            </div>
-            <div class="col-md-3 active-col">
+            <div class="col-md-4 active-col">
               <mat-checkbox [(ngModel)]="variation.isActive" [ngModelOptions]="{standalone: true}">
                 Active
               </mat-checkbox>
             </div>
+          </div>
+          <div class="code-lock-note">
+            Stock yahan se increase nahi hoga. Stock sirf Purchase ya Stock Adjustment se badhega.
           </div>
         </div>
       </mat-card-content>

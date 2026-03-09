@@ -66,7 +66,7 @@
                     </div>
                     <div class="card-footer">
                         <div class="stats">
-                            <i class="material-icons">assignment_return</i> Return today: ₹ {{ kpis?.todayReturnAmount | number:'1.2-2' }}
+                            <i class="material-icons">assignment_return</i> Purchase return today: ₹ {{ kpis?.todayPurchaseReturnAmount | number:'1.2-2' }}
                         </div>
                     </div>
                 </div>
@@ -83,7 +83,7 @@
                     <div class="card-footer">
                         <div class="stats">
                             <ng-container *ngIf="canViewSensitivePricing; else stockFooterBasic">
-                                <i class="material-icons">currency_rupee</i> Credit today: ₹ {{ kpis?.todayCreditAmount | number:'1.2-2' }}
+                                <i class="material-icons">currency_rupee</i> Sales credit today: ₹ {{ kpis?.todaySaleCreditAmount | number:'1.2-2' }}
                             </ng-container>
                             <ng-template #stockFooterBasic>
                                 <i class="material-icons">inventory_2</i> Reorder watch active
@@ -130,7 +130,7 @@
             <div class="col-12">
                 <div class="analytics-strip">
                     <div class="analytics-card return-card dashboard-click-card" (click)="openReturns()">
-                        <div class="title">{{ isManager ? 'Returns Today' : 'Returns Today' }}</div>
+                        <div class="title">Sales Returns Today</div>
                         <div class="amount" *ngIf="canViewReturnAmounts; else todayReturnOpsOnly">₹ {{ returnAnalytics?.today?.totalAmount | number:'1.2-2' }}</div>
                         <ng-template #todayReturnOpsOnly>
                             <div class="amount">{{ returnAnalytics?.today?.count || 0 }}</div>
@@ -147,7 +147,7 @@
                         </ng-template>
                     </div>
                     <div class="analytics-card return-card dashboard-click-card" (click)="openReturns()">
-                        <div class="title">Returns Weekly</div>
+                        <div class="title">Sales Returns Weekly</div>
                         <div class="amount" *ngIf="canViewReturnAmounts; else weeklyReturnOpsOnly">₹ {{ returnAnalytics?.weekly?.totalAmount | number:'1.2-2' }}</div>
                         <ng-template #weeklyReturnOpsOnly>
                             <div class="amount">{{ returnAnalytics?.weekly?.count || 0 }}</div>
@@ -164,7 +164,7 @@
                         </ng-template>
                     </div>
                     <div class="analytics-card return-card dashboard-click-card" (click)="openReturns()">
-                        <div class="title">Returns Monthly</div>
+                        <div class="title">Sales Returns Monthly</div>
                         <div class="amount" *ngIf="canViewReturnAmounts; else monthlyReturnOpsOnly">₹ {{ returnAnalytics?.monthly?.totalAmount | number:'1.2-2' }}</div>
                         <ng-template #monthlyReturnOpsOnly>
                             <div class="amount">{{ returnAnalytics?.monthly?.count || 0 }}</div>
@@ -179,6 +179,36 @@
                             Qty: {{ returnAnalytics?.monthly?.totalQty || 0 }} |
                             Count: {{ returnAnalytics?.monthly?.count || 0 }}
                         </ng-template>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row" *ngIf="canViewSensitivePricing">
+            <div class="col-12">
+                <div class="analytics-strip">
+                    <div class="analytics-card purchase-return-card dashboard-click-card" (click)="openPurchase()">
+                        <div class="title">Purchase Returns Today</div>
+                        <div class="amount">₹ {{ purchaseReturnAnalytics?.today?.totalAmount | number:'1.2-2' }}</div>
+                        <div class="meta">
+                            Qty: {{ purchaseReturnAnalytics?.today?.totalQty || 0 }} |
+                            Count: {{ purchaseReturnAnalytics?.today?.count || 0 }}
+                        </div>
+                    </div>
+                    <div class="analytics-card purchase-return-card dashboard-click-card" (click)="openPurchase()">
+                        <div class="title">Purchase Returns Weekly</div>
+                        <div class="amount">₹ {{ purchaseReturnAnalytics?.weekly?.totalAmount | number:'1.2-2' }}</div>
+                        <div class="meta">
+                            Qty: {{ purchaseReturnAnalytics?.weekly?.totalQty || 0 }} |
+                            Count: {{ purchaseReturnAnalytics?.weekly?.count || 0 }}
+                        </div>
+                    </div>
+                    <div class="analytics-card purchase-return-card dashboard-click-card" (click)="openPurchase()">
+                        <div class="title">Purchase Returns Monthly</div>
+                        <div class="amount">₹ {{ purchaseReturnAnalytics?.monthly?.totalAmount | number:'1.2-2' }}</div>
+                        <div class="meta">
+                            Qty: {{ purchaseReturnAnalytics?.monthly?.totalQty || 0 }} |
+                            Count: {{ purchaseReturnAnalytics?.monthly?.count || 0 }}
+                        </div>
                     </div>
                 </div>
             </div>
