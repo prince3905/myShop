@@ -449,7 +449,14 @@ const buildCustomerLedger = async ({
       payment: { transactionType: "payment", label: "Order Payment", debit: 0, credit: roundAmount(entry.amount), sortOrder: 25 },
       cancellation: { transactionType: "return", label: "Order Cancelled", debit: 0, credit: roundAmount(entry.amount), sortOrder: 35 },
       return: { transactionType: "return", label: "Order Return", debit: 0, credit: roundAmount(entry.amount), sortOrder: 35 },
-      refund: { transactionType: "refund", label: "Order Refund", debit: 0, credit: 0, sortOrder: 45 },
+      refund: {
+        transactionType: "refund",
+        label: "Order Refund",
+        debit: 0,
+        credit: 0,
+        refundAmount: roundAmount(entry.amount),
+        sortOrder: 45,
+      },
     };
     const config = configMap[type];
     if (!config) continue;
@@ -467,6 +474,9 @@ const buildCustomerLedger = async ({
       items: order?.items || [],
       debit: config.debit,
       credit: config.credit,
+      refundAmount: roundAmount(config.refundAmount || 0),
+      creditAmount: 0,
+      dueAdjustedAmount: 0,
       createdAt: entry.createdAt,
       sortOrder: config.sortOrder,
     });

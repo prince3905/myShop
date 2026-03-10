@@ -48,6 +48,8 @@
               <th>Customer ID</th>
               <th>Name</th>
               <th>Phone</th>
+              <th>Shop</th>
+              <th>Created</th>
               <th>Total Purchase</th>
               <th>Total Paid</th>
               <th>Total Due</th>
@@ -61,6 +63,8 @@
               <td>{{ item._id }}</td>
               <td>{{ item.name }}</td>
               <td>{{ item.phone || '-' }}</td>
+              <td>{{ item.shop?.shopName || item.shop?.shopCode || '-' }}</td>
+              <td>{{ item.createdAt | date:'mediumDate' }}</td>
               <td>Rs {{ item.totalPurchase || 0 }}</td>
               <td>Rs {{ item.totalPaid || 0 }}</td>
               <td>Rs {{ item.totalDue || 0 }}</td>
@@ -80,7 +84,7 @@
             </tr>
 
             <tr *ngIf="paginatedItems.length === 0">
-              <td colspan="9" class="text-center empty-state">No customers found</td>
+              <td colspan="11" class="text-center empty-state">No customers found</td>
             </tr>
           </tbody>
         </table>

@@ -54,6 +54,14 @@
                     <td>{{ customer.address || 'N/A' }}</td>
                   </tr>
                   <tr>
+                    <th>Shop:</th>
+                    <td>{{ customer.shop?.shopName || customer.shop?.shopCode || 'N/A' }}</td>
+                  </tr>
+                  <tr>
+                    <th>Created On:</th>
+                    <td>{{ customer.createdAt | date:'medium' }}</td>
+                  </tr>
+                  <tr>
                     <th>Total Purchases:</th>
                     <td>{{ customer.purchaseCount || 0 }}</td>
                   </tr>
@@ -64,32 +72,47 @@
               <div class="info-section">
                 <h5>Account Summary</h5>
                 <p class="text-muted mb-3">
-                  Net account summary after returns. Settled value includes cash/online payments and wallet used.
+                  Customer account ko 3 parts me samjho: net billing, cash settlement, aur wallet credit.
                 </p>
                 <div class="summary-cards">
                   <div class="summary-card total-purchase">
-                    <div class="label">Net Purchase</div>
+                    <div class="label">Net Billing</div>
                     <div class="amount">Rs {{ customer.totalPurchase | number:'1.2-2' }}</div>
                   </div>
                   <div class="summary-card total-paid">
-                    <div class="label">Settled Value</div>
+                    <div class="label">Total Settled</div>
                     <div class="amount">Rs {{ customer.totalPaid | number:'1.2-2' }}</div>
                   </div>
                   <div class="summary-card total-due">
-                    <div class="label">Outstanding Due</div>
+                    <div class="label">Still Receivable</div>
                     <div class="amount">Rs {{ customer.totalDue | number:'1.2-2' }}</div>
                   </div>
                   <div class="summary-card total-paid">
-                    <div class="label">Wallet Credit Balance</div>
+                    <div class="label">Wallet Balance</div>
                     <div class="amount">Rs {{ customer.walletBalance | number:'1.2-2' }}</div>
                   </div>
                   <div class="summary-card total-paid">
-                    <div class="label">Refund Given</div>
+                    <div class="label">Cash Refund Given</div>
                     <div class="amount">Rs {{ statementSummary.totalRefunded | number:'1.2-2' }}</div>
                   </div>
                   <div class="summary-card total-paid">
-                    <div class="label">Credit Issued</div>
+                    <div class="label">Wallet Credit Issued</div>
                     <div class="amount">Rs {{ statementSummary.totalCredited | number:'1.2-2' }}</div>
+                  </div>
+                  <div class="summary-card total-paid">
+                    <div class="label">Due Reduced by Returns</div>
+                    <div class="amount">Rs {{ statementSummary.totalDueAdjusted | number:'1.2-2' }}</div>
+                  </div>
+                </div>
+                <div class="summary-note-grid">
+                  <div class="summary-note">
+                    <strong>Net Billing</strong> = sales minus approved returns
+                  </div>
+                  <div class="summary-note">
+                    <strong>Total Settled</strong> = cash/online received + wallet used
+                  </div>
+                  <div class="summary-note">
+                    <strong>Still Receivable</strong> = customer se abhi aur kitna lena hai
                   </div>
                 </div>
               </div>
@@ -140,33 +163,33 @@
           </div>
 
           <div class="table-responsive" *ngIf="!salesLoading">
-            <table class="table">
+            <table class="table statement-table">
               <thead>
                 <tr>
-                  <th>Date</th>
-                  <th>Invoice No.</th>
-                  <th>Transaction Type</th>
-                  <th>Items / Note</th>
-                  <th class="text-right">Debit</th>
-                  <th class="text-right">Credit</th>
-                  <th class="text-right">Due Adj</th>
-                  <th class="text-right">Wallet Credit</th>
-                  <th class="text-right">Refund</th>
-                  <th class="text-right">Due Balance</th>
-                  <th>Action</th>
+                  <th class="col-date">Date</th>
+                  <th class="col-invoice">Invoice No.</th>
+                  <th class="col-type">Transaction Type</th>
+                  <th class="col-items">Items / Note</th>
+                  <th class="text-right amount-head amount-head-debit">Debit</th>
+                  <th class="text-right amount-head amount-head-credit">Credit</th>
+                  <th class="text-right amount-head amount-head-due-adj">Due Adj</th>
+                  <th class="text-right amount-head amount-head-wallet">Wallet Credit</th>
+                  <th class="text-right amount-head amount-head-refund">Refund</th>
+                  <th class="text-right amount-head amount-head-balance">Due Balance</th>
+                  <th class="col-action">Action</th>
                 </tr>
               </thead>
               <tbody>
                 <tr *ngFor="let sale of sales">
-                  <td>{{ sale.createdAt | date:'medium' }}</td>
-                  <td>{{ sale.invoiceNo || sale.transactionId }}</td>
+                  <td class="col-date">{{ sale.createdAt | date:'medium' }}</td>
+                  <td class="col-invoice invoice-cell">{{ sale.invoiceNo || sale.transactionId }}</td>
                   <td>
                     <span class="badge" [ngClass]="getTransactionBadgeClass(sale.transactionType)">
                       {{ sale.label }}
                     </span>
                   </td>
-                  <td>
-                    <div>{{ getTransactionItems(sale) }}</div>
+                  <td class="col-items">
+                    <div class="item-text">{{ getTransactionItems(sale) }}</div>
                     <div class="text-muted" *ngIf="sale.note && sale.items?.length">
                       {{ sale.note }}
                     </div>
@@ -177,27 +200,27 @@
                     </div>
                   </td>
                   <td class="text-right">
-                    <span *ngIf="sale.debit; else noDebitAmount">Rs {{ sale.debit | number:'1.2-2' }}</span>
+                    <span class="amount-chip amount-chip-debit" *ngIf="sale.debit; else noDebitAmount">Rs {{ sale.debit | number:'1.2-2' }}</span>
                     <ng-template #noDebitAmount>—</ng-template>
                   </td>
                   <td class="text-right">
-                    <span *ngIf="sale.credit; else noCreditAmount">Rs {{ sale.credit | number:'1.2-2' }}</span>
+                    <span class="amount-chip amount-chip-credit" *ngIf="sale.credit; else noCreditAmount">Rs {{ sale.credit | number:'1.2-2' }}</span>
                     <ng-template #noCreditAmount>—</ng-template>
                   </td>
                   <td class="text-right">
-                    <span *ngIf="sale.dueAdjustedAmount; else noDueAdjustedAmount">Rs {{ sale.dueAdjustedAmount | number:'1.2-2' }}</span>
+                    <span class="amount-chip amount-chip-due-adj" *ngIf="sale.dueAdjustedAmount; else noDueAdjustedAmount">Rs {{ sale.dueAdjustedAmount | number:'1.2-2' }}</span>
                     <ng-template #noDueAdjustedAmount>—</ng-template>
                   </td>
                   <td class="text-right">
-                    <span *ngIf="sale.creditAmount; else noWalletCreditAmount">Rs {{ sale.creditAmount | number:'1.2-2' }}</span>
+                    <span class="amount-chip amount-chip-wallet" *ngIf="sale.creditAmount; else noWalletCreditAmount">Rs {{ sale.creditAmount | number:'1.2-2' }}</span>
                     <ng-template #noWalletCreditAmount>—</ng-template>
                   </td>
                   <td class="text-right">
-                    <span *ngIf="sale.refundAmount; else noRefundAmount">Rs {{ sale.refundAmount | number:'1.2-2' }}</span>
+                    <span class="amount-chip amount-chip-refund" *ngIf="sale.refundAmount; else noRefundAmount">Rs {{ sale.refundAmount | number:'1.2-2' }}</span>
                     <ng-template #noRefundAmount>—</ng-template>
                   </td>
                   <td class="text-right">
-                    <span [ngClass]="getBalanceClass(sale.runningBalance)">
+                    <span class="amount-chip amount-chip-balance" [ngClass]="getBalanceClass(sale.runningBalance)">
                       Rs {{ sale.runningBalance | number:'1.2-2' }}
                     </span>
                   </td>
@@ -220,12 +243,12 @@
               <tfoot *ngIf="sales.length > 0">
                 <tr class="total-row">
                   <td colspan="4"><strong>Total</strong></td>
-                  <td class="text-right"><strong>Rs {{ statementSummary.totalDebit | number:'1.2-2' }}</strong></td>
-                  <td class="text-right"><strong>Rs {{ statementSummary.totalCredit | number:'1.2-2' }}</strong></td>
-                  <td class="text-right"><strong>Rs {{ statementSummary.totalDueAdjusted | number:'1.2-2' }}</strong></td>
-                  <td class="text-right"><strong>Rs {{ statementSummary.totalCredited | number:'1.2-2' }}</strong></td>
-                  <td class="text-right"><strong>Rs {{ statementSummary.totalRefunded | number:'1.2-2' }}</strong></td>
-                  <td class="text-right"><strong>Rs {{ statementSummary.closingBalance | number:'1.2-2' }}</strong></td>
+                  <td class="text-right"><strong class="amount-chip amount-chip-debit">Rs {{ statementSummary.totalDebit | number:'1.2-2' }}</strong></td>
+                  <td class="text-right"><strong class="amount-chip amount-chip-credit">Rs {{ statementSummary.totalCredit | number:'1.2-2' }}</strong></td>
+                  <td class="text-right"><strong class="amount-chip amount-chip-due-adj">Rs {{ statementSummary.totalDueAdjusted | number:'1.2-2' }}</strong></td>
+                  <td class="text-right"><strong class="amount-chip amount-chip-wallet">Rs {{ statementSummary.totalCredited | number:'1.2-2' }}</strong></td>
+                  <td class="text-right"><strong class="amount-chip amount-chip-refund">Rs {{ statementSummary.totalRefunded | number:'1.2-2' }}</strong></td>
+                  <td class="text-right"><strong class="amount-chip amount-chip-balance">Rs {{ statementSummary.closingBalance | number:'1.2-2' }}</strong></td>
                   <td></td>
                 </tr>
               </tfoot>

@@ -40,12 +40,23 @@ exports.createLedger = async (req, res) => {
         _id: normalizedReferenceId,
         distributor: distributorId,
         shop: req.shopId,
-      }).select("_id");
+      }).select("_id dueAmount");
       if (!purchase) {
         return res.status(404).json({
           success: false,
           message: "Selected purchase not found for this distributor",
         });
+      }
+
+      if (`${type || ""}`.trim().toLowerCase() === "payment") {
+        const paymentAmount = Math.max(0, Number(amount || 0));
+        const purchaseDueAmount = Math.max(0, Number(purchase.dueAmount || 0));
+        if (paymentAmount > purchaseDueAmount) {
+          return res.status(400).json({
+            success: false,
+            message: `Payment cannot exceed purchase due amount ${purchaseDueAmount.toFixed(2)}`,
+          });
+        }
       }
     }
 
@@ -71,7 +82,10 @@ exports.createLedger = async (req, res) => {
     });
   } catch (err) {
     console.error("Create Ledger Error:", err);
-    res.status(500).json({ message: "Error creating ledger" });
+    res.status(err.statusCode || 500).json({
+      success: false,
+      message: err.message || "Error creating ledger",
+    });
   }
 };
 

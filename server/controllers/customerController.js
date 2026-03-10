@@ -29,7 +29,8 @@ exports.getAllCustomers = async (req, res) => {
         .sort({ createdAt: -1 })
         .skip(skipItems)
         .limit(itemsPerPage)
-        .select("name phone email address totalPurchase totalPaid totalDue walletBalance purchaseCount createdAt isActive"),
+        .select("name phone email address totalPurchase totalPaid totalDue walletBalance purchaseCount createdAt isActive shop")
+        .populate("shop", "shopName shopCode"),
       Customer.countDocuments(query),
     ]);
 
@@ -120,7 +121,7 @@ exports.getCustomerById = async (req, res) => {
     const query = isSuperAdminGlobal(req)
       ? { _id: req.params.id, isDeleted: { $ne: true } }
       : { _id: req.params.id, shop: req.shopId, isDeleted: { $ne: true } };
-    const customer = await Customer.findOne(query);
+    const customer = await Customer.findOne(query).populate("shop", "shopName shopCode");
     if (!customer) {
       return res.status(404).json({ success: false, error: "Customer not found" });
     }

@@ -63,6 +63,23 @@
   font-weight: bold;
 }
 
+.summary-note-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.summary-note {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  color: #475569;
+  font-size: 12px;
+  line-height: 1.45;
+  padding: 10px 12px;
+}
+
 .total-purchase {
   background-color: #e3f2fd;
   border-left: 4px solid #2196f3;
@@ -95,18 +112,128 @@
 
 .table {
   width: 100%;
+  table-layout: auto;
 }
 
 .table th {
   background-color: #f5f5f5;
   font-weight: 600;
-  padding: 12px;
+  padding: 10px 8px;
   text-align: left;
+  font-size: 12px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.amount-head {
+  letter-spacing: 0.02em;
+}
+
+.amount-head-debit {
+  color: #b91c1c;
+}
+
+.amount-head-credit {
+  color: #166534;
+}
+
+.amount-head-due-adj {
+  color: #1d4ed8;
+}
+
+.amount-head-wallet {
+  color: #7c3aed;
+}
+
+.amount-head-refund {
+  color: #b45309;
+}
+
+.amount-head-balance {
+  color: #334155;
 }
 
 .table td {
-  padding: 12px;
+  padding: 10px 8px;
   border-bottom: 1px solid #eee;
+  font-size: 12px;
+  line-height: 1.35;
+  vertical-align: top;
+}
+
+.amount-chip {
+  display: inline-block;
+  min-width: 72px;
+  padding: 3px 7px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 11px;
+  line-height: 1.2;
+  text-align: right;
+}
+
+.statement-table .col-date {
+  min-width: 122px;
+  max-width: 122px;
+}
+
+.statement-table .col-invoice {
+  min-width: 122px;
+  max-width: 140px;
+}
+
+.statement-table .col-type {
+  min-width: 106px;
+}
+
+.statement-table .col-items {
+  min-width: 210px;
+}
+
+.statement-table .col-action {
+  width: 54px;
+}
+
+.invoice-cell {
+  font-weight: 700;
+  color: #1e293b;
+  word-break: break-word;
+}
+
+.item-text {
+  color: #0f172a;
+  font-weight: 500;
+  word-break: break-word;
+}
+
+.amount-chip-debit {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.amount-chip-credit {
+  background: #f0fdf4;
+  color: #166534;
+}
+
+.amount-chip-due-adj {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.amount-chip-wallet {
+  background: #f5f3ff;
+  color: #7c3aed;
+}
+
+.amount-chip-refund {
+  background: #fff7ed;
+  color: #b45309;
+}
+
+.amount-chip-balance {
+  background: #f8fafc;
+  color: #334155;
 }
 
 /* Account Statement Styles */
@@ -155,11 +282,13 @@
 }
 
 .badge {
-  padding: 4px 8px;
+  padding: 3px 7px;
   border-radius: 4px;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
   text-transform: uppercase;
+  line-height: 1.2;
+  white-space: nowrap;
 }
 
 .badge-purchase {
@@ -184,15 +313,16 @@
 
 .text-muted {
   color: #64748b;
-  font-size: 12px;
+  font-size: 11px;
   margin-top: 4px;
+  word-break: break-word;
 }
 
 .settlement-strip {
   display: flex;
-  gap: 6px;
+  gap: 4px;
   flex-wrap: wrap;
-  margin-top: 6px;
+  margin-top: 5px;
 }
 
 .mini-settlement {
@@ -200,8 +330,8 @@
   color: #334155;
   border: 1px solid #dbe4ff;
   border-radius: 999px;
-  font-size: 11px;
-  padding: 2px 8px;
+  font-size: 10px;
+  padding: 2px 6px;
 }
 
 .total-row {
@@ -210,7 +340,7 @@
 
 .total-row td {
   border-top: 2px solid #e2e8f0;
-  padding: 15px 12px;
+  padding: 12px 8px;
 }
 
 /* Mobile responsive */
@@ -234,11 +364,18 @@
   
   .table th,
   .table td {
-    padding: 8px 6px;
-    font-size: 12px;
+    padding: 7px 5px;
+    font-size: 11px;
   }
   
   .table {
     font-size: 11px;
+  }
+
+  .statement-table .col-date,
+  .statement-table .col-invoice,
+  .statement-table .col-items {
+    min-width: unset;
+    max-width: unset;
   }
 }

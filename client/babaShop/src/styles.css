@@ -14,3 +14,173 @@
   height: 96vh !important;
   max-height: 96vh !important;
 }
+
+app-purchase-console .table-responsive,
+sales-list .table-responsive,
+app-returns .table-responsive,
+stocks .table-responsive,
+orders .table-responsive,
+app-order-details .table-responsive,
+app-sales-reports .table-responsive,
+app-customer-details .table-responsive,
+app-view-distributor .table-responsive,
+distributors .table-responsive {
+  overflow-x: auto;
+}
+
+app-purchase-console .table,
+sales-list .table,
+app-returns .table,
+stocks .table,
+orders .table,
+app-order-details .table,
+app-sales-reports .table,
+app-customer-details .table,
+distributors .table {
+  width: 100%;
+  table-layout: auto;
+}
+
+app-purchase-console .table th,
+sales-list .table th,
+app-returns .table th,
+stocks .table th,
+orders .table th,
+app-order-details .table th,
+app-sales-reports .table th,
+app-customer-details .table th,
+distributors .table th,
+app-view-distributor .ledger-table th {
+  padding: 10px 8px;
+  font-size: 12px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+app-purchase-console .table td,
+sales-list .table td,
+app-returns .table td,
+stocks .table td,
+orders .table td,
+app-order-details .table td,
+app-sales-reports .table td,
+app-customer-details .table td,
+distributors .table td,
+app-view-distributor .ledger-table td {
+  padding: 10px 8px;
+  font-size: 12px;
+  line-height: 1.35;
+  vertical-align: top;
+  word-break: break-word;
+}
+
+app-purchase-console .badge,
+sales-list .badge,
+app-returns .badge,
+stocks .badge,
+orders .badge,
+app-order-details .badge,
+app-sales-reports .badge,
+app-customer-details .badge,
+distributors .status-badge,
+app-view-distributor .badge {
+  font-size: 10px;
+  line-height: 1.2;
+}
+
+app-purchase-console .card-title,
+sales-list .card-title,
+app-returns .card-title,
+stocks .card-title,
+orders .card-title,
+app-order-details .card-title,
+app-sales-reports .card-title,
+app-customer-details .card-title,
+distributors .card-title {
+  font-size: 1.2rem;
+  line-height: 1.2;
+}
+
+app-purchase-console .card-category,
+sales-list .card-category,
+app-returns .card-category,
+stocks .card-category,
+orders .card-category,
+app-order-details .card-category,
+app-sales-reports .card-category,
+app-customer-details .card-category,
+distributors .card-category {
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+app-purchase-console .summary-card .label,
+sales-list .summary-card .label,
+app-returns .summary-card .label,
+stocks .summary-card .label,
+orders .summary-card .label,
+app-order-details .summary-card .label,
+app-sales-reports .summary-card .label,
+app-customer-details .summary-card .label,
+app-view-distributor .summary-card .label {
+  font-size: 11px;
+}
+
+app-purchase-console .summary-card .value,
+sales-list .summary-card .value,
+app-returns .summary-card .value,
+stocks .summary-card .value,
+orders .summary-card .value,
+app-order-details .summary-card .value,
+app-sales-reports .summary-card .value,
+app-customer-details .summary-card .value,
+app-view-distributor .summary-card .value {
+  font-size: 17px;
+}
+
+app-purchase-console .hero-card,
+app-order-details .hero-card,
+app-sales-reports .hero-card,
+app-purchase-console .timeline-card,
+app-order-details .payment-entry,
+app-view-distributor .summary-card {
+  border-radius: 12px;
+}
+
+@media (max-width: 768px) {
+  app-purchase-console .table th,
+  sales-list .table th,
+  app-returns .table th,
+  stocks .table th,
+  orders .table th,
+  app-order-details .table th,
+  app-sales-reports .table th,
+  app-customer-details .table th,
+  distributors .table th,
+  app-view-distributor .ledger-table th,
+  app-purchase-console .table td,
+  sales-list .table td,
+  app-returns .table td,
+  stocks .table td,
+  orders .table td,
+  app-order-details .table td,
+  app-sales-reports .table td,
+  app-customer-details .table td,
+  distributors .table td,
+  app-view-distributor .ledger-table td {
+    padding: 7px 5px;
+    font-size: 11px;
+  }
+
+  app-purchase-console .card-title,
+  sales-list .card-title,
+  app-returns .card-title,
+  stocks .card-title,
+  orders .card-title,
+  app-order-details .card-title,
+  app-sales-reports .card-title,
+  app-customer-details .card-title,
+  distributors .card-title {
+    font-size: 1.05rem;
+  }
+}

@@ -6,7 +6,10 @@ const normalizePhoneValue = (value) => {
   return digits.length > 10 ? digits.slice(-10) : digits;
 };
 
-const normalizeEmailValue = (value) => `${value || ""}`.trim().toLowerCase();
+const normalizeEmailValue = (value) => {
+  const normalized = `${value || ""}`.trim().toLowerCase();
+  return normalized || undefined;
+};
 
 const customerSchema = new mongoose.Schema({
 
@@ -24,7 +27,6 @@ const customerSchema = new mongoose.Schema({
 
   email: {
     type: String,
-    sparse: true,
     trim: true,
     lowercase: true,
   },
@@ -117,7 +119,7 @@ customerSchema.index(
   { shop: 1, email: 1 },
   {
     unique: true,
-    partialFilterExpression: { email: { $type: "string", $ne: "" } },
+    partialFilterExpression: { email: { $type: "string" } },
   },
 );
 

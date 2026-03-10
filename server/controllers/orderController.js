@@ -749,7 +749,10 @@ exports.createOrder = async (req, res) => {
     });
   } catch (err) {
     console.error("Error creating order:", err);
-    return res.status(500).json({ success: false, error: "Error creating order" });
+    return res.status(err.statusCode || 500).json({
+      success: false,
+      message: err.message || "Error creating order",
+    });
   }
 };
 
