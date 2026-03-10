@@ -32,6 +32,7 @@ exports.createLedger = async (req, res) => {
       referenceId,
       purchaseId,
     } = req.body;
+    const normalizedType = `${type || ""}`.trim().toLowerCase();
     const normalizedPaymentMethod = `${paymentMethod || paymentMode || ""}`.trim().toUpperCase();
     const normalizedReferenceId = `${referenceId || purchaseId || ""}`.trim();
 
@@ -48,7 +49,7 @@ exports.createLedger = async (req, res) => {
         });
       }
 
-      if (`${type || ""}`.trim().toLowerCase() === "payment") {
+      if (normalizedType === "payment") {
         const paymentAmount = Math.max(0, Number(amount || 0));
         const purchaseDueAmount = Math.max(0, Number(purchase.dueAmount || 0));
         if (paymentAmount > purchaseDueAmount) {
@@ -63,9 +64,9 @@ exports.createLedger = async (req, res) => {
     const ledger = await createDistributorLedgerEntry({
       shop: req.shopId,
       distributor: distributorId,
-      type,
+      type: normalizedType,
       amount,
-      paymentMethod: normalizedPaymentMethod || (type === "payment" ? "CASH" : undefined),
+      paymentMethod: normalizedPaymentMethod || (normalizedType === "payment" ? "CASH" : undefined),
       referenceId: normalizedReferenceId || undefined,
       note,
       createdBy: req.user._id,

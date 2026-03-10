@@ -12,7 +12,7 @@ import { OrderService } from "app/shared/services/order.service";
 export class OrderPaymentDialogComponent implements OnInit {
   form!: FormGroup;
   saving = false;
-  readonly methods = ["CASH", "UPI", "CARD", "BANK_TRANSFER"];
+  readonly methods = ["CASH", "UPI", "CARD", "ONLINE", "BANK_TRANSFER"];
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: any,

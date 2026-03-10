@@ -17,7 +17,7 @@ export class CreateOrderComponent implements OnInit, OnDestroy {
     { label: "Offline", value: "POS" },
     { label: "Online", value: "ONLINE" },
   ];
-  readonly paymentMethods = ["CASH", "UPI", "CARD", "BANK_TRANSFER"];
+  readonly paymentMethods = ["CASH", "UPI", "CARD", "ONLINE", "BANK_TRANSFER"];
   readonly paymentStatuses = ["PENDING", "PAID", "FAILED"];
 
   loading = false;

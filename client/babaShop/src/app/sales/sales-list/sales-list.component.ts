@@ -306,8 +306,8 @@ export class SalesListComponent implements OnInit {
             <td>${it?.model || "-"}</td>
             <td>${it?.size || "-"}</td>
             <td>${Number(it?.quantity || 0)}</td>
-            <td>${Number(it?.purchasePrice || 0).toFixed(2)}</td>
-            <td>${(Number(it?.quantity || 0) * Number(it?.purchasePrice || 0)).toFixed(2)}</td>
+            <td>${Number(it?.sellingPrice || 0).toFixed(2)}</td>
+            <td>${(Number(it?.quantity || 0) * Number(it?.sellingPrice || 0)).toFixed(2)}</td>
           </tr>
         `,
       )

@@ -67,7 +67,9 @@ const getSaleReturnTotals = async ({ shopId, saleId }) => {
 
 const buildVariationSnapshot = (variation, rawItem = {}) => {
   const qty = Math.max(0, Number(rawItem?.quantity || 0));
-  const sellingPrice = Number(rawItem?.purchasePrice || variation?.sellingPrice || 0);
+  const sellingPrice = Number(
+    rawItem?.sellingPrice ?? rawItem?.price ?? variation?.sellingPrice ?? 0,
+  );
   const costPrice = Number(variation?.costPrice || 0);
   const lineTotal = Number((qty * sellingPrice).toFixed(2));
   const categoryName =
@@ -614,12 +616,12 @@ exports.getSales = async (req, res) => {
           size: it.size || "-",
           quantity: Number(it.quantity || 0),
           returnedQuantity: Number(it.returnedQuantity || 0),
-          purchasePrice: Number(it.sellingPrice || 0),
+          sellingPrice: Number(it.sellingPrice || 0),
           lineSale: Number((Number(it.quantity || 0) * Number(it.sellingPrice || 0)).toFixed(2)),
           ...(allowFinancials
             ? {
-                costPrice: Number(it.purchasePrice || 0),
-                lineCost: Number((Number(it.quantity || 0) * Number(it.purchasePrice || 0)).toFixed(2)),
+              costPrice: Number(it.purchasePrice || 0),
+              lineCost: Number((Number(it.quantity || 0) * Number(it.purchasePrice || 0)).toFixed(2)),
               }
             : {}),
         })),

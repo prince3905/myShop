@@ -8,9 +8,27 @@
       <div class="card-body">
         <div class="top-bar">
           <div class="context-chip">Visible Products: {{ totalItems || 0 }}</div>
-          <button mat-stroked-button color="primary" (click)="openAddItemModal()">Add Product</button>
-          <button mat-stroked-button color="accent" (click)="openAddCategoryModal()">Add Category</button>
-          <button mat-stroked-button color="accent" (click)="openAddBrandModal()">Add Brand</button>
+          <button
+            *hasRole="['SUPER_ADMIN','ADMIN','MANAGER']"
+            mat-stroked-button
+            color="primary"
+            (click)="openAddItemModal()">
+            Add Product
+          </button>
+          <button
+            *hasRole="['SUPER_ADMIN','ADMIN']"
+            mat-stroked-button
+            color="accent"
+            (click)="openAddCategoryModal()">
+            Add Category
+          </button>
+          <button
+            *hasRole="['SUPER_ADMIN','ADMIN']"
+            mat-stroked-button
+            color="accent"
+            (click)="openAddBrandModal()">
+            Add Brand
+          </button>
         </div>
 
         <div class="filter-row">

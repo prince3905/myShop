@@ -60,7 +60,7 @@ const orderPaymentEntrySchema = new mongoose.Schema(
     },
     paymentMethod: {
       type: String,
-      enum: ["CASH", "UPI", "CARD", "BANK_TRANSFER"],
+      enum: ["CASH", "UPI", "CARD", "ONLINE", "BANK_TRANSFER"],
       default: "CASH",
     },
     note: {
@@ -166,7 +166,7 @@ const orderSchema = new mongoose.Schema(
     },
     paymentMethod: {
       type: String,
-      enum: ["CASH", "UPI", "CARD", "BANK_TRANSFER"],
+      enum: ["CASH", "UPI", "CARD", "ONLINE", "BANK_TRANSFER"],
     },
     paymentNote: {
       type: String,

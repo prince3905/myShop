@@ -1,5 +1,6 @@
 const DistributorLedger = require("../models/DistributorLedger");
 const Distributor = require("../models/Distributor");
+const { syncDistributorPurchaseSnapshots } = require("./purchaseAccount.service");
 
 exports.createDistributorLedgerEntry = async ({
   shop,
@@ -75,6 +76,13 @@ exports.createDistributorLedgerEntry = async ({
   await Distributor.findByIdAndUpdate(distributor, {
     currentBalance: newBalance,
   });
+
+  if (["purchase", "payment", "purchase_return"].includes(type)) {
+    await syncDistributorPurchaseSnapshots({
+      distributorId: distributor,
+      shopId: shop,
+    });
+  }
 
   return ledger;
 };

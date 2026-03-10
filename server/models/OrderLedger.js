@@ -37,7 +37,7 @@ const orderLedgerSchema = new mongoose.Schema(
     },
     paymentMethod: {
       type: String,
-      enum: ["CASH", "UPI", "CARD", "BANK_TRANSFER"],
+      enum: ["CASH", "UPI", "CARD", "ONLINE", "BANK_TRANSFER"],
     },
     note: {
       type: String,

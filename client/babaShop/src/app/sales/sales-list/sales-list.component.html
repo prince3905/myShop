@@ -213,8 +213,8 @@
                 <td>{{ it?.model || '-' }}</td>
                 <td>{{ it?.size || '-' }}</td>
                 <td>{{ it?.quantity || 0 }}</td>
-                <td>Rs {{ it?.purchasePrice || 0 | number:'1.2-2' }}</td>
-                <td>Rs {{ ((it?.quantity || 0) * (it?.purchasePrice || 0)) | number:'1.2-2' }}</td>
+                <td>Rs {{ it?.sellingPrice || 0 | number:'1.2-2' }}</td>
+                <td>Rs {{ ((it?.quantity || 0) * (it?.sellingPrice || 0)) | number:'1.2-2' }}</td>
               </tr>
             </tbody>
           </table>

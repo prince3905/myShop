@@ -18,6 +18,7 @@ async function syncDistributorPurchaseSnapshots({ distributorId, shopId } = {}) 
 
   const purchaseQuery = {
     distributor: distributorId,
+    status: "CONFIRMED",
   };
   if (shopId) {
     purchaseQuery.shop = shopId;
@@ -156,10 +157,12 @@ async function syncPurchaseSnapshot({ purchaseId, shopId } = {}) {
     return null;
   }
 
-  await syncDistributorPurchaseSnapshots({
-    distributorId: purchase.distributor,
-    shopId: shopId || purchase.shop,
-  });
+  if (purchase.status === "CONFIRMED") {
+    await syncDistributorPurchaseSnapshots({
+      distributorId: purchase.distributor,
+      shopId: shopId || purchase.shop,
+    });
+  }
 
   return Purchase.findById(purchase._id);
 }

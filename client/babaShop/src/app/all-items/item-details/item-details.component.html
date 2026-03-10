@@ -41,7 +41,12 @@
                   (click)="openVariationConsole(item)">
                   Add Variation
                 </button>
-                <button mat-icon-button color="primary" matTooltip="Edit Product" (click)="openEditProduct(item)">
+                <button
+                  *hasRole="['SUPER_ADMIN','ADMIN','MANAGER']"
+                  mat-icon-button
+                  color="primary"
+                  matTooltip="Edit Product"
+                  (click)="openEditProduct(item)">
                   <mat-icon>edit</mat-icon>
                 </button>
                 <button

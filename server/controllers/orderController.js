@@ -16,7 +16,7 @@ const ORDER_STATUSES = new Set([
   "RETURNED",
 ]);
 const PAYMENT_STATUSES = new Set(["PENDING", "PAID", "FAILED", "REFUNDED"]);
-const PAYMENT_METHODS = new Set(["CASH", "UPI", "CARD", "BANK_TRANSFER"]);
+const PAYMENT_METHODS = new Set(["CASH", "UPI", "CARD", "ONLINE", "BANK_TRANSFER"]);
 const ORDER_SOURCES = new Set(["POS", "ONLINE"]);
 
 const isSuperAdminGlobal = (req) =>
