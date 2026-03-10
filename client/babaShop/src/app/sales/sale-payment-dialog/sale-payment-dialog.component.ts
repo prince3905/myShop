@@ -30,6 +30,7 @@ export class SalePaymentDialogComponent implements OnInit {
       paymentMethod: ["CASH", Validators.required],
       note: [""],
     });
+    this.form.get("amount")?.valueChanges.subscribe(() => this.clampAmount());
   }
 
   submit(): void {
@@ -64,5 +65,10 @@ export class SalePaymentDialogComponent implements OnInit {
           });
         },
       });
+  }
+
+  private clampAmount(): void {
+    const amount = Math.max(0, Number(this.form.get("amount")?.value || 0));
+    this.form.patchValue({ amount: Math.min(amount, this.dueAmount) || null }, { emitEvent: false });
   }
 }

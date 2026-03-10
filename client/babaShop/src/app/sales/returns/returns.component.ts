@@ -22,6 +22,7 @@ export class ReturnsComponent implements OnInit {
   refundMethod = "CASH";
   refundAmount = 0;
   note = "";
+  refundManuallyEdited = false;
 
   readonly refundMethods = ["CASH", "BANK", "ONLINE", "UPI", "CARD", "STORE_CREDIT"];
   readonly reasons = ["DAMAGED", "WRONG_ITEM", "CUSTOMER_REJECTED", "WARRANTY", "OTHER"];
@@ -45,7 +46,7 @@ export class ReturnsComponent implements OnInit {
   loadSale(): void {
     const id = `${this.invoiceId || ""}`.trim();
     if (!id) {
-      this.snackBar.open("Enter sale invoice id first", "Close", { duration: 2200 });
+      this.snackBar.open("Customer return dekhne ke liye sale invoice id dalo", "Close", { duration: 2200 });
       return;
     }
 
@@ -55,7 +56,7 @@ export class ReturnsComponent implements OnInit {
         this.sale = res?.data || null;
         if (!this.sale) {
           this.loading = false;
-          this.snackBar.open("Sale not found", "Close", { duration: 2500 });
+          this.snackBar.open("Sale invoice nahi mila", "Close", { duration: 2500 });
           return;
         }
         this.prepareReturnRows();
@@ -82,7 +83,8 @@ export class ReturnsComponent implements OnInit {
         this.returns = Array.isArray(res?.data) ? res.data : [];
         this.returnsSummary = res?.summary || null;
         this.recalculateRemainingFromHistory();
-        this.refundAmount = this.calculateReturnTotal();
+        this.refundManuallyEdited = false;
+        this.syncRefundAmount();
         this.loadSaleLedger();
         this.loading = false;
         this.loadAllReturns();
@@ -98,7 +100,7 @@ export class ReturnsComponent implements OnInit {
 
   submitReturn(): void {
     if (!this.sale?._id) {
-      this.snackBar.open("Load sale first", "Close", { duration: 2200 });
+      this.snackBar.open("Pehle sale invoice load karo", "Close", { duration: 2200 });
       return;
     }
 
@@ -113,7 +115,7 @@ export class ReturnsComponent implements OnInit {
       .filter((it: any) => Number(it.quantity || 0) > 0);
 
     if (!items.length) {
-      this.snackBar.open("Enter return quantity in at least one item", "Close", { duration: 2500 });
+      this.snackBar.open("Customer return ke liye kam se kam ek item me qty dalo", "Close", { duration: 2500 });
       return;
     }
 
@@ -121,7 +123,7 @@ export class ReturnsComponent implements OnInit {
     const refundableMax = this.getRefundableMax();
     const refund = Math.max(0, Number(this.refundAmount || 0));
     if (refund > refundableMax) {
-      this.snackBar.open(`Refund cannot be greater than ${refundableMax.toFixed(2)}`, "Close", { duration: 2800 });
+      this.snackBar.open(`Refund customer ko ${refundableMax.toFixed(2)} se zyada nahi ho sakta`, "Close", { duration: 2800 });
       return;
     }
 
@@ -136,13 +138,13 @@ export class ReturnsComponent implements OnInit {
       .subscribe({
         next: () => {
           this.submitting = false;
-          this.snackBar.open("Sales return created", "Close", { duration: 2600 });
+          this.snackBar.open("Customer return saved", "Close", { duration: 2600 });
           this.loadSale();
           this.loadAllReturns();
         },
         error: (err) => {
           this.submitting = false;
-          this.snackBar.open(err?.error?.message || "Failed to create sales return", "Close", {
+          this.snackBar.open(err?.error?.message || "Failed to save customer return", "Close", {
             duration: 3200,
           });
         },
@@ -166,10 +168,13 @@ export class ReturnsComponent implements OnInit {
     const qty = Math.max(0, Number(item?.returnQty || 0));
     const remaining = Math.max(0, Number(item?.remainingQty || 0));
     item.returnQty = Math.min(qty, remaining);
-    this.refundAmount = Math.min(
-      Math.max(0, Number(this.refundAmount || 0)),
-      this.getRefundableMax(),
-    );
+    this.syncRefundAmount();
+  }
+
+  onRefundAmountInput(value: number | string): void {
+    this.refundManuallyEdited = true;
+    const numericValue = Math.max(0, Number(value || 0));
+    this.refundAmount = Math.min(numericValue, this.getRefundableMax());
   }
 
   getDueAdjustPreview(): number {
@@ -244,6 +249,8 @@ export class ReturnsComponent implements OnInit {
       returnNote: "",
     }));
     this.refundMethod = "CASH";
+    this.refundManuallyEdited = false;
+    this.refundAmount = 0;
     this.note = "";
   }
 
@@ -268,5 +275,15 @@ export class ReturnsComponent implements OnInit {
         returnQty: 0,
       };
     });
+    this.syncRefundAmount();
+  }
+
+  private syncRefundAmount(): void {
+    const refundableMax = this.getRefundableMax();
+    if (this.refundManuallyEdited) {
+      this.refundAmount = Math.min(Math.max(0, Number(this.refundAmount || 0)), refundableMax);
+      return;
+    }
+    this.refundAmount = refundableMax;
   }
 }

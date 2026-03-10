@@ -70,7 +70,7 @@ export class PurchaseReturnDialogComponent implements OnInit {
       return qty < 0 || qty > max;
     });
     if (invalid) {
-      this.snackBar.open("Return qty cannot exceed purchased qty", "Close", { duration: 3000 });
+      this.snackBar.open("Distributor ko return qty purchased qty se zyada nahi ho sakti", "Close", { duration: 3000 });
       return;
     }
 
@@ -83,12 +83,12 @@ export class PurchaseReturnDialogComponent implements OnInit {
       .subscribe({
         next: () => {
           this.saving = false;
-          this.snackBar.open("Purchase return created", "Close", { duration: 2500 });
+          this.snackBar.open("Distributor return saved", "Close", { duration: 2500 });
           this.dialogRef.close(true);
         },
         error: (err) => {
           this.saving = false;
-          this.snackBar.open(err?.error?.message || "Failed to create return", "Close", {
+          this.snackBar.open(err?.error?.message || "Failed to save distributor return", "Close", {
             duration: 3200,
           });
         },

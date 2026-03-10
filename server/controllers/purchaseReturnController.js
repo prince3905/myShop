@@ -1,5 +1,6 @@
 const Purchase = require("../models/Purchase");
 const PurchaseReturn = require("../models/PurchaseReturn");
+const Stock = require("../models/Stock");
 const { applyStockTransaction } = require("../utils/stock.service");
 const { createDistributorLedgerEntry } = require("../utils/distributorLedger.service");
 const { syncPurchaseSnapshot } = require("../utils/purchaseAccount.service");
@@ -64,6 +65,14 @@ exports.createPurchaseReturn = async (req, res) => {
       shopId: req.shopId,
       purchaseId: purchase._id,
     });
+    const stockRows = await Stock.find({
+      shop: req.shopId,
+      variation: { $in: purchase.items.map((it) => it.variation) },
+    }).select("variation quantity reservedQuantity damagedQuantity");
+    const stockMap = new Map();
+    stockRows.forEach((row) => {
+      stockMap.set(`${row.variation}`, row);
+    });
 
     const hasRemaining = purchase.items.some((it) => {
       const variationId = `${it?.variation || ""}`;
@@ -109,15 +118,21 @@ exports.createPurchaseReturn = async (req, res) => {
 
       const purchasePrice = Number(original.purchasePrice || 0);
       const totalAmount = Number((returnQty * purchasePrice).toFixed(2));
+      const stockRow = stockMap.get(variationId);
+      const currentDamagedQty = Number(stockRow?.damagedQuantity || 0);
+      const reason = item?.reason || "OTHER";
+      const consumedDamagedQuantity =
+        reason === "DAMAGED" ? Math.min(currentDamagedQty, returnQty) : 0;
       returnItems.push({
         product: original.product,
         model: original.model,
         variation: original.variation,
         sku: original.sku,
         quantity: returnQty,
+        consumedDamagedQuantity,
         purchasePrice,
         totalAmount,
-        reason: item?.reason || "OTHER",
+        reason,
         note: item?.note || "",
       });
     }
@@ -140,6 +155,16 @@ exports.createPurchaseReturn = async (req, res) => {
     });
 
     for (const item of returnItems) {
+      if (Number(item.consumedDamagedQuantity || 0) > 0) {
+        const stock = await Stock.findOne({ shop: req.shopId, variation: item.variation });
+        if (stock) {
+          stock.damagedQuantity = Math.max(
+            0,
+            Number(stock.damagedQuantity || 0) - Number(item.consumedDamagedQuantity || 0),
+          );
+          await stock.save();
+        }
+      }
       await applyStockTransaction({
         shop: req.shopId,
         product: item.product,
@@ -150,7 +175,10 @@ exports.createPurchaseReturn = async (req, res) => {
         quantity: Number(item.quantity || 0),
         referenceType: "RETURN",
         referenceId: purchaseReturn._id,
-        note: `Purchase return ${purchase.invoiceNo || purchase._id}`,
+        note:
+          Number(item.consumedDamagedQuantity || 0) > 0
+            ? `Purchase return ${purchase.invoiceNo || purchase._id} (damaged consumed: ${item.consumedDamagedQuantity})`
+            : `Purchase return ${purchase.invoiceNo || purchase._id}`,
         createdBy: req.user?._id,
       });
     }

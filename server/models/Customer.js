@@ -58,6 +58,11 @@ const customerSchema = new mongoose.Schema({
     default: 0
   },
 
+  walletBalance: {
+    type: Number,
+    default: 0
+  },
+
   purchaseCount: {
     type: Number,
     default: 0

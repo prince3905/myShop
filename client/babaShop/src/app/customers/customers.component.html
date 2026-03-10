@@ -51,6 +51,7 @@
               <th>Total Purchase</th>
               <th>Total Paid</th>
               <th>Total Due</th>
+              <th>Wallet</th>
               <th>Purchases</th>
               <th>Action</th>
             </tr>
@@ -63,6 +64,7 @@
               <td>Rs {{ item.totalPurchase || 0 }}</td>
               <td>Rs {{ item.totalPaid || 0 }}</td>
               <td>Rs {{ item.totalDue || 0 }}</td>
+              <td>Rs {{ item.walletBalance || 0 }}</td>
               <td>{{ item.purchaseCount || 0 }}</td>
               <td>
                 <button
@@ -78,7 +80,7 @@
             </tr>
 
             <tr *ngIf="paginatedItems.length === 0">
-              <td colspan="8" class="text-center empty-state">No customers found</td>
+              <td colspan="9" class="text-center empty-state">No customers found</td>
             </tr>
           </tbody>
         </table>

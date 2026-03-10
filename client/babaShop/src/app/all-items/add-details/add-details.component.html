@@ -31,7 +31,7 @@
             <div class="col-md-6 model-add-inline">
               <mat-form-field appearance="outline" class="w-100">
                 <mat-label>New Model Name</mat-label>
-                <input matInput [(ngModel)]="modelName" [ngModelOptions]="{standalone: true}" />
+                <input matInput [(ngModel)]="modelName" appCapitalizeFirst [ngModelOptions]="{standalone: true}" />
               </mat-form-field>
               <button
                 mat-stroked-button
@@ -87,6 +87,7 @@
                 <input
                   matInput
                   [(ngModel)]="variation.color"
+                  appCapitalizeFirst
                   [ngModelOptions]="{standalone: true}"
                   (ngModelChange)="onVariationMetaChange()" />
               </mat-form-field>
@@ -94,7 +95,7 @@
             <div class="col-md-4">
               <mat-form-field appearance="outline" class="w-100">
                 <mat-label>Size</mat-label>
-                <input matInput [(ngModel)]="variation.size" [ngModelOptions]="{standalone: true}" />
+                <input matInput [(ngModel)]="variation.size" appCapitalizeFirst [ngModelOptions]="{standalone: true}" />
               </mat-form-field>
             </div>
             <div class="col-md-4">
@@ -103,6 +104,7 @@
                 <input
                   matInput
                   [(ngModel)]="variation.storage"
+                  appCapitalizeFirst
                   [ngModelOptions]="{standalone: true}"
                   (ngModelChange)="onVariationMetaChange()" />
               </mat-form-field>

@@ -174,6 +174,7 @@
                       type="text"
                       [disabled]="reconciliation?.status !== 'DRAFT'"
                       [(ngModel)]="line.note"
+                      appCapitalizeFirst
                       placeholder="optional note" />
                   </td>
                 </tr>
@@ -351,7 +352,9 @@
                 <th>Product</th>
                 <th>Type</th>
                 <th>Ref</th>
-                <th>Qty</th>
+                <th>Damage Source</th>
+                <th>Txn Qty</th>
+                <th>Stock Effect</th>
                 <th>Prev</th>
                 <th>New</th>
                 <th>User</th>
@@ -367,14 +370,24 @@
                   <span class="tx-pill" [ngClass]="'tx-' + (tx?.type || 'ADJUSTMENT')">{{ tx?.type }}</span>
                 </td>
                 <td>{{ tx?.referenceType || '-' }}</td>
-                <td>{{ tx?.deltaQuantity }}</td>
+                <td>
+                  <ng-container [ngSwitch]="tx?.damageSource">
+                    <span *ngSwitchCase="'PURCHASE_DAMAGE'">From Distributor</span>
+                    <span *ngSwitchCase="'INTERNAL_DAMAGE'">Internal Damage</span>
+                    <span *ngSwitchCase="'CUSTOMER_RETURN_DAMAGE'">Customer Return Damage</span>
+                    <span *ngSwitchCase="'OTHER_DAMAGE'">Other</span>
+                    <span *ngSwitchDefault>-</span>
+                  </ng-container>
+                </td>
+                <td>{{ getTransactionQty(tx) }}</td>
+                <td>{{ getTransactionEffect(tx) }}</td>
                 <td>{{ tx?.previousQuantity }}</td>
                 <td>{{ tx?.newQuantity }}</td>
                 <td>{{ tx?.createdBy?.email || '-' }}</td>
                 <td>{{ tx?.note || '-' }}</td>
               </tr>
               <tr *ngIf="txRows.length === 0">
-                <td colspan="10" class="empty">No transaction records found</td>
+                <td colspan="12" class="empty">No transaction records found</td>
               </tr>
             </tbody>
           </table>
@@ -438,6 +451,15 @@
             </mat-select>
           </mat-form-field>
 
+          <mat-form-field appearance="outline" class="filter-field" *ngIf="adjustForm.type === 'DAMAGED'">
+            <mat-label>Damage Source</mat-label>
+            <mat-select [(ngModel)]="adjustForm.damageSource">
+              <mat-option *ngFor="let source of damageSources" [value]="source.value">
+                {{ source.label }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
           <mat-form-field appearance="outline" class="filter-field">
             <mat-label>Quantity</mat-label>
             <input matInput type="number" [(ngModel)]="adjustForm.quantity" placeholder="e.g. 5" />
@@ -445,7 +467,7 @@
 
           <mat-form-field appearance="outline" class="filter-field note-field">
             <mat-label>Note</mat-label>
-            <input matInput [(ngModel)]="adjustForm.note" placeholder="Reason for adjustment" />
+            <input matInput [(ngModel)]="adjustForm.note" placeholder="Reason for adjustment" appCapitalizeFirst />
           </mat-form-field>
 
           <button mat-raised-button color="primary" [disabled]="adjustSaving" (click)="submitAdjustment()">

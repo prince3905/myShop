@@ -28,6 +28,11 @@ const purchaseReturnItemSchema = new mongoose.Schema(
       required: true,
       min: 1,
     },
+    consumedDamagedQuantity: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
     purchasePrice: {
       type: Number,
       required: true,
@@ -106,4 +111,3 @@ const purchaseReturnSchema = new mongoose.Schema(
 purchaseReturnSchema.index({ shop: 1, purchase: 1, createdAt: -1 });
 
 module.exports = mongoose.model("PurchaseReturn", purchaseReturnSchema);
-

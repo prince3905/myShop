@@ -80,6 +80,7 @@ export class PurchaseConsoleComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.bindPurchaseValueGuards();
     this.loadDistributors();
     this.loadProducts();
     this.loadPurchases();
@@ -289,7 +290,8 @@ export class PurchaseConsoleComponent implements OnInit {
       variation: selected._id,
       sku: selected.sku,
       purchasePrice: Number(selected.costPrice || 0),
-    });
+    }, { emitEvent: false });
+    this.normalizeItemRow(index);
   }
 
   isProductSelected(index: number): boolean {
@@ -336,6 +338,8 @@ export class PurchaseConsoleComponent implements OnInit {
       this.purchaseForm.markAllAsTouched();
       return;
     }
+
+    this.normalizeAllPurchaseValues();
 
     this.saving = true;
     const req$ = this.editingPurchaseId
@@ -444,9 +448,9 @@ export class PurchaseConsoleComponent implements OnInit {
 
   getReturnStatusLabel(purchase: any): string {
     const status = `${purchase?.returnStatus || "NONE"}`.trim().toUpperCase();
-    if (status === "FULL") return "FULL";
-    if (status === "PARTIAL") return "PARTIAL";
-    return "NONE";
+    if (status === "FULL") return "FULLY RETURNED TO DISTRIBUTOR";
+    if (status === "PARTIAL") return "PARTIALLY RETURNED TO DISTRIBUTOR";
+    return "NO DISTRIBUTOR RETURN";
   }
 
   getPurchaseItemCount(purchase: any): number {
@@ -475,9 +479,18 @@ export class PurchaseConsoleComponent implements OnInit {
       0,
     );
     const total = Number(purchase?.grandTotal || 0);
-    if (returnedAmount <= 0) return "No Return";
-    if (total > 0 && returnedAmount >= total) return "Full Return";
-    return "Partial Return";
+    if (returnedAmount <= 0) return "No Return to Distributor";
+    if (total > 0 && returnedAmount >= total) return "Fully Returned to Distributor";
+    return "Partially Returned to Distributor";
+  }
+
+  getPurchaseReturnDamagedQty(row: any): number {
+    return Number(
+      (row?.items || []).reduce(
+        (acc: number, item: any) => acc + Number(item?.consumedDamagedQuantity || 0),
+        0,
+      ) || 0,
+    );
   }
 
   getPurchaseScenarioSummary(purchase: any): string {
@@ -491,7 +504,7 @@ export class PurchaseConsoleComponent implements OnInit {
       0,
     );
     if (returnedAmount > 0) {
-      return `Total maal ${totalQty} qty liya gaya. Kul bill ₹${total.toFixed(2)} tha. Return ₹${returnedAmount.toFixed(2)} ho chuka hai. Ab tak ₹${paid.toFixed(2)} payment aaya, baki ₹${due.toFixed(2)} hai.`;
+      return `Total maal ${totalQty} qty liya gaya. Kul bill ₹${total.toFixed(2)} tha. Isme se ₹${returnedAmount.toFixed(2)} ka maal distributor ko wapas chala gaya. Ab tak ₹${paid.toFixed(2)} payment hua, baki ₹${due.toFixed(2)} hai.`;
     }
     return `Total maal ${totalQty} qty liya gaya. Kul bill ₹${total.toFixed(2)} hai. Ab tak ₹${paid.toFixed(2)} payment aaya aur baki ₹${due.toFixed(2)} due hai.`;
   }
@@ -534,7 +547,7 @@ export class PurchaseConsoleComponent implements OnInit {
     if (!this.canMutatePurchase) return;
     const row = this.purchases.find((p: any) => `${p?._id}` === `${purchaseId}`);
     if ((row?.returnStatus || "NONE") === "FULL") {
-      this.snackBar.open("All quantities already returned for this purchase", "Close", {
+      this.snackBar.open("Is purchase ka sara maal distributor ko return ho chuka hai", "Close", {
         duration: 2800,
       });
       return;
@@ -650,6 +663,7 @@ export class PurchaseConsoleComponent implements OnInit {
     this.purchaseForm.setControl("items", this.fb.array([this.createItemRow()]));
     this.rowModelsByIndex = {};
     this.rowVariationsByIndex = {};
+    this.bindPurchaseValueGuards();
     this.purchaseForm.markAsPristine();
     this.purchaseForm.markAsUntouched();
   }
@@ -686,8 +700,85 @@ export class PurchaseConsoleComponent implements OnInit {
     );
     this.purchaseForm.setControl("items", this.fb.array(rows.length ? rows : [this.createItemRow()]));
     this.rebuildAllRowOptionCaches();
+    this.bindPurchaseValueGuards();
+    this.normalizeAllPurchaseValues();
     this.purchaseForm.markAsPristine();
     this.purchaseForm.markAsUntouched();
+  }
+
+  private bindPurchaseValueGuards(): void {
+    this.purchaseForm
+      .get("discountAmount")
+      ?.valueChanges.subscribe(() => this.normalizePurchaseDiscountAndPaid());
+    this.purchaseForm
+      .get("paidAmount")
+      ?.valueChanges.subscribe(() => this.normalizePurchaseDiscountAndPaid());
+
+    this.itemsFormArray.controls.forEach((ctrl, index) => {
+      ["quantity", "purchasePrice", "taxPercent", "discountAmount", "freeQuantity"].forEach((field) => {
+        ctrl.get(field)?.valueChanges.subscribe(() => this.normalizeItemRow(index));
+      });
+    });
+  }
+
+  private normalizeAllPurchaseValues(): void {
+    this.itemsFormArray.controls.forEach((_, index) => this.normalizeItemRow(index));
+    this.normalizePurchaseDiscountAndPaid();
+  }
+
+  private normalizeItemRow(index: number): void {
+    const row = this.itemsFormArray.at(index);
+    if (!row) return;
+
+    const qty = Math.max(1, Number(row.get("quantity")?.value || 0));
+    const freeQuantity = Math.max(0, Number(row.get("freeQuantity")?.value || 0));
+    const price = Math.max(0, Number(row.get("purchasePrice")?.value || 0));
+    const taxPercent = Math.max(0, Number(row.get("taxPercent")?.value || 0));
+    const base = qty * price;
+    const safeDiscount = Math.max(0, Math.min(Number(row.get("discountAmount")?.value || 0), base));
+
+    row.patchValue(
+      {
+        quantity: qty,
+        freeQuantity,
+        purchasePrice: price,
+        taxPercent,
+        discountAmount: safeDiscount,
+      },
+      { emitEvent: false },
+    );
+
+    this.normalizePurchaseDiscountAndPaid();
+  }
+
+  private normalizePurchaseDiscountAndPaid(): void {
+    const itemTotal = this.itemsFormArray.controls.reduce((acc, ctrl) => {
+      const row = ctrl.value || {};
+      const qty = Math.max(0, Number(row.quantity || 0));
+      const price = Math.max(0, Number(row.purchasePrice || 0));
+      const tax = Math.max(0, Number(row.taxPercent || 0));
+      const rowDiscount = Math.max(0, Math.min(Number(row.discountAmount || 0), qty * price));
+      const base = qty * price;
+      return acc + Math.max(0, base + (base * tax) / 100 - rowDiscount);
+    }, 0);
+
+    const safeBillDiscount = Math.max(
+      0,
+      Math.min(Number(this.purchaseForm.get("discountAmount")?.value || 0), itemTotal),
+    );
+    const grandTotal = Math.max(0, itemTotal - safeBillDiscount);
+    const safePaid = Math.max(
+      0,
+      Math.min(Number(this.purchaseForm.get("paidAmount")?.value || 0), grandTotal),
+    );
+
+    this.purchaseForm.patchValue(
+      {
+        discountAmount: safeBillDiscount,
+        paidAmount: safePaid,
+      },
+      { emitEvent: false },
+    );
   }
 
   private rebuildAllRowOptionCaches(): void {

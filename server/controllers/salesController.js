@@ -4,6 +4,7 @@ const Product = require("../models/Product");
 const ProductModel = require("../models/ProductModel");
 const ProductVariation = require("../models/ProductVariation");
 const Stock = require("../models/Stock");
+const StockTransaction = require("../models/StockTransaction");
 const SaleReturn = require("../models/SaleReturn");
 const SaleLedger = require("../models/SaleLedger");
 const Customer = require("../models/Customer");
@@ -100,6 +101,12 @@ const buildVariationSnapshot = (variation, rawItem = {}) => {
   };
 };
 
+const getSellableStock = (stock = {}) =>
+  Math.max(
+    0,
+    Number(stock?.quantity || 0) - Number(stock?.reservedQuantity || 0) - Number(stock?.damagedQuantity || 0),
+  );
+
 const resolveVariation = async (shopId, rawItem = {}) => {
   const variationId = `${rawItem?.variationId || ""}`.trim();
   const variationSku = `${rawItem?.variationSku || rawItem?.variations || ""}`.trim();
@@ -181,6 +188,7 @@ exports.createSale = async (req, res) => {
     }
 
     const {
+      customer,
       customerName = "Walk-in",
       customerPhone = "",
       customerAddress = "",
@@ -188,6 +196,7 @@ exports.createSale = async (req, res) => {
       paymentMethod = "CASH",
       billDiscount = 0,
       paidAmount = 0,
+      walletUsedAmount = 0,
     } = req.body || {};
 
     if (!Array.isArray(items) || items.length === 0) {
@@ -199,7 +208,19 @@ exports.createSale = async (req, res) => {
     const normalizedCustomerName = `${customerName || ""}`.trim();
     const normalizedPhone = normalizeCustomerPhone(customerPhone);
     
-    if (normalizedCustomerName && normalizedCustomerName !== "Walk-in" && normalizedPhone && normalizedPhone.length === 10) {
+    if (customer && mongoose.Types.ObjectId.isValid(`${customer}`)) {
+      customerDoc = await Customer.findOne({
+        _id: customer,
+        shop: req.shopId,
+        isDeleted: { $ne: true },
+      });
+      if (!customerDoc) {
+        return res.status(404).json({
+          success: false,
+          message: "Selected customer not found for this shop",
+        });
+      }
+    } else if (normalizedCustomerName && normalizedCustomerName !== "Walk-in" && normalizedPhone && normalizedPhone.length === 10) {
       customerDoc = await Customer.findOne({ 
         shop: req.shopId, 
         phone: normalizedPhone,
@@ -307,7 +328,7 @@ exports.createSale = async (req, res) => {
       const stock =
         stockByVariation.get(`${variation._id}`) ||
         (await Stock.findOne({ shop: req.shopId, variation: variation._id }).lean());
-      const available = Number(stock?.quantity || 0);
+      const available = getSellableStock(stock);
       if (available < qty) {
         return res.status(400).json({
           success: false,
@@ -323,10 +344,29 @@ exports.createSale = async (req, res) => {
     const safeBillDiscount = Math.max(0, Number(billDiscount || 0));
     const totalAmount = Math.max(0, Number((subTotal - safeBillDiscount).toFixed(2)));
     const safePaidAmount = Math.max(0, Number(paidAmount || 0));
+    const safeWalletUsedAmount = Math.max(0, Number(walletUsedAmount || 0));
     if (safePaidAmount > totalAmount) {
       return res.status(400).json({
         success: false,
         message: "Paid amount cannot be greater than net bill amount",
+      });
+    }
+    if (safeWalletUsedAmount > 0 && !customerDoc?._id) {
+      return res.status(400).json({
+        success: false,
+        message: "Wallet can only be used for a saved customer",
+      });
+    }
+    if (safeWalletUsedAmount > Number(customerDoc?.walletBalance || 0)) {
+      return res.status(400).json({
+        success: false,
+        message: `Wallet amount cannot exceed available balance ${Number(customerDoc?.walletBalance || 0).toFixed(2)}`,
+      });
+    }
+    if (safePaidAmount + safeWalletUsedAmount > totalAmount) {
+      return res.status(400).json({
+        success: false,
+        message: "Paid amount plus wallet amount cannot be greater than net bill amount",
       });
     }
     const allowedPaymentMethods = new Set(["CASH", "UPI", "CARD", "BANK", "ONLINE", "CREDIT"]);
@@ -357,7 +397,8 @@ exports.createSale = async (req, res) => {
       totalAmount,
       paymentMethod: normalizedPaymentMethod,
       paidAmount: safePaidAmount,
-      dueAmount: Math.max(0, Number((totalAmount - safePaidAmount).toFixed(2))),
+      walletUsedAmount: safeWalletUsedAmount,
+      dueAmount: Math.max(0, Number((totalAmount - safePaidAmount - safeWalletUsedAmount).toFixed(2))),
       orderSource: "POS",
       status: "COMPLETED",
     });
@@ -384,6 +425,20 @@ exports.createSale = async (req, res) => {
         paymentMethod: normalizedPaymentMethod,
         referenceId: sale._id,
         note: `Sale payment (${normalizedPaymentMethod}) ${sale.invoiceNo || sale._id}`,
+        createdBy: req.user?._id,
+      });
+    }
+    if (safeWalletUsedAmount > 0) {
+      await createSaleLedgerEntry({
+        shop: req.shopId,
+        sale: sale._id,
+        customer: sale.customer,
+        customerName: sale.customerName,
+        type: "wallet_use",
+        amount: safeWalletUsedAmount,
+        paymentMethod: "STORE_CREDIT",
+        referenceId: sale._id,
+        note: `Wallet used ${sale.invoiceNo || sale._id}`,
         createdBy: req.user?._id,
       });
     }
@@ -537,6 +592,7 @@ exports.getSales = async (req, res) => {
           : {}),
         billDiscount: Number(s.billDiscount || 0),
         paidAmount: Number(s.paidAmount || 0),
+        walletUsedAmount: Number(s.walletUsedAmount || 0),
         dueAmount: Number(s.dueAmount || 0),
         totalQuantity: Number(s.totalQuantity || 0),
         returnedQuantity: Number(s.returnedQuantity || 0),
@@ -1467,6 +1523,7 @@ exports.createSaleReturn = async (req, res) => {
       }
 
       const sellingPrice = Number(saleItem.sellingPrice || 0);
+      const reason = raw?.reason || "OTHER";
       returnItems.push({
         item: saleItem.item,
         variationId: saleItem.variationId,
@@ -1476,9 +1533,10 @@ exports.createSaleReturn = async (req, res) => {
         size: saleItem.size || "",
         color: saleItem.color || "",
         quantity: qty,
+        damagedReceivedQuantity: reason === "DAMAGED" ? qty : 0,
         sellingPrice,
         totalAmount: Number((qty * sellingPrice).toFixed(2)),
-        reason: raw?.reason || "OTHER",
+        reason,
         note: raw?.note || "",
       });
     }
@@ -1536,7 +1594,7 @@ exports.createSaleReturn = async (req, res) => {
 
     for (const item of returnItems) {
       const variation = variationMap.get(`${item.variationId}`);
-      await applyStockTransaction({
+      const { stock } = await applyStockTransaction({
         shop: req.shopId,
         product: variation.product,
         model: variation.model,
@@ -1549,6 +1607,30 @@ exports.createSaleReturn = async (req, res) => {
         note: `Sales return ${sale._id}`,
         createdBy: req.user?._id,
       });
+
+      if (Number(item.damagedReceivedQuantity || 0) > 0) {
+        const previousQuantity = Number(stock?.quantity || 0);
+        stock.damagedQuantity = Number(stock.damagedQuantity || 0) + Number(item.damagedReceivedQuantity || 0);
+        await stock.save();
+
+        await StockTransaction.create({
+          shop: req.shopId,
+          product: variation.product,
+          model: variation.model,
+          variation: variation._id,
+          sku: variation.sku || item.variationSku,
+          type: "DAMAGED",
+          quantity: Number(item.damagedReceivedQuantity || 0),
+          deltaQuantity: 0,
+          previousQuantity,
+          newQuantity: previousQuantity,
+          referenceType: "RETURN",
+          referenceId: saleReturn._id,
+          note: `Customer return received damaged ${sale._id}`,
+          damageSource: "CUSTOMER_RETURN_DAMAGE",
+          createdBy: req.user?._id,
+        });
+      }
     }
 
     const mergedReturnedMap = await sumSaleReturnedByVariation({

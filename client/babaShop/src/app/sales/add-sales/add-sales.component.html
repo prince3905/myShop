@@ -39,7 +39,7 @@
           <div class="customer-bar">
             <mat-form-field appearance="outline" class="customer-name-field">
               <mat-label>Customer</mat-label>
-              <input matInput name="customerName" [(ngModel)]="customerName" (input)="fetchCusSuggestions()" />
+              <input matInput name="customerName" [(ngModel)]="customerName" (input)="onCustomerNameChange(customerName)" />
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="customer-phone-field">
@@ -53,9 +53,10 @@
             </button>
           </div>
 
-          <div class="suggestion-list customer-suggestion-list" *ngIf="cus_suggestions?.length">
-            <button mat-stroked-button type="button" *ngFor="let suggestion of cus_suggestions" (click)="selectCusSuggestion(suggestion)">
-              {{ suggestion }}
+          <div class="suggestion-list customer-suggestion-list" *ngIf="cus_full_suggestions?.length">
+            <button mat-stroked-button type="button" *ngFor="let suggestion of cus_full_suggestions" (click)="selectCusSuggestion(suggestion)">
+              {{ suggestion?.name }} ({{ suggestion?.phone }})
+              <span *ngIf="(suggestion?.walletBalance || 0) > 0"> • Wallet Rs {{ suggestion?.walletBalance | number:'1.2-2' }}</span>
             </button>
           </div>
 
@@ -163,15 +164,50 @@
             <div class="summary-row compact">
               <span>Discount:</span>
               <mat-form-field appearance="outline" class="summary-input">
-                <input type="number" matInput name="billDiscount" [(ngModel)]="billDiscount" min="0" />
+                <input type="number" matInput name="billDiscount" [ngModel]="billDiscount" min="0" [max]="totalPurchasePrice || 0" (ngModelChange)="onBillDiscountChange($event, billDiscountInput)" #billDiscountInput />
               </mat-form-field>
             </div>
 
             <div class="summary-row compact">
               <span>Paid:</span>
               <mat-form-field appearance="outline" class="summary-input">
-                <input type="number" matInput name="paidAmount" [(ngModel)]="paidAmount" min="0" />
+                <input
+                  type="number"
+                  matInput
+                  name="paidAmount"
+                  [ngModel]="paidAmount"
+                  min="0"
+                  [max]="getNetTotal() - (walletUsedAmount || 0)"
+                  (ngModelChange)="onPaidAmountChange($event, paidAmountInput)"
+                  #paidAmountInput
+                />
               </mat-form-field>
+            </div>
+
+            <div class="summary-row compact" *ngIf="selectedCustomerId && currentCustomerWalletBalance > 0">
+              <span>Wallet Use:</span>
+              <mat-form-field appearance="outline" class="summary-input">
+                <input
+                  type="number"
+                  matInput
+                  name="walletUsedAmount"
+                  [ngModel]="walletUsedAmount"
+                  min="0"
+                  [max]="getMaxWalletUsable()"
+                  (ngModelChange)="onWalletAmountChange($event, walletUsedAmountInput)"
+                  #walletUsedAmountInput
+                />
+              </mat-form-field>
+            </div>
+
+            <div class="summary-row" *ngIf="selectedCustomerId && currentCustomerWalletBalance > 0">
+              <span>Wallet Balance:</span>
+              <strong>{{ currentCustomerWalletBalance | currency:'INR':'symbol':'1.2-2' }}</strong>
+            </div>
+
+            <div class="summary-row" *ngIf="selectedCustomerId && walletUsedAmount > 0">
+              <span>Wallet Applied:</span>
+              <strong>{{ walletUsedAmount | currency:'INR':'symbol':'1.2-2' }}</strong>
             </div>
 
             <div class="summary-row">

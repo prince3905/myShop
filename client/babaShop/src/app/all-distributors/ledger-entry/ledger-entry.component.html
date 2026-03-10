@@ -9,7 +9,7 @@
     <!-- Amount -->
     <mat-form-field appearance="outline" class="full-width">
       <mat-label>Amount</mat-label>
-      <input matInput type="number" formControlName="amount">
+      <input matInput type="number" min="1" [max]="maxAmount || null" formControlName="amount">
       <mat-error *ngIf="form.get('amount')?.hasError('required')">
         Amount is required
       </mat-error>
@@ -41,12 +41,15 @@
       <mat-hint *ngIf="!purchaseOptions.length">
         No pending confirmed purchase found for this distributor
       </mat-hint>
+      <mat-hint *ngIf="maxAmount > 0">
+        Max payment for selected purchase: ₹{{ maxAmount | number:'1.2-2' }}
+      </mat-hint>
     </mat-form-field>
 
     <!-- Note -->
     <mat-form-field appearance="outline" class="full-width">
       <mat-label>Note</mat-label>
-      <textarea matInput rows="3" formControlName="note"></textarea>
+      <textarea matInput rows="3" formControlName="note" appCapitalizeFirst></textarea>
     </mat-form-field>
 
   </form>

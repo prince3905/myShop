@@ -143,7 +143,9 @@ export class CreateOrderComponent implements OnInit, OnDestroy {
   onPaymentStatusChange(): void {
     if (this.paymentStatus === "PAID") {
       this.paidAmount = this.getGrandTotal();
+      return;
     }
+    this.clampFinancialInputs();
   }
 
   searchCustomers(): void {
@@ -245,6 +247,8 @@ export class CreateOrderComponent implements OnInit, OnDestroy {
       return;
     }
 
+    this.clampCurrentLineInputs();
+
     const row = {
       productName: this.selectedProductName,
       productId: this.selectedProductId,
@@ -260,11 +264,13 @@ export class CreateOrderComponent implements OnInit, OnDestroy {
     };
 
     this.items = [...this.items, row];
+    this.clampFinancialInputs();
     this.resetLineSelection();
   }
 
   removeItem(index: number): void {
     this.items = this.items.filter((_, i) => i !== index);
+    this.clampFinancialInputs();
   }
 
   createOrder(): void {
@@ -277,6 +283,8 @@ export class CreateOrderComponent implements OnInit, OnDestroy {
       this.snackBar.open("Add at least one item", "Close", { duration: 2200 });
       return;
     }
+
+    this.clampFinancialInputs();
 
     const grandTotal = this.getGrandTotal();
     const safePaidAmount = this.paymentStatus === "PAID" ? grandTotal : Number(this.paidAmount || 0);
@@ -380,6 +388,45 @@ export class CreateOrderComponent implements OnInit, OnDestroy {
     this.lineDiscount = 0;
   }
 
+  onAdditionalDiscountChange(value: any): void {
+    this.additionalDiscount = Math.max(0, Number(value || 0));
+    this.clampFinancialInputs();
+  }
+
+  onTaxAmountChange(value: any): void {
+    this.taxAmount = Math.max(0, Number(value || 0));
+    this.clampFinancialInputs();
+  }
+
+  onPaidAmountChange(value: any): void {
+    this.paidAmount = Math.max(0, Number(value || 0));
+    this.clampFinancialInputs();
+  }
+
+  onLineDiscountChange(value: any): void {
+    this.lineDiscount = Math.max(0, Number(value || 0));
+    this.clampCurrentLineInputs();
+  }
+
+  clampCurrentLineInputs(): void {
+    this.quantity = Math.max(1, Number(this.quantity || 0));
+    const price = Math.max(0, Number(this.selectedPrice || 0));
+    const lineBase = this.quantity * price;
+    this.lineDiscount = Math.max(0, Math.min(Number(this.lineDiscount || 0), lineBase));
+  }
+
+  private clampFinancialInputs(): void {
+    const itemDiscountTotal = this.getItemDiscountTotal();
+    const subtotal = this.getSubTotal();
+    const maxAdditionalDiscount = Math.max(0, subtotal - itemDiscountTotal);
+    this.additionalDiscount = Math.max(0, Math.min(Number(this.additionalDiscount || 0), maxAdditionalDiscount));
+    this.taxAmount = Math.max(0, Number(this.taxAmount || 0));
+    const grandTotal = this.getGrandTotal();
+    this.paidAmount = this.paymentStatus === "PAID"
+      ? grandTotal
+      : Math.max(0, Math.min(Number(this.paidAmount || 0), grandTotal));
+  }
+
   private loadOrderForEdit(id: string): void {
     this.loading = true;
     this.orderService.getOrderById(id).subscribe({
@@ -434,6 +481,8 @@ export class CreateOrderComponent implements OnInit, OnDestroy {
               size: item?.variation?.size || "",
             }))
           : [];
+
+        this.clampFinancialInputs();
 
         this.loading = false;
       },

@@ -25,7 +25,7 @@ const saleLedgerSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ["sale", "payment", "return_due_adjustment", "return_refund", "return_credit"],
+      enum: ["sale", "payment", "wallet_use", "return_due_adjustment", "return_refund", "return_credit"],
       required: true,
       index: true,
     },

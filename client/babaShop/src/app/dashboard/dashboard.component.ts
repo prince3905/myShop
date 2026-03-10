@@ -57,6 +57,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     topSellingProducts: [],
     recentPayments: [],
     dueSummary: null,
+    customerCreditSummary: null,
   };
   private chartTooltipEl: HTMLDivElement | null = null;
   constructor(
@@ -365,6 +366,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
           topSellingProducts: res?.data?.topSellingProducts || [],
           recentPayments: res?.data?.recentPayments || [],
           dueSummary: res?.data?.dueSummary || null,
+          customerCreditSummary: res?.data?.customerCreditSummary || null,
         };
       },
       error: () => {
@@ -375,6 +377,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
           topSellingProducts: [],
           recentPayments: [],
           dueSummary: null,
+          customerCreditSummary: null,
         };
       },
     });

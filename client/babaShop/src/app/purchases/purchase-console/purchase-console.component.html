@@ -94,13 +94,13 @@
               <div class="col-md-1">
                 <mat-form-field class="w-100" appearance="outline">
                   <mat-label>Paid</mat-label>
-                  <input matInput type="number" formControlName="paidAmount" />
+                  <input matInput type="number" min="0" [max]="getGrandTotalPreview()" formControlName="paidAmount" />
                 </mat-form-field>
               </div>
               <div class="col-md-1">
                 <mat-form-field class="w-100" appearance="outline">
                   <mat-label>Bill Disc.</mat-label>
-                  <input matInput type="number" formControlName="discountAmount" />
+                  <input matInput type="number" min="0" [max]="getGrandTotalPreview()" formControlName="discountAmount" />
                 </mat-form-field>
               </div>
               <div class="col-md-1 d-flex align-items-center">
@@ -152,31 +152,31 @@
                 <div class="col-md-1">
                   <mat-form-field class="w-100" appearance="outline">
                     <mat-label>Qty</mat-label>
-                    <input matInput type="number" formControlName="quantity" />
+                    <input matInput type="number" min="1" formControlName="quantity" />
                   </mat-form-field>
                 </div>
                 <div class="col-md-1">
                   <mat-form-field class="w-100" appearance="outline">
                     <mat-label>Free</mat-label>
-                    <input matInput type="number" formControlName="freeQuantity" />
+                    <input matInput type="number" min="0" formControlName="freeQuantity" />
                   </mat-form-field>
                 </div>
                 <div class="col-md-1">
                   <mat-form-field class="w-100" appearance="outline">
                     <mat-label>Tax %</mat-label>
-                    <input matInput type="number" formControlName="taxPercent" />
+                    <input matInput type="number" min="0" formControlName="taxPercent" />
                   </mat-form-field>
                 </div>
                 <div class="col-md-1">
                   <mat-form-field class="w-100" appearance="outline">
                     <mat-label>Discount</mat-label>
-                    <input matInput type="number" formControlName="discountAmount" />
+                    <input matInput type="number" min="0" [max]="(itemsFormArray.at(i)?.value?.quantity || 0) * (itemsFormArray.at(i)?.value?.purchasePrice || 0)" formControlName="discountAmount" />
                   </mat-form-field>
                 </div>
                 <div class="col-md-1">
                   <mat-form-field class="w-100" appearance="outline">
                     <mat-label>Cost</mat-label>
-                    <input matInput type="number" formControlName="purchasePrice" />
+                    <input matInput type="number" min="0" formControlName="purchasePrice" />
                   </mat-form-field>
                 </div>
                 <div class="col-md-1">
@@ -199,7 +199,7 @@
               <div class="col-md-8">
                 <mat-form-field class="w-100" appearance="outline">
                   <mat-label>Note</mat-label>
-                  <textarea matInput rows="2" formControlName="note"></textarea>
+                  <textarea matInput rows="2" formControlName="note" appCapitalizeFirst></textarea>
                 </mat-form-field>
               </div>
               <div class="col-md-4 totals-box">
@@ -247,7 +247,7 @@
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="filter-field">
-            <mat-label>Return Status</mat-label>
+            <mat-label>Distributor Return Status</mat-label>
             <mat-select [(ngModel)]="purchaseFilters.returnStatus" [ngModelOptions]="{ standalone: true }">
               <mat-option [value]="null">All</mat-option>
               <mat-option value="NONE">NONE</mat-option>
@@ -331,7 +331,7 @@
             </button>
           </span>
           <span class="chip" *ngIf="purchaseFilters.returnStatus">
-            Return: {{ purchaseFilters.returnStatus }}
+            Distributor Return: {{ purchaseFilters.returnStatus }}
             <button mat-icon-button type="button" (click)="removeFilterChip('returnStatus')">
               <mat-icon>close</mat-icon>
             </button>
@@ -379,7 +379,7 @@
                   </mat-icon>
                 </th>
                 <th>Payment</th>
-                <th>Return</th>
+                <th>Distributor Return</th>
                 <th class="sortable" (click)="toggleSort('grandTotal')">
                   <span>Total</span>
                   <mat-icon class="sort-icon" [ngClass]="{ active: isSortActive('grandTotal') }">
@@ -439,7 +439,7 @@
                       [disabled]="(p.returnStatus || 'NONE') === 'FULL'"
                       (click)="openReturnDialog(p._id)"
                     >
-                      Return
+                      Return to Distributor
                     </button>
                   </ng-container>
                 </td>
@@ -504,7 +504,7 @@
         <div class="meta-card"><span class="meta-label">Bill Discount</span><span class="meta-value">₹ {{ selectedPurchase.discountAmount | number:'1.2-2' }}</span></div>
         <div class="meta-card"><span class="meta-label">Payment Mode</span><span class="meta-value">{{ getPaymentModeLabel(selectedPurchase) }}</span></div>
         <div class="meta-card"><span class="meta-label">Purchase Date</span><span class="meta-value">{{ selectedPurchase.purchaseDate || selectedPurchase.createdAt | date:'dd MMM yyyy, hh:mm a' }}</span></div>
-        <div class="meta-card"><span class="meta-label">Return Status</span><span class="meta-value">{{ getReturnStatusLabel(selectedPurchase) }}</span></div>
+        <div class="meta-card"><span class="meta-label">Distributor Return Status</span><span class="meta-value">{{ getReturnStatusLabel(selectedPurchase) }}</span></div>
       </div>
 
       <div class="return-section" *ngIf="getPurchaseTimeline(selectedPurchase).length">
@@ -579,22 +579,23 @@
 
       <div class="return-section" *ngIf="purchaseReturns?.length">
         <div class="return-head">
-          <h6>Purchase Returns</h6>
+          <h6>Returned to Distributor</h6>
           <div class="return-summary">
-            Qty: {{ purchaseReturnSummary?.totalReturnedQty || 0 }} |
-            Amount: ₹ {{ (purchaseReturnSummary?.totalReturnedAmount || 0) | number:'1.2-2' }} |
+            Returned Qty: {{ purchaseReturnSummary?.totalReturnedQty || 0 }} |
+            Return Amount: ₹ {{ (purchaseReturnSummary?.totalReturnedAmount || 0) | number:'1.2-2' }} |
             Status: {{ getPurchaseReturnStatusLabel(selectedPurchase) }}
           </div>
         </div>
 
         <div class="table-responsive drawer-table-wrap">
           <table class="table table-sm purchase-items-table">
-            <thead><tr><th>Date</th><th>Items</th><th>Qty</th><th>Amount</th></tr></thead>
+            <thead><tr><th>Date</th><th>Items</th><th>Returned Qty</th><th>Damaged Used</th><th>Return Amount</th></tr></thead>
             <tbody>
               <tr *ngFor="let r of purchaseReturns">
                 <td>{{ r.createdAt | date:'dd MMM yyyy, hh:mm a' }}</td>
                 <td>{{ r.items?.length || 0 }}</td>
                 <td>{{ r.totalQuantity || 0 }}</td>
+                <td>{{ getPurchaseReturnDamagedQty(r) }}</td>
                 <td>₹ {{ r.totalAmount | number:'1.2-2' }}</td>
               </tr>
             </tbody>

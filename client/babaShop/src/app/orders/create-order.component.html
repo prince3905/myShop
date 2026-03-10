@@ -63,7 +63,7 @@
           <div class="delivery-grid">
             <mat-form-field appearance="outline">
               <mat-label>Delivery Contact</mat-label>
-              <input matInput [(ngModel)]="deliveryContactName" placeholder="Receiver name" />
+              <input matInput [(ngModel)]="deliveryContactName" placeholder="Receiver name" appCapitalizeFirst />
             </mat-form-field>
 
             <mat-form-field appearance="outline">
@@ -79,12 +79,12 @@
 
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Delivery Address</mat-label>
-            <textarea matInput rows="3" [(ngModel)]="deliveryAddress" placeholder="Delivery address"></textarea>
+            <textarea matInput rows="3" [(ngModel)]="deliveryAddress" placeholder="Delivery address" appCapitalizeFirst></textarea>
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Delivery Note</mat-label>
-            <input matInput [(ngModel)]="deliveryNote" placeholder="Optional delivery note" />
+            <input matInput [(ngModel)]="deliveryNote" placeholder="Optional delivery note" appCapitalizeFirst />
           </mat-form-field>
 
           <div class="item-box">
@@ -125,7 +125,7 @@
 
               <mat-form-field appearance="outline">
                 <mat-label>Qty</mat-label>
-                <input matInput type="number" [(ngModel)]="quantity" min="1" />
+                <input matInput type="number" [(ngModel)]="quantity" (ngModelChange)="quantity = $event; clampCurrentLineInputs()" min="1" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
@@ -135,7 +135,7 @@
 
               <mat-form-field appearance="outline">
                 <mat-label>Line Discount</mat-label>
-                <input matInput type="number" [(ngModel)]="lineDiscount" min="0" />
+                <input matInput type="number" [(ngModel)]="lineDiscount" (ngModelChange)="onLineDiscountChange($event)" min="0" [max]="(quantity || 0) * (selectedPrice || 0)" />
               </mat-form-field>
 
               <button mat-raised-button color="primary" type="button" class="add-item-btn" (click)="addItem()">Add Item</button>
@@ -180,14 +180,14 @@
             <div class="total-input-row">
               <span>Extra Discount</span>
               <mat-form-field appearance="outline" class="mini-input">
-                <input matInput type="number" [(ngModel)]="additionalDiscount" min="0" />
+                <input matInput type="number" [(ngModel)]="additionalDiscount" (ngModelChange)="onAdditionalDiscountChange($event)" min="0" [max]="getSubTotal() - getItemDiscountTotal()" />
               </mat-form-field>
             </div>
 
             <div class="total-input-row">
               <span>Tax</span>
               <mat-form-field appearance="outline" class="mini-input">
-                <input matInput type="number" [(ngModel)]="taxAmount" min="0" />
+                <input matInput type="number" [(ngModel)]="taxAmount" (ngModelChange)="onTaxAmountChange($event)" min="0" />
               </mat-form-field>
             </div>
 
@@ -198,8 +198,9 @@
                   matInput
                   type="number"
                   [ngModel]="paymentStatus === 'PAID' ? getGrandTotal() : paidAmount"
-                  (ngModelChange)="paidAmount = $event"
+                  (ngModelChange)="onPaidAmountChange($event)"
                   min="0"
+                  [max]="getGrandTotal()"
                   [readonly]="paymentStatus === 'PAID'"
                 />
               </mat-form-field>

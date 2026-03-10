@@ -196,7 +196,7 @@ exports.manualAdjust = async (req, res) => {
       return res.status(400).json({ success: false, message: "Please select a shop first" });
     }
 
-    const { variation, type = "ADJUSTMENT", quantity, note = "" } = req.body;
+    const { variation, type = "ADJUSTMENT", quantity, note = "", damageSource } = req.body;
     if (!variation || quantity === undefined) {
       return res.status(400).json({
         success: false,
@@ -222,6 +222,13 @@ exports.manualAdjust = async (req, res) => {
     let tx;
 
     if (["DAMAGED", "RESTORE_DAMAGE"].includes(normalizedType)) {
+      const normalizedDamageSource = `${damageSource || ""}`.trim().toUpperCase();
+      const resolvedDamageSource =
+        normalizedType === "DAMAGED"
+          ? (["PURCHASE_DAMAGE", "INTERNAL_DAMAGE", "CUSTOMER_RETURN_DAMAGE", "OTHER_DAMAGE"].includes(normalizedDamageSource)
+              ? normalizedDamageSource
+              : "INTERNAL_DAMAGE")
+          : undefined;
       stock = await Stock.findOne({ shop: req.shopId, variation: variationDoc._id });
       if (!stock) {
         stock = await Stock.create({
@@ -273,7 +280,18 @@ exports.manualAdjust = async (req, res) => {
         previousQuantity: onHandQty,
         newQuantity: onHandQty,
         referenceType: "MANUAL",
-        note: note || (normalizedType === "DAMAGED" ? "Marked as damaged" : "Restored from damaged"),
+        note:
+          note ||
+          (normalizedType === "DAMAGED"
+            ? resolvedDamageSource === "PURCHASE_DAMAGE"
+              ? "Marked as damaged (received from distributor)"
+              : resolvedDamageSource === "CUSTOMER_RETURN_DAMAGE"
+                ? "Marked as damaged (customer return)"
+                : resolvedDamageSource === "OTHER_DAMAGE"
+                  ? "Marked as damaged (other source)"
+                  : "Marked as damaged (internal damage)"
+            : "Restored from damaged"),
+        damageSource: normalizedType === "DAMAGED" ? resolvedDamageSource : undefined,
         createdBy: req.user?._id,
       });
     } else {

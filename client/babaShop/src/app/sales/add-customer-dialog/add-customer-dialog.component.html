@@ -6,7 +6,7 @@
       
       <mat-form-field appearance="outline" class="full-width">
         <mat-label>Customer Name *</mat-label>
-        <input matInput formControlName="name" placeholder="Enter customer name" />
+        <input matInput formControlName="name" placeholder="Enter customer name" appCapitalizeFirst />
         <mat-error *ngIf="customerForm.get('name')?.hasError('required')">
           Name is required
         </mat-error>
@@ -36,7 +36,7 @@
 
       <mat-form-field appearance="outline" class="full-width">
         <mat-label>Address</mat-label>
-        <textarea matInput formControlName="address" rows="2" placeholder="Enter address (optional)"></textarea>
+        <textarea matInput formControlName="address" rows="2" placeholder="Enter address (optional)" appCapitalizeFirst></textarea>
       </mat-form-field>
 
     </form>

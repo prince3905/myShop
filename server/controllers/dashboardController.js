@@ -33,6 +33,9 @@ exports.getOverview = async (req, res) => {
       salesDueAgg,
       orderDueAgg,
       customerDueAgg,
+      customerWalletAgg,
+      saleCreditAgg,
+      walletUsedAgg,
     ] = await Promise.all([
       Stock.find(query)
         .populate("product", "name")
@@ -127,6 +130,60 @@ exports.getOverview = async (req, res) => {
             },
           ])
         : Promise.resolve([]),
+      allowFinancials
+        ? Customer.aggregate([
+            {
+              $match: {
+                ...query,
+                isDeleted: { $ne: true },
+                walletBalance: { $gt: 0 },
+              },
+            },
+            {
+              $group: {
+                _id: null,
+                totalWalletBalance: { $sum: "$walletBalance" },
+                count: { $sum: 1 },
+              },
+            },
+          ])
+        : Promise.resolve([]),
+      allowFinancials
+        ? SaleReturn.aggregate([
+            {
+              $match: {
+                ...query,
+                status: "APPROVED",
+                creditAmount: { $gt: 0 },
+              },
+            },
+            {
+              $group: {
+                _id: null,
+                totalCreditIssued: { $sum: "$creditAmount" },
+                count: { $sum: 1 },
+              },
+            },
+          ])
+        : Promise.resolve([]),
+      allowFinancials
+        ? Sale.aggregate([
+            {
+              $match: {
+                ...query,
+                status: { $ne: "CANCELLED" },
+                walletUsedAmount: { $gt: 0 },
+              },
+            },
+            {
+              $group: {
+                _id: null,
+                totalWalletUsed: { $sum: "$walletUsedAmount" },
+                count: { $sum: 1 },
+              },
+            },
+          ])
+        : Promise.resolve([]),
     ]);
 
     return res.status(200).json({
@@ -203,6 +260,16 @@ exports.getOverview = async (req, res) => {
               orderDueCount: Number(orderDueAgg[0]?.count || 0),
               customerDue: Number(customerDueAgg[0]?.totalDue || 0),
               customerDueCount: Number(customerDueAgg[0]?.count || 0),
+            }
+          : null,
+        customerCreditSummary: allowFinancials
+          ? {
+              totalWalletBalance: Number(customerWalletAgg[0]?.totalWalletBalance || 0),
+              walletCustomerCount: Number(customerWalletAgg[0]?.count || 0),
+              totalCreditIssued: Number(saleCreditAgg[0]?.totalCreditIssued || 0),
+              creditIssueCount: Number(saleCreditAgg[0]?.count || 0),
+              totalWalletUsed: Number(walletUsedAgg[0]?.totalWalletUsed || 0),
+              walletUseCount: Number(walletUsedAgg[0]?.count || 0),
             }
           : null,
       },

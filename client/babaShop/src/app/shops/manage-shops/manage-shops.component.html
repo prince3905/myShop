@@ -10,7 +10,7 @@
           <form [formGroup]="shopForm" (ngSubmit)="createShop()">
             <mat-form-field class="example-full-width">
               <mat-label>Shop Name</mat-label>
-              <input matInput formControlName="name" />
+              <input matInput formControlName="name" appCapitalizeFirst />
             </mat-form-field>
 
             <mat-form-field class="example-full-width">

@@ -5,6 +5,7 @@ const getDelta = (type, amount) => {
     case "sale":
       return Math.abs(amount);
     case "payment":
+    case "wallet_use":
     case "return_due_adjustment":
       return -Math.abs(amount);
     case "return_refund":

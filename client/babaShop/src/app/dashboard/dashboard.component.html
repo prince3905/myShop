@@ -66,7 +66,7 @@
                     </div>
                     <div class="card-footer">
                         <div class="stats">
-                            <i class="material-icons">assignment_return</i> Purchase return today: ₹ {{ kpis?.todayPurchaseReturnAmount | number:'1.2-2' }}
+                            <i class="material-icons">assignment_return</i> Returned to distributor today: ₹ {{ kpis?.todayPurchaseReturnAmount | number:'1.2-2' }}
                         </div>
                     </div>
                 </div>
@@ -83,7 +83,7 @@
                     <div class="card-footer">
                         <div class="stats">
                             <ng-container *ngIf="canViewSensitivePricing; else stockFooterBasic">
-                                <i class="material-icons">currency_rupee</i> Sales credit today: ₹ {{ kpis?.todaySaleCreditAmount | number:'1.2-2' }}
+                                <i class="material-icons">currency_rupee</i> Customer credit today: ₹ {{ kpis?.todaySaleCreditAmount | number:'1.2-2' }}
                             </ng-container>
                             <ng-template #stockFooterBasic>
                                 <i class="material-icons">inventory_2</i> Reorder watch active
@@ -130,14 +130,14 @@
             <div class="col-12">
                 <div class="analytics-strip">
                     <div class="analytics-card return-card dashboard-click-card" (click)="openReturns()">
-                        <div class="title">Sales Returns Today</div>
+                        <div class="title">Customer Returns Today</div>
                         <div class="amount" *ngIf="canViewReturnAmounts; else todayReturnOpsOnly">₹ {{ returnAnalytics?.today?.totalAmount | number:'1.2-2' }}</div>
                         <ng-template #todayReturnOpsOnly>
                             <div class="amount">{{ returnAnalytics?.today?.count || 0 }}</div>
                         </ng-template>
                         <div class="meta" *ngIf="canViewReturnAmounts; else todayReturnOpsMeta">
-                            Refund: ₹ {{ returnAnalytics?.today?.totalRefund | number:'1.2-2' }} |
-                            Credit: ₹ {{ returnAnalytics?.today?.totalCredit | number:'1.2-2' }} |
+                            Refund to Customer: ₹ {{ returnAnalytics?.today?.totalRefund | number:'1.2-2' }} |
+                            Customer Credit: ₹ {{ returnAnalytics?.today?.totalCredit | number:'1.2-2' }} |
                             Qty: {{ returnAnalytics?.today?.totalQty || 0 }} |
                             Count: {{ returnAnalytics?.today?.count || 0 }}
                         </div>
@@ -147,14 +147,14 @@
                         </ng-template>
                     </div>
                     <div class="analytics-card return-card dashboard-click-card" (click)="openReturns()">
-                        <div class="title">Sales Returns Weekly</div>
+                        <div class="title">Customer Returns Weekly</div>
                         <div class="amount" *ngIf="canViewReturnAmounts; else weeklyReturnOpsOnly">₹ {{ returnAnalytics?.weekly?.totalAmount | number:'1.2-2' }}</div>
                         <ng-template #weeklyReturnOpsOnly>
                             <div class="amount">{{ returnAnalytics?.weekly?.count || 0 }}</div>
                         </ng-template>
                         <div class="meta" *ngIf="canViewReturnAmounts; else weeklyReturnOpsMeta">
-                            Refund: ₹ {{ returnAnalytics?.weekly?.totalRefund | number:'1.2-2' }} |
-                            Credit: ₹ {{ returnAnalytics?.weekly?.totalCredit | number:'1.2-2' }} |
+                            Refund to Customer: ₹ {{ returnAnalytics?.weekly?.totalRefund | number:'1.2-2' }} |
+                            Customer Credit: ₹ {{ returnAnalytics?.weekly?.totalCredit | number:'1.2-2' }} |
                             Qty: {{ returnAnalytics?.weekly?.totalQty || 0 }} |
                             Count: {{ returnAnalytics?.weekly?.count || 0 }}
                         </div>
@@ -164,14 +164,14 @@
                         </ng-template>
                     </div>
                     <div class="analytics-card return-card dashboard-click-card" (click)="openReturns()">
-                        <div class="title">Sales Returns Monthly</div>
+                        <div class="title">Customer Returns Monthly</div>
                         <div class="amount" *ngIf="canViewReturnAmounts; else monthlyReturnOpsOnly">₹ {{ returnAnalytics?.monthly?.totalAmount | number:'1.2-2' }}</div>
                         <ng-template #monthlyReturnOpsOnly>
                             <div class="amount">{{ returnAnalytics?.monthly?.count || 0 }}</div>
                         </ng-template>
                         <div class="meta" *ngIf="canViewReturnAmounts; else monthlyReturnOpsMeta">
-                            Refund: ₹ {{ returnAnalytics?.monthly?.totalRefund | number:'1.2-2' }} |
-                            Credit: ₹ {{ returnAnalytics?.monthly?.totalCredit | number:'1.2-2' }} |
+                            Refund to Customer: ₹ {{ returnAnalytics?.monthly?.totalRefund | number:'1.2-2' }} |
+                            Customer Credit: ₹ {{ returnAnalytics?.monthly?.totalCredit | number:'1.2-2' }} |
                             Qty: {{ returnAnalytics?.monthly?.totalQty || 0 }} |
                             Count: {{ returnAnalytics?.monthly?.count || 0 }}
                         </div>
@@ -187,7 +187,7 @@
             <div class="col-12">
                 <div class="analytics-strip">
                     <div class="analytics-card purchase-return-card dashboard-click-card" (click)="openPurchase()">
-                        <div class="title">Purchase Returns Today</div>
+                        <div class="title">Returned to Distributor Today</div>
                         <div class="amount">₹ {{ purchaseReturnAnalytics?.today?.totalAmount | number:'1.2-2' }}</div>
                         <div class="meta">
                             Qty: {{ purchaseReturnAnalytics?.today?.totalQty || 0 }} |
@@ -195,7 +195,7 @@
                         </div>
                     </div>
                     <div class="analytics-card purchase-return-card dashboard-click-card" (click)="openPurchase()">
-                        <div class="title">Purchase Returns Weekly</div>
+                        <div class="title">Returned to Distributor Weekly</div>
                         <div class="amount">₹ {{ purchaseReturnAnalytics?.weekly?.totalAmount | number:'1.2-2' }}</div>
                         <div class="meta">
                             Qty: {{ purchaseReturnAnalytics?.weekly?.totalQty || 0 }} |
@@ -203,7 +203,7 @@
                         </div>
                     </div>
                     <div class="analytics-card purchase-return-card dashboard-click-card" (click)="openPurchase()">
-                        <div class="title">Purchase Returns Monthly</div>
+                        <div class="title">Returned to Distributor Monthly</div>
                         <div class="amount">₹ {{ purchaseReturnAnalytics?.monthly?.totalAmount | number:'1.2-2' }}</div>
                         <div class="meta">
                             Qty: {{ purchaseReturnAnalytics?.monthly?.totalQty || 0 }} |
@@ -328,6 +328,36 @@
                         </div>
                         <ng-template #dueRestricted>
                             <div class="dashboard-empty-state">Due summary is available for Super Admin and Admin only.</div>
+                        </ng-template>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6 col-md-12" *ngIf="canViewSensitivePricing">
+                <div class="card dashboard-detail-card dashboard-click-card" (click)="openCustomers()">
+                    <div class="card-header card-header-success">
+                        <h4 class="card-title">Customer Credit & Wallet</h4>
+                        <p class="card-category">Store credit issued, wallet used, and wallet balance</p>
+                    </div>
+                    <div class="card-body">
+                        <div class="due-summary-grid" *ngIf="overview.customerCreditSummary; else noCustomerCreditSummary">
+                            <div class="due-summary-card">
+                                <div class="due-summary-label">Wallet Balance</div>
+                                <div class="due-summary-value">₹ {{ overview.customerCreditSummary.totalWalletBalance | number:'1.2-2' }}</div>
+                                <div class="due-summary-meta">{{ overview.customerCreditSummary.walletCustomerCount }} customers with balance</div>
+                            </div>
+                            <div class="due-summary-card">
+                                <div class="due-summary-label">Credit Issued</div>
+                                <div class="due-summary-value">₹ {{ overview.customerCreditSummary.totalCreditIssued | number:'1.2-2' }}</div>
+                                <div class="due-summary-meta">{{ overview.customerCreditSummary.creditIssueCount }} credit-note returns</div>
+                            </div>
+                            <div class="due-summary-card">
+                                <div class="due-summary-label">Wallet Used</div>
+                                <div class="due-summary-value">₹ {{ overview.customerCreditSummary.totalWalletUsed | number:'1.2-2' }}</div>
+                                <div class="due-summary-meta">{{ overview.customerCreditSummary.walletUseCount }} sales adjusted</div>
+                            </div>
+                        </div>
+                        <ng-template #noCustomerCreditSummary>
+                            <div class="dashboard-empty-state">No customer credit or wallet activity found.</div>
                         </ng-template>
                     </div>
                 </div>

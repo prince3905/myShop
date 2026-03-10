@@ -164,6 +164,12 @@ const saleSchema = new mongoose.Schema(
       min: 0,
     },
 
+    walletUsedAmount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
     dueAmount: {
       type: Number,
       default: 0,

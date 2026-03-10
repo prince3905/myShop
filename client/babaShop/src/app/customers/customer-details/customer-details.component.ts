@@ -28,6 +28,9 @@ export class CustomerDetailsComponent implements OnInit {
   statementSummary = {
     totalDebit: 0,
     totalCredit: 0,
+    totalRefunded: 0,
+    totalCredited: 0,
+    totalDueAdjusted: 0,
     closingBalance: 0,
   };
 
@@ -79,6 +82,9 @@ export class CustomerDetailsComponent implements OnInit {
           this.statementSummary = {
             totalDebit: response.summary?.totalDebit || 0,
             totalCredit: response.summary?.totalCredit || 0,
+            totalRefunded: response.summary?.totalRefunded || 0,
+            totalCredited: response.summary?.totalCredited || 0,
+            totalDueAdjusted: response.summary?.totalDueAdjusted || 0,
             closingBalance: response.summary?.closingBalance || 0,
           };
         }
@@ -143,6 +149,20 @@ export class CustomerDetailsComponent implements OnInit {
     }
 
     return '';
+  }
+
+  getTransactionMeta(entry: any): string[] {
+    const meta: string[] = [];
+    if (Number(entry?.dueAdjustedAmount || 0) > 0) {
+      meta.push(`Due adjusted Rs ${Number(entry.dueAdjustedAmount).toFixed(2)}`);
+    }
+    if (Number(entry?.refundAmount || 0) > 0) {
+      meta.push(`Refund Rs ${Number(entry.refundAmount).toFixed(2)}`);
+    }
+    if (Number(entry?.creditAmount || 0) > 0) {
+      meta.push(`Wallet credit Rs ${Number(entry.creditAmount).toFixed(2)}`);
+    }
+    return meta;
   }
 
   onPageChange(event: any): void {

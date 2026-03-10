@@ -53,6 +53,7 @@ import { ManageShopsComponent } from "app/shops/manage-shops/manage-shops.compon
 import { PurchaseConsoleComponent } from "app/purchases/purchase-console/purchase-console.component";
 import { PurchaseReturnDialogComponent } from "app/purchases/purchase-return-dialog/purchase-return-dialog.component";
 import { HasRoleDirective } from "app/shared/directives/has-role.directive";
+import { CapitalizeFirstDirective } from "app/shared/directives/capitalize-first.directive";
 import { PosComponent } from "app/sales/pos/pos.component";
 import { ReturnsComponent } from "app/sales/returns/returns.component";
 import { SalePaymentDialogComponent } from "app/sales/sale-payment-dialog/sale-payment-dialog.component";
@@ -124,6 +125,7 @@ import { AddCustomerDialogComponent } from "app/sales/add-customer-dialog/add-cu
     SalesReportsComponent,
     AddCustomerDialogComponent,
     HasRoleDirective,
+    CapitalizeFirstDirective,
   ],
 })
 export class AdminLayoutModule {

@@ -29,6 +29,7 @@ export class OrderPaymentDialogComponent implements OnInit {
       paymentMethod: [this.data?.order?.paymentMethod || "CASH", Validators.required],
       note: [""],
     });
+    this.form.get("amount")?.valueChanges.subscribe(() => this.clampAmount());
   }
 
   submit(): void {
@@ -63,5 +64,11 @@ export class OrderPaymentDialogComponent implements OnInit {
           });
         },
       });
+  }
+
+  private clampAmount(): void {
+    const dueAmount = Number(this.data?.order?.dueAmount || 0);
+    const amount = Math.max(0, Number(this.form.get("amount")?.value || 0));
+    this.form.patchValue({ amount: Math.min(amount, dueAmount) || null }, { emitEvent: false });
   }
 }

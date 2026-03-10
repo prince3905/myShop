@@ -15,7 +15,7 @@
       <!-- Product Name -->
       <mat-form-field appearance="outline" class="full-width">
         <mat-label>Product Name *</mat-label>
-        <input matInput [(ngModel)]="product.name" required>
+        <input matInput [(ngModel)]="product.name" appCapitalizeFirst required>
       </mat-form-field>
 
       <!-- Category -->
@@ -44,7 +44,7 @@
       <!-- Description -->
       <mat-form-field appearance="outline" class="full-width">
         <mat-label>Description</mat-label>
-        <textarea matInput rows="3" [(ngModel)]="product.description"></textarea>
+        <textarea matInput rows="3" [(ngModel)]="product.description" appCapitalizeFirst></textarea>
       </mat-form-field>
 
     </div>

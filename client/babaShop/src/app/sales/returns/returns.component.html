@@ -2,8 +2,8 @@
   <div class="container-fluid">
     <div class="card returns-card">
       <div class="card-header card-header-danger">
-        <h4 class="card-title">Sales Return Console</h4>
-        <p class="card-category">Invoice-wise return with stock reverse and refund tracking</p>
+        <h4 class="card-title">Customer Return Console</h4>
+        <p class="card-category">Customer se maal wapas lena, stock reverse karna, aur refund/credit track karna</p>
       </div>
       <div class="card-body">
         <div class="load-row">
@@ -24,8 +24,8 @@
           <mat-icon>assignment_return</mat-icon>
           <h5>No Invoice Loaded</h5>
           <p>
-            Sales return dekhne ke liye Sales List me kisi invoice ka
-            <strong>Open Return</strong> button click karo, ya upar invoice id daal kar
+            Customer return dekhne ke liye Sales List me kisi invoice ka
+            <strong>Return from Customer</strong> button click karo, ya upar invoice id daal kar
             <strong>Load Invoice</strong> karo.
           </p>
           <button mat-stroked-button color="primary" routerLink="/sale-list">Go to Sales List</button>
@@ -41,7 +41,7 @@
           </div>
 
           <div class="lock-banner" *ngIf="!hasAnyReturnableItem()">
-            This invoice is fully returned. You cannot create another return for it.
+            Is invoice ka sara maal customer se wapas aa chuka hai. Naya customer return nahi ban sakta.
           </div>
 
           <div class="table-responsive">
@@ -54,7 +54,7 @@
                   <th>Returned</th>
                   <th>Remaining</th>
                   <th>Price</th>
-                  <th>Return Qty</th>
+                  <th>Customer Return Qty</th>
                   <th>Reason</th>
                 </tr>
               </thead>
@@ -92,40 +92,46 @@
 
           <div class="submit-row">
             <mat-form-field appearance="outline" class="small-field">
-              <mat-label>Refund Method</mat-label>
+              <mat-label>Refund to Customer</mat-label>
               <mat-select [(ngModel)]="refundMethod">
                 <mat-option *ngFor="let method of refundMethods" [value]="method">{{ method }}</mat-option>
               </mat-select>
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="small-field">
-              <mat-label>Refund Amount</mat-label>
-              <input matInput type="number" min="0" [(ngModel)]="refundAmount" />
+              <mat-label>Refund Amount to Customer</mat-label>
+              <input
+                matInput
+                type="number"
+                min="0"
+                [max]="getRefundableMax()"
+                [(ngModel)]="refundAmount"
+                (input)="onRefundAmountInput(refundAmount)" />
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="note-field">
               <mat-label>Note</mat-label>
-              <input matInput [(ngModel)]="note" />
+              <input matInput [(ngModel)]="note" appCapitalizeFirst />
             </mat-form-field>
 
-            <div class="total-box">Return Total: Rs {{ calculateReturnTotal() | number:'1.2-2' }}</div>
+            <div class="total-box">Customer Return Total: Rs {{ calculateReturnTotal() | number:'1.2-2' }}</div>
             <div class="total-box info">Due Adjust: Rs {{ getDueAdjustPreview() | number:'1.2-2' }}</div>
-            <div class="total-box info">Refund Max: Rs {{ getRefundableMax() | number:'1.2-2' }}</div>
-            <div class="total-box info">Credit: Rs {{ getCreditPreview() | number:'1.2-2' }}</div>
+            <div class="total-box info">Max Refund to Customer: Rs {{ getRefundableMax() | number:'1.2-2' }}</div>
+            <div class="total-box info">Customer Credit Note: Rs {{ getCreditPreview() | number:'1.2-2' }}</div>
 
             <button mat-raised-button color="primary" [disabled]="submitting || !hasAnyReturnableItem()" (click)="submitReturn()">
-              Submit Return
+              Return from Customer
             </button>
           </div>
 
           <div class="history-block">
-            <h5>Return History</h5>
+            <h5>Customer Return History</h5>
             <div class="summary-line" *ngIf="returnsSummary">
               Count: {{ returnsSummary?.count || 0 }} |
               Qty: {{ returnsSummary?.totalReturnedQty || 0 }} |
               Amount: Rs {{ returnsSummary?.totalReturnedAmount || 0 | number:'1.2-2' }} |
-              Refunded: Rs {{ returnsSummary?.totalRefundedAmount || 0 | number:'1.2-2' }} |
-              Credit: Rs {{ returnsSummary?.totalCreditAmount || 0 | number:'1.2-2' }}
+              Refunded to Customer: Rs {{ returnsSummary?.totalRefundedAmount || 0 | number:'1.2-2' }} |
+              Customer Credit: Rs {{ returnsSummary?.totalCreditAmount || 0 | number:'1.2-2' }}
             </div>
             <div class="table-responsive">
               <table class="table history-table">
@@ -135,7 +141,7 @@
                     <th>Qty</th>
                     <th>Total</th>
                     <th>Due Adj</th>
-                    <th>Refund</th>
+                    <th>Refund to Customer</th>
                     <th>Credit</th>
                     <th>Method</th>
                   </tr>
@@ -151,7 +157,7 @@
                     <td>{{ row?.refundMethod || '-' }}</td>
                   </tr>
                   <tr *ngIf="(returns || []).length === 0">
-                    <td colspan="7" class="empty">No returns yet</td>
+                    <td colspan="7" class="empty">No customer returns yet</td>
                   </tr>
                 </tbody>
               </table>
@@ -191,7 +197,7 @@
         </ng-container>
 
         <div class="history-block">
-          <h5>All Sales Returns</h5>
+          <h5>All Customer Returns</h5>
           <div class="loading-wrap" *ngIf="returnsLoading">
             <mat-spinner diameter="28"></mat-spinner>
           </div>
@@ -205,7 +211,7 @@
                   <th>Qty</th>
                   <th>Total</th>
                   <th>Due Adj</th>
-                  <th>Refund</th>
+                  <th>Refund to Customer</th>
                   <th>Credit</th>
                   <th>Method</th>
                   <th>Action</th>
@@ -227,7 +233,7 @@
                   </td>
                 </tr>
                 <tr *ngIf="(allReturns || []).length === 0">
-                  <td colspan="10" class="empty">No sales returns found</td>
+                  <td colspan="10" class="empty">No customer returns found</td>
                 </tr>
               </tbody>
             </table>

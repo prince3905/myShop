@@ -63,18 +63,33 @@
             <div class="col-md-6">
               <div class="info-section">
                 <h5>Account Summary</h5>
+                <p class="text-muted mb-3">
+                  Net account summary after returns. Settled value includes cash/online payments and wallet used.
+                </p>
                 <div class="summary-cards">
                   <div class="summary-card total-purchase">
-                    <div class="label">Total Purchase</div>
+                    <div class="label">Net Purchase</div>
                     <div class="amount">Rs {{ customer.totalPurchase | number:'1.2-2' }}</div>
                   </div>
                   <div class="summary-card total-paid">
-                    <div class="label">Total Paid</div>
+                    <div class="label">Settled Value</div>
                     <div class="amount">Rs {{ customer.totalPaid | number:'1.2-2' }}</div>
                   </div>
                   <div class="summary-card total-due">
-                    <div class="label">Total Due</div>
+                    <div class="label">Outstanding Due</div>
                     <div class="amount">Rs {{ customer.totalDue | number:'1.2-2' }}</div>
+                  </div>
+                  <div class="summary-card total-paid">
+                    <div class="label">Wallet Credit Balance</div>
+                    <div class="amount">Rs {{ customer.walletBalance | number:'1.2-2' }}</div>
+                  </div>
+                  <div class="summary-card total-paid">
+                    <div class="label">Refund Given</div>
+                    <div class="amount">Rs {{ statementSummary.totalRefunded | number:'1.2-2' }}</div>
+                  </div>
+                  <div class="summary-card total-paid">
+                    <div class="label">Credit Issued</div>
+                    <div class="amount">Rs {{ statementSummary.totalCredited | number:'1.2-2' }}</div>
                   </div>
                 </div>
               </div>
@@ -113,7 +128,7 @@
               </div>
               <div class="col-md-3 text-right">
                 <div class="filtered-summary">
-                  <span class="summary-label">Closing Balance:</span>
+                  <span class="summary-label">Due Balance:</span>
                   <span class="summary-amount">Rs {{ statementSummary.closingBalance | number:'1.2-2' }}</span>
                 </div>
               </div>
@@ -134,7 +149,10 @@
                   <th>Items / Note</th>
                   <th class="text-right">Debit</th>
                   <th class="text-right">Credit</th>
-                  <th class="text-right">Balance</th>
+                  <th class="text-right">Due Adj</th>
+                  <th class="text-right">Wallet Credit</th>
+                  <th class="text-right">Refund</th>
+                  <th class="text-right">Due Balance</th>
                   <th>Action</th>
                 </tr>
               </thead>
@@ -152,6 +170,11 @@
                     <div class="text-muted" *ngIf="sale.note && sale.items?.length">
                       {{ sale.note }}
                     </div>
+                    <div class="settlement-strip" *ngIf="getTransactionMeta(sale).length">
+                      <span class="mini-settlement" *ngIf="sale.dueAdjustedAmount">Due Adj: Rs {{ sale.dueAdjustedAmount | number:'1.2-2' }}</span>
+                      <span class="mini-settlement" *ngIf="sale.creditAmount">Wallet: Rs {{ sale.creditAmount | number:'1.2-2' }}</span>
+                      <span class="mini-settlement" *ngIf="sale.refundAmount">Refund: Rs {{ sale.refundAmount | number:'1.2-2' }}</span>
+                    </div>
                   </td>
                   <td class="text-right">
                     <span *ngIf="sale.debit; else noDebitAmount">Rs {{ sale.debit | number:'1.2-2' }}</span>
@@ -160,6 +183,18 @@
                   <td class="text-right">
                     <span *ngIf="sale.credit; else noCreditAmount">Rs {{ sale.credit | number:'1.2-2' }}</span>
                     <ng-template #noCreditAmount>—</ng-template>
+                  </td>
+                  <td class="text-right">
+                    <span *ngIf="sale.dueAdjustedAmount; else noDueAdjustedAmount">Rs {{ sale.dueAdjustedAmount | number:'1.2-2' }}</span>
+                    <ng-template #noDueAdjustedAmount>—</ng-template>
+                  </td>
+                  <td class="text-right">
+                    <span *ngIf="sale.creditAmount; else noWalletCreditAmount">Rs {{ sale.creditAmount | number:'1.2-2' }}</span>
+                    <ng-template #noWalletCreditAmount>—</ng-template>
+                  </td>
+                  <td class="text-right">
+                    <span *ngIf="sale.refundAmount; else noRefundAmount">Rs {{ sale.refundAmount | number:'1.2-2' }}</span>
+                    <ng-template #noRefundAmount>—</ng-template>
                   </td>
                   <td class="text-right">
                     <span [ngClass]="getBalanceClass(sale.runningBalance)">
@@ -179,7 +214,7 @@
                   </td>
                 </tr>
                 <tr *ngIf="!sales || sales.length === 0">
-                  <td colspan="8" class="text-center">No transactions found</td>
+                  <td colspan="11" class="text-center">No transactions found</td>
                 </tr>
               </tbody>
               <tfoot *ngIf="sales.length > 0">
@@ -187,11 +222,19 @@
                   <td colspan="4"><strong>Total</strong></td>
                   <td class="text-right"><strong>Rs {{ statementSummary.totalDebit | number:'1.2-2' }}</strong></td>
                   <td class="text-right"><strong>Rs {{ statementSummary.totalCredit | number:'1.2-2' }}</strong></td>
+                  <td class="text-right"><strong>Rs {{ statementSummary.totalDueAdjusted | number:'1.2-2' }}</strong></td>
+                  <td class="text-right"><strong>Rs {{ statementSummary.totalCredited | number:'1.2-2' }}</strong></td>
+                  <td class="text-right"><strong>Rs {{ statementSummary.totalRefunded | number:'1.2-2' }}</strong></td>
                   <td class="text-right"><strong>Rs {{ statementSummary.closingBalance | number:'1.2-2' }}</strong></td>
                   <td></td>
                 </tr>
               </tfoot>
             </table>
+          </div>
+          <div class="summary-chips mt-2" *ngIf="sales.length > 0">
+            <div class="chip">Refund Given: Rs {{ statementSummary.totalRefunded | number:'1.2-2' }}</div>
+            <div class="chip">Credit Issued: Rs {{ statementSummary.totalCredited | number:'1.2-2' }}</div>
+            <div class="chip">Due Adjusted: Rs {{ statementSummary.totalDueAdjusted | number:'1.2-2' }}</div>
           </div>
 
           <!-- Pagination -->

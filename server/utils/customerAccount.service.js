@@ -129,6 +129,7 @@ const syncCustomerAccountSnapshot = async ({ shopId, customerId }) => {
           _id: null,
           totalPurchase: { $sum: "$totalAmount" },
           totalPaid: { $sum: "$paidAmount" },
+          totalWalletUsed: { $sum: "$walletUsedAmount" },
           purchaseCount: { $sum: 1 },
         },
       },
@@ -155,6 +156,7 @@ const syncCustomerAccountSnapshot = async ({ shopId, customerId }) => {
           _id: null,
           returnedAmount: { $sum: "$totalAmount" },
           refundedAmount: { $sum: "$refundAmount" },
+          creditedAmount: { $sum: "$creditAmount" },
         },
       },
     ]),
@@ -215,11 +217,17 @@ const syncCustomerAccountSnapshot = async ({ shopId, customerId }) => {
     roundAmount(
       Number(saleTotals.totalPaid || 0) -
         Number(returnTotals.refundedAmount || 0) +
+        Number(saleTotals.totalWalletUsed || 0) +
         Number(orderTotals.orderPayment || 0) -
         Number(orderTotals.orderRefund || 0),
     ),
   );
-  const totalDue = Math.max(0, roundAmount(totalPurchase - totalPaid));
+  const totalWalletUsed = Math.max(0, roundAmount(Number(saleTotals.totalWalletUsed || 0)));
+  const totalDue = Math.max(0, roundAmount(totalPurchase - totalPaid - totalWalletUsed));
+  const walletBalance = Math.max(
+    0,
+    roundAmount(Number(returnTotals.creditedAmount || 0) - totalWalletUsed),
+  );
   const purchaseCount = Number(saleTotals.purchaseCount || 0) + Number(orderTotals.orderCount || 0);
 
   await Customer.findOneAndUpdate(
@@ -228,6 +236,7 @@ const syncCustomerAccountSnapshot = async ({ shopId, customerId }) => {
       totalPurchase,
       totalPaid,
       totalDue,
+      walletBalance,
       purchaseCount,
     },
     { new: false },
@@ -237,6 +246,7 @@ const syncCustomerAccountSnapshot = async ({ shopId, customerId }) => {
     totalPurchase,
     totalPaid,
     totalDue,
+    walletBalance,
     purchaseCount,
   };
 };
@@ -259,20 +269,31 @@ const buildCustomerLedger = async ({
 }) => {
   const sales = await Sale.find({ shop: shopId, customer: customerId })
     .sort({ createdAt: 1, _id: 1 })
-    .select(
-      "_id invoiceNo items totalAmount paidAmount dueAmount paymentMethod returnedAmount refundedAmount creditedAmount createdAt",
+      .select(
+      "_id invoiceNo items totalAmount paidAmount walletUsedAmount dueAmount paymentMethod returnedAmount refundedAmount creditedAmount createdAt",
     )
     .lean();
 
   const saleIds = sales.map((sale) => sale._id);
   const saleMap = new Map(sales.map((sale) => [`${sale._id}`, sale]));
 
-  const [payments, saleReturns, orderLedgerEntries] = await Promise.all([
+  const [payments, walletUses, saleReturns, orderLedgerEntries] = await Promise.all([
     saleIds.length
       ? SaleLedger.find({
           shop: shopId,
           customer: customerId,
           type: "payment",
+          sale: { $in: saleIds },
+        })
+          .sort({ createdAt: 1, _id: 1 })
+          .select("_id sale amount paymentMethod note createdAt")
+          .lean()
+      : [],
+    saleIds.length
+      ? SaleLedger.find({
+          shop: shopId,
+          customer: customerId,
+          type: "wallet_use",
           sale: { $in: saleIds },
         })
           .sort({ createdAt: 1, _id: 1 })
@@ -347,6 +368,25 @@ const buildCustomerLedger = async ({
     });
   }
 
+  for (const walletUse of walletUses) {
+    const sale = saleMap.get(`${walletUse.sale}`);
+    ledgerRows.push({
+      _id: `wallet:${walletUse._id}`,
+      transactionId: walletUse._id,
+      transactionType: "payment",
+      label: "Wallet Used",
+      saleId: walletUse.sale,
+      invoiceNo: sale?.invoiceNo || `${walletUse.sale}`,
+      paymentMethod: walletUse.paymentMethod || "STORE_CREDIT",
+      note: walletUse.note || "",
+      items: [],
+      debit: 0,
+      credit: roundAmount(walletUse.amount),
+      createdAt: walletUse.createdAt,
+      sortOrder: 22,
+    });
+  }
+
   for (const saleReturn of saleReturns) {
     const sale = saleMap.get(`${saleReturn.sale}`);
     const returnNotes = [];
@@ -372,6 +412,9 @@ const buildCustomerLedger = async ({
       items: saleReturn.items || [],
       debit: 0,
       credit: roundAmount(saleReturn.totalAmount),
+      refundAmount: roundAmount(saleReturn.refundAmount || 0),
+      creditAmount: roundAmount(saleReturn.creditAmount || 0),
+      dueAdjustedAmount: roundAmount(saleReturn.dueAdjustedAmount || 0),
       createdAt: saleReturn.createdAt,
       sortOrder: 30,
     });
@@ -387,8 +430,11 @@ const buildCustomerLedger = async ({
         paymentMethod: saleReturn.refundMethod || null,
         note: saleReturn.note || "Return refund settled",
         items: [],
-        debit: roundAmount(saleReturn.refundAmount),
+        debit: 0,
         credit: 0,
+        refundAmount: roundAmount(saleReturn.refundAmount || 0),
+        creditAmount: 0,
+        dueAdjustedAmount: 0,
         createdAt: saleReturn.createdAt,
         sortOrder: 40,
       });
@@ -403,7 +449,7 @@ const buildCustomerLedger = async ({
       payment: { transactionType: "payment", label: "Order Payment", debit: 0, credit: roundAmount(entry.amount), sortOrder: 25 },
       cancellation: { transactionType: "return", label: "Order Cancelled", debit: 0, credit: roundAmount(entry.amount), sortOrder: 35 },
       return: { transactionType: "return", label: "Order Return", debit: 0, credit: roundAmount(entry.amount), sortOrder: 35 },
-      refund: { transactionType: "refund", label: "Order Refund", debit: roundAmount(entry.amount), credit: 0, sortOrder: 45 },
+      refund: { transactionType: "refund", label: "Order Refund", debit: 0, credit: 0, sortOrder: 45 },
     };
     const config = configMap[type];
     if (!config) continue;
@@ -430,7 +476,10 @@ const buildCustomerLedger = async ({
 
   let runningBalance = 0;
   const withBalance = ledgerRows.map((row) => {
-    runningBalance = roundAmount(runningBalance + Number(row.debit || 0) - Number(row.credit || 0));
+    runningBalance = Math.max(
+      0,
+      roundAmount(runningBalance + Number(row.debit || 0) - Number(row.credit || 0)),
+    );
     return {
       ...row,
       runningBalance,
@@ -466,6 +515,9 @@ const buildCustomerLedger = async ({
     summary: {
       totalDebit: roundAmount(filteredRows.reduce((sum, row) => sum + Number(row.debit || 0), 0)),
       totalCredit: roundAmount(filteredRows.reduce((sum, row) => sum + Number(row.credit || 0), 0)),
+      totalRefunded: roundAmount(filteredRows.reduce((sum, row) => sum + Number(row.refundAmount || 0), 0)),
+      totalCredited: roundAmount(filteredRows.reduce((sum, row) => sum + Number(row.creditAmount || 0), 0)),
+      totalDueAdjusted: roundAmount(filteredRows.reduce((sum, row) => sum + Number(row.dueAdjustedAmount || 0), 0)),
       closingBalance: filteredRows.length
         ? roundAmount(filteredRows[filteredRows.length - 1].runningBalance)
         : 0,

@@ -11,7 +11,7 @@
   <form [formGroup]="form" class="form-wrap">
     <mat-form-field appearance="outline">
       <mat-label>Amount</mat-label>
-      <input matInput type="number" formControlName="amount" min="0.01" />
+      <input matInput type="number" formControlName="amount" min="0.01" [max]="data?.order?.dueAmount || 0" />
     </mat-form-field>
 
     <mat-form-field appearance="outline">

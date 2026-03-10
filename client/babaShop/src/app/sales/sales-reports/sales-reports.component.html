@@ -3,7 +3,7 @@
     <div class="card report-card">
       <div class="card-header card-header-danger">
         <h4 class="card-title">Sales Reports</h4>
-        <p class="card-category">Sales, returns, collections and dues summary</p>
+        <p class="card-category">Sales, customer returns, collections and dues summary</p>
       </div>
       <div class="card-body">
         <div class="filter-row">
@@ -35,7 +35,7 @@
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="f">
-            <mat-label>Return Status</mat-label>
+            <mat-label>Customer Return Status</mat-label>
             <mat-select [(ngModel)]="filters.returnStatus">
               <mat-option value="">All</mat-option>
               <mat-option value="NONE">None</mat-option>
@@ -45,7 +45,7 @@
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="f">
-            <mat-label>Refund Method</mat-label>
+            <mat-label>Refund to Customer</mat-label>
             <mat-select [(ngModel)]="filters.refundMethod">
               <mat-option value="">All</mat-option>
               <mat-option value="CASH">CASH</mat-option>
@@ -58,7 +58,7 @@
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="f">
-            <mat-label>Return Search</mat-label>
+            <mat-label>Customer Return Search</mat-label>
             <input matInput [(ngModel)]="filters.search" />
           </mat-form-field>
 
@@ -98,15 +98,15 @@
         <div class="val">Rs {{ overview?.sales?.totalDue | number:'1.2-2' }}</div>
       </div>
       <div class="kpi">
-        <div class="label">Return Amount</div>
+        <div class="label">Customer Return Amount</div>
         <div class="val">Rs {{ overview?.returns?.totalAmount | number:'1.2-2' }}</div>
       </div>
       <div class="kpi">
-        <div class="label">Refunded</div>
+        <div class="label">Refunded to Customer</div>
         <div class="val">Rs {{ overview?.returns?.totalRefund | number:'1.2-2' }}</div>
       </div>
       <div class="kpi">
-        <div class="label">Credit Notes</div>
+        <div class="label">Customer Credit Notes</div>
         <div class="val">Rs {{ overview?.returns?.totalCredit | number:'1.2-2' }}</div>
       </div>
     </div>
@@ -142,8 +142,8 @@
               <th *ngIf="canViewSensitivePricing">Margin %</th>
               <th>Paid</th>
               <th>Due</th>
-              <th>Returned Amt</th>
-              <th>Refunded Amt</th>
+              <th>Customer Returned Amt</th>
+              <th>Refunded to Customer</th>
               <th>Date</th>
             </tr>
           </thead>
@@ -277,7 +277,7 @@
 
     <div class="card mt-3" *ngIf="!loading">
       <div class="card-header card-header-warning">
-        <h4 class="card-title">Recent Returns (Filtered)</h4>
+        <h4 class="card-title">Recent Customer Returns (Filtered)</h4>
       </div>
       <div class="card-body table-responsive">
         <table class="table r-table">
@@ -286,10 +286,10 @@
               <th>Date</th>
               <th>Invoice</th>
               <th>Customer</th>
-              <th>Return Amt</th>
+              <th>Customer Return Amt</th>
               <th>Due Adj</th>
-              <th>Refund</th>
-              <th>Credit</th>
+              <th>Refund to Customer</th>
+              <th>Customer Credit</th>
               <th>Method</th>
             </tr>
           </thead>
@@ -305,7 +305,7 @@
               <td>{{ row?.refundMethod || '-' }}</td>
             </tr>
             <tr *ngIf="returnRows.length === 0">
-              <td colspan="8" class="empty">No return data</td>
+              <td colspan="8" class="empty">No customer return data</td>
             </tr>
           </tbody>
         </table>

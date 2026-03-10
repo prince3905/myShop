@@ -63,13 +63,19 @@ export class StocksComponent implements OnInit {
   reorderingIds: Record<string, boolean> = {};
   bulkReorderSaving = false;
   adjustSaving = false;
+  readonly damageSources = [
+    { value: "PURCHASE_DAMAGE", label: "From Distributor" },
+    { value: "INTERNAL_DAMAGE", label: "Internal Damage" },
+    { value: "OTHER_DAMAGE", label: "Other" },
+  ];
   adjustModelOptions: any[] = [];
   adjustVariationOptions: any[] = [];
   adjustForm: {
     product: string | null;
     model: string | null;
     variation: string | null;
-    type: "IN" | "OUT" | "ADJUSTMENT";
+    type: "IN" | "OUT" | "ADJUSTMENT" | "DAMAGED" | "RESTORE_DAMAGE";
+    damageSource: string | null;
     quantity: number | null;
     note: string;
   } = {
@@ -77,6 +83,7 @@ export class StocksComponent implements OnInit {
     model: null,
     variation: null,
     type: "ADJUSTMENT",
+    damageSource: "INTERNAL_DAMAGE",
     quantity: null,
     note: "",
   };
@@ -439,11 +446,16 @@ export class StocksComponent implements OnInit {
       this.snackBar.open("Quantity must be greater than 0", "Close", { duration: 2600 });
       return;
     }
+    if (this.adjustForm.type === "DAMAGED" && !this.adjustForm.damageSource) {
+      this.snackBar.open("Select damage source", "Close", { duration: 2600 });
+      return;
+    }
 
     this.adjustSaving = true;
     this.stocksService.manualAdjust({
       variation: this.adjustForm.variation,
       type: this.adjustForm.type,
+      damageSource: this.adjustForm.type === "DAMAGED" ? this.adjustForm.damageSource : null,
       quantity: Number(this.adjustForm.quantity || 0),
       note: this.adjustForm.note || "",
     }).subscribe({
@@ -455,6 +467,7 @@ export class StocksComponent implements OnInit {
           model: null,
           variation: null,
           type: "ADJUSTMENT",
+          damageSource: "INTERNAL_DAMAGE",
           quantity: null,
           note: "",
         };
@@ -477,6 +490,17 @@ export class StocksComponent implements OnInit {
     const current = Number(row?.quantity || 0);
     const gap = reorder - current;
     return gap > 0 ? gap : 1;
+  }
+
+  getTransactionQty(tx: any): number {
+    return Math.abs(Number(tx?.quantity ?? tx?.deltaQuantity ?? 0));
+  }
+
+  getTransactionEffect(tx: any): string {
+    const delta = Number(tx?.deltaQuantity || 0);
+    if (delta > 0) return `+${delta}`;
+    if (delta < 0) return `${delta}`;
+    return "0";
   }
 
   createReorderDraft(row: any): void {

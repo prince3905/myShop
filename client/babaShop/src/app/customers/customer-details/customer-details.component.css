@@ -188,6 +188,22 @@
   margin-top: 4px;
 }
 
+.settlement-strip {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.mini-settlement {
+  background: #eef2ff;
+  color: #334155;
+  border: 1px solid #dbe4ff;
+  border-radius: 999px;
+  font-size: 11px;
+  padding: 2px 8px;
+}
+
 .total-row {
   background: #f8fafc;
 }

@@ -65,6 +65,10 @@ const stockTransactionSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    damageSource: {
+      type: String,
+      enum: ["PURCHASE_DAMAGE", "INTERNAL_DAMAGE", "CUSTOMER_RETURN_DAMAGE", "OTHER_DAMAGE"],
+    },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

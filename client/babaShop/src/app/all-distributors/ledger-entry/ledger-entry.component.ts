@@ -19,6 +19,7 @@ export class LedgerEntryComponent implements OnInit {
   canSubmit = true;
   readonly paymentModes = ["CASH", "BANK", "ONLINE", "UPI", "CARD", "CHEQUE"];
   purchaseOptions: any[] = [];
+  maxAmount = 0;
 
   constructor(
     private fb: FormBuilder,
@@ -59,6 +60,9 @@ export class LedgerEntryComponent implements OnInit {
     if (this.type === 'payment' && this.data?.distributorId) {
       this.loadPendingPurchases();
     }
+
+    this.form.get("referenceId")?.valueChanges.subscribe(() => this.syncPaymentLimit());
+    this.form.get("amount")?.valueChanges.subscribe(() => this.clampAmountToLimit());
   }
 
   loadPendingPurchases(): void {
@@ -72,6 +76,7 @@ export class LedgerEntryComponent implements OnInit {
         next: (res: any) => {
           const rows = Array.isArray(res?.data) ? res.data : [];
           this.purchaseOptions = rows.filter((row: any) => Number(row?.dueAmount || 0) > 0);
+          this.syncPaymentLimit();
         },
         error: () => {
           this.purchaseOptions = [];
@@ -110,6 +115,25 @@ export class LedgerEntryComponent implements OnInit {
           this.loading = false;
         }
       });
+  }
+
+  getSelectedPurchaseDue(): number {
+    const referenceId = `${this.form?.value?.referenceId || ""}`;
+    const matched = this.purchaseOptions.find((row: any) => `${row?._id}` === referenceId);
+    return Math.max(0, Number(matched?.dueAmount || 0));
+  }
+
+  private syncPaymentLimit(): void {
+    this.maxAmount = this.getSelectedPurchaseDue();
+    this.clampAmountToLimit();
+  }
+
+  private clampAmountToLimit(): void {
+    if (this.type !== "payment") return;
+    const current = Math.max(0, Number(this.form?.get("amount")?.value || 0));
+    const max = this.maxAmount;
+    const safeAmount = max > 0 ? Math.min(current, max) : current;
+    this.form?.patchValue({ amount: safeAmount || null }, { emitEvent: false });
   }
 
 }

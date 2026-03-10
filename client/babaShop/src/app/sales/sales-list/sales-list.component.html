@@ -148,9 +148,9 @@
                     mat-stroked-button
                     color="warn"
                     [disabled]="isReturnClosed(row)"
-                    [matTooltip]="isReturnClosed(row) ? 'Fully returned - cannot return again' : 'Open return form'"
+                    [matTooltip]="isReturnClosed(row) ? 'Customer se full return ho chuka hai' : 'Return from customer open karo'"
                     (click)="openReturn(row)">
-                    Open Return
+                    Return from Customer
                   </button>
                   <button mat-stroked-button color="primary" (click)="printInvoice(row)">Print</button>
                 </td>
@@ -185,13 +185,14 @@
           <div><strong>Total:</strong> Rs {{ selectedSale?.totalPurchasePrice | number:'1.2-2' }}</div>
           <div><strong>Discount:</strong> Rs {{ selectedSale?.billDiscount | number:'1.2-2' }}</div>
           <div><strong>Paid:</strong> Rs {{ selectedSale?.paidAmount | number:'1.2-2' }}</div>
+          <div><strong>Wallet Used:</strong> Rs {{ selectedSale?.walletUsedAmount | number:'1.2-2' }}</div>
           <div><strong>Due:</strong> Rs {{ selectedSale?.dueAmount | number:'1.2-2' }}</div>
-          <div><strong>Return Status:</strong> {{ getReturnBadge(selectedSale) | uppercase }}</div>
-          <div><strong>Returned Qty:</strong> {{ selectedSale?.returnedQuantity || 0 }} / {{ selectedSale?.totalQuantity || 0 }}</div>
-          <div><strong>Returned Amount:</strong> Rs {{ selectedSale?.returnedAmount | number:'1.2-2' }}</div>
+          <div><strong>Customer Return Status:</strong> {{ getReturnBadge(selectedSale) | uppercase }}</div>
+          <div><strong>Customer Returned Qty:</strong> {{ selectedSale?.returnedQuantity || 0 }} / {{ selectedSale?.totalQuantity || 0 }}</div>
+          <div><strong>Customer Returned Amount:</strong> Rs {{ selectedSale?.returnedAmount | number:'1.2-2' }}</div>
           <div><strong>Due Adjusted:</strong> Rs {{ selectedSale?.dueAdjustedAmount | number:'1.2-2' }}</div>
-          <div><strong>Refunded:</strong> Rs {{ selectedSale?.refundedAmount | number:'1.2-2' }}</div>
-          <div><strong>Credit Note:</strong> Rs {{ selectedSale?.creditedAmount | number:'1.2-2' }}</div>
+          <div><strong>Refunded to Customer:</strong> Rs {{ selectedSale?.refundedAmount | number:'1.2-2' }}</div>
+          <div><strong>Customer Credit Note:</strong> Rs {{ selectedSale?.creditedAmount | number:'1.2-2' }}</div>
         </div>
 
         <div class="table-responsive">

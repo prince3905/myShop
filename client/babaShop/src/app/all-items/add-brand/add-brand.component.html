@@ -9,12 +9,12 @@
       <form (ngSubmit)="onSubmit()" #brandForm="ngForm" class="brand-form">
         <mat-form-field class="example-full-width">
           <mat-label>Brand Name</mat-label>
-          <input matInput name="name" [(ngModel)]="name" required />
+          <input matInput name="name" [(ngModel)]="name" appCapitalizeFirst required />
         </mat-form-field>
 
         <mat-form-field class="example-full-width">
           <mat-label>Brand Description</mat-label>
-          <textarea matInput name="description" [(ngModel)]="description"></textarea>
+          <textarea matInput name="description" [(ngModel)]="description" appCapitalizeFirst></textarea>
         </mat-form-field>
 
         <div class="form-actions">

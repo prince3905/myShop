@@ -29,7 +29,7 @@ exports.getAllCustomers = async (req, res) => {
         .sort({ createdAt: -1 })
         .skip(skipItems)
         .limit(itemsPerPage)
-        .select("name phone email address totalPurchase totalPaid totalDue purchaseCount createdAt isActive"),
+        .select("name phone email address totalPurchase totalPaid totalDue walletBalance purchaseCount createdAt isActive"),
       Customer.countDocuments(query),
     ]);
 
@@ -70,7 +70,7 @@ exports.searchCustomers = async (req, res) => {
     const customers = await Customer.find(query)
       .sort({ name: 1 })
       .limit(Math.min(100, Number(limit || 20)))
-      .select('name phone email address totalPurchase totalPaid totalDue purchaseCount');
+      .select('_id name phone email address totalPurchase totalPaid totalDue walletBalance purchaseCount');
 
     return res.status(200).json({ success: true, customers });
   } catch (err) {

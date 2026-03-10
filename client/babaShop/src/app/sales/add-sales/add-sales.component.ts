@@ -29,6 +29,9 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
   customerName: string = "";
   customerPhone: string = "";
   customerAddress: string = "";
+  selectedCustomerId: string = "";
+  currentCustomerWalletBalance: number = 0;
+  walletUsedAmount: number = 0;
   model: string = "";
   variations: string = "";
   quantity: number;
@@ -56,7 +59,6 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
   totalQuantity: number = null;
 
   suggestions: any[] = [];
-  cus_suggestions: string[] = [];
   cus_full_suggestions: any[] = [];
   size_suggestions: string[] = [];
   model_suggestions: string[] = [];
@@ -144,13 +146,15 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
   // Handle customer name change - fetch suggestions
   onCustomerNameChange(value: string): void {
     this.customerName = value;
+    this.selectedCustomerId = "";
+    this.currentCustomerWalletBalance = 0;
+    this.walletUsedAmount = 0;
     this.fetchCusSuggestions();
   }
 
   fetchCusSuggestions(): void {
     const searchTerm = (this.customerName || "").trim();
     if (!searchTerm) {
-      this.cus_suggestions = [];
       this.cus_full_suggestions = [];
       return;
     }
@@ -158,26 +162,20 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
     this.customerSearch$.next(searchTerm);
   }
 
-  selectCusSuggestion(suggestion: string): void {
-    let matchedCustomer: any = null;
-    
-    if (suggestion && typeof suggestion === 'object') {
-      matchedCustomer = suggestion;
-    } else {
-      matchedCustomer = this.cus_full_suggestions.find((c: any) => `${c.name} (${c.phone})` === suggestion);
-    }
-    
+  selectCusSuggestion(suggestion: any): void {
+    const matchedCustomer = suggestion && typeof suggestion === "object"
+      ? suggestion
+      : null;
+
     if (matchedCustomer) {
-      // Keep the name, fill phone and address
       this.customerName = matchedCustomer.name || this.customerName || "";
       this.customerPhone = matchedCustomer.phone || "";
       this.customerAddress = matchedCustomer.address || "";
-    } else if (typeof suggestion === 'string') {
-      // If no match, use the suggestion as name
-      this.customerName = suggestion;
+      this.selectedCustomerId = matchedCustomer._id || "";
+      this.currentCustomerWalletBalance = Number(matchedCustomer.walletBalance || 0);
+      this.syncWalletUsage();
     }
-    
-    this.cus_suggestions = [];
+
     this.cus_full_suggestions = [];
   }
 
@@ -193,9 +191,10 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
       this.customerName = customer.name || '';
       this.customerPhone = customer.phone || '';
       this.customerAddress = customer.address || '';
+      this.selectedCustomerId = customer._id || "";
+      this.currentCustomerWalletBalance = Number(customer.walletBalance || 0);
+      this.syncWalletUsage();
     }
-    // Clear suggestions
-    this.cus_suggestions = [];
     this.cus_full_suggestions = [];
   }
 
@@ -210,6 +209,9 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
         this.customerName = result.name || "";
         this.customerPhone = result.phone || "";
         this.customerAddress = result.address || "";
+        this.selectedCustomerId = result._id || "";
+        this.currentCustomerWalletBalance = Number(result.walletBalance || 0);
+        this.walletUsedAmount = 0;
         this.snackBar.open(`Customer "${result.name}" added successfully!`, 'Close', { duration: 3000 });
       }
     });
@@ -611,14 +613,64 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
       this.totalQuantity += item.quantity;
       this.totalPurchasePrice += item.quantity * item.purchasePrice;
     }
+    this.normalizeBillingInputs();
+    this.syncWalletUsage();
   }
 
   getNetTotal(): number {
     return Math.max(0, Number(this.totalPurchasePrice || 0) - Number(this.billDiscount || 0));
   }
 
+  getMaxWalletUsable(): number {
+    const wallet = Math.max(0, Number(this.currentCustomerWalletBalance || 0));
+    const remainingAfterCash = Math.max(0, this.getNetTotal() - Number(this.paidAmount || 0));
+    return Math.max(0, Math.min(wallet, remainingAfterCash));
+  }
+
+  private syncWalletUsage(): void {
+    const maxWalletUsable = this.getMaxWalletUsable();
+    this.walletUsedAmount = Math.max(0, Math.min(Number(this.walletUsedAmount || 0), maxWalletUsable));
+  }
+
+  onBillDiscountChange(value?: number | string, inputEl?: HTMLInputElement | null): void {
+    this.billDiscount = Math.max(0, Number(value ?? this.billDiscount ?? 0));
+    this.normalizeBillingInputs();
+    this.syncNumericInputValue(inputEl, this.billDiscount);
+  }
+
+  onWalletAmountChange(value?: number | string, inputEl?: HTMLInputElement | null): void {
+    this.walletUsedAmount = Math.max(0, Number(value ?? this.walletUsedAmount ?? 0));
+    this.syncWalletUsage();
+    this.onPaidAmountChange();
+    this.syncNumericInputValue(inputEl, this.walletUsedAmount);
+  }
+
+  onPaidAmountChange(value?: number | string, inputEl?: HTMLInputElement | null): void {
+    this.paidAmount = Math.max(0, Number(value ?? this.paidAmount ?? 0));
+    this.normalizeBillingInputs();
+    const netTotal = this.getNetTotal();
+    const safePaid = Math.max(0, Number(this.paidAmount || 0));
+    const maxCashAllowed = Math.max(0, netTotal - Number(this.walletUsedAmount || 0));
+    const clampedPaid = Math.min(safePaid, maxCashAllowed);
+    if (clampedPaid !== safePaid) {
+      this.paidAmount = clampedPaid;
+    }
+    this.syncWalletUsage();
+    this.syncNumericInputValue(inputEl, this.paidAmount);
+  }
+
+  private normalizeBillingInputs(): void {
+    const subtotal = Math.max(0, Number(this.totalPurchasePrice || 0));
+    this.billDiscount = Math.max(0, Math.min(Number(this.billDiscount || 0), subtotal));
+  }
+
+  private syncNumericInputValue(inputEl: HTMLInputElement | null | undefined, value: number): void {
+    if (!inputEl) return;
+    inputEl.value = `${Number(value || 0)}`;
+  }
+
   getDueAmount(): number {
-    return Math.max(0, this.getNetTotal() - Number(this.paidAmount || 0));
+    return Math.max(0, this.getNetTotal() - Number(this.paidAmount || 0) - Number(this.walletUsedAmount || 0));
   }
 
   canSaveSale(): boolean {
@@ -651,6 +703,20 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
       this.snackBar.open("Paid amount cannot be greater than net total", "Close", { duration: 2600 });
       return;
     }
+    this.syncWalletUsage();
+    const walletUsedAmount = Number(this.walletUsedAmount || 0);
+    if (walletUsedAmount < 0) {
+      this.snackBar.open("Wallet amount cannot be negative", "Close", { duration: 2500 });
+      return;
+    }
+    if (walletUsedAmount > Number(this.currentCustomerWalletBalance || 0)) {
+      this.snackBar.open("Wallet amount exceeds customer wallet balance", "Close", { duration: 2600 });
+      return;
+    }
+    if (paidAmount + walletUsedAmount > net) {
+      this.snackBar.open("Paid amount plus wallet cannot be greater than net total", "Close", { duration: 2600 });
+      return;
+    }
 
     let finalPaidAmount = this.paidAmount;
     let finalPaymentMethod = this.paymentMethod;
@@ -667,6 +733,7 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.final_Sales_data = {
       customerName: customerName,
+      customer: this.selectedCustomerId || null,
       customerPhone: this.customerPhone || "",
       customerAddress: this.customerAddress || "",
       items: (this.Display_items || []).map((it: any) => ({
@@ -685,6 +752,7 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
       })),
       billDiscount: Number(this.billDiscount || 0),
       paidAmount: Number(finalPaidAmount || 0),
+      walletUsedAmount: walletUsedAmount,
       paymentMethod: finalPaymentMethod || "CASH",
       splitPayments: this.useSplitPayment ? this.splitPayments : null
     };
@@ -721,11 +789,14 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
       id: Date.now(),
       name: billName,
       customerName: this.customerName || "Walk-in",
+      selectedCustomerId: this.selectedCustomerId || "",
       customerPhone: this.customerPhone || "",
       customerAddress: this.customerAddress || "",
       items: JSON.parse(JSON.stringify(this.Display_items)),
       billDiscount: this.billDiscount || 0,
       paidAmount: this.paidAmount || 0,
+      walletUsedAmount: this.walletUsedAmount || 0,
+      currentCustomerWalletBalance: this.currentCustomerWalletBalance || 0,
       paymentMethod: this.paymentMethod || "CASH",
       heldAt: new Date()
     };
@@ -747,14 +818,18 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
     }
     
     this.customerName = bill.customerName || "";
+    this.selectedCustomerId = bill.selectedCustomerId || "";
     this.customerPhone = bill.customerPhone || "";
     this.customerAddress = bill.customerAddress || "";
     this.Display_items = JSON.parse(JSON.stringify(bill.items));
     this.billDiscount = bill.billDiscount || 0;
     this.paidAmount = bill.paidAmount || 0;
+    this.walletUsedAmount = Number(bill.walletUsedAmount || 0);
+    this.currentCustomerWalletBalance = Number(bill.currentCustomerWalletBalance || 0);
     this.paymentMethod = bill.paymentMethod || "CASH";
     
     this.calculateTotals();
+    this.onPaidAmountChange();
     this.snackBar.open(`Bill "${bill.name}" loaded!`, 'Close', { duration: 2000 });
   }
   
@@ -787,6 +862,9 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
     this.customerName = "";
     this.customerPhone = "";
     this.customerAddress = "";
+    this.selectedCustomerId = "";
+    this.currentCustomerWalletBalance = 0;
+    this.walletUsedAmount = 0;
     this.Display_items = [];
     this.billDiscount = 0;
     this.paidAmount = 0;
@@ -800,8 +878,9 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
   setPaymentMethod(method: "CASH" | "UPI" | "CARD" | "BANK" | "ONLINE" | "CREDIT"): void {
     this.paymentMethod = method;
     if (!this.useSplitPayment) {
-      this.paidAmount = this.getNetTotal();
+      this.paidAmount = Math.max(0, this.getNetTotal() - Number(this.walletUsedAmount || 0));
     }
+    this.onPaidAmountChange();
   }
 
   getLineTotal(item: any): number {
@@ -812,7 +891,7 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
   toggleSplitPayment(): void {
     this.useSplitPayment = !this.useSplitPayment;
     if (this.useSplitPayment) {
-      this.splitPayments = [{ method: "CASH", amount: 0 }];
+      this.splitPayments = [{ method: "CASH", amount: this.getNetTotal() }];
     } else {
       this.splitPayments = [];
     }
@@ -820,16 +899,41 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
   
   addSplitPaymentRow(): void {
     this.splitPayments.push({ method: "CASH", amount: 0 });
+    this.normalizeSplitPayments();
   }
   
   removeSplitPaymentRow(index: number): void {
     if (this.splitPayments.length > 1) {
       this.splitPayments.splice(index, 1);
+      this.normalizeSplitPayments();
     }
   }
   
   getSplitPaymentTotal(): number {
     return this.splitPayments.reduce((sum, sp) => sum + (sp.amount || 0), 0);
+  }
+
+  onSplitPaymentAmountChange(index: number): void {
+    if (!this.splitPayments[index]) return;
+    this.splitPayments[index].amount = Math.max(0, Number(this.splitPayments[index].amount || 0));
+    this.normalizeSplitPayments();
+  }
+
+  private normalizeSplitPayments(): void {
+    const net = this.getNetTotal();
+    const normalized = this.splitPayments.map((sp: any) => ({
+      method: sp?.method || "CASH",
+      amount: Math.max(0, Number(sp?.amount || 0)),
+    }));
+    let remaining = net;
+    this.splitPayments = normalized.map((sp: any, index: number) => {
+      if (index === normalized.length - 1) {
+        return { ...sp, amount: Math.max(0, remaining) };
+      }
+      const safeAmount = Math.min(sp.amount, Math.max(0, remaining));
+      remaining -= safeAmount;
+      return { ...sp, amount: safeAmount };
+    });
   }
   
   getBillTotal(bill: any): number {
@@ -880,15 +984,12 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
         next: (response: any) => {
           if (response?.success && Array.isArray(response.customers)) {
             this.cus_full_suggestions = response.customers;
-            this.cus_suggestions = response.customers.map((c: any) => `${c.name} (${c.phone})`);
             return;
           }
 
-          this.cus_suggestions = [];
           this.cus_full_suggestions = [];
         },
         error: () => {
-          this.cus_suggestions = [];
           this.cus_full_suggestions = [];
         },
       });
