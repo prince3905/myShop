@@ -1,0 +1,5 @@
+client/babaShop/dist/
+client/babaShop/node_modules/
+server/node_modules/
+node_modules/
+.DS_Store
