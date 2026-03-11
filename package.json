@@ -1,0 +1,11 @@
+{
+  "name": "myshop-workspace",
+  "private": true,
+  "scripts": {
+    "build:client": "npm --prefix client/babaShop run build -- --optimization=false",
+    "start:server": "npm --prefix server run dev",
+    "start": "npm run build:client && npm run start:server",
+    "dev:client": "npm --prefix client/babaShop start",
+    "dev:server": "npm --prefix server run dev"
+  }
+}

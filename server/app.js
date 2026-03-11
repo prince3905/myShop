@@ -1,8 +1,12 @@
 const express = require("express");
+const path = require("path");
 const app = express();
 const cors = require("cors");
 
-const allowedOrigins = (process.env.ALLOWED_ORIGINS || "http://localhost:4200,http://127.0.0.1:4200")
+const allowedOrigins = (
+  process.env.ALLOWED_ORIGINS
+  || "http://localhost:3000,http://127.0.0.1:3000,http://localhost:4200,http://127.0.0.1:4200"
+)
   .split(",")
   .map((origin) => origin.trim())
   .filter(Boolean);
@@ -108,5 +112,15 @@ app.use("/api/customer", customerRouter);
 app.use("/api/order", orderRoutes);
 app.use("/api/orders", orderRoutes);
 
+const clientDistPath = path.join(__dirname, "..", "client", "babaShop", "dist");
+app.use(express.static(clientDistPath));
+
+app.get("*", (req, res, next) => {
+  if (req.path.startsWith("/api/")) {
+    return next();
+  }
+
+  return res.sendFile(path.join(clientDistPath, "index.html"));
+});
 
 module.exports = app;
