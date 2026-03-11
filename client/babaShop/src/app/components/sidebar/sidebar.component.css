@@ -13,6 +13,14 @@
   overflow-x: visible;
 }
 
+.nav {
+  padding: 0 10px 14px;
+}
+
+.nav-item {
+  margin-bottom: 4px;
+}
+
 .sidebar-head {
   display: flex;
   justify-content: flex-end;
@@ -219,6 +227,121 @@
 
 .sidebar-wrapper.collapsed .child-menu.flyout .material-icons {
   margin-right: 0;
+}
+
+@media (max-width: 1199px) {
+  .logo {
+    width: 110px;
+    margin-left: 40px;
+    padding: 58px 20px;
+  }
+
+  .logo-img img {
+    width: 105px;
+    margin-left: -48px;
+  }
+
+  .nav-link {
+    padding: 11px 13px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 991px) {
+  .sidebar-wrapper {
+    height: 100dvh;
+    padding-bottom: env(safe-area-inset-bottom, 0);
+    overflow-x: hidden;
+  }
+
+  .sidebar-head {
+    justify-content: flex-end;
+    padding: 12px 12px 4px;
+  }
+
+  .logo {
+    width: 91px;
+    margin-left: 85px;
+    padding: 44px 16px;
+  }
+
+  .logo-img img {
+    width: 75px;
+    margin-left: -38px;
+    margin-top: 1px;
+  }
+
+  .nav {
+    padding: 0 8px 18px;
+  }
+
+  .nav-link {
+    padding: 11px 12px;
+    border-radius: 12px;
+  }
+
+  .collapse-toggle {
+    background: rgba(255, 255, 255, 0.12) !important;
+    border-color: rgba(255, 255, 255, 0.2);
+    color: #fff;
+    width: 40px;
+    height: 40px;
+    line-height: 40px;
+    border-radius: 12px;
+  }
+
+  .collapse-toggle .material-icons {
+    color: #fff !important;
+  }
+
+  .child-menu {
+    margin-left: 8px;
+  }
+
+  .sidebar-wrapper.collapsed .nav {
+    width: 100%;
+  }
+
+  .sidebar-wrapper.collapsed .nav-link {
+    width: auto;
+  }
+
+  .sidebar-wrapper.collapsed .child-menu.flyout {
+    left: 48px;
+    min-width: 52px;
+  }
+
+  .nav-link p {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 640px) {
+  .sidebar-head {
+    padding-inline: 10px;
+  }
+
+  .collapse-toggle {
+    width: 34px;
+    height: 34px;
+    line-height: 34px;
+  }
+
+  .nav-link {
+    font-size: 12px;
+    padding: 10px 11px;
+  }
+
+  .material-icons {
+    margin-right: 12px;
+    font-size: 20px;
+    min-width: 20px;
+  }
+
+  .child-menu .nav-link {
+    font-size: 12px;
+    padding: 7px 12px;
+  }
 }
 
 ::ng-deep .cdk-overlay-container,

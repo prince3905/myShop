@@ -379,3 +379,43 @@
     max-width: unset;
   }
 }
+
+@media (max-width: 991px) {
+  .summary-cards {
+    gap: 10px;
+  }
+
+  .summary-card {
+    min-width: calc(50% - 10px);
+  }
+
+  .info-table th,
+  .info-table td {
+    padding: 8px;
+  }
+}
+
+@media (max-width: 640px) {
+  .summary-card {
+    min-width: 100%;
+  }
+
+  .summary-note-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .info-table th,
+  .info-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .info-table th {
+    padding-bottom: 4px;
+  }
+
+  .info-table td {
+    padding-top: 0;
+    padding-bottom: 10px;
+  }
+}

@@ -332,25 +332,30 @@
                     </div>
                 </div>
             </div>
-            <div class="col-lg-6 col-md-12" *ngIf="canViewSensitivePricing">
+            <div class="col-lg-12 col-md-12" *ngIf="canViewSensitivePricing">
                 <div class="card dashboard-detail-card dashboard-click-card" (click)="openCustomers()">
-                    <div class="card-header card-header-success">
-                        <h4 class="card-title">Customer Credit & Wallet</h4>
-                        <p class="card-category">Store credit issued, wallet used, and wallet balance</p>
+                    <div class="card-header card-header-success customer-credit-header">
+                        <div class="customer-credit-header-main">
+                            <h4 class="card-title">Customer Credit & Wallet</h4>
+                            <p class="card-category">Store credit issued, wallet used, and current wallet balance</p>
+                        </div>
+                    </div>
+                    <div class="customer-credit-chip-row">
+                        <div class="customer-credit-chip">Live Wallet View</div>
                     </div>
                     <div class="card-body">
-                        <div class="due-summary-grid" *ngIf="overview.customerCreditSummary; else noCustomerCreditSummary">
-                            <div class="due-summary-card">
+                        <div class="due-summary-grid customer-credit-grid" *ngIf="overview.customerCreditSummary; else noCustomerCreditSummary">
+                            <div class="due-summary-card customer-credit-panel">
                                 <div class="due-summary-label">Wallet Balance</div>
                                 <div class="due-summary-value">₹ {{ overview.customerCreditSummary.totalWalletBalance | number:'1.2-2' }}</div>
                                 <div class="due-summary-meta">{{ overview.customerCreditSummary.walletCustomerCount }} customers with balance</div>
                             </div>
-                            <div class="due-summary-card">
+                            <div class="due-summary-card customer-credit-panel">
                                 <div class="due-summary-label">Credit Issued</div>
                                 <div class="due-summary-value">₹ {{ overview.customerCreditSummary.totalCreditIssued | number:'1.2-2' }}</div>
                                 <div class="due-summary-meta">{{ overview.customerCreditSummary.creditIssueCount }} credit-note returns</div>
                             </div>
-                            <div class="due-summary-card">
+                            <div class="due-summary-card customer-credit-panel">
                                 <div class="due-summary-label">Wallet Used</div>
                                 <div class="due-summary-value">₹ {{ overview.customerCreditSummary.totalWalletUsed | number:'1.2-2' }}</div>
                                 <div class="due-summary-meta">{{ overview.customerCreditSummary.walletUseCount }} sales adjusted</div>

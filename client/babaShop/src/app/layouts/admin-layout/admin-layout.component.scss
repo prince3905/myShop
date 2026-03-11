@@ -1,3 +1,25 @@
-/* admin layout original (empty) */
+:host {
+  display: block;
+}
 
+.wrapper {
+  min-height: 100vh;
+  overflow-x: clip;
+}
+
+.main-panel {
+  min-height: 100vh;
+  overflow-x: clip;
+}
+
+@media (max-width: 991px) {
+  .wrapper {
+    overflow-x: hidden;
+  }
+
+  .main-panel {
+    width: 100% !important;
+    min-height: 100dvh;
+  }
+}
 

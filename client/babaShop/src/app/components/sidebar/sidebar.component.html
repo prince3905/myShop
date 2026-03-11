@@ -4,8 +4,8 @@
       mat-icon-button
       class="collapse-toggle"
       (click)="toggleSidebar()"
-      [matTooltip]="isCollapsed ? 'Expand menu' : 'Collapse menu'">
-      <mat-icon>{{ isCollapsed ? 'chevron_right' : 'chevron_left' }}</mat-icon>
+      [matTooltip]="isMobileViewport ? 'Close menu' : (isCollapsed ? 'Expand menu' : 'Collapse menu')">
+      <mat-icon>{{ isMobileViewport ? 'close' : (isCollapsed ? 'chevron_right' : 'chevron_left') }}</mat-icon>
     </button>
   </div>
 

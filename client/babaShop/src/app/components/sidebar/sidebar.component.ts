@@ -1,4 +1,4 @@
-import { Component, Inject, OnDestroy, OnInit, Renderer2 } from "@angular/core";
+import { Component, HostListener, Inject, OnDestroy, OnInit, Renderer2 } from "@angular/core";
 import { DOCUMENT } from "@angular/common";
 import { Router } from "@angular/router";
 import { AuthService } from "app/shared/services/auth.service";
@@ -143,6 +143,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
   menuItems: any[];
   userRole: string | null = null;
   isCollapsed = false;
+  isMobileViewport = false;
   activeFlyoutKey: string | null = null;
   private readonly collapseKey = "sidebar_collapsed";
   private sidebarEl: HTMLElement | null = null;
@@ -160,6 +161,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
     this.menuItems = this.filterMenuByRole(ROUTES);
     this.sidebarEl = this.document.querySelector(".sidebar");
     this.mainPanelEl = this.document.querySelector(".main-panel");
+    this.updateViewportState();
     this.restoreCollapseState();
   }
 
@@ -217,6 +219,11 @@ export class SidebarComponent implements OnInit, OnDestroy {
   }
 
   toggleSidebar(): void {
+    if (this.isMobileViewport) {
+      this.closeMobileDrawer();
+      return;
+    }
+
     this.isCollapsed = !this.isCollapsed;
     if (!this.isCollapsed) {
       this.activeFlyoutKey = null;
@@ -252,9 +259,30 @@ export class SidebarComponent implements OnInit, OnDestroy {
   }
 
   private restoreCollapseState(): void {
+    if (this.isMobileViewport) {
+      this.isCollapsed = false;
+      localStorage.removeItem(this.collapseKey);
+      this.syncBodyClass();
+      return;
+    }
+
     const saved = localStorage.getItem(this.collapseKey);
     this.isCollapsed = saved === "true";
     this.syncBodyClass();
+  }
+
+  @HostListener("window:resize")
+  onWindowResize(): void {
+    const wasMobile = this.isMobileViewport;
+    this.updateViewportState();
+
+    if (this.isMobileViewport) {
+      this.isCollapsed = false;
+      this.activeFlyoutKey = null;
+      this.syncBodyClass();
+    } else if (wasMobile !== this.isMobileViewport) {
+      this.restoreCollapseState();
+    }
   }
 
   private getFlyoutKey(menuItem: RouteInfo, idx: number): string {
@@ -290,6 +318,19 @@ export class SidebarComponent implements OnInit, OnDestroy {
     }
     if (this.mainPanelEl) {
       this.renderer.removeStyle(this.mainPanelEl, "width");
+    }
+  }
+
+  private updateViewportState(): void {
+    this.isMobileViewport = window.innerWidth <= 991;
+  }
+
+  private closeMobileDrawer(): void {
+    this.renderer.removeClass(this.document.body, "nav-open");
+    this.activeFlyoutKey = null;
+    const closeLayer = this.document.getElementsByClassName("close-layer")[0];
+    if (closeLayer?.parentNode) {
+      closeLayer.parentNode.removeChild(closeLayer);
     }
   }
 }

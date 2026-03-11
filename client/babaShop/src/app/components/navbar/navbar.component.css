@@ -209,6 +209,10 @@
 }
 
 @media (max-width: 1199px) {
+  .navbar-title-wrap {
+    max-width: calc(100vw - 220px);
+  }
+
   .shop-chip {
     max-width: 260px;
     margin-right: 6px;
@@ -221,10 +225,36 @@
 }
 
 @media (max-width: 991px) {
+  .navbar .container-fluid {
+    gap: 10px;
+  }
+
+  .navbar-wrapper {
+    width: calc(100% - 52px);
+    min-width: 0;
+  }
+
+  .navbar-title-wrap {
+    width: 100%;
+    max-width: 100%;
+    flex-wrap: wrap;
+    align-items: center;
+    row-gap: 8px;
+  }
+
+  .navbar-breadcrumb {
+    max-width: 100%;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: initial;
+    flex-wrap: wrap;
+  }
+
   .shop-chip {
     width: 100%;
     max-width: 100%;
     border-radius: 8px;
+    margin-right: 0;
   }
 
   .mode-chip,
@@ -234,6 +264,69 @@
 
   .navbar .navbar-collapse {
     margin-top: 8px;
+    justify-content: flex-start !important;
+    width: 100%;
+    gap: 10px;
   }
 
+  .navbar .navbar-nav {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .quick-link-text {
+    display: inline;
+  }
+
+}
+
+@media (max-width: 640px) {
+  .navbar .container-fluid {
+    padding-inline: 8px;
+  }
+
+  .navbar-title-wrap {
+    gap: 6px;
+  }
+
+  .corner-dashboard-link {
+    padding: 6px 8px;
+    font-size: 10px;
+  }
+
+  .navbar-breadcrumb {
+    font-size: 11px;
+    gap: 4px;
+  }
+
+  .mode-chip,
+  .readonly-chip,
+  .shop-chip {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .shop-chip {
+    padding: 7px 10px;
+  }
+
+  .shop-chip-label,
+  .shop-chip-value,
+  .shop-count-label,
+  .quick-link-text {
+    font-size: 11px;
+  }
+
+  .navbar .nav-item .nav-link {
+    padding: 6px 7px;
+  }
+
+  .quick-link {
+    gap: 4px;
+  }
+
+  .quick-link .material-icons {
+    font-size: 17px;
+  }
 }

@@ -229,3 +229,25 @@
     min-width: 100%;
   }
 }
+
+@media (max-width: 640px) {
+  .stock-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .summary-card.valuation {
+    grid-column: span 1;
+  }
+
+  .filter-row,
+  .stock-context-row {
+    align-items: stretch;
+  }
+
+  .filter-field,
+  .search-field,
+  .note-field {
+    min-width: 100%;
+    width: 100%;
+  }
+}

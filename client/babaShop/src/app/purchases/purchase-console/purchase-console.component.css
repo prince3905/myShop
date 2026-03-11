@@ -614,6 +614,12 @@ mat-paginator {
   .timeline-grid {
     grid-template-columns: 1fr;
   }
+
+  .purchase-filter-row,
+  .top-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }
 
 @media (max-width: 767px) {
@@ -633,5 +639,23 @@ mat-paginator {
   .date-field,
   .filter-field {
     min-width: 100%;
+  }
+
+  .purchase-drawer {
+    top: 12px;
+    right: 2vw;
+    left: 2vw;
+    width: 96vw;
+    max-height: calc(100dvh - 24px);
+    padding: 14px;
+  }
+
+  .drawer-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .drawer-head h5 {
+    font-size: 20px;
   }
 }
