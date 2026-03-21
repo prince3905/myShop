@@ -2,8 +2,17 @@ const mongoose = require('mongoose');
 require("dotenv").config();
 const app = require("./app");
 
-const port = process.env.PORT;
-const URL = process.env.MONGO_URI
+const requiredEnvKeys = ["MONGO_URI", "PORT", "JWT_SECRET"];
+const missingEnvKeys = requiredEnvKeys.filter((key) => !`${process.env[key] || ""}`.trim());
+
+if (missingEnvKeys.length) {
+  console.error(`Missing required environment variables: ${missingEnvKeys.join(", ")}`);
+  console.error("Create server/.env from server/.env.example and fill in real values.");
+  process.exit(1);
+}
+
+const port = Number(process.env.PORT);
+const URL = `${process.env.MONGO_URI}`.trim();
 
 mongoose
   .connect(URL, {
