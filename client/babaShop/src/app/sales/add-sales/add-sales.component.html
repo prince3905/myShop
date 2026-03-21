@@ -1,6 +1,19 @@
 <div class="pos-shell">
   <div class="card sales-form-card">
       <div class="card-body pos-layout">
+        <div class="pos-page-header">
+          <div class="pos-page-header-copy">
+            <div class="pos-page-eyebrow">Point Of Sale</div>
+            <div class="pos-page-title">Billing Console</div>
+            <div class="pos-page-subtitle">Search products, scan barcode, manage cart and complete billing from one screen.</div>
+          </div>
+          <div class="pos-page-badges">
+            <span class="pos-page-badge">Search</span>
+            <span class="pos-page-badge">Scan</span>
+            <span class="pos-page-badge">Hold Bills</span>
+          </div>
+        </div>
+
         <div class="catalog-panel">
           <div class="search-strip">
             <div class="search-box">
@@ -10,8 +23,18 @@
                 name="itemName"
                 [(ngModel)]="itemName"
                 (input)="fetchSuggestions()"
+                (keydown)="onSearchKeydown($event)"
                 placeholder="Search Product / Scan Barcode"
               />
+              <button
+                *ngIf="itemName"
+                mat-icon-button
+                type="button"
+                class="input-clear-button"
+                (click)="clearSearchInput()"
+              >
+                <mat-icon>close</mat-icon>
+              </button>
               <button
                 mat-icon-button
                 type="button"
@@ -33,6 +56,15 @@
                 (keyup.enter)="onBarcodeScan()"
                 placeholder="Barcode"
               />
+              <button
+                *ngIf="scannedBarcode"
+                mat-icon-button
+                type="button"
+                class="input-clear-button"
+                (click)="clearBarcodeInput()"
+              >
+                <mat-icon>close</mat-icon>
+              </button>
             </div>
           </div>
 
@@ -103,18 +135,43 @@
           </div>
 
           <div class="catalog-grid" *ngIf="suggestions?.length; else emptyCatalog">
-            <button
-              type="button"
+            <div
               class="product-card"
               *ngFor="let suggestion of suggestions"
+              [class.active]="activeSuggestionIndex === $index"
               (click)="selectSuggestion(suggestion)"
             >
               <div class="product-image">
                 <mat-icon>inventory_2</mat-icon>
               </div>
-              <div class="product-name">{{ suggestion?.label || suggestion?.name }}</div>
-              <div class="product-meta">{{ suggestion?.matchedBy?.join(' • ') || 'Tap to load models' }}</div>
-            </button>
+              <div class="product-card-body">
+                <div class="product-name">{{ suggestion?.label || suggestion?.name }}</div>
+                <div class="product-badges">
+                  <span class="product-badge price" *ngIf="suggestion?.maxSellingPrice > 0">
+                    {{ suggestion?.minSellingPrice === suggestion?.maxSellingPrice
+                      ? ('Rs ' + (suggestion?.maxSellingPrice | number:'1.0-0'))
+                      : ('Rs ' + (suggestion?.minSellingPrice | number:'1.0-0') + ' - ' + (suggestion?.maxSellingPrice | number:'1.0-0')) }}
+                  </span>
+                  <span class="product-badge stock" *ngIf="suggestion?.availableStock !== null && suggestion?.availableStock !== undefined">
+                    Stock: {{ suggestion?.availableStock }}
+                  </span>
+                </div>
+                <div class="product-supporting">
+                  <span>{{ suggestion?.modelCount || 0 }} model{{ (suggestion?.modelCount || 0) === 1 ? '' : 's' }}</span>
+                  <span>{{ suggestion?.variationCount || 0 }} option{{ (suggestion?.variationCount || 0) === 1 ? '' : 's' }}</span>
+                </div>
+                <div class="product-meta">{{ suggestion?.matchedBy?.join(' • ') || 'Tap to load models' }}</div>
+                <div class="product-actions">
+                  <button
+                    type="button"
+                    class="product-action-button"
+                    [class.quick-add]="canQuickAddSuggestion(suggestion)"
+                    (click)="quickAddSuggestion($event, suggestion)">
+                    {{ getQuickAddSuggestionLabel(suggestion) }}
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
 
           <ng-template #emptyCatalog>
@@ -136,7 +193,7 @@
                     <div class="cart-item-name">{{ item?.itemName }}</div>
                     <div class="cart-item-subtitle">{{ item?.model || 'Model not selected' }}</div>
                   </div>
-                  <button mat-icon-button color="warn" type="button" (click)="removeItem(i)">
+                  <button mat-icon-button color="warn" type="button" class="cart-remove-button" (click)="removeItem(i)">
                     <mat-icon>close</mat-icon>
                   </button>
                 </div>
@@ -145,7 +202,15 @@
                   <span class="cart-chip" *ngIf="item?.variationSku">SKU: {{ item?.variationSku }}</span>
                   <span class="cart-chip" *ngIf="item?.size">Size: {{ item?.size }}</span>
                   <span class="cart-chip" *ngIf="item?.color">Color: {{ item?.color }}</span>
-                  <span class="cart-chip">Qty: {{ item?.quantity }}</span>
+                  <div class="cart-qty-editor">
+                    <button type="button" class="cart-qty-button" (click)="changeCartItemQuantity(i, -1)">
+                      <span class="qty-symbol">-</span>
+                    </button>
+                    <span class="cart-chip cart-qty-chip">Qty: {{ item?.quantity }}</span>
+                    <button type="button" class="cart-qty-button" (click)="changeCartItemQuantity(i, 1)">
+                      <span class="qty-symbol">+</span>
+                    </button>
+                  </div>
                 </div>
 
                 <div class="cart-line-bottom">
@@ -261,11 +326,33 @@
           </div>
 
           <div class="held-bills-list compact-held" *ngIf="heldBills?.length">
-            <h5>Held Bills</h5>
-            <div class="held-bill-item" *ngFor="let bill of heldBills">
+            <div class="held-bills-header">
+              <h5>Held Bills</h5>
+              <span class="held-bills-count">{{ filteredHeldBills.length }} shown</span>
+            </div>
+
+            <div class="held-bills-search">
+              <mat-icon>search</mat-icon>
+              <input
+                matInput
+                type="text"
+                name="heldBillSearch"
+                [(ngModel)]="heldBillSearch"
+                placeholder="Search held bill, customer, phone" />
+            </div>
+
+            <div class="held-bill-item" *ngFor="let bill of filteredHeldBills">
               <div class="held-bill-info">
-                <strong>{{ bill.name }}</strong>
-                <span>{{ bill.items?.length }} items - {{ getBillTotal(bill) | currency:'INR':'symbol':'1.0-0' }}</span>
+                <div class="held-bill-title-row">
+                  <strong>{{ bill.name }}</strong>
+                  <span class="held-bill-total">{{ getBillTotal(bill) | currency:'INR':'symbol':'1.0-0' }}</span>
+                </div>
+                <span class="held-bill-customer">{{ bill.customerName || 'Walk-in' }}</span>
+                <span class="held-bill-meta">
+                  {{ getHeldBillItemCount(bill) }} qty • {{ bill.items?.length || 0 }} lines
+                  <span *ngIf="bill.customerPhone">• {{ bill.customerPhone }}</span>
+                </span>
+                <span class="held-bill-time">{{ bill.heldAt | date:'dd/MM/yyyy hh:mm a' }}</span>
               </div>
               <div class="held-bill-actions">
                 <button mat-mini-fab color="primary" (click)="recallBill(bill)" title="Recall">
@@ -275,6 +362,10 @@
                   <mat-icon>delete</mat-icon>
                 </button>
               </div>
+            </div>
+
+            <div class="held-bills-empty" *ngIf="filteredHeldBills.length === 0">
+              No held bills match this search.
             </div>
           </div>
         </div>

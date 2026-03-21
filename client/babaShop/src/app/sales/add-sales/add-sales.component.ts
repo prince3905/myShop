@@ -51,6 +51,7 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
   // Hold/Recall Bills
   heldBills: any[] = [];
   heldBillName: string = "";
+  heldBillSearch: string = "";
   
   Sales_added: any = {};
   final_Sales_data: any = {};
@@ -59,6 +60,7 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
   totalQuantity: number = null;
 
   suggestions: any[] = [];
+  activeSuggestionIndex = -1;
   cus_full_suggestions: any[] = [];
   size_suggestions: string[] = [];
   model_suggestions: string[] = [];
@@ -75,11 +77,13 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
   scannedBarcode: string = "";
   autoAddOnScan: boolean = true;
   private scanDebounceTimer: any = null;
+  private primarySearchScanTimer: any = null;
   barcodeLookupLoading = false;
   private readonly destroy$ = new Subject<void>();
   private readonly itemSearch$ = new Subject<string>();
   private readonly customerSearch$ = new Subject<string>();
   isSavingSale = false;
+  private lastAutoHoldSignature = "";
   @ViewChild("barcodeInputRef") barcodeInputRef?: ElementRef<HTMLInputElement>;
 
   constructor(
@@ -109,12 +113,86 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
       clearTimeout(this.scanDebounceTimer);
       this.scanDebounceTimer = null;
     }
+    if (this.primarySearchScanTimer) {
+      clearTimeout(this.primarySearchScanTimer);
+      this.primarySearchScanTimer = null;
+    }
     this.destroy$.next();
     this.destroy$.complete();
   }
 
   fetchSuggestions(): void {
-    this.itemSearch$.next(`${this.itemName || ""}`.trim());
+    const term = `${this.itemName || ""}`.trim();
+    if (this.primarySearchScanTimer) {
+      clearTimeout(this.primarySearchScanTimer);
+      this.primarySearchScanTimer = null;
+    }
+
+    if (!term) {
+      this.suggestions = [];
+      this.activeSuggestionIndex = -1;
+      this.itemSearch$.next("");
+      return;
+    }
+
+    if (this.looksLikeScannableCode(term)) {
+      this.suggestions = [];
+      this.activeSuggestionIndex = -1;
+      this.primarySearchScanTimer = setTimeout(() => {
+        if (`${this.itemName || ""}`.trim() !== term) return;
+        this.scannedBarcode = term;
+        this.onBarcodeScan("primary");
+      }, 160);
+      return;
+    }
+
+    this.itemSearch$.next(term);
+  }
+
+  onSearchKeydown(event: KeyboardEvent): void {
+    if (!this.suggestions?.length) {
+      if (event.key === "Escape") {
+        this.activeSuggestionIndex = -1;
+      }
+      return;
+    }
+
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      this.activeSuggestionIndex = (this.activeSuggestionIndex + 1 + this.suggestions.length) % this.suggestions.length;
+      return;
+    }
+
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      this.activeSuggestionIndex =
+        this.activeSuggestionIndex <= 0 ? this.suggestions.length - 1 : this.activeSuggestionIndex - 1;
+      return;
+    }
+
+    if (event.key === "Enter") {
+      event.preventDefault();
+      const selectedSuggestion = this.suggestions[this.activeSuggestionIndex >= 0 ? this.activeSuggestionIndex : 0];
+      if (selectedSuggestion) {
+        this.applySuggestionFromKeyboard(selectedSuggestion);
+      }
+      return;
+    }
+
+    if (event.key === "Escape") {
+      event.preventDefault();
+      this.suggestions = [];
+      this.activeSuggestionIndex = -1;
+    }
+  }
+
+  private applySuggestionFromKeyboard(suggestion: any): void {
+    if (this.canQuickAddSuggestion(suggestion)) {
+      this.quickAddSuggestion(undefined, suggestion);
+      return;
+    }
+
+    this.selectSuggestion(suggestion);
   }
 
   selectSuggestion(suggestion: any): void {
@@ -135,11 +213,50 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
     this.currentSelectedVariation = null;
     this.quantity = this.quantity && this.quantity > 0 ? this.quantity : 1;
     this.suggestions = [];
+    this.activeSuggestionIndex = -1;
 
     if (this.selectedItemModels.length === 1) {
       const onlyModel = this.selectedItemModels[0];
       this.selectedModel = `${onlyModel?.model || onlyModel?.name || onlyModel?._id || ""}`.trim();
       this.updateSelectedModelVariations();
+    }
+  }
+
+  canQuickAddSuggestion(suggestion: any): boolean {
+    const models = Array.isArray(suggestion?.models) ? suggestion.models : [];
+    if (models.length !== 1) return false;
+    const variations = Array.isArray(models[0]?.variations) ? models[0].variations : [];
+    return variations.length === 1;
+  }
+
+  getQuickAddSuggestionLabel(suggestion: any): string {
+    if (!this.canQuickAddSuggestion(suggestion)) {
+      return "Select";
+    }
+
+    const variation = suggestion?.models?.[0]?.variations?.[0];
+    return variation?.sku || variation?.orderNumber ? `Quick Add ${variation.sku || variation.orderNumber}` : "Quick Add";
+  }
+
+  quickAddSuggestion(event: Event | undefined, suggestion: any): void {
+    event?.stopPropagation();
+    this.selectSuggestion(suggestion);
+    if (!this.canQuickAddSuggestion(suggestion)) {
+      return;
+    }
+
+    const onlyVariation = suggestion?.models?.[0]?.variations?.[0];
+    const variationValue = onlyVariation?.orderNumber || onlyVariation?.sku || onlyVariation?._id || "";
+    if (!variationValue) {
+      return;
+    }
+
+    this.selectedVariation = `${variationValue}`;
+    this.onVariationChange(this.selectedVariation);
+    this.quantity = 1;
+    const added = this.addCurrentItemToCart("manual");
+    if (added) {
+      this.snackBar.open(`Added ${suggestion?.label || suggestion?.name || "item"} to cart`, "Close", { duration: 1800 });
     }
   }
 
@@ -276,7 +393,7 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  onBarcodeScan(): void {
+  onBarcodeScan(source: "barcode" | "primary" = "barcode"): void {
     const code = (this.scannedBarcode || "").trim();
     if (!code || this.barcodeLookupLoading) return;
 
@@ -286,6 +403,9 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
       next: (res: any) => {
         const row = Array.isArray(res?.data) ? res.data[0] : null;
         if (!row) {
+          if (source === "primary") {
+            this.itemName = code;
+          }
           this.snackBar.open("No variation found for this barcode", "Close", { duration: 2500 });
           this.barcodeLookupLoading = false;
           return;
@@ -402,6 +522,7 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
   onBarcodeInputChange(): void {
     const code = (this.scannedBarcode || "").trim();
     if (!code) return;
+    if (!this.looksLikeScannableCode(code)) return;
 
     if (this.scanDebounceTimer) {
       clearTimeout(this.scanDebounceTimer);
@@ -409,6 +530,30 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
     this.scanDebounceTimer = setTimeout(() => {
       this.onBarcodeScan();
     }, 140);
+  }
+
+  private looksLikeScannableCode(value: string): boolean {
+    const term = `${value || ""}`.trim();
+    if (term.length < 6 || /\s/.test(term)) {
+      return false;
+    }
+
+    const hasDigit = /\d/.test(term);
+    const hasSeparator = /[-_/]/.test(term);
+    const allUpper = term === term.toUpperCase() && /[A-Z]/.test(term);
+    const mostlyNumeric = /^[0-9A-Z-_/]+$/.test(term);
+    return mostlyNumeric && (hasDigit || hasSeparator || allUpper);
+  }
+
+  clearSearchInput(): void {
+    this.itemName = "";
+    this.suggestions = [];
+    this.activeSuggestionIndex = -1;
+  }
+
+  clearBarcodeInput(): void {
+    this.scannedBarcode = "";
+    this.focusBarcodeInput();
   }
 
   private focusBarcodeInput(): void {
@@ -603,7 +748,27 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
 
   removeItem(index: number) {
     this.Display_items.splice(index, 1);
-    this.calculateTotals();
+    this.rebuildSalesStateFromDisplayItems();
+  }
+
+  changeCartItemQuantity(index: number, delta: number): void {
+    const item = this.Display_items?.[index];
+    if (!item) return;
+
+    const nextQty = Number(item.quantity || 0) + Number(delta || 0);
+    if (nextQty <= 0) {
+      this.removeItem(index);
+      return;
+    }
+
+    const availableStock = Number(this.currentAvailableStock ?? item?.availableStock ?? item?.stockAvailable ?? Infinity);
+    if (Number.isFinite(availableStock) && nextQty > availableStock) {
+      this.snackBar.open(`Stock limit reached. Available: ${availableStock}`, "Close", { duration: 2400 });
+      return;
+    }
+
+    item.quantity = nextQty;
+    this.rebuildSalesStateFromDisplayItems();
   }
 
   calculateTotals() {
@@ -766,12 +931,21 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
       (response: any) => {
         this.snackBar.open(response?.message || "Sale saved", "Close", { duration: 3200, horizontalPosition: "center", verticalPosition: "bottom" });
         this.resetForm();
+        this.lastAutoHoldSignature = "";
         this.isSavingSale = false;
         this.dialogRef?.close(true);
       },
       (error: any) => {
         console.error("Error adding Sales item:", error);
+        if (this.shouldAutoHoldOnSaleError(error) && this.autoHoldCurrentBill()) {
+          this.snackBar.open("Internet/server issue detected. Bill moved to Hold Bills automatically.", "Close", {
+            duration: 4500,
+            horizontalPosition: "center",
+            verticalPosition: "bottom",
+          });
+        } else {
         this.snackBar.open(error?.error?.message || "Failed to add sales item", "Close", { duration: 4000, horizontalPosition: "center", verticalPosition: "bottom" });
+        }
         this.isSavingSale = false;
       }
     );
@@ -779,31 +953,15 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
 
   // HOLD/RECALL BILLS
   holdBill(): void {
-    if (!this.Display_items || this.Display_items.length === 0) {
+    const heldBill = this.createHeldBill(this.heldBillName || `Bill ${new Date().toLocaleTimeString()}`);
+    if (!heldBill) {
       this.snackBar.open("No items to hold", "Close", { duration: 2000 });
       return;
     }
-    
-    const billName = this.heldBillName || `Bill ${new Date().toLocaleTimeString()}`;
-    const heldBill = {
-      id: Date.now(),
-      name: billName,
-      customerName: this.customerName || "Walk-in",
-      selectedCustomerId: this.selectedCustomerId || "",
-      customerPhone: this.customerPhone || "",
-      customerAddress: this.customerAddress || "",
-      items: JSON.parse(JSON.stringify(this.Display_items)),
-      billDiscount: this.billDiscount || 0,
-      paidAmount: this.paidAmount || 0,
-      walletUsedAmount: this.walletUsedAmount || 0,
-      currentCustomerWalletBalance: this.currentCustomerWalletBalance || 0,
-      paymentMethod: this.paymentMethod || "CASH",
-      heldAt: new Date()
-    };
-    
-    this.heldBills.push(heldBill);
+
+    this.heldBills.unshift(heldBill);
     this.saveHeldBillsToStorage();
-    this.snackBar.open(`Bill "${billName}" held successfully!`, 'Close', { duration: 2000 });
+    this.snackBar.open(`Bill "${heldBill.name}" held successfully!`, 'Close', { duration: 2000 });
     this.clearCart();
     this.heldBillName = "";
   }
@@ -827,8 +985,10 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
     this.walletUsedAmount = Number(bill.walletUsedAmount || 0);
     this.currentCustomerWalletBalance = Number(bill.currentCustomerWalletBalance || 0);
     this.paymentMethod = bill.paymentMethod || "CASH";
-    
-    this.calculateTotals();
+    this.useSplitPayment = Array.isArray(bill.splitPayments) && bill.splitPayments.length > 0;
+    this.splitPayments = this.useSplitPayment ? JSON.parse(JSON.stringify(bill.splitPayments)) : [];
+
+    this.rebuildSalesStateFromDisplayItems();
     this.onPaidAmountChange();
     this.snackBar.open(`Bill "${bill.name}" loaded!`, 'Close', { duration: 2000 });
   }
@@ -851,7 +1011,11 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
     try {
       const saved = localStorage.getItem('heldBills');
       if (saved) {
-        this.heldBills = JSON.parse(saved);
+        this.heldBills = JSON.parse(saved).sort((a: any, b: any) => {
+          const aTime = new Date(a?.heldAt || 0).getTime();
+          const bTime = new Date(b?.heldAt || 0).getTime();
+          return bTime - aTime;
+        });
       }
     } catch (e) {
       console.error("Error loading held bills:", e);
@@ -865,6 +1029,8 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
     this.selectedCustomerId = "";
     this.currentCustomerWalletBalance = 0;
     this.walletUsedAmount = 0;
+    this.Sales_added = {};
+    this.final_Sales_data = {};
     this.Display_items = [];
     this.billDiscount = 0;
     this.paidAmount = 0;
@@ -940,16 +1106,151 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
     if (!bill || !bill.items) return 0;
     return bill.items.reduce((sum: number, item: any) => sum + (item.quantity * item.purchasePrice), 0);
   }
+
+  getHeldBillItemCount(bill: any): number {
+    return Array.isArray(bill?.items)
+      ? bill.items.reduce((sum: number, item: any) => sum + Number(item?.quantity || 0), 0)
+      : 0;
+  }
+
+  get filteredHeldBills(): any[] {
+    const allBills = Array.isArray(this.heldBills) ? [...this.heldBills] : [];
+    const term = `${this.heldBillSearch || ""}`.trim().toLowerCase();
+    const filtered = !term
+      ? allBills
+      : allBills.filter((bill: any) => {
+          const haystack = [
+            bill?.name,
+            bill?.customerName,
+            bill?.customerPhone,
+          ]
+            .filter(Boolean)
+            .join(" ")
+            .toLowerCase();
+          return haystack.includes(term);
+        });
+
+    return filtered.sort((a: any, b: any) => new Date(b?.heldAt || 0).getTime() - new Date(a?.heldAt || 0).getTime());
+  }
   
   private resetForm(): void {
     this.clearCart();
     this.heldBillName = "";
   }
 
+  private rebuildSalesStateFromDisplayItems(): void {
+    const customerName = `${this.customerName || ""}`.trim() || "Walk-in";
+    const items = Array.isArray(this.Display_items) ? this.Display_items : [];
+
+    if (!items.length) {
+      this.Sales_added = {};
+      this.final_Sales_data = {};
+      this.Display_items = [];
+      this.calculateTotals();
+      return;
+    }
+
+    const clonedItems = JSON.parse(JSON.stringify(items));
+    this.Sales_added = {
+      [customerName]: {
+        customerName,
+        items: clonedItems,
+        totalPurchasePrice: clonedItems.reduce((acc: number, it: any) => acc + Number(it?.quantity || 0) * Number(it?.purchasePrice || 0), 0),
+        totalQuantity: clonedItems.reduce((acc: number, it: any) => acc + Number(it?.quantity || 0), 0),
+      },
+    };
+
+    this.final_Sales_data = {
+      customerName,
+      items: clonedItems,
+      billDiscount: Number(this.billDiscount || 0),
+      paidAmount: Number(this.paidAmount || 0),
+      paymentMethod: this.paymentMethod || "CASH",
+    };
+    this.Display_items = this.Sales_added[customerName].items;
+    this.calculateTotals();
+  }
+
+  private shouldAutoHoldOnSaleError(error: any): boolean {
+    const status = Number(error?.status ?? 0);
+    return status === 0 || status >= 500;
+  }
+
+  private autoHoldCurrentBill(): boolean {
+    const heldBill = this.createHeldBill(this.buildAutoHoldName(), true);
+    if (!heldBill) {
+      return false;
+    }
+
+    if (heldBill.autoHoldSignature && heldBill.autoHoldSignature === this.lastAutoHoldSignature) {
+      return true;
+    }
+
+    const existingIndex = this.heldBills.findIndex((bill: any) => bill?.autoHoldSignature === heldBill.autoHoldSignature);
+    if (existingIndex >= 0) {
+      this.heldBills[existingIndex] = heldBill;
+    } else {
+      this.heldBills.unshift(heldBill);
+    }
+
+    this.lastAutoHoldSignature = heldBill.autoHoldSignature || "";
+    this.saveHeldBillsToStorage();
+    return true;
+  }
+
+  private buildAutoHoldName(): string {
+    return `Auto Hold ${new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
+  }
+
+  private buildHoldSignature(items: any[]): string {
+    return JSON.stringify({
+      customerName: `${this.customerName || ""}`.trim() || "Walk-in",
+      customerPhone: `${this.customerPhone || ""}`.trim(),
+      items: (items || []).map((item: any) => ({
+        itemName: item?.itemName || "",
+        variationId: item?.variationId || "",
+        quantity: Number(item?.quantity || 0),
+        purchasePrice: Number(item?.purchasePrice || 0),
+      })),
+      billDiscount: Number(this.billDiscount || 0),
+      paidAmount: Number(this.paidAmount || 0),
+      walletUsedAmount: Number(this.walletUsedAmount || 0),
+      paymentMethod: this.paymentMethod || "CASH",
+    });
+  }
+
+  private createHeldBill(name: string, autoHeld = false): any | null {
+    if (!Array.isArray(this.Display_items) || this.Display_items.length === 0) {
+      return null;
+    }
+
+    const items = JSON.parse(JSON.stringify(this.Display_items));
+    const autoHoldSignature = this.buildHoldSignature(items);
+
+    return {
+      id: Date.now(),
+      name,
+      customerName: this.customerName || "Walk-in",
+      selectedCustomerId: this.selectedCustomerId || "",
+      customerPhone: this.customerPhone || "",
+      customerAddress: this.customerAddress || "",
+      items,
+      billDiscount: this.billDiscount || 0,
+      paidAmount: this.paidAmount || 0,
+      walletUsedAmount: this.walletUsedAmount || 0,
+      currentCustomerWalletBalance: this.currentCustomerWalletBalance || 0,
+      paymentMethod: this.paymentMethod || "CASH",
+      splitPayments: this.useSplitPayment ? JSON.parse(JSON.stringify(this.splitPayments)) : [],
+      heldAt: new Date(),
+      autoHeld,
+      autoHoldSignature,
+    };
+  }
+
   private setupSuggestionStreams(): void {
     this.itemSearch$
       .pipe(
-        debounceTime(180),
+        debounceTime(240),
         distinctUntilChanged(),
         switchMap((term) => {
           if (!term) {
@@ -962,9 +1263,11 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
       .subscribe({
         next: (response: any) => {
           this.suggestions = Array.isArray(response?.data) ? response.data : [];
+          this.activeSuggestionIndex = this.suggestions.length ? 0 : -1;
         },
         error: () => {
           this.suggestions = [];
+          this.activeSuggestionIndex = -1;
         },
       });
 
