@@ -5,11 +5,21 @@ const cors = require("cors");
 
 const allowedOrigins = (
   process.env.ALLOWED_ORIGINS
-  || "http://localhost:3000,http://127.0.0.1:3000,http://localhost:4200,http://127.0.0.1:4200"
+  || "http://localhost:3000,http://127.0.0.1:3000,http://localhost:4200,http://127.0.0.1:4200,capacitor://localhost,http://localhost"
 )
   .split(",")
   .map((origin) => origin.trim())
   .filter(Boolean);
+
+const dynamicOriginPatterns = [
+  /^https?:\/\/localhost(?::\d+)?$/i,
+  /^https?:\/\/127\.0\.0\.1(?::\d+)?$/i,
+  /^https:\/\/[a-z0-9.-]+\.ngrok-free\.app$/i,
+  /^https:\/\/[a-z0-9.-]+\.ngrok\.app$/i,
+  /^https:\/\/[a-z0-9.-]+\.ngrok-dev\.app$/i,
+  /^capacitor:\/\/localhost$/i,
+  /^ionic:\/\/localhost$/i,
+];
 
 const authWindowMs = 15 * 60 * 1000;
 const authMaxRequests = 20;
@@ -77,7 +87,11 @@ const orderRoutes = require("./routes/orderRoutes");
 app.use(
   cors({
     origin(origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (
+        !origin
+        || allowedOrigins.includes(origin)
+        || dynamicOriginPatterns.some((pattern) => pattern.test(origin))
+      ) {
         return callback(null, true);
       }
       return callback(new Error("CORS blocked"));
@@ -111,6 +125,14 @@ app.use("/api/sales", salesRoutes);
 app.use("/api/customer", customerRouter);
 app.use("/api/order", orderRoutes);
 app.use("/api/orders", orderRoutes);
+
+app.get("/api/health", (req, res) => {
+  res.status(200).json({
+    success: true,
+    status: "ok",
+    timestamp: new Date().toISOString(),
+  });
+});
 
 const clientDistPath = path.join(__dirname, "..", "client", "babaShop", "dist");
 app.use(express.static(clientDistPath));

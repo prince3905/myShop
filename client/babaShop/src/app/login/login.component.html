@@ -15,13 +15,23 @@
 
     <mat-card-content>
       <form (ngSubmit)="onSubmit()" #loginForm="ngForm" class="login-form">
+        <div class="server-status-banner" [ngClass]="serverReachable === false ? 'offline' : (serverReachable === true ? 'online' : 'checking')">
+          <div class="server-status-copy">
+            <strong>{{ serverStatusLabel }}</strong>
+            <span>{{ activeApiURL }}</span>
+          </div>
+          <button type="button" class="server-status-retry" (click)="checkServerStatus()">Retry</button>
+        </div>
 
         <!-- Shop Code Input -->
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Shop Code</mat-label>
           <mat-icon matPrefix>store</mat-icon>
-          <input matInput placeholder="BABA01" [(ngModel)]="shopCode" name="shopCode">
-
+          <input matInput placeholder="BABA01" [ngModel]="shopCode" (ngModelChange)="normalizeShopCode($event)" name="shopCode">
+          <mat-hint>Use code like BABA01. Required for shop-wise users.</mat-hint>
+          <mat-error *ngIf="shopCode && !shopCodePattern.test(shopCode)">
+            Shop code can use uppercase letters, numbers, and hyphens only.
+          </mat-error>
         </mat-form-field>
 
         <!-- Email Input -->

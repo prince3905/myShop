@@ -1,2 +1,20 @@
 
+<div
+  class="global-connectivity-banner"
+  *ngIf="serverReachable === false || checkingServer"
+  [ngClass]="checkingServer ? 'checking' : 'offline'">
+  <div class="global-connectivity-copy">
+    <strong>{{ checkingServer ? 'Checking server...' : 'Server unreachable' }}</strong>
+    <span>{{ activeApiURL }}</span>
+  </div>
+  <div class="global-connectivity-actions">
+    <button type="button" class="global-connectivity-secondary" *ngIf="router.url !== '/login'" (click)="openApiSettings()">
+      Open Settings
+    </button>
+    <button type="button" class="global-connectivity-retry" (click)="retryConnection()">
+      Retry
+    </button>
+  </div>
+</div>
+
 <router-outlet></router-outlet>

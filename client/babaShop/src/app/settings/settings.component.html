@@ -265,6 +265,58 @@
                     {{ savingPreferences ? "Saving..." : "Save Preferences" }}
                   </button>
                 </form>
+
+                <div class="api-settings-panel">
+                  <div class="api-settings-header">
+                    <div>
+                      <h5>API Connection</h5>
+                      <p>Switch local, emulator, ngrok, or custom backend without editing files.</p>
+                    </div>
+                    <span class="api-status-chip" [ngClass]="serverReachable === true ? 'online' : (serverReachable === false ? 'offline' : 'checking')">
+                      {{ serverReachable === true ? "Connected" : (serverReachable === false ? "Offline" : "Checking") }}
+                    </span>
+                  </div>
+
+                  <div class="row">
+                    <div class="col-md-6">
+                      <mat-form-field class="example-full-width">
+                        <mat-label>API Mode</mat-label>
+                        <mat-select [(ngModel)]="apiMode" [ngModelOptions]="{ standalone: true }" (selectionChange)="onApiModeChange()">
+                          <mat-option *ngFor="let option of apiModeOptions" [value]="option.value">
+                            {{ option.label }}
+                          </mat-option>
+                        </mat-select>
+                      </mat-form-field>
+                    </div>
+                    <div class="col-md-6" *ngIf="apiMode === 'custom' || apiMode === 'ngrok'">
+                      <mat-form-field class="example-full-width">
+                        <mat-label>{{ apiMode === 'ngrok' ? 'ngrok URL' : 'Custom API URL' }}</mat-label>
+                        <input matInput [(ngModel)]="customApiURL" [ngModelOptions]="{ standalone: true }" placeholder="https://api.example.com" />
+                      </mat-form-field>
+                    </div>
+                  </div>
+
+                  <div class="api-current-url">Active API: {{ activeApiURL }}</div>
+
+                  <div class="api-settings-actions">
+                    <button mat-raised-button class="btn btn-danger" type="button" (click)="applyApiSettings()">
+                      Apply API Mode
+                    </button>
+                    <button mat-stroked-button color="primary" type="button" (click)="retryApiConnection()">
+                      Retry Connection
+                    </button>
+                    <button mat-stroked-button color="warn" type="button" (click)="resetApiSettings()">
+                      Reset To Auto
+                    </button>
+                  </div>
+
+                  <div class="diagnostics-grid">
+                    <div class="diagnostic-row" *ngFor="let row of diagnosticsRows">
+                      <span class="diagnostic-label">{{ row.label }}</span>
+                      <span class="diagnostic-value" [ngClass]="row.tone || ''">{{ row.value }}</span>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <div *ngIf="activeSection === 'Danger Zone'" class="danger-zone">

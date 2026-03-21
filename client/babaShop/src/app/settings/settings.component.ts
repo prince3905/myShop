@@ -3,6 +3,9 @@ import { FormBuilder, FormGroup, Validators } from "@angular/forms";
 import { MatSnackBar } from "@angular/material/snack-bar";
 import { Router } from "@angular/router";
 import { AuthService } from "app/shared/services/auth.service";
+import { ApiEndpointService } from "app/shared/services/api-endpoint.service";
+import { ConnectivityService } from "app/shared/services/connectivity.service";
+import { ApiMode } from "app/shared/config/api-endpoint.config";
 
 @Component({
   selector: "app-settings",
@@ -58,12 +61,19 @@ export class SettingsComponent implements OnInit {
   runningBackup = false;
   deactivatingAccount = false;
   deactivatingShop = false;
+  apiModeOptions = this.apiEndpointService.apiModeOptions;
+  apiMode: ApiMode = "auto";
+  customApiURL = "";
+  activeApiURL = "";
+  serverReachable: boolean | null = null;
 
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
     private snackBar: MatSnackBar,
     private router: Router,
+    private apiEndpointService: ApiEndpointService,
+    private connectivityService: ConnectivityService,
   ) {}
 
   private showMessage(message: string): void {
@@ -159,10 +169,84 @@ export class SettingsComponent implements OnInit {
     this.loadOverview();
     this.loadSessions();
     this.loadAuditLogs();
+    this.loadApiSettings();
+    this.connectivityService.startMonitoring();
+    this.connectivityService.serverReachable$.subscribe((reachable) => {
+      this.serverReachable = reachable;
+    });
+    this.connectivityService.activeApiURL$.subscribe((url) => {
+      this.activeApiURL = url;
+    });
   }
 
   setSection(section: string) {
     this.activeSection = section;
+  }
+
+  loadApiSettings(): void {
+    const settings = this.apiEndpointService.getSettings();
+    this.apiMode = settings.apiMode;
+    this.customApiURL = settings.customApiURL;
+    this.activeApiURL = settings.activeApiURL;
+  }
+
+  onApiModeChange(): void {
+    if (this.apiMode !== "custom") {
+      this.applyApiSettings();
+    }
+  }
+
+  applyApiSettings(): void {
+    const result = this.apiEndpointService.saveSettings(this.apiMode, this.customApiURL);
+    if (!result.success) {
+      this.showMessage("Custom API URL required");
+      return;
+    }
+
+    this.customApiURL = this.apiMode === "custom" || this.apiMode === "ngrok"
+      ? this.apiEndpointService.normalizeCustomURL(this.customApiURL)
+      : this.customApiURL;
+    this.activeApiURL = result.resolvedURL;
+    this.connectivityService.checkNow();
+    this.showMessage("API endpoint updated");
+  }
+
+  resetApiSettings(): void {
+    this.apiEndpointService.clearOverride();
+    this.loadApiSettings();
+    this.connectivityService.checkNow();
+    this.showMessage("API mode reset to auto");
+  }
+
+  get diagnosticsRows(): Array<{ label: string; value: string; tone?: string }> {
+    const user = this.authService.getCurrentUser() || {};
+    const selectedShopLabel = this.shopContext?.name
+      || user?.shopName
+      || user?.shopCode
+      || (user?.shop ? "Selected shop active" : "No shop selected");
+    const appMode =
+      typeof window !== "undefined" && typeof (window as any).Capacitor !== "undefined"
+        ? "Native / Capacitor"
+        : "Web Browser";
+
+    return [
+      {
+        label: "Connection",
+        value: this.serverReachable === true ? "Online" : (this.serverReachable === false ? "Offline" : "Checking"),
+        tone: this.serverReachable === true ? "online" : (this.serverReachable === false ? "offline" : "checking"),
+      },
+      { label: "API Mode", value: this.apiModeOptions.find((option) => option.value === this.apiMode)?.label || "Auto" },
+      { label: "Active API", value: this.activeApiURL || "-" },
+      { label: "Role", value: user?.role || "-" },
+      { label: "Selected Shop", value: selectedShopLabel },
+      { label: "Shop Code", value: user?.shopCode || this.shopContext?.shopCode || "-" },
+      { label: "App Mode", value: appMode },
+      { label: "Current Route", value: this.router.url || "/settings" },
+    ];
+  }
+
+  retryApiConnection(): void {
+    this.connectivityService.checkNow();
   }
 
   loadOverview() {
