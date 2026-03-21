@@ -124,6 +124,17 @@
         </div>
 
         <div *ngIf="!reconciliationLoading && reconciliation">
+          <div class="reconciliation-audit-grid" *ngIf="reconciliationAuditEntries.length">
+            <div
+              class="reconciliation-audit-card"
+              *ngFor="let entry of reconciliationAuditEntries"
+              [ngClass]="entry.tone">
+              <div class="audit-label">{{ entry.label }}</div>
+              <div class="audit-actor">{{ entry.actor?.name || entry.actor?.email || 'System' }}</div>
+              <div class="audit-time">{{ entry.at | date:'dd/MM/yyyy hh:mm a' }}</div>
+            </div>
+          </div>
+
           <div class="stock-context-row">
             <div class="context-chip">Lines: {{ reconciliation?.summary?.totalLines || 0 }}</div>
             <div class="context-chip">System Qty: {{ reconciliation?.summary?.totalSystemQty || 0 }}</div>
@@ -149,7 +160,9 @@
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let line of filteredReconciliationLines">
+                <tr
+                  *ngFor="let line of filteredReconciliationLines"
+                  [ngClass]="(line?.varianceQty || 0) === 0 ? 'variance-match' : ((line?.varianceQty || 0) > 0 ? 'variance-positive' : 'variance-negative')">
                   <td>{{ line?.sku || '-' }}</td>
                   <td>{{ line?.productName || '-' }}</td>
                   <td>{{ line?.modelName || '-' }}</td>
@@ -186,28 +199,37 @@
           </div>
 
           <div class="filter-row mt-2">
-            <button
-              mat-stroked-button
-              color="primary"
-              (click)="saveReconciliationDraft()"
-              [disabled]="reconciliation?.status !== 'DRAFT' || reconciliationSaving">
-              {{ reconciliationSaving ? 'Saving...' : 'Save Draft' }}
-            </button>
-            <button
-              mat-raised-button
-              color="warn"
-              (click)="submitReconciliation()"
-              [disabled]="reconciliation?.status !== 'DRAFT' || reconciliationSubmitting">
-              {{ reconciliationSubmitting ? 'Submitting...' : 'Submit For Approval' }}
-            </button>
-            <button
-              *ngIf="canApproveReconciliation"
-              mat-raised-button
-              color="primary"
-              (click)="approveReconciliation()"
-              [disabled]="reconciliation?.status !== 'SUBMITTED' || reconciliationApproving">
-              {{ reconciliationApproving ? 'Approving...' : 'Approve & Apply Variance' }}
-            </button>
+            <div class="action-stack">
+              <button
+                mat-stroked-button
+                color="primary"
+                (click)="saveReconciliationDraft()"
+                [disabled]="reconciliation?.status !== 'DRAFT' || reconciliationSaving">
+                {{ reconciliationSaving ? 'Saving...' : 'Save Draft' }}
+              </button>
+              <div class="action-reason" *ngIf="saveDraftDisabledReason">{{ saveDraftDisabledReason }}</div>
+            </div>
+            <div class="action-stack">
+              <button
+                mat-raised-button
+                color="warn"
+                (click)="submitReconciliation()"
+                [disabled]="reconciliation?.status !== 'DRAFT' || reconciliationSubmitting">
+                {{ reconciliationSubmitting ? 'Submitting...' : 'Submit For Approval' }}
+              </button>
+              <div class="action-reason" *ngIf="submitDisabledReason">{{ submitDisabledReason }}</div>
+            </div>
+            <div class="action-stack" *ngIf="canApproveReconciliation || approveDisabledReason">
+              <button
+                *ngIf="canApproveReconciliation"
+                mat-raised-button
+                color="primary"
+                (click)="approveReconciliation()"
+                [disabled]="reconciliation?.status !== 'SUBMITTED' || reconciliationApproving">
+                {{ reconciliationApproving ? 'Approving...' : 'Approve & Apply Variance' }}
+              </button>
+              <div class="action-reason" *ngIf="approveDisabledReason">{{ approveDisabledReason }}</div>
+            </div>
           </div>
         </div>
       </div>

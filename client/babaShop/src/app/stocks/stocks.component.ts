@@ -10,6 +10,7 @@ import { PurchaseService } from "app/shared/services/purchase.service";
 import { firstValueFrom } from "rxjs";
 import { MatDialog } from "@angular/material/dialog";
 import { StockReorderPreviewDialogComponent } from "./stock-reorder-preview-dialog.component";
+import { ConfirmDialogComponent } from "app/shared/components/confirm-dialog/confirm-dialog.component";
 
 @Component({
   selector: "stocks",
@@ -161,6 +162,37 @@ export class StocksComponent implements OnInit {
     });
   }
 
+  get reconciliationAuditEntries(): Array<{ label: string; actor: any; at: any; tone: string }> {
+    if (!this.reconciliation) return [];
+
+    return [
+      { label: "Created", actor: this.reconciliation?.createdBy, at: this.reconciliation?.createdAt, tone: "neutral" },
+      { label: "Submitted", actor: this.reconciliation?.submittedBy, at: this.reconciliation?.submittedAt, tone: "info" },
+      { label: "Approved", actor: this.reconciliation?.approvedBy, at: this.reconciliation?.approvedAt, tone: "success" },
+    ].filter((entry) => entry.actor || entry.at);
+  }
+
+  get saveDraftDisabledReason(): string {
+    if (!this.canManageReconciliation) return "Manage permission required";
+    if (!this.reconciliation?._id) return "Start reconciliation first";
+    if (`${this.reconciliation?.status || ""}` !== "DRAFT") return "Only DRAFT can be saved";
+    return "";
+  }
+
+  get submitDisabledReason(): string {
+    if (!this.canManageReconciliation) return "Manage permission required";
+    if (!this.reconciliation?._id) return "Start reconciliation first";
+    if (`${this.reconciliation?.status || ""}` !== "DRAFT") return "Only DRAFT can be submitted";
+    return "";
+  }
+
+  get approveDisabledReason(): string {
+    if (!this.canApproveReconciliation) return "Approval permission required";
+    if (!this.reconciliation?._id) return "Start reconciliation first";
+    if (`${this.reconciliation?.status || ""}` !== "SUBMITTED") return "Only SUBMITTED can be approved";
+    return "";
+  }
+
   onReconciliationMonthChange(): void {
     this.loadCurrentReconciliation();
   }
@@ -186,7 +218,12 @@ export class StocksComponent implements OnInit {
       next: (res: any) => {
         this.reconciliationSaving = false;
         this.reconciliation = res?.data || null;
-        this.snackBar.open(res?.message || "Reconciliation started", "Close", { duration: 2600 });
+        const status = `${this.reconciliation?.status || ""}`.trim().toUpperCase();
+        const feedback =
+          res?.message === "Reconciliation already exists"
+            ? `Existing reconciliation loaded (${status || "UNKNOWN"})`
+            : (res?.message || "Reconciliation started");
+        this.snackBar.open(feedback, "Close", { duration: 3000 });
       },
       error: (err: any) => {
         this.reconciliationSaving = false;
@@ -241,42 +278,50 @@ export class StocksComponent implements OnInit {
   submitReconciliation(): void {
     if (!this.canManageReconciliation || this.reconciliationSubmitting) return;
     if (!this.reconciliation?._id) return;
-    this.reconciliationSubmitting = true;
-    this.stocksService.submitReconciliation(this.reconciliation._id).subscribe({
-      next: (res: any) => {
-        this.reconciliationSubmitting = false;
-        this.reconciliation = res?.data || this.reconciliation;
-        this.snackBar.open("Reconciliation submitted", "Close", { duration: 2500 });
-      },
-      error: (err: any) => {
-        this.reconciliationSubmitting = false;
-        this.snackBar.open(err?.error?.message || "Failed to submit reconciliation", "Close", {
-          duration: 3000,
-        });
-      },
+    this.openReconciliationConfirmDialog("submit").afterClosed().subscribe((confirmed: boolean) => {
+      if (!confirmed) return;
+
+      this.reconciliationSubmitting = true;
+      this.stocksService.submitReconciliation(this.reconciliation._id).subscribe({
+        next: (res: any) => {
+          this.reconciliationSubmitting = false;
+          this.reconciliation = res?.data || this.reconciliation;
+          this.snackBar.open("Reconciliation submitted", "Close", { duration: 2500 });
+        },
+        error: (err: any) => {
+          this.reconciliationSubmitting = false;
+          this.snackBar.open(err?.error?.message || "Failed to submit reconciliation", "Close", {
+            duration: 3000,
+          });
+        },
+      });
     });
   }
 
   approveReconciliation(): void {
     if (!this.canApproveReconciliation || this.reconciliationApproving) return;
     if (!this.reconciliation?._id) return;
-    this.reconciliationApproving = true;
-    this.stocksService.approveReconciliation(this.reconciliation._id).subscribe({
-      next: (res: any) => {
-        this.reconciliationApproving = false;
-        this.reconciliation = res?.data || this.reconciliation;
-        this.snackBar.open("Reconciliation approved and stock updated", "Close", {
-          duration: 2800,
-        });
-        this.loadStocks();
-        this.loadTransactions();
-      },
-      error: (err: any) => {
-        this.reconciliationApproving = false;
-        this.snackBar.open(err?.error?.message || "Failed to approve reconciliation", "Close", {
-          duration: 3200,
-        });
-      },
+    this.openReconciliationConfirmDialog("approve").afterClosed().subscribe((confirmed: boolean) => {
+      if (!confirmed) return;
+
+      this.reconciliationApproving = true;
+      this.stocksService.approveReconciliation(this.reconciliation._id).subscribe({
+        next: (res: any) => {
+          this.reconciliationApproving = false;
+          this.reconciliation = res?.data || this.reconciliation;
+          this.snackBar.open("Reconciliation approved and stock updated", "Close", {
+            duration: 2800,
+          });
+          this.loadStocks();
+          this.loadTransactions();
+        },
+        error: (err: any) => {
+          this.reconciliationApproving = false;
+          this.snackBar.open(err?.error?.message || "Failed to approve reconciliation", "Close", {
+            duration: 3200,
+          });
+        },
+      });
     });
   }
 
@@ -799,6 +844,42 @@ export class StocksComponent implements OnInit {
       totalCountedQty,
       totalVarianceQty,
     };
+  }
+
+  private buildReconciliationConfirmationMessage(action: "submit" | "approve"): string {
+    const summary = this.reconciliation?.summary || {};
+    const monthKey = this.reconciliation?.monthKey || this.reconciliationMonthKey;
+    const totalLines = Number(summary?.totalLines || 0);
+    const matchedLines = Number(summary?.matchedLines || 0);
+    const mismatchLines = Number(summary?.mismatchLines || 0);
+    const totalVarianceQty = Number(summary?.totalVarianceQty || 0);
+    const actionLine =
+      action === "submit"
+        ? "After submit, editing will be locked until approval."
+        : "Approval will apply stock variance to live inventory.";
+
+    return [
+      `Month: ${monthKey}`,
+      `Lines checked: ${totalLines}`,
+      `Matched lines: ${matchedLines}`,
+      `Mismatch lines: ${mismatchLines}`,
+      `Total variance qty: ${totalVarianceQty}`,
+      actionLine,
+      "Do you want to continue?",
+    ].join("\n");
+  }
+
+  private openReconciliationConfirmDialog(action: "submit" | "approve") {
+    return this.dialog.open(ConfirmDialogComponent, {
+      width: "420px",
+      data: {
+        mode: "confirm",
+        title: action === "submit" ? "Submit Reconciliation?" : "Approve Reconciliation?",
+        message: this.buildReconciliationConfirmationMessage(action),
+        confirmText: action === "submit" ? "Submit Now" : "Approve Now",
+        cancelText: "Review Again",
+      },
+    });
   }
 
   private getCurrentMonthKey(): string {
