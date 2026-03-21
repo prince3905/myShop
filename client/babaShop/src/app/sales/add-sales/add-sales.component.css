@@ -33,65 +33,33 @@
   grid-column: 1 / -1;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 9px 12px;
-  border: 1px solid rgba(159, 24, 24, 0.22);
-  border-radius: 18px;
+  justify-content: flex-start;
+  gap: 8px;
+  padding: 9px 14px;
+  border: 1px solid rgba(21, 128, 61, 0.22);
+  border-radius: 15px;
   background:
     radial-gradient(circle at top right, rgba(255, 255, 255, 0.16), transparent 28%),
-    linear-gradient(135deg, #7f1d1d, #b91c1c 58%, #ef4444);
-  box-shadow: 0 14px 30px rgba(127, 29, 29, 0.22);
+    linear-gradient(135deg, #166534, #15803d 58%, #22c55e);
+  box-shadow: 0 14px 30px rgba(21, 128, 61, 0.22);
 }
 
 .pos-page-header-copy {
   min-width: 0;
 }
 
-.pos-page-eyebrow {
-  margin-bottom: 2px;
-  font-size: 9px;
-  font-weight: 800;
-  line-height: 1;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.76);
-}
-
 .pos-page-title {
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 800;
-  line-height: 1.08;
+  line-height: 1.1;
   color: #ffffff;
 }
 
 .pos-page-subtitle {
   margin-top: 2px;
-  max-width: 680px;
   font-size: 11px;
-  line-height: 1.25;
+  line-height: 1.2;
   color: rgba(255, 255, 255, 0.88);
-}
-
-.pos-page-badges {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 6px;
-}
-
-.pos-page-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 24px;
-  padding: 0 8px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.12);
-  color: #ffffff;
-  font-size: 10px;
-  font-weight: 700;
 }
 
 .catalog-panel,

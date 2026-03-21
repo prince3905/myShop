@@ -1,5 +1,5 @@
 .card-plain {
-  margin-top: -30px;
+  margin-top: 0;
 }
 
 .customer-header {
@@ -8,20 +8,21 @@
   justify-content: space-between;
   gap: 16px;
   flex-wrap: wrap;
-  padding: 20px;
+  padding: 16px 18px;
   background-color: #f44336;
   color: #fff;
-  border-radius: 5px;
+  border-radius: 15px;
 }
 
 .card-title {
   margin: 0;
-  font-size: 24px;
+  font-size: 22px;
 }
 
 .card-category {
-  margin: 6px 0 0;
+  margin: 4px 0 0;
   opacity: 0.9;
+  font-size: 12px;
 }
 
 .toolbar {
@@ -57,7 +58,7 @@
 
 @media (max-width: 768px) {
   .customer-header {
-    padding: 16px;
+    padding: 14px;
   }
 
   .toolbar {

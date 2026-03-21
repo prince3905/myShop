@@ -3,9 +3,10 @@
   justify-content: space-between;
   align-items: flex-start;
   gap: 16px;
-  padding: 20px 22px;
+  padding: 16px 18px;
+  margin-top: 0;
   margin-bottom: 14px;
-  border-radius: 18px;
+  border-radius: 16px;
   background: linear-gradient(135deg, #1f3b73 0%, #355c9a 55%, #5c7fbd 100%);
   color: #fff;
   box-shadow: 0 18px 40px rgba(31, 59, 115, 0.28);
@@ -40,13 +41,13 @@
 
 .dashboard-header-title {
   margin: 0;
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 800;
 }
 
 .dashboard-header-subtitle {
   margin: 0;
-  font-size: 13px;
+  font-size: 12px;
   opacity: 0.88;
 }
 
