@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, AfterViewInit } from '@angular/core';
+import { Component, OnInit, AfterViewInit, OnDestroy } from '@angular/core';
 import { Location, LocationStrategy, PathLocationStrategy, PopStateEvent } from '@angular/common';
 import { Router, NavigationEnd, NavigationStart } from '@angular/router';
 import PerfectScrollbar from 'perfect-scrollbar';
@@ -10,10 +10,13 @@ import { filter, Subscription } from 'rxjs';
   templateUrl: './admin-layout.component.html',
   styleUrls: ['./admin-layout.component.scss']
 })
-export class AdminLayoutComponent implements OnInit {
+export class AdminLayoutComponent implements OnInit, OnDestroy {
   private _router: Subscription;
+  private _navigationSubscription: Subscription;
   private lastPoppedUrl: string;
   private yScrollStack: number[] = [];
+  private mainPanelScrollbar?: PerfectScrollbar;
+  private sidebarScrollbar?: PerfectScrollbar;
 
   constructor( public location: Location, private router: Router) {}
 
@@ -33,7 +36,7 @@ export class AdminLayoutComponent implements OnInit {
       this.location.subscribe((ev:PopStateEvent) => {
           this.lastPoppedUrl = ev.url;
       });
-       this.router.events.subscribe((event:any) => {
+       this._navigationSubscription = this.router.events.subscribe((event:any) => {
           if (event instanceof NavigationStart) {
              if (event.url != this.lastPoppedUrl)
                  this.yScrollStack.push(window.scrollY);
@@ -48,10 +51,17 @@ export class AdminLayoutComponent implements OnInit {
       this._router = this.router.events.pipe(filter(event => event instanceof NavigationEnd)).subscribe((event: NavigationEnd) => {
            elemMainPanel.scrollTop = 0;
            elemSidebar.scrollTop = 0;
+           this.mainPanelScrollbar?.update();
+           this.sidebarScrollbar?.update();
       });
       if (window.matchMedia(`(min-width: 960px)`).matches && !this.isMac()) {
-          let ps = new PerfectScrollbar(elemMainPanel);
-          ps = new PerfectScrollbar(elemSidebar);
+          this.mainPanelScrollbar = new PerfectScrollbar(elemMainPanel);
+          this.sidebarScrollbar = new PerfectScrollbar(elemSidebar);
+      }
+
+      const hasFixedPlugin = !!document.querySelector('.fixed-plugin');
+      if (!hasFixedPlugin) {
+        return;
       }
 
       const window_width = $(window).width();
@@ -140,11 +150,8 @@ export class AdminLayoutComponent implements OnInit {
       }
   }
   runOnRouteChange(): void {
-    if (window.matchMedia(`(min-width: 960px)`).matches && !this.isMac()) {
-      const elemMainPanel = <HTMLElement>document.querySelector('.main-panel');
-      const ps = new PerfectScrollbar(elemMainPanel);
-      ps.update();
-    }
+    this.mainPanelScrollbar?.update();
+    this.sidebarScrollbar?.update();
   }
   isMac(): boolean {
       let bool = false;
@@ -152,6 +159,13 @@ export class AdminLayoutComponent implements OnInit {
           bool = true;
       }
       return bool;
+  }
+
+  ngOnDestroy(): void {
+      this._router?.unsubscribe();
+      this._navigationSubscription?.unsubscribe();
+      this.mainPanelScrollbar?.destroy();
+      this.sidebarScrollbar?.destroy();
   }
 
 }

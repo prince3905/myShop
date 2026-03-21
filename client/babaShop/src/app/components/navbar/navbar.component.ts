@@ -1,9 +1,11 @@
-import { Component, OnInit, ElementRef } from "@angular/core";
+import { Component, OnDestroy, OnInit, ElementRef } from "@angular/core";
 import { ROUTES } from "../sidebar/sidebar.component";
 import { ShopService } from "../../shared/services/shop.service";
 import { AuthService } from "../../shared/services/auth.service";
 import { Location } from "@angular/common";
-import { Router } from "@angular/router";
+import { NavigationEnd, Router } from "@angular/router";
+import { Subject } from "rxjs";
+import { filter, takeUntil } from "rxjs/operators";
 
 interface NavbarLink {
   title: string;
@@ -38,6 +40,7 @@ export class NavbarComponent implements OnInit {
   private toggleButton: any;
   private sidebarVisible: boolean;
   private listTitles: RouteMeta[] = [];
+  private readonly destroy$ = new Subject<void>();
 
   constructor(
     location: Location,
@@ -54,7 +57,10 @@ export class NavbarComponent implements OnInit {
     this.listTitles = this.flattenRoutes(ROUTES);
     const navbar: HTMLElement = this.element.nativeElement;
     this.toggleButton = navbar.getElementsByClassName("navbar-toggler")[0];
-    this.router.events.subscribe((event) => {
+    this.router.events.pipe(
+      filter((event) => event instanceof NavigationEnd),
+      takeUntil(this.destroy$),
+    ).subscribe(() => {
       this.sidebarClose();
       var $layer: any = document.getElementsByClassName("close-layer")[0];
       if ($layer) {
@@ -65,13 +71,18 @@ export class NavbarComponent implements OnInit {
     this.isSuperAdmin = this.authService.getUserRole() === "SUPER_ADMIN";
     this.selectedShop = this.shopService.getSelectedShop();
     this.navLinks = this.getRoleBasedLinks();
-    this.shopService.selectedShop$.subscribe((shopId) => {
+    this.shopService.selectedShop$.pipe(takeUntil(this.destroy$)).subscribe((shopId) => {
       this.selectedShop = shopId;
     });
 
     if (this.isSuperAdmin) {
       this.loadShops();
     }
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   loadShops() {

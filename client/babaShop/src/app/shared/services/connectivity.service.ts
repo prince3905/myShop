@@ -39,6 +39,14 @@ export class ConnectivityService {
     if (typeof document !== "undefined" && document.hidden && !showChecking) {
       return;
     }
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      this.activeApiURL$.next(environment.apiBaseURL);
+      if (showChecking) {
+        this.checking$.next(false);
+      }
+      this.serverReachable$.next(false);
+      return;
+    }
 
     const baseURL = environment.apiBaseURL;
     this.activeApiURL$.next(baseURL);

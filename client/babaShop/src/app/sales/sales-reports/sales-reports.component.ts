@@ -1,4 +1,4 @@
-import { Component, OnInit } from "@angular/core";
+import { Component, OnDestroy, OnInit } from "@angular/core";
 import * as Chartist from "chartist";
 import { MatSnackBar } from "@angular/material/snack-bar";
 import { AuthService } from "app/shared/services/auth.service";
@@ -9,7 +9,7 @@ import { SalesService } from "app/shared/services/sales.service";
   templateUrl: "./sales-reports.component.html",
   styleUrls: ["./sales-reports.component.css"],
 })
-export class SalesReportsComponent implements OnInit {
+export class SalesReportsComponent implements OnInit, OnDestroy {
   loading = false;
 
   filters = {
@@ -55,6 +55,8 @@ export class SalesReportsComponent implements OnInit {
 
   salesRows: any[] = [];
   returnRows: any[] = [];
+  private profitTrendChart: any = null;
+  private profitChartRenderTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(
     private salesService: SalesService,
@@ -64,6 +66,13 @@ export class SalesReportsComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadAll();
+  }
+
+  ngOnDestroy(): void {
+    if (this.profitChartRenderTimer) {
+      clearTimeout(this.profitChartRenderTimer);
+    }
+    this.profitTrendChart?.detach?.();
   }
 
   get canViewSensitivePricing(): boolean {
@@ -100,7 +109,7 @@ export class SalesReportsComponent implements OnInit {
       next: (res: any) => {
         this.overview = res?.data || this.overview;
         if (this.canViewSensitivePricing) {
-          setTimeout(() => this.renderProfitTrendChart(), 0);
+          this.scheduleProfitTrendChartRender();
         }
       },
       error: () => {
@@ -135,6 +144,7 @@ export class SalesReportsComponent implements OnInit {
             profit: [],
           },
         };
+        this.profitTrendChart?.detach?.();
       },
     });
 
@@ -193,7 +203,8 @@ export class SalesReportsComponent implements OnInit {
     const cost = Array.isArray(chartData.cost) && chartData.cost.length ? chartData.cost : [0];
     const profit = Array.isArray(chartData.profit) && chartData.profit.length ? chartData.profit : [0];
 
-    new Chartist.Line(
+    this.profitTrendChart?.detach?.();
+    this.profitTrendChart = new Chartist.Line(
       "#profitTrendChart",
       {
         labels,
@@ -206,5 +217,12 @@ export class SalesReportsComponent implements OnInit {
         lineSmooth: Chartist.Interpolation.cardinal({ tension: 0 }),
       },
     );
+  }
+
+  private scheduleProfitTrendChartRender(): void {
+    if (this.profitChartRenderTimer) {
+      clearTimeout(this.profitChartRenderTimer);
+    }
+    this.profitChartRenderTimer = setTimeout(() => this.renderProfitTrendChart(), 100);
   }
 }
