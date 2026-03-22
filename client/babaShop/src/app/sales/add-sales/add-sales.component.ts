@@ -80,6 +80,7 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
   private scanDebounceTimer: any = null;
   private primarySearchScanTimer: any = null;
   barcodeLookupLoading = false;
+  itemSearchLoading = false;
   private readonly destroy$ = new Subject<void>();
   private readonly itemSearch$ = new Subject<string>();
   private readonly customerSearch$ = new Subject<string>();
@@ -132,6 +133,7 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
     if (!term) {
       this.suggestions = [];
       this.activeSuggestionIndex = -1;
+      this.itemSearchLoading = false;
       this.itemSearch$.next("");
       return;
     }
@@ -139,6 +141,7 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.looksLikeScannableCode(term)) {
       this.suggestions = [];
       this.activeSuggestionIndex = -1;
+      this.itemSearchLoading = false;
       this.primarySearchScanTimer = setTimeout(() => {
         if (`${this.itemName || ""}`.trim() !== term) return;
         this.scannedBarcode = term;
@@ -550,6 +553,7 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
     this.itemName = "";
     this.suggestions = [];
     this.activeSuggestionIndex = -1;
+    this.itemSearchLoading = false;
   }
 
   clearBarcodeInput(): void {
@@ -701,6 +705,7 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
       variationSku: this.selectedVariationSku || this.variations || null,
       productId: this.selectedProductId || null,
       modelId: this.selectedModelId || null,
+      availableStock: Number.isFinite(availableStock) ? availableStock : null,
     };
 
     if (!customerSales) {
@@ -762,7 +767,7 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
-    const availableStock = Number(this.currentAvailableStock ?? item?.availableStock ?? item?.stockAvailable ?? Infinity);
+    const availableStock = Number(item?.availableStock ?? item?.stockAvailable ?? Infinity);
     if (Number.isFinite(availableStock) && nextQty > availableStock) {
       this.snackBar.open(`Stock limit reached. Available: ${availableStock}`, "Close", { duration: 2400 });
       return;
@@ -1255,8 +1260,10 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
         distinctUntilChanged(),
         switchMap((term) => {
           if (!term) {
+            this.itemSearchLoading = false;
             return of([]);
           }
+          this.itemSearchLoading = true;
           return this.item.searchProductsForPos(term);
         }),
         takeUntil(this.destroy$),
@@ -1265,10 +1272,12 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
         next: (response: any) => {
           this.suggestions = Array.isArray(response?.data) ? response.data : [];
           this.activeSuggestionIndex = this.suggestions.length ? 0 : -1;
+          this.itemSearchLoading = false;
         },
         error: () => {
           this.suggestions = [];
           this.activeSuggestionIndex = -1;
+          this.itemSearchLoading = false;
         },
       });
 

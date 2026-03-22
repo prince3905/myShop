@@ -87,10 +87,10 @@
             </button>
           </div>
 
-          <div class="selected-customer-strip" *ngIf="customerName || customerPhone">
+          <div class="selected-customer-strip" *ngIf="selectedCustomerId">
             <div class="selected-customer-primary">
               <mat-icon>person</mat-icon>
-              <span>{{ customerName || 'Walk-in Customer' }}</span>
+              <span>{{ customerName || 'Selected Customer' }}</span>
             </div>
             <div class="selected-customer-meta" *ngIf="customerPhone">{{ customerPhone }}</div>
             <div class="selected-customer-wallet" *ngIf="currentCustomerWalletBalance > 0">
@@ -192,8 +192,11 @@
 
           <ng-template #emptyCatalog>
             <div class="catalog-empty">
-              <mat-icon>point_of_sale</mat-icon>
-              <div>Search item name or scan barcode to start billing.</div>
+              <mat-icon>{{ itemSearchLoading ? 'hourglass_top' : (itemName ? 'search_off' : 'point_of_sale') }}</mat-icon>
+              <div *ngIf="itemSearchLoading">Searching products...</div>
+              <div *ngIf="!itemSearchLoading && itemName">No matching products found.</div>
+              <div *ngIf="!itemSearchLoading && !itemName">Search item name or scan barcode to start billing.</div>
+              <small *ngIf="!itemSearchLoading && itemName">Try a different name, model, or barcode.</small>
             </div>
           </ng-template>
         </div>
