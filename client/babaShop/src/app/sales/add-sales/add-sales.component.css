@@ -280,37 +280,58 @@
 
 .product-card {
   border: 1px solid #d9dfeb;
-  border-radius: 12px;
-  background: #fff;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #ffffff, #f8fbff);
   padding: 8px;
   display: flex;
   flex-direction: column;
   text-align: left;
   cursor: pointer;
   transition: transform 120ms ease, box-shadow 120ms ease;
-  box-shadow: 0 8px 18px rgba(30, 41, 59, 0.05);
+  box-shadow: 0 10px 20px rgba(30, 41, 59, 0.06);
   min-height: 148px;
+  position: relative;
+  overflow: hidden;
 }
 
 .product-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 14px 28px rgba(30, 41, 59, 0.12);
+  border-color: #c6d4e7;
+  box-shadow: 0 16px 30px rgba(30, 41, 59, 0.12);
 }
 
 .product-card.active {
   transform: translateY(-2px);
   border-color: #0f766e;
+  background: linear-gradient(180deg, #ffffff, #f0fdfa);
   box-shadow: 0 0 0 2px rgba(15, 118, 110, 0.14), 0 16px 30px rgba(15, 23, 42, 0.12);
+}
+
+.product-card::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, rgba(15, 118, 110, 0.9), rgba(59, 130, 246, 0.75));
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.product-card:hover::after,
+.product-card.active::after {
+  opacity: 1;
 }
 
 .product-image {
   height: 64px;
-  border-radius: 9px;
-  background: linear-gradient(180deg, #f9fafb, #eef2f7);
+  border-radius: 10px;
+  background: linear-gradient(180deg, #f8fafc, #eef5fb);
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 7px;
+  border: 1px solid #edf2f7;
 }
 
 .product-image mat-icon {
@@ -322,7 +343,7 @@
 
 .product-name {
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 800;
   color: #111827;
   line-height: 1.2;
   word-break: break-word;
@@ -377,6 +398,7 @@
   font-size: 10px;
   line-height: 1.25;
   word-break: break-word;
+  min-height: 24px;
 }
 
 .product-actions {
@@ -403,7 +425,8 @@
 }
 
 .product-action-button:hover {
-  background: #e2e8f0;
+  background: #e8eef6;
+  border-color: #b7c6db;
 }
 
 .product-action-button.quick-add:hover {
