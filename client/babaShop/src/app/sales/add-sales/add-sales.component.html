@@ -2,6 +2,14 @@
   <div class="card sales-form-card">
       <div class="card-body pos-layout">
         <div class="pos-page-header">
+          <button
+            type="button"
+            class="pos-back-inline-button"
+            (click)="exitRequested.emit()"
+            aria-label="Back"
+          >
+            <span aria-hidden="true">←</span>
+          </button>
           <div class="pos-page-header-copy">
             <div class="pos-page-title">Billing Console</div>
             <div class="pos-page-subtitle">Search, scan and complete billing</div>

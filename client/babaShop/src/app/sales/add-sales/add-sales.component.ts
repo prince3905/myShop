@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, Optional, ViewChild } from "@angular/core";
+import { AfterViewInit, Component, ElementRef, EventEmitter, OnDestroy, OnInit, Optional, Output, ViewChild } from "@angular/core";
 import { MatDialog, MatDialogRef } from "@angular/material/dialog";
 import { MatSnackBar } from "@angular/material/snack-bar";
 import { debounceTime, distinctUntilChanged, switchMap, takeUntil } from "rxjs/operators";
@@ -18,6 +18,7 @@ import { AddCustomerDialogComponent } from "../add-customer-dialog/add-customer-
   styleUrls: ["./add-sales.component.css"],
 })
 export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
+  @Output() exitRequested = new EventEmitter<void>();
   Category: any = [];
   Brands: any = [];
   selectedCategory: string = "";
