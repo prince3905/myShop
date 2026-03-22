@@ -87,10 +87,24 @@
             </button>
           </div>
 
+          <div class="selected-customer-strip" *ngIf="customerName || customerPhone">
+            <div class="selected-customer-primary">
+              <mat-icon>person</mat-icon>
+              <span>{{ customerName || 'Walk-in Customer' }}</span>
+            </div>
+            <div class="selected-customer-meta" *ngIf="customerPhone">{{ customerPhone }}</div>
+            <div class="selected-customer-wallet" *ngIf="currentCustomerWalletBalance > 0">
+              Wallet Rs {{ currentCustomerWalletBalance | number:'1.2-2' }}
+            </div>
+          </div>
+
           <div class="suggestion-list customer-suggestion-list" *ngIf="cus_full_suggestions?.length">
             <button mat-stroked-button type="button" *ngFor="let suggestion of cus_full_suggestions" (click)="selectCusSuggestion(suggestion)">
-              {{ suggestion?.name }} ({{ suggestion?.phone }})
-              <span *ngIf="(suggestion?.walletBalance || 0) > 0"> • Wallet Rs {{ suggestion?.walletBalance | number:'1.2-2' }}</span>
+              <span class="customer-suggestion-name">{{ suggestion?.name }}</span>
+              <span class="customer-suggestion-phone">{{ suggestion?.phone }}</span>
+              <span class="customer-suggestion-wallet" *ngIf="(suggestion?.walletBalance || 0) > 0">
+                Wallet Rs {{ suggestion?.walletBalance | number:'1.2-2' }}
+              </span>
             </button>
           </div>
 
@@ -185,7 +199,10 @@
         </div>
 
         <div class="cart-panel shot-panel">
-          <div class="cart-title">Cart</div>
+          <div class="cart-header">
+            <div class="cart-title">Cart</div>
+            <div class="cart-count" *ngIf="Display_items?.length">{{ Display_items.length }} item{{ Display_items.length === 1 ? '' : 's' }}</div>
+          </div>
 
           <div class="cart-table-wrap">
             <div class="cart-line-list" *ngIf="Display_items?.length; else emptyCartState">
@@ -223,7 +240,11 @@
             </div>
 
             <ng-template #emptyCartState>
-              <div class="empty">Cart is empty</div>
+              <div class="cart-empty-state">
+                <mat-icon>shopping_cart</mat-icon>
+                <div>Cart is empty</div>
+                <small>Add products to start billing</small>
+              </div>
             </ng-template>
           </div>
 
