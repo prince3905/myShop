@@ -62,6 +62,7 @@ import { CustomerDetailsComponent } from "app/customers/customer-details/custome
 import { AddCustomerDialogComponent } from "app/sales/add-customer-dialog/add-customer-dialog.component";
 import { DailyExpenseComponent } from "app/expenses/daily-expense/daily-expense.component";
 import { StaffMasterComponent } from "app/staff/staff-master/staff-master.component";
+import { StaffPaymentsComponent } from "app/staff/staff-payments/staff-payments.component";
 
 @NgModule({
   imports: [
@@ -128,6 +129,7 @@ import { StaffMasterComponent } from "app/staff/staff-master/staff-master.compon
     AddCustomerDialogComponent,
     DailyExpenseComponent,
     StaffMasterComponent,
+    StaffPaymentsComponent,
     HasRoleDirective,
     CapitalizeFirstDirective,
   ],

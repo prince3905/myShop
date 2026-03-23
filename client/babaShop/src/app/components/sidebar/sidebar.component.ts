@@ -112,6 +112,12 @@ export const ROUTES: RouteInfo[] = [
         icon: "badge",
         roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"],
       },
+      {
+        path: "/staff-payments",
+        title: "Payment & Advance",
+        icon: "account_balance_wallet",
+        roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"],
+      },
     ],
   },
 

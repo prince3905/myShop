@@ -83,6 +83,7 @@ const customerRouter = require("./routes/customerRouter");
 const orderRoutes = require("./routes/orderRoutes");
 const dailyExpenseRoutes = require("./routes/dailyExpenseRoutes");
 const staffRoutes = require("./routes/staffRoutes");
+const staffPaymentRoutes = require("./routes/staffPaymentRoutes");
 
 
 //Middleware
@@ -129,6 +130,7 @@ app.use("/api/order", orderRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/daily-expenses", dailyExpenseRoutes);
 app.use("/api/staffs", staffRoutes);
+app.use("/api/staff-payments", staffPaymentRoutes);
 
 app.get("/api/health", (req, res) => {
   res.status(200).json({
