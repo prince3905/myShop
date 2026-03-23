@@ -81,6 +81,7 @@ const dashboardRoutes = require("./routes/dashboardRoutes");
 const salesRoutes = require("./routes/salesRoutes");
 const customerRouter = require("./routes/customerRouter");
 const orderRoutes = require("./routes/orderRoutes");
+const dailyExpenseRoutes = require("./routes/dailyExpenseRoutes");
 
 
 //Middleware
@@ -125,6 +126,7 @@ app.use("/api/sales", salesRoutes);
 app.use("/api/customer", customerRouter);
 app.use("/api/order", orderRoutes);
 app.use("/api/orders", orderRoutes);
+app.use("/api/daily-expenses", dailyExpenseRoutes);
 
 app.get("/api/health", (req, res) => {
   res.status(200).json({

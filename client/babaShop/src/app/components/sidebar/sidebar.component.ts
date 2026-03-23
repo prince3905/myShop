@@ -88,6 +88,20 @@ export const ROUTES: RouteInfo[] = [
   },
 
   {
+    title: "Expenses",
+    icon: "receipt_long",
+    roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"],
+    children: [
+      {
+        path: "/daily-expense",
+        title: "Daily Expense",
+        icon: "payments",
+        roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"],
+      },
+    ],
+  },
+
+  {
     title: "People",
     icon: "groups",
     roles: ["SUPER_ADMIN", "ADMIN", "MANAGER"],

@@ -1,0 +1,272 @@
+<div class="main-content daily-expense-page">
+  <div class="container-fluid">
+    <div class="card page-hero-card">
+      <div class="card-header card-header-danger expense-hero">
+        <div class="expense-hero-copy">
+          <h2 class="expense-hero-title">Daily Expense</h2>
+          <p class="expense-hero-subtitle">Shop-wise daily expense register with simple summary and recent entries.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="row summary-row">
+      <div class="col-md-3 col-sm-6">
+        <div class="card summary-card">
+          <div class="card-body">
+            <div class="summary-label">Today Expense</div>
+            <div class="summary-value">Rs {{ summary.todayAmount || 0 | number: '1.2-2' }}</div>
+            <div class="summary-meta">{{ summary.todayEntries || 0 }} entries today</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 col-sm-6">
+        <div class="card summary-card">
+          <div class="card-body">
+            <div class="summary-label">Total Expense</div>
+            <div class="summary-value">Rs {{ summary.totalAmount || 0 | number: '1.2-2' }}</div>
+            <div class="summary-meta">{{ summary.totalEntries || 0 }} total entries</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 col-sm-6">
+        <div class="card summary-card">
+          <div class="card-body">
+            <div class="summary-label">Top Category</div>
+            <div class="summary-value summary-value--sm">{{ summary.byCategory?.[0]?._id || 'No data' }}</div>
+            <div class="summary-meta">Rs {{ summary.byCategory?.[0]?.totalAmount || 0 | number: '1.2-2' }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 col-sm-6">
+        <div class="card summary-card">
+          <div class="card-body">
+            <div class="summary-label">Top Department</div>
+            <div class="summary-value summary-value--sm">{{ summary.byDepartment?.[0]?._id || 'No data' }}</div>
+            <div class="summary-meta">Rs {{ summary.byDepartment?.[0]?.totalAmount || 0 | number: '1.2-2' }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row breakdown-row">
+      <div class="col-md-6">
+        <div class="card breakdown-card">
+          <div class="card-body">
+            <div class="breakdown-title">Category Breakdown</div>
+            <div *ngIf="loadingSummary" class="breakdown-empty">Loading category summary...</div>
+            <div *ngIf="!loadingSummary && summary.byCategory?.length === 0" class="breakdown-empty">No category data yet.</div>
+            <div *ngFor="let row of summary.byCategory; trackBy: trackBySummary" class="breakdown-item">
+              <div>
+                <div class="breakdown-name">{{ row._id }}</div>
+                <div class="breakdown-meta">{{ row.count }} entries</div>
+              </div>
+              <div class="breakdown-amount">Rs {{ row.totalAmount | number: '1.2-2' }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card breakdown-card">
+          <div class="card-body">
+            <div class="breakdown-title">Department Breakdown</div>
+            <div *ngIf="loadingSummary" class="breakdown-empty">Loading department summary...</div>
+            <div *ngIf="!loadingSummary && summary.byDepartment?.length === 0" class="breakdown-empty">No department data yet.</div>
+            <div *ngFor="let row of summary.byDepartment; trackBy: trackBySummary" class="breakdown-item">
+              <div>
+                <div class="breakdown-name">{{ row._id }}</div>
+                <div class="breakdown-meta">{{ row.count }} entries</div>
+              </div>
+              <div class="breakdown-amount">Rs {{ row.totalAmount | number: '1.2-2' }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-lg-4">
+        <div class="card">
+          <div class="card-header card-header-danger">
+            <h4 class="card-title">{{ getFormTitle() }}</h4>
+          </div>
+          <div class="card-body">
+            <form #expenseNgForm="ngForm" (ngSubmit)="submitExpense(expenseNgForm)">
+              <div class="edit-banner" *ngIf="editingExpenseId">
+                Editing selected expense entry.
+              </div>
+              <mat-form-field class="example-full-width">
+                <mat-label>Expense Date</mat-label>
+                <input matInput type="date" [(ngModel)]="expenseForm.expenseDate" name="expenseDate" required>
+              </mat-form-field>
+
+              <mat-form-field class="example-full-width">
+                <mat-label>Category</mat-label>
+                <mat-select [(ngModel)]="expenseForm.category" name="category" required>
+                  <mat-option *ngFor="let category of categories" [value]="category">{{ category }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field class="example-full-width">
+                <mat-label>Department</mat-label>
+                <mat-select [(ngModel)]="expenseForm.department" name="department" required>
+                  <mat-option *ngFor="let department of departments" [value]="department">{{ department }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field class="example-full-width">
+                <mat-label>Account Head</mat-label>
+                <mat-select [(ngModel)]="expenseForm.accountHead" name="accountHead" required>
+                  <mat-option *ngFor="let head of accountHeads" [value]="head">{{ head }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <div class="row">
+                <div class="col-md-6">
+                  <mat-form-field class="example-full-width">
+                    <mat-label>Amount</mat-label>
+                    <input matInput type="number" min="1" [(ngModel)]="expenseForm.amount" name="amount" required>
+                  </mat-form-field>
+                </div>
+                <div class="col-md-6">
+                  <mat-form-field class="example-full-width">
+                    <mat-label>Payment Method</mat-label>
+                    <mat-select [(ngModel)]="expenseForm.paymentMethod" name="paymentMethod" required>
+                      <mat-option *ngFor="let method of paymentMethods" [value]="method">{{ method }}</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+              </div>
+
+              <mat-form-field class="example-full-width">
+                <mat-label>Note</mat-label>
+                <textarea matInput rows="3" [(ngModel)]="expenseForm.note" name="note"></textarea>
+              </mat-form-field>
+
+              <div class="form-actions">
+                <button mat-raised-button class="btn btn-danger submit-btn" [disabled]="savingExpense || expenseNgForm.invalid">
+                  {{ getSubmitLabel() }}
+                </button>
+                <button
+                  *ngIf="editingExpenseId"
+                  type="button"
+                  mat-stroked-button
+                  class="btn btn-outline-danger submit-btn"
+                  (click)="cancelEdit(expenseNgForm)"
+                >
+                  Cancel Edit
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-8">
+        <div class="card">
+          <div class="card-header card-header-danger">
+            <h4 class="card-title">Recent Expenses</h4>
+          </div>
+          <div class="card-body">
+            <div class="filter-grid">
+              <mat-form-field class="example-full-width">
+                <mat-label>Search</mat-label>
+                <input matInput [(ngModel)]="filters.search" name="search" placeholder="Category, note, head">
+              </mat-form-field>
+              <mat-form-field class="example-full-width">
+                <mat-label>Category</mat-label>
+                <mat-select [(ngModel)]="filters.category" name="filterCategory">
+                  <mat-option value="">All</mat-option>
+                  <mat-option *ngFor="let category of categories" [value]="category">{{ category }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+              <mat-form-field class="example-full-width">
+                <mat-label>Department</mat-label>
+                <mat-select [(ngModel)]="filters.department" name="filterDepartment">
+                  <mat-option value="">All</mat-option>
+                  <mat-option *ngFor="let department of departments" [value]="department">{{ department }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+              <mat-form-field class="example-full-width">
+                <mat-label>From Date</mat-label>
+                <input matInput type="date" [(ngModel)]="filters.dateFrom" name="dateFrom">
+              </mat-form-field>
+              <mat-form-field class="example-full-width">
+                <mat-label>To Date</mat-label>
+                <input matInput type="date" [(ngModel)]="filters.dateTo" name="dateTo">
+              </mat-form-field>
+              <mat-form-field class="example-full-width">
+                <mat-label>Payment Method</mat-label>
+                <mat-select [(ngModel)]="filters.paymentMethod" name="filterPaymentMethod">
+                  <mat-option value="">All</mat-option>
+                  <mat-option *ngFor="let method of paymentMethods" [value]="method">{{ method }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+
+            <div class="filter-actions">
+              <button mat-raised-button class="btn btn-danger" (click)="loadExpenses()">Apply Filters</button>
+              <button mat-stroked-button class="btn btn-outline-danger" (click)="clearFilters()">Reset</button>
+            </div>
+
+            <div *ngIf="loadingExpenses" class="table-empty">Loading expenses...</div>
+
+            <div *ngIf="!loadingExpenses && expenses.length === 0" class="table-empty">
+              No expenses found for current filters.
+            </div>
+
+            <div class="expense-table-wrap" *ngIf="!loadingExpenses && expenses.length > 0">
+              <table class="table expense-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Category</th>
+                    <th>Department</th>
+                    <th>Head</th>
+                    <th>Mode</th>
+                    <th>Amount</th>
+                    <th>By</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let expense of expenses">
+                    <td>{{ expense.expenseDate | date: 'dd/MM/yyyy' }}</td>
+                    <td>
+                      <div class="table-primary">{{ expense.category }}</div>
+                      <div class="table-note" *ngIf="expense.note">{{ expense.note }}</div>
+                    </td>
+                    <td>{{ expense.department }}</td>
+                    <td>{{ expense.accountHead }}</td>
+                    <td>{{ expense.paymentMethod }}</td>
+                    <td class="amount-cell">Rs {{ expense.amount | number: '1.2-2' }}</td>
+                    <td>{{ expense.createdBy?.pFname || expense.createdBy?.email || '-' }}</td>
+                    <td>
+                      <div class="table-actions" *ngIf="canManage">
+                        <button
+                          mat-button
+                          class="table-edit-btn"
+                          [disabled]="deletingId === expense._id"
+                          (click)="startEdit(expense)"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          mat-button
+                          class="table-delete-btn"
+                          [disabled]="deletingId === expense._id"
+                          (click)="deleteExpense(expense)"
+                        >
+                          {{ deletingId === expense._id ? 'Deleting...' : 'Delete' }}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
