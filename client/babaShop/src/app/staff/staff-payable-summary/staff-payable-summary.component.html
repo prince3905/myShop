@@ -1,0 +1,58 @@
+<div class="main-content report-page">
+  <div class="container-fluid">
+    <div class="page-header-card">
+      <div>
+        <h2>Staff Payable / Summary</h2>
+        <p>Earned amount, advance, payment aur net payable worker-wise.</p>
+      </div>
+    </div>
+
+    <div class="card filter-card">
+      <div class="card-header card-header-danger"><h4 class="card-title">Filters</h4></div>
+      <div class="card-body">
+        <div class="filter-grid">
+          <mat-form-field class="example-full-width"><mat-label>Search</mat-label><input matInput [(ngModel)]="filters.search" name="search"></mat-form-field>
+          <mat-form-field class="example-full-width"><mat-label>Staff</mat-label><mat-select [(ngModel)]="filters.staff" name="staff"><mat-option value="">All</mat-option><mat-option *ngFor="let staff of staffOptions" [value]="staff._id">{{ staff.name }}</mat-option></mat-select></mat-form-field>
+          <mat-form-field class="example-full-width"><mat-label>From Date</mat-label><input matInput type="date" [(ngModel)]="filters.dateFrom" name="dateFrom"></mat-form-field>
+          <mat-form-field class="example-full-width"><mat-label>To Date</mat-label><input matInput type="date" [(ngModel)]="filters.dateTo" name="dateTo"></mat-form-field>
+        </div>
+        <div class="filter-actions">
+          <button mat-raised-button class="btn btn-danger" (click)="loadReport()">Apply Filters</button>
+          <button mat-stroked-button class="btn btn-outline-danger" (click)="resetFilters()">Today</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="summary-grid">
+      <div class="summary-card"><span class="summary-label">Total Earned</span><strong>Rs {{ summary.totalEarned | number: '1.2-2' }}</strong></div>
+      <div class="summary-card"><span class="summary-label">Total Advance</span><strong>Rs {{ summary.totalAdvance | number: '1.2-2' }}</strong></div>
+      <div class="summary-card"><span class="summary-label">Total Payment</span><strong>Rs {{ summary.totalPayment | number: '1.2-2' }}</strong></div>
+      <div class="summary-card highlight"><span class="summary-label">Net Payable</span><strong>Rs {{ summary.totalPayable | number: '1.2-2' }}</strong></div>
+    </div>
+
+    <div *ngIf="loading" class="table-empty">Loading staff summary...</div>
+
+    <div class="card" *ngIf="!loading">
+      <div class="card-header card-header-danger"><h4 class="card-title">Worker-wise Summary</h4></div>
+      <div class="card-body">
+        <div *ngIf="rows.length === 0" class="table-empty">No staff summary found.</div>
+        <div class="table-wrap" *ngIf="rows.length > 0">
+          <table class="table report-table">
+            <thead><tr><th>Staff</th><th>Work Type</th><th>Work Entries</th><th>Earned</th><th>Advance</th><th>Payment</th><th>Payable</th></tr></thead>
+            <tbody>
+              <tr *ngFor="let row of rows; trackBy: trackByRow">
+                <td class="table-primary">{{ row.name }}</td>
+                <td>{{ row.workType || '-' }}</td>
+                <td>{{ row.workEntries }}</td>
+                <td class="amount-cell">Rs {{ row.earned | number: '1.2-2' }}</td>
+                <td class="amount-cell">Rs {{ row.advance | number: '1.2-2' }}</td>
+                <td class="amount-cell">Rs {{ row.payment | number: '1.2-2' }}</td>
+                <td class="amount-cell" [class.negative]="row.payable < 0">Rs {{ row.payable | number: '1.2-2' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

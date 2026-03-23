@@ -26,15 +26,18 @@ import { ReturnsComponent } from "app/sales/returns/returns.component";
 import { SalesReportsComponent } from "app/sales/sales-reports/sales-reports.component";
 import { CustomerDetailsComponent } from "app/customers/customer-details/customer-details.component";
 import { DailyExpenseComponent } from "app/expenses/daily-expense/daily-expense.component";
+import { ExpenseReportComponent } from "app/expenses/expense-report/expense-report.component";
 import { StaffMasterComponent } from "app/staff/staff-master/staff-master.component";
 import { StaffPaymentsComponent } from "app/staff/staff-payments/staff-payments.component";
 import { StaffDailyWorkComponent } from "app/staff/staff-daily-work/staff-daily-work.component";
+import { StaffPayableSummaryComponent } from "app/staff/staff-payable-summary/staff-payable-summary.component";
 import { FactoryProductionComponent } from "app/factory/factory-production/factory-production.component";
 import { RawMaterialRegisterComponent } from "app/factory/raw-material-register/raw-material-register.component";
 import { ScrapRegisterComponent } from "app/factory/scrap-register/scrap-register.component";
 import { FactoryReportComponent } from "app/factory/factory-report/factory-report.component";
 import { MaterialInwardComponent } from "app/factory/material-inward/material-inward.component";
 import { FinishedGoodsRegisterComponent } from "app/factory/finished-goods-register/finished-goods-register.component";
+import { FactoryDailyCostingComponent } from "app/factory/factory-daily-costing/factory-daily-costing.component";
 
 const ALL_ROLES = ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"];
 const MANAGER_AND_ABOVE = ["SUPER_ADMIN", "ADMIN", "MANAGER"];
@@ -70,14 +73,17 @@ export const AdminLayoutRoutes: Routes = [
   { path: "customer", component: CustomersComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ALL_ROLES, requireShop: true, allowGlobalRead: true } },
   { path: "customer/:id", component: CustomerDetailsComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ALL_ROLES, requireShop: true, allowGlobalRead: true } },
   { path: "daily-expense", component: DailyExpenseComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ALL_ROLES, requireShop: true } },
+  { path: "expense-report", component: ExpenseReportComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ALL_ROLES, requireShop: true } },
   { path: "staff-master", component: StaffMasterComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ALL_ROLES, requireShop: true } },
   { path: "staff-daily-work", component: StaffDailyWorkComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ALL_ROLES, requireShop: true } },
   { path: "staff-payments", component: StaffPaymentsComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ALL_ROLES, requireShop: true } },
+  { path: "staff-payable-summary", component: StaffPayableSummaryComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ALL_ROLES, requireShop: true } },
   { path: "factory-production", component: FactoryProductionComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ALL_ROLES, requireShop: true } },
   { path: "raw-material-register", component: RawMaterialRegisterComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ALL_ROLES, requireShop: true } },
   { path: "material-inward", component: MaterialInwardComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ALL_ROLES, requireShop: true } },
   { path: "finished-goods-register", component: FinishedGoodsRegisterComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ALL_ROLES, requireShop: true } },
   { path: "scrap-register", component: ScrapRegisterComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ALL_ROLES, requireShop: true } },
+  { path: "factory-daily-costing", component: FactoryDailyCostingComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ALL_ROLES, requireShop: true } },
   { path: "factory-report", component: FactoryReportComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ALL_ROLES, requireShop: true } },
   { path: "users", component: UserComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ADMIN_AND_ABOVE } },
   { path: "shops", component: ManageShopsComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ["SUPER_ADMIN"] } },

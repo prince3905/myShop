@@ -98,6 +98,12 @@ export const ROUTES: RouteInfo[] = [
         icon: "payments",
         roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"],
       },
+      {
+        path: "/expense-report",
+        title: "Expense Report",
+        icon: "receipt_long",
+        roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"],
+      },
     ],
   },
 
@@ -122,6 +128,12 @@ export const ROUTES: RouteInfo[] = [
         path: "/staff-payments",
         title: "Payment & Advance",
         icon: "account_balance_wallet",
+        roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"],
+      },
+      {
+        path: "/staff-payable-summary",
+        title: "Payable / Summary",
+        icon: "summarize",
         roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"],
       },
     ],
@@ -166,6 +178,12 @@ export const ROUTES: RouteInfo[] = [
         path: "/factory-report",
         title: "Factory Report",
         icon: "assessment",
+        roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"],
+      },
+      {
+        path: "/factory-daily-costing",
+        title: "Daily Costing Report",
+        icon: "analytics",
         roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"],
       },
     ],

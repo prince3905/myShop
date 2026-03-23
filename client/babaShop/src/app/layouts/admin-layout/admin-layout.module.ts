@@ -61,15 +61,18 @@ import { SalesReportsComponent } from "app/sales/sales-reports/sales-reports.com
 import { CustomerDetailsComponent } from "app/customers/customer-details/customer-details.component";
 import { AddCustomerDialogComponent } from "app/sales/add-customer-dialog/add-customer-dialog.component";
 import { DailyExpenseComponent } from "app/expenses/daily-expense/daily-expense.component";
+import { ExpenseReportComponent } from "app/expenses/expense-report/expense-report.component";
 import { StaffMasterComponent } from "app/staff/staff-master/staff-master.component";
 import { StaffPaymentsComponent } from "app/staff/staff-payments/staff-payments.component";
 import { StaffDailyWorkComponent } from "app/staff/staff-daily-work/staff-daily-work.component";
+import { StaffPayableSummaryComponent } from "app/staff/staff-payable-summary/staff-payable-summary.component";
 import { FactoryProductionComponent } from "app/factory/factory-production/factory-production.component";
 import { RawMaterialRegisterComponent } from "app/factory/raw-material-register/raw-material-register.component";
 import { ScrapRegisterComponent } from "app/factory/scrap-register/scrap-register.component";
 import { FactoryReportComponent } from "app/factory/factory-report/factory-report.component";
 import { MaterialInwardComponent } from "app/factory/material-inward/material-inward.component";
 import { FinishedGoodsRegisterComponent } from "app/factory/finished-goods-register/finished-goods-register.component";
+import { FactoryDailyCostingComponent } from "app/factory/factory-daily-costing/factory-daily-costing.component";
 
 @NgModule({
   imports: [
@@ -135,13 +138,16 @@ import { FinishedGoodsRegisterComponent } from "app/factory/finished-goods-regis
     SalesReportsComponent,
     AddCustomerDialogComponent,
     DailyExpenseComponent,
+    ExpenseReportComponent,
     StaffMasterComponent,
     StaffDailyWorkComponent,
     StaffPaymentsComponent,
+    StaffPayableSummaryComponent,
     FactoryProductionComponent,
     RawMaterialRegisterComponent,
     MaterialInwardComponent,
     FinishedGoodsRegisterComponent,
+    FactoryDailyCostingComponent,
     ScrapRegisterComponent,
     FactoryReportComponent,
     HasRoleDirective,
