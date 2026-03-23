@@ -139,6 +139,12 @@ export const ROUTES: RouteInfo[] = [
         roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"],
       },
       {
+        path: "/material-inward",
+        title: "Material Inward",
+        icon: "input_circle",
+        roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"],
+      },
+      {
         path: "/scrap-register",
         title: "Scrap / Waste Register",
         icon: "delete_sweep",

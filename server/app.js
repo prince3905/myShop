@@ -87,6 +87,7 @@ const staffPaymentRoutes = require("./routes/staffPaymentRoutes");
 const factoryProductionRoutes = require("./routes/factoryProductionRoutes");
 const rawMaterialRoutes = require("./routes/rawMaterialRoutes");
 const scrapRegisterRoutes = require("./routes/scrapRegisterRoutes");
+const materialInwardRoutes = require("./routes/materialInwardRoutes");
 
 
 //Middleware
@@ -137,6 +138,7 @@ app.use("/api/staff-payments", staffPaymentRoutes);
 app.use("/api/factory-productions", factoryProductionRoutes);
 app.use("/api/raw-materials", rawMaterialRoutes);
 app.use("/api/scrap-registers", scrapRegisterRoutes);
+app.use("/api/material-inwards", materialInwardRoutes);
 
 app.get("/api/health", (req, res) => {
   res.status(200).json({
