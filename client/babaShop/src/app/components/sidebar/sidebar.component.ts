@@ -102,6 +102,20 @@ export const ROUTES: RouteInfo[] = [
   },
 
   {
+    title: "Staffs & Worker",
+    icon: "engineering",
+    roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"],
+    children: [
+      {
+        path: "/staff-master",
+        title: "Staff List",
+        icon: "badge",
+        roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"],
+      },
+    ],
+  },
+
+  {
     title: "People",
     icon: "groups",
     roles: ["SUPER_ADMIN", "ADMIN", "MANAGER"],

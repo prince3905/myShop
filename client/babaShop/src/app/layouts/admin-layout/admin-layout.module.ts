@@ -61,6 +61,7 @@ import { SalesReportsComponent } from "app/sales/sales-reports/sales-reports.com
 import { CustomerDetailsComponent } from "app/customers/customer-details/customer-details.component";
 import { AddCustomerDialogComponent } from "app/sales/add-customer-dialog/add-customer-dialog.component";
 import { DailyExpenseComponent } from "app/expenses/daily-expense/daily-expense.component";
+import { StaffMasterComponent } from "app/staff/staff-master/staff-master.component";
 
 @NgModule({
   imports: [
@@ -126,6 +127,7 @@ import { DailyExpenseComponent } from "app/expenses/daily-expense/daily-expense.
     SalesReportsComponent,
     AddCustomerDialogComponent,
     DailyExpenseComponent,
+    StaffMasterComponent,
     HasRoleDirective,
     CapitalizeFirstDirective,
   ],

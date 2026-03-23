@@ -1,0 +1,221 @@
+<div class="main-content staff-page">
+  <div class="container-fluid">
+    <div class="card page-hero-card">
+      <div class="card-header card-header-danger staff-hero">
+        <div>
+          <h2 class="staff-hero-title">Staffs & Worker</h2>
+          <p class="staff-hero-subtitle">Shop-wise staff and worker list with work type and daily or piece rate tracking.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="row summary-row">
+      <div class="col-md-3 col-sm-6">
+        <div class="card summary-card">
+          <div class="card-body">
+            <div class="summary-label">Total Staff</div>
+            <div class="summary-value">{{ summary.totalStaffs || 0 }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 col-sm-6">
+        <div class="card summary-card">
+          <div class="card-body">
+            <div class="summary-label">Active</div>
+            <div class="summary-value">{{ summary.activeStaffs || 0 }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 col-sm-6">
+        <div class="card summary-card">
+          <div class="card-body">
+            <div class="summary-label">Inactive</div>
+            <div class="summary-value">{{ summary.inactiveStaffs || 0 }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 col-sm-6">
+        <div class="card summary-card">
+          <div class="card-body">
+            <div class="summary-label">Rate Base</div>
+            <div class="summary-value">Rs {{ summary.totalRateBase || 0 | number: '1.0-0' }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row breakdown-row">
+      <div class="col-md-12">
+        <div class="card breakdown-card">
+          <div class="card-body">
+            <div class="breakdown-title">Work Type Breakdown</div>
+            <div *ngIf="loadingSummary" class="breakdown-empty">Loading work types...</div>
+            <div *ngIf="!loadingSummary && summary.byWorkType?.length === 0" class="breakdown-empty">No staff data yet.</div>
+            <div class="breakdown-grid" *ngIf="!loadingSummary && summary.byWorkType?.length > 0">
+              <div *ngFor="let row of summary.byWorkType; trackBy: trackBySummary" class="breakdown-item">
+                <div class="breakdown-name">{{ row._id }}</div>
+                <div class="breakdown-meta">{{ row.count }} staff</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-lg-4">
+        <div class="card">
+          <div class="card-header card-header-danger">
+            <h4 class="card-title">{{ getFormTitle() }}</h4>
+          </div>
+          <div class="card-body">
+            <form #staffNgForm="ngForm" (ngSubmit)="submitStaff(staffNgForm)">
+              <div class="edit-banner" *ngIf="editingStaffId">Editing selected staff or worker.</div>
+
+              <mat-form-field class="example-full-width">
+                <mat-label>Name</mat-label>
+                <input matInput [(ngModel)]="staffForm.name" name="name" required>
+              </mat-form-field>
+
+              <mat-form-field class="example-full-width">
+                <mat-label>Phone</mat-label>
+                <input matInput [(ngModel)]="staffForm.phone" name="phone">
+              </mat-form-field>
+
+              <mat-form-field class="example-full-width">
+                <mat-label>Work Type</mat-label>
+                <mat-select [(ngModel)]="staffForm.workType" name="workType" required>
+                  <mat-option *ngFor="let type of workTypes" [value]="type">{{ type }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <div class="row">
+                <div class="col-md-6">
+                  <mat-form-field class="example-full-width">
+                    <mat-label>Rate Type</mat-label>
+                    <mat-select [(ngModel)]="staffForm.rateType" name="rateType" required>
+                      <mat-option *ngFor="let type of rateTypes" [value]="type">{{ type }}</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+                <div class="col-md-6">
+                  <mat-form-field class="example-full-width">
+                    <mat-label>Rate</mat-label>
+                    <input matInput type="number" min="0" [(ngModel)]="staffForm.rate" name="rate" required>
+                  </mat-form-field>
+                </div>
+              </div>
+
+              <mat-form-field class="example-full-width">
+                <mat-label>Note</mat-label>
+                <textarea matInput rows="3" [(ngModel)]="staffForm.note" name="note"></textarea>
+              </mat-form-field>
+
+              <mat-checkbox [(ngModel)]="staffForm.active" name="active">Active staff</mat-checkbox>
+
+              <div class="form-actions">
+                <button mat-raised-button class="btn btn-danger submit-btn" [disabled]="savingStaff || staffNgForm.invalid">
+                  {{ getSubmitLabel() }}
+                </button>
+                <button
+                  *ngIf="editingStaffId"
+                  type="button"
+                  mat-stroked-button
+                  class="btn btn-outline-danger submit-btn"
+                  (click)="cancelEdit(staffNgForm)"
+                >
+                  Cancel Edit
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-8">
+        <div class="card">
+          <div class="card-header card-header-danger">
+            <h4 class="card-title">Staff List</h4>
+          </div>
+          <div class="card-body">
+            <div class="filter-grid">
+              <mat-form-field class="example-full-width">
+                <mat-label>Search</mat-label>
+                <input matInput [(ngModel)]="filters.search" name="search" placeholder="Name, phone, work type">
+              </mat-form-field>
+              <mat-form-field class="example-full-width">
+                <mat-label>Work Type</mat-label>
+                <mat-select [(ngModel)]="filters.workType" name="filterWorkType">
+                  <mat-option value="">All</mat-option>
+                  <mat-option *ngFor="let type of workTypes" [value]="type">{{ type }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+              <mat-form-field class="example-full-width">
+                <mat-label>Rate Type</mat-label>
+                <mat-select [(ngModel)]="filters.rateType" name="filterRateType">
+                  <mat-option value="">All</mat-option>
+                  <mat-option *ngFor="let type of rateTypes" [value]="type">{{ type }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+              <mat-form-field class="example-full-width">
+                <mat-label>Status</mat-label>
+                <mat-select [(ngModel)]="filters.active" name="filterActive">
+                  <mat-option value="">All</mat-option>
+                  <mat-option value="true">Active</mat-option>
+                  <mat-option value="false">Inactive</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+
+            <div class="filter-actions">
+              <button mat-raised-button class="btn btn-danger" (click)="loadStaffs()">Apply Filters</button>
+              <button mat-stroked-button class="btn btn-outline-danger" (click)="clearFilters()">Reset</button>
+            </div>
+
+            <div *ngIf="loadingStaffs" class="table-empty">Loading staff list...</div>
+            <div *ngIf="!loadingStaffs && staffs.length === 0" class="table-empty">No staff found for current filters.</div>
+
+            <div class="staff-table-wrap" *ngIf="!loadingStaffs && staffs.length > 0">
+              <table class="table staff-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Phone</th>
+                    <th>Work Type</th>
+                    <th>Rate</th>
+                    <th>Status</th>
+                    <th>By</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let staff of staffs">
+                    <td>
+                      <div class="table-primary">{{ staff.name }}</div>
+                      <div class="table-note" *ngIf="staff.note">{{ staff.note }}</div>
+                    </td>
+                    <td>{{ staff.phone || '-' }}</td>
+                    <td>{{ staff.workType }}</td>
+                    <td>{{ staff.rateType }} · Rs {{ staff.rate | number: '1.0-0' }}</td>
+                    <td>
+                      <span class="status-chip" [class.inactive]="!staff.active">{{ staff.active ? 'Active' : 'Inactive' }}</span>
+                    </td>
+                    <td>{{ staff.createdBy?.pFname || staff.createdBy?.email || '-' }}</td>
+                    <td>
+                      <div class="table-actions" *ngIf="canManage">
+                        <button mat-button class="table-edit-btn" [disabled]="deletingId === staff._id" (click)="startEdit(staff)">Edit</button>
+                        <button mat-button class="table-delete-btn" [disabled]="deletingId === staff._id" (click)="deleteStaff(staff)">
+                          {{ deletingId === staff._id ? 'Deleting...' : 'Delete' }}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
