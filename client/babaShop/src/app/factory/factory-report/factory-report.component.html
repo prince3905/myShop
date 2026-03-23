@@ -1,0 +1,218 @@
+<div class="main-content page-shell">
+  <div class="container-fluid">
+    <div class="page-header-card">
+      <div>
+        <h2>Factory Report</h2>
+        <p>Production, scrap aur raw material ka consolidated view.</p>
+      </div>
+    </div>
+
+    <div class="card filter-card">
+      <div class="card-header card-header-danger">
+        <h4 class="card-title">Filters</h4>
+      </div>
+      <div class="card-body">
+        <div class="filter-grid">
+          <mat-form-field class="example-full-width">
+            <mat-label>Search</mat-label>
+            <input matInput [(ngModel)]="filters.search" name="search" placeholder="Item, material, source">
+          </mat-form-field>
+          <mat-form-field class="example-full-width">
+            <mat-label>From Date</mat-label>
+            <input matInput type="date" [(ngModel)]="filters.dateFrom" name="dateFrom">
+          </mat-form-field>
+          <mat-form-field class="example-full-width">
+            <mat-label>To Date</mat-label>
+            <input matInput type="date" [(ngModel)]="filters.dateTo" name="dateTo">
+          </mat-form-field>
+        </div>
+
+        <div class="filter-actions">
+          <button mat-raised-button class="btn btn-danger" (click)="loadReport()">Apply Filters</button>
+          <button mat-stroked-button class="btn btn-outline-danger" (click)="resetFilters()">Reset</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="summary-grid">
+      <div class="summary-card">
+        <span class="summary-label">Production Entries</span>
+        <strong>{{ report.productionEntries }}</strong>
+        <small>{{ report.productionQty | number: "1.0-2" }} total qty</small>
+      </div>
+      <div class="summary-card">
+        <span class="summary-label">Production Cost</span>
+        <strong>Rs {{ report.productionCost | number: "1.2-2" }}</strong>
+        <small>Filtered range total</small>
+      </div>
+      <div class="summary-card">
+        <span class="summary-label">Scrap Entries</span>
+        <strong>{{ report.scrapEntries }}</strong>
+        <small>{{ report.scrapQty | number: "1.0-2" }} total qty</small>
+      </div>
+      <div class="summary-card">
+        <span class="summary-label">Scrap Value</span>
+        <strong>Rs {{ report.scrapValue | number: "1.2-2" }}</strong>
+        <small>Estimated total value</small>
+      </div>
+      <div class="summary-card">
+        <span class="summary-label">Raw Materials</span>
+        <strong>{{ report.materialCount }}</strong>
+        <small>Registered materials</small>
+      </div>
+      <div class="summary-card">
+        <span class="summary-label">Material Value</span>
+        <strong>Rs {{ report.materialValue | number: "1.2-2" }}</strong>
+        <small>Opening qty x current rate</small>
+      </div>
+    </div>
+
+    <div *ngIf="loading" class="table-empty">Loading factory report...</div>
+
+    <div class="row" *ngIf="!loading">
+      <div class="col-lg-6">
+        <div class="card">
+          <div class="card-header card-header-danger">
+            <h4 class="card-title">Top Produced Items</h4>
+          </div>
+          <div class="card-body">
+            <div *ngIf="report.topProducedItems.length === 0" class="table-empty">No production data found.</div>
+            <div class="breakdown-list" *ngIf="report.topProducedItems.length > 0">
+              <div class="breakdown-row" *ngFor="let item of report.topProducedItems; trackBy: trackByLabel">
+                <div>
+                  <div class="breakdown-title">{{ item.label }}</div>
+                  <div class="breakdown-subtitle">Rs {{ item.value | number: "1.2-2" }}</div>
+                </div>
+                <strong>{{ item.qty | number: "1.0-2" }}</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <div class="card">
+          <div class="card-header card-header-danger">
+            <h4 class="card-title">Scrap By Source</h4>
+          </div>
+          <div class="card-body">
+            <div *ngIf="report.scrapBySource.length === 0" class="table-empty">No scrap data found.</div>
+            <div class="breakdown-list" *ngIf="report.scrapBySource.length > 0">
+              <div class="breakdown-row" *ngFor="let item of report.scrapBySource; trackBy: trackByLabel">
+                <div>
+                  <div class="breakdown-title">{{ item.label }}</div>
+                  <div class="breakdown-subtitle">{{ item.count }} entries</div>
+                </div>
+                <strong>{{ item.qty | number: "1.0-2" }}</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row" *ngIf="!loading">
+      <div class="col-lg-6">
+        <div class="card">
+          <div class="card-header card-header-danger">
+            <h4 class="card-title">Recent Production</h4>
+          </div>
+          <div class="card-body">
+            <div *ngIf="recentProductions.length === 0" class="table-empty">No production entries in selected range.</div>
+            <div class="table-wrap" *ngIf="recentProductions.length > 0">
+              <table class="table report-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Item</th>
+                    <th>Qty</th>
+                    <th>Cost</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let item of recentProductions">
+                    <td>{{ item.entryDate | date: "dd/MM/yyyy" }}</td>
+                    <td>
+                      <div class="table-primary">{{ item.itemName }}</div>
+                      <div class="table-note" *ngIf="item.serialNo">#{{ item.serialNo }}</div>
+                    </td>
+                    <td>{{ item.qtyProduced | number: "1.0-2" }} {{ item.unitLabel }}</td>
+                    <td class="amount-cell">Rs {{ item.totalCost | number: "1.2-2" }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <div class="card">
+          <div class="card-header card-header-danger">
+            <h4 class="card-title">Recent Scrap / Waste</h4>
+          </div>
+          <div class="card-body">
+            <div *ngIf="recentScraps.length === 0" class="table-empty">No scrap entries in selected range.</div>
+            <div class="table-wrap" *ngIf="recentScraps.length > 0">
+              <table class="table report-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Item</th>
+                    <th>Source</th>
+                    <th>Qty</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let item of recentScraps">
+                    <td>{{ item.entryDate | date: "dd/MM/yyyy" }}</td>
+                    <td>
+                      <div class="table-primary">{{ item.itemName }}</div>
+                      <div class="table-note" *ngIf="item.sourceRef">{{ item.sourceRef }}</div>
+                    </td>
+                    <td>{{ item.sourceType }}</td>
+                    <td>{{ item.qty | number: "1.0-2" }} {{ item.unitLabel }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" *ngIf="!loading">
+      <div class="card-header card-header-danger">
+        <h4 class="card-title">Raw Material Snapshot</h4>
+      </div>
+      <div class="card-body">
+        <div *ngIf="rawMaterialSnapshot.length === 0" class="table-empty">No raw materials found.</div>
+        <div class="table-wrap" *ngIf="rawMaterialSnapshot.length > 0">
+          <table class="table report-table">
+            <thead>
+              <tr>
+                <th>Material</th>
+                <th>Code</th>
+                <th>Opening Qty</th>
+                <th>Current Rate</th>
+                <th>Opening Value</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of rawMaterialSnapshot">
+                <td>
+                  <div class="table-primary">{{ item.name }}</div>
+                  <div class="table-note" *ngIf="item.supplierName">{{ item.supplierName }}</div>
+                </td>
+                <td>{{ item.code || "-" }}</td>
+                <td>{{ item.openingQty | number: "1.0-2" }} {{ item.unitLabel }}</td>
+                <td>Rs {{ item.currentRate | number: "1.2-2" }}</td>
+                <td class="amount-cell">Rs {{ (item.openingQty * item.currentRate) | number: "1.2-2" }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

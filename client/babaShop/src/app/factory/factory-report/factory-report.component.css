@@ -1,0 +1,139 @@
+.page-shell {
+  padding-bottom: 24px;
+}
+
+.page-header-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding: 16px 18px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #fff8f8 0%, #fff 100%);
+  border: 1px solid rgba(220, 53, 69, 0.12);
+}
+
+.page-header-card h2 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 800;
+}
+
+.page-header-card p {
+  margin: 4px 0 0;
+  color: #6c757d;
+}
+
+.filter-card {
+  margin-bottom: 14px;
+}
+
+.filter-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.filter-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.summary-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px;
+  border-radius: 16px;
+  background: #fff;
+  border: 1px solid #eef1f5;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
+}
+
+.summary-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #7a809a;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.summary-card strong {
+  font-size: 24px;
+  font-weight: 800;
+  color: #2d3436;
+}
+
+.summary-card small {
+  color: #7a809a;
+}
+
+.breakdown-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.breakdown-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #fafbff;
+  border: 1px solid #edf0f7;
+}
+
+.breakdown-title,
+.table-primary {
+  font-weight: 700;
+  color: #2d3436;
+}
+
+.breakdown-subtitle,
+.table-note {
+  font-size: 12px;
+  color: #7a809a;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+.report-table {
+  margin: 0;
+}
+
+.report-table th {
+  font-size: 12px;
+  font-weight: 700;
+  color: #7a809a;
+  text-transform: uppercase;
+}
+
+.amount-cell {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.table-empty {
+  padding: 32px 16px;
+  text-align: center;
+  color: #7a809a;
+}
+
+@media (max-width: 991px) {
+  .filter-grid,
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -144,6 +144,12 @@ export const ROUTES: RouteInfo[] = [
         icon: "delete_sweep",
         roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"],
       },
+      {
+        path: "/factory-report",
+        title: "Factory Report",
+        icon: "assessment",
+        roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"],
+      },
     ],
   },
 
