@@ -14,15 +14,33 @@
       <div class="card-body">
         <div class="filter-grid">
           <mat-form-field class="example-full-width"><mat-label>Search</mat-label><input matInput [(ngModel)]="filters.search" name="search"></mat-form-field>
-          <mat-form-field class="example-full-width"><mat-label>Category</mat-label><input matInput [(ngModel)]="filters.category" name="category"></mat-form-field>
-          <mat-form-field class="example-full-width"><mat-label>Department</mat-label><input matInput [(ngModel)]="filters.department" name="department"></mat-form-field>
-          <mat-form-field class="example-full-width"><mat-label>Payment Method</mat-label><input matInput [(ngModel)]="filters.paymentMethod" name="paymentMethod"></mat-form-field>
+          <mat-form-field class="example-full-width">
+            <mat-label>Category</mat-label>
+            <mat-select [(ngModel)]="filters.category" name="category">
+              <mat-option value="">All</mat-option>
+              <mat-option *ngFor="let category of categories" [value]="category">{{ category }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field class="example-full-width">
+            <mat-label>Department</mat-label>
+            <mat-select [(ngModel)]="filters.department" name="department">
+              <mat-option value="">All</mat-option>
+              <mat-option *ngFor="let department of departments" [value]="department">{{ department }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field class="example-full-width">
+            <mat-label>Payment Method</mat-label>
+            <mat-select [(ngModel)]="filters.paymentMethod" name="paymentMethod">
+              <mat-option value="">All</mat-option>
+              <mat-option *ngFor="let method of paymentMethods" [value]="method">{{ method }}</mat-option>
+            </mat-select>
+          </mat-form-field>
           <mat-form-field class="example-full-width"><mat-label>From Date</mat-label><input matInput type="date" [(ngModel)]="filters.dateFrom" name="dateFrom"></mat-form-field>
           <mat-form-field class="example-full-width"><mat-label>To Date</mat-label><input matInput type="date" [(ngModel)]="filters.dateTo" name="dateTo"></mat-form-field>
         </div>
         <div class="filter-actions">
           <button mat-raised-button class="btn btn-danger" (click)="loadReport()">Apply Filters</button>
-          <button mat-stroked-button class="btn btn-outline-danger" (click)="resetFilters()">Today</button>
+          <button mat-stroked-button class="btn btn-outline-danger" (click)="resetFilters()">Reset</button>
         </div>
       </div>
     </div>

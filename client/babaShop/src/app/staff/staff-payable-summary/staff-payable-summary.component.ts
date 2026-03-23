@@ -42,7 +42,7 @@ export class StaffPayableSummaryComponent implements OnInit {
   loadReport(): void {
     this.loading = true;
     forkJoin({
-      staffResponse: this.staffService.getStaffs({ active: "true", search: this.filters.search }),
+      staffResponse: this.staffService.getStaffs({ search: this.filters.search }),
       dailyWorkResponse: this.staffDailyWorkService.getDailyWorks(this.filters),
       paymentResponse: this.staffPaymentService.getPayments(this.filters),
     }).subscribe({
@@ -53,9 +53,8 @@ export class StaffPayableSummaryComponent implements OnInit {
         this.staffOptions = staffs;
 
         const selectedStaffId = `${this.filters.staff || ""}`.trim();
-        const rows = staffs
-          .filter((staff: any) => !selectedStaffId || staff._id === selectedStaffId)
-          .map((staff: any) => ({
+        const byId = staffs.reduce((acc: Record<string, any>, staff: any) => {
+          acc[staff._id] = {
             staffId: staff._id,
             name: staff.name,
             workType: staff.workType,
@@ -64,23 +63,44 @@ export class StaffPayableSummaryComponent implements OnInit {
             payment: 0,
             payable: 0,
             workEntries: 0,
-          }));
-
-        const byId = rows.reduce((acc: Record<string, any>, row: any) => {
-          acc[row.staffId] = row;
+          };
           return acc;
         }, {});
 
         dailyWorks.forEach((row: any) => {
           const staffId = row?.staff?._id || row?.staff;
-          if (!byId[staffId]) return;
+          if (!staffId) return;
+          if (!byId[staffId]) {
+            byId[staffId] = {
+              staffId,
+              name: row?.staff?.name || "Unknown Staff",
+              workType: row?.staff?.workType || "",
+              earned: 0,
+              advance: 0,
+              payment: 0,
+              payable: 0,
+              workEntries: 0,
+            };
+          }
           byId[staffId].earned += Number(row?.earnedAmount || 0);
           byId[staffId].workEntries += 1;
         });
 
         payments.forEach((row: any) => {
           const staffId = row?.staff?._id || row?.staff;
-          if (!byId[staffId]) return;
+          if (!staffId) return;
+          if (!byId[staffId]) {
+            byId[staffId] = {
+              staffId,
+              name: row?.staff?.name || "Unknown Staff",
+              workType: row?.staff?.workType || "",
+              earned: 0,
+              advance: 0,
+              payment: 0,
+              payable: 0,
+              workEntries: 0,
+            };
+          }
           const amount = Number(row?.amount || 0);
           if (`${row?.entryType || ""}` === "ADVANCE") {
             byId[staffId].advance += amount;
@@ -89,10 +109,13 @@ export class StaffPayableSummaryComponent implements OnInit {
           }
         });
 
-        this.rows = Object.values(byId).map((row: any) => ({
-          ...row,
-          payable: row.earned - row.advance - row.payment,
-        })).sort((a: any, b: any) => b.payable - a.payable);
+        this.rows = Object.values(byId)
+          .filter((row: any) => !selectedStaffId || row.staffId === selectedStaffId)
+          .map((row: any) => ({
+            ...row,
+            payable: row.earned - row.advance - row.payment,
+          }))
+          .sort((a: any, b: any) => b.payable - a.payable);
 
         this.summary = {
           totalEarned: this.rows.reduce((sum, row) => sum + row.earned, 0),

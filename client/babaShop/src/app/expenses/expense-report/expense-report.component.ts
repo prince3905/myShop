@@ -8,6 +8,25 @@ import { DailyExpenseService } from "app/shared/services/daily-expense.service";
   styleUrls: ["./expense-report.component.css"],
 })
 export class ExpenseReportComponent implements OnInit {
+  readonly categories = [
+    "CHAI_PANI",
+    "LABOUR",
+    "TRANSPORT",
+    "DIESEL",
+    "BIJLI",
+    "REPAIR",
+    "ADVANCE",
+    "FACTORY_EXPENSE",
+    "OFFICE_EXPENSE",
+    "MAINTENANCE",
+    "UTILITY",
+    "MISC",
+  ];
+
+  readonly departments = ["FACTORY", "OFFICE", "STAFF", "WORKSHOP", "TRANSPORT"];
+
+  readonly paymentMethods = ["CASH", "UPI", "BANK", "CARD", "ONLINE", "CHEQUE"];
+
   filters = {
     search: "",
     category: "",
