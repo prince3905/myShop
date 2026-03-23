@@ -63,6 +63,7 @@ import { AddCustomerDialogComponent } from "app/sales/add-customer-dialog/add-cu
 import { DailyExpenseComponent } from "app/expenses/daily-expense/daily-expense.component";
 import { StaffMasterComponent } from "app/staff/staff-master/staff-master.component";
 import { StaffPaymentsComponent } from "app/staff/staff-payments/staff-payments.component";
+import { StaffDailyWorkComponent } from "app/staff/staff-daily-work/staff-daily-work.component";
 import { FactoryProductionComponent } from "app/factory/factory-production/factory-production.component";
 import { RawMaterialRegisterComponent } from "app/factory/raw-material-register/raw-material-register.component";
 import { ScrapRegisterComponent } from "app/factory/scrap-register/scrap-register.component";
@@ -134,6 +135,7 @@ import { MaterialInwardComponent } from "app/factory/material-inward/material-in
     AddCustomerDialogComponent,
     DailyExpenseComponent,
     StaffMasterComponent,
+    StaffDailyWorkComponent,
     StaffPaymentsComponent,
     FactoryProductionComponent,
     RawMaterialRegisterComponent,

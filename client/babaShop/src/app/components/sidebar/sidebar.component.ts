@@ -113,6 +113,12 @@ export const ROUTES: RouteInfo[] = [
         roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"],
       },
       {
+        path: "/staff-daily-work",
+        title: "Daily Work",
+        icon: "event_note",
+        roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"],
+      },
+      {
         path: "/staff-payments",
         title: "Payment & Advance",
         icon: "account_balance_wallet",
@@ -141,7 +147,7 @@ export const ROUTES: RouteInfo[] = [
       {
         path: "/material-inward",
         title: "Material Inward",
-        icon: "input_circle",
+        icon: "inventory",
         roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"],
       },
       {

@@ -1,0 +1,166 @@
+.staff-daily-work-page .page-hero-card {
+  margin-bottom: 14px;
+}
+
+.daily-work-hero {
+  border-radius: 15px;
+  margin-top: 0;
+  padding: 14px 16px;
+}
+
+.daily-work-hero-title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.daily-work-hero-subtitle {
+  margin: 6px 0 0;
+  opacity: 0.92;
+}
+
+.summary-row,
+.breakdown-row {
+  margin-bottom: 8px;
+}
+
+.summary-card,
+.breakdown-card {
+  border: 1px solid #eef1f5;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+}
+
+.summary-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #7a809a;
+  text-transform: uppercase;
+}
+
+.summary-value {
+  font-size: 24px;
+  font-weight: 800;
+  color: #2d3436;
+}
+
+.breakdown-title,
+.table-primary {
+  font-weight: 700;
+  color: #2d3436;
+}
+
+.breakdown-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.breakdown-item {
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #fafbff;
+  border: 1px solid #edf0f7;
+}
+
+.breakdown-meta,
+.table-note {
+  color: #7a809a;
+  font-size: 12px;
+}
+
+.breakdown-amount {
+  margin-top: 8px;
+  font-weight: 700;
+}
+
+.filter-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.filter-actions,
+.form-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.edit-banner,
+.table-empty {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #fff7f7;
+  color: #d63031;
+  margin-bottom: 12px;
+}
+
+.table-empty {
+  text-align: center;
+  color: #7a809a;
+  background: #fafbff;
+}
+
+.value-preview-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: calc(100% - 18px);
+  margin-top: 9px;
+  padding: 14px;
+  border-radius: 12px;
+  background: #fafbff;
+  border: 1px solid #edf0f7;
+}
+
+.daily-work-table-wrap {
+  overflow-x: auto;
+}
+
+.type-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 88px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #0f8b50;
+  background: rgba(47, 184, 106, 0.14);
+}
+
+.type-chip.half-day {
+  color: #d97706;
+  background: rgba(245, 158, 11, 0.16);
+}
+
+.type-chip.absent {
+  color: #d63031;
+  background: rgba(214, 48, 49, 0.14);
+}
+
+.amount-cell {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.table-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.table-edit-btn {
+  color: #1d4ed8;
+}
+
+.table-delete-btn {
+  color: #d63031;
+}
+
+@media (max-width: 991px) {
+  .breakdown-grid,
+  .filter-grid {
+    grid-template-columns: 1fr;
+  }
+}

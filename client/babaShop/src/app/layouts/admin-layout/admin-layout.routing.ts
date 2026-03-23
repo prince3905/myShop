@@ -28,6 +28,7 @@ import { CustomerDetailsComponent } from "app/customers/customer-details/custome
 import { DailyExpenseComponent } from "app/expenses/daily-expense/daily-expense.component";
 import { StaffMasterComponent } from "app/staff/staff-master/staff-master.component";
 import { StaffPaymentsComponent } from "app/staff/staff-payments/staff-payments.component";
+import { StaffDailyWorkComponent } from "app/staff/staff-daily-work/staff-daily-work.component";
 import { FactoryProductionComponent } from "app/factory/factory-production/factory-production.component";
 import { RawMaterialRegisterComponent } from "app/factory/raw-material-register/raw-material-register.component";
 import { ScrapRegisterComponent } from "app/factory/scrap-register/scrap-register.component";
@@ -69,6 +70,7 @@ export const AdminLayoutRoutes: Routes = [
   { path: "customer/:id", component: CustomerDetailsComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ALL_ROLES, requireShop: true, allowGlobalRead: true } },
   { path: "daily-expense", component: DailyExpenseComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ALL_ROLES, requireShop: true } },
   { path: "staff-master", component: StaffMasterComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ALL_ROLES, requireShop: true } },
+  { path: "staff-daily-work", component: StaffDailyWorkComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ALL_ROLES, requireShop: true } },
   { path: "staff-payments", component: StaffPaymentsComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ALL_ROLES, requireShop: true } },
   { path: "factory-production", component: FactoryProductionComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ALL_ROLES, requireShop: true } },
   { path: "raw-material-register", component: RawMaterialRegisterComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ALL_ROLES, requireShop: true } },
