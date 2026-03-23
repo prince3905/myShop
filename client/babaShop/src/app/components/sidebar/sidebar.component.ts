@@ -138,6 +138,12 @@ export const ROUTES: RouteInfo[] = [
         icon: "inventory",
         roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"],
       },
+      {
+        path: "/scrap-register",
+        title: "Scrap / Waste Register",
+        icon: "delete_sweep",
+        roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"],
+      },
     ],
   },
 

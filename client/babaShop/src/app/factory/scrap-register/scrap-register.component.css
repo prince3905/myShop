@@ -1,0 +1,207 @@
+.scrap-page {
+  padding-top: 12px;
+}
+
+.page-hero-card {
+  margin-bottom: 12px;
+}
+
+.scrap-hero {
+  border-radius: 15px;
+  margin-top: 0;
+  padding: 14px 18px;
+}
+
+.scrap-hero-title {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.scrap-hero-subtitle {
+  margin: 6px 0 0;
+  font-size: 0.95rem;
+  opacity: 0.92;
+}
+
+.summary-row,
+.breakdown-row {
+  margin-bottom: 12px;
+}
+
+.summary-card,
+.breakdown-card {
+  height: 100%;
+  border: 1px solid rgba(210, 218, 232, 0.85);
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.06);
+}
+
+.summary-label {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #64748b;
+  margin-bottom: 8px;
+}
+
+.summary-value {
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: #111827;
+  line-height: 1.2;
+}
+
+.breakdown-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 12px;
+}
+
+.breakdown-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.breakdown-item {
+  border: 1px solid #e6ecf4;
+  border-radius: 12px;
+  padding: 12px;
+  background: #fafcff;
+}
+
+.breakdown-name {
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.breakdown-meta,
+.breakdown-empty {
+  font-size: 0.84rem;
+  color: #6b7280;
+}
+
+.breakdown-amount {
+  margin-top: 4px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.form-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.submit-btn {
+  width: 100%;
+}
+
+.edit-banner {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(220, 38, 38, 0.08);
+  color: #991b1b;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.filter-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px 12px;
+}
+
+.filter-actions {
+  display: flex;
+  gap: 10px;
+  margin: 6px 0 14px;
+}
+
+.scrap-table-wrap {
+  overflow-x: auto;
+}
+
+.scrap-table {
+  margin-bottom: 0;
+}
+
+.scrap-table th {
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6b7280;
+  border-top: 0;
+}
+
+.scrap-table td {
+  vertical-align: top;
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+
+.table-primary {
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.table-note {
+  margin-top: 3px;
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.amount-cell {
+  font-weight: 700;
+  color: #111827;
+  white-space: nowrap;
+}
+
+.table-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.table-edit-btn {
+  color: #2563eb;
+  min-width: auto;
+  padding: 0;
+}
+
+.table-delete-btn {
+  color: #c62828;
+  min-width: auto;
+  padding: 0;
+}
+
+.table-empty {
+  border: 1px dashed #d6dce8;
+  border-radius: 14px;
+  padding: 24px;
+  text-align: center;
+  color: #64748b;
+  background: #f8fbff;
+}
+
+@media (max-width: 991px) {
+  .filter-grid,
+  .breakdown-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .filter-grid,
+  .breakdown-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .filter-actions {
+    flex-direction: column;
+  }
+}
