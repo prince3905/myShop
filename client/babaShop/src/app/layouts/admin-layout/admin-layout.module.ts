@@ -64,6 +64,7 @@ import { DailyExpenseComponent } from "app/expenses/daily-expense/daily-expense.
 import { StaffMasterComponent } from "app/staff/staff-master/staff-master.component";
 import { StaffPaymentsComponent } from "app/staff/staff-payments/staff-payments.component";
 import { FactoryProductionComponent } from "app/factory/factory-production/factory-production.component";
+import { RawMaterialRegisterComponent } from "app/factory/raw-material-register/raw-material-register.component";
 
 @NgModule({
   imports: [
@@ -132,6 +133,7 @@ import { FactoryProductionComponent } from "app/factory/factory-production/facto
     StaffMasterComponent,
     StaffPaymentsComponent,
     FactoryProductionComponent,
+    RawMaterialRegisterComponent,
     HasRoleDirective,
     CapitalizeFirstDirective,
   ],

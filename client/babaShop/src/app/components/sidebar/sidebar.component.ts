@@ -132,6 +132,12 @@ export const ROUTES: RouteInfo[] = [
         icon: "construction",
         roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"],
       },
+      {
+        path: "/raw-material-register",
+        title: "Raw Material Register",
+        icon: "inventory",
+        roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"],
+      },
     ],
   },
 

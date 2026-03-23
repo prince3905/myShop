@@ -85,6 +85,7 @@ const dailyExpenseRoutes = require("./routes/dailyExpenseRoutes");
 const staffRoutes = require("./routes/staffRoutes");
 const staffPaymentRoutes = require("./routes/staffPaymentRoutes");
 const factoryProductionRoutes = require("./routes/factoryProductionRoutes");
+const rawMaterialRoutes = require("./routes/rawMaterialRoutes");
 
 
 //Middleware
@@ -133,6 +134,7 @@ app.use("/api/daily-expenses", dailyExpenseRoutes);
 app.use("/api/staffs", staffRoutes);
 app.use("/api/staff-payments", staffPaymentRoutes);
 app.use("/api/factory-productions", factoryProductionRoutes);
+app.use("/api/raw-materials", rawMaterialRoutes);
 
 app.get("/api/health", (req, res) => {
   res.status(200).json({
