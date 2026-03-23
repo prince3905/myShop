@@ -122,6 +122,20 @@ export const ROUTES: RouteInfo[] = [
   },
 
   {
+    title: "Factory",
+    icon: "precision_manufacturing",
+    roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"],
+    children: [
+      {
+        path: "/factory-production",
+        title: "Production Register",
+        icon: "construction",
+        roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"],
+      },
+    ],
+  },
+
+  {
     title: "People",
     icon: "groups",
     roles: ["SUPER_ADMIN", "ADMIN", "MANAGER"],
