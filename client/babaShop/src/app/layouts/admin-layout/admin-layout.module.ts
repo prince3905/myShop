@@ -69,6 +69,7 @@ import { RawMaterialRegisterComponent } from "app/factory/raw-material-register/
 import { ScrapRegisterComponent } from "app/factory/scrap-register/scrap-register.component";
 import { FactoryReportComponent } from "app/factory/factory-report/factory-report.component";
 import { MaterialInwardComponent } from "app/factory/material-inward/material-inward.component";
+import { FinishedGoodsRegisterComponent } from "app/factory/finished-goods-register/finished-goods-register.component";
 
 @NgModule({
   imports: [
@@ -140,6 +141,7 @@ import { MaterialInwardComponent } from "app/factory/material-inward/material-in
     FactoryProductionComponent,
     RawMaterialRegisterComponent,
     MaterialInwardComponent,
+    FinishedGoodsRegisterComponent,
     ScrapRegisterComponent,
     FactoryReportComponent,
     HasRoleDirective,

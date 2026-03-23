@@ -34,6 +34,7 @@ import { RawMaterialRegisterComponent } from "app/factory/raw-material-register/
 import { ScrapRegisterComponent } from "app/factory/scrap-register/scrap-register.component";
 import { FactoryReportComponent } from "app/factory/factory-report/factory-report.component";
 import { MaterialInwardComponent } from "app/factory/material-inward/material-inward.component";
+import { FinishedGoodsRegisterComponent } from "app/factory/finished-goods-register/finished-goods-register.component";
 
 const ALL_ROLES = ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"];
 const MANAGER_AND_ABOVE = ["SUPER_ADMIN", "ADMIN", "MANAGER"];
@@ -75,6 +76,7 @@ export const AdminLayoutRoutes: Routes = [
   { path: "factory-production", component: FactoryProductionComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ALL_ROLES, requireShop: true } },
   { path: "raw-material-register", component: RawMaterialRegisterComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ALL_ROLES, requireShop: true } },
   { path: "material-inward", component: MaterialInwardComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ALL_ROLES, requireShop: true } },
+  { path: "finished-goods-register", component: FinishedGoodsRegisterComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ALL_ROLES, requireShop: true } },
   { path: "scrap-register", component: ScrapRegisterComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ALL_ROLES, requireShop: true } },
   { path: "factory-report", component: FactoryReportComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ALL_ROLES, requireShop: true } },
   { path: "users", component: UserComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ADMIN_AND_ABOVE } },
