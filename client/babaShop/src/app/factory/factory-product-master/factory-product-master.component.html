@@ -1,0 +1,160 @@
+<div class="main-content factory-page factory-product-page">
+  <div class="container-fluid">
+    <div class="card page-hero-card">
+      <div class="card-header card-header-danger factory-hero">
+        <div>
+          <h2 class="factory-hero-title">Factory Product Master</h2>
+          <p class="factory-hero-subtitle">Ready maal ki fixed list banao, taki production register me product select karke costing fast ho.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="row summary-row">
+      <div class="col-md-4 col-sm-6"><div class="card summary-card"><div class="card-body"><div class="summary-label">Total Products</div><div class="summary-value">{{ summary.totalProducts || 0 }}</div></div></div></div>
+      <div class="col-md-4 col-sm-6"><div class="card summary-card"><div class="card-body"><div class="summary-label">Active</div><div class="summary-value">{{ summary.activeProducts || 0 }}</div></div></div></div>
+      <div class="col-md-4 col-sm-6"><div class="card summary-card"><div class="card-body"><div class="summary-label">Inactive</div><div class="summary-value">{{ summary.inactiveProducts || 0 }}</div></div></div></div>
+    </div>
+
+    <div class="row breakdown-row">
+      <div class="col-md-12">
+        <div class="card breakdown-card">
+          <div class="card-body">
+            <div class="breakdown-title">Unit Breakdown</div>
+            <div *ngIf="loadingSummary" class="breakdown-empty">Loading breakdown...</div>
+            <div *ngIf="!loadingSummary && summary.byUnit?.length === 0" class="breakdown-empty">No products added yet.</div>
+            <div class="breakdown-grid" *ngIf="!loadingSummary && summary.byUnit?.length > 0">
+              <div class="breakdown-item" *ngFor="let row of summary.byUnit; trackBy: trackBySummary">
+                <div class="breakdown-name">{{ row._id }}</div>
+                <div class="breakdown-meta">{{ row.count }} products</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-lg-4">
+        <div class="card">
+          <div class="card-header card-header-danger"><h4 class="card-title">{{ getFormTitle() }}</h4></div>
+          <div class="card-body">
+            <form #productNgForm="ngForm" (ngSubmit)="submitProduct(productNgForm)">
+              <mat-form-field class="example-full-width">
+                <mat-label>Product Name</mat-label>
+                <input matInput [(ngModel)]="productForm.name" name="name" required>
+              </mat-form-field>
+
+              <div class="row">
+                <div class="col-md-6">
+                  <mat-form-field class="example-full-width">
+                    <mat-label>Code</mat-label>
+                    <input matInput [(ngModel)]="productForm.code" name="code">
+                  </mat-form-field>
+                </div>
+                <div class="col-md-6">
+                  <mat-form-field class="example-full-width">
+                    <mat-label>Unit</mat-label>
+                    <mat-select [(ngModel)]="productForm.unitLabel" name="unitLabel" required>
+                      <mat-option *ngFor="let unit of unitOptions" [value]="unit">{{ unit }}</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-6">
+                  <mat-form-field class="example-full-width">
+                    <mat-label>Std Labour Cost</mat-label>
+                    <input matInput type="number" min="0" [(ngModel)]="productForm.standardLabourCost" name="standardLabourCost" required>
+                  </mat-form-field>
+                </div>
+                <div class="col-md-6">
+                  <mat-form-field class="example-full-width">
+                    <mat-label>Std Other Cost</mat-label>
+                    <input matInput type="number" min="0" [(ngModel)]="productForm.standardOtherCost" name="standardOtherCost" required>
+                  </mat-form-field>
+                </div>
+              </div>
+
+              <mat-form-field class="example-full-width">
+                <mat-label>Note</mat-label>
+                <textarea matInput rows="2" [(ngModel)]="productForm.note" name="note"></textarea>
+              </mat-form-field>
+
+              <mat-checkbox [(ngModel)]="productForm.active" name="active">Active product</mat-checkbox>
+
+              <div class="form-actions">
+                <button mat-raised-button class="btn btn-danger submit-btn" [disabled]="savingProduct || productNgForm.invalid">{{ getSubmitLabel() }}</button>
+                <button *ngIf="editingProductId" type="button" mat-stroked-button class="btn btn-outline-danger submit-btn" (click)="cancelEdit(productNgForm)">Cancel Edit</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-8">
+        <div class="card">
+          <div class="card-header card-header-danger"><h4 class="card-title">Factory Product List</h4></div>
+          <div class="card-body">
+            <div class="filter-grid two-col-grid">
+              <mat-form-field class="example-full-width">
+                <mat-label>Search</mat-label>
+                <input matInput [(ngModel)]="filters.search" name="search" placeholder="Product, code, note">
+              </mat-form-field>
+              <mat-form-field class="example-full-width">
+                <mat-label>Status</mat-label>
+                <mat-select [(ngModel)]="filters.active" name="active">
+                  <mat-option value="">All</mat-option>
+                  <mat-option value="true">Active</mat-option>
+                  <mat-option value="false">Inactive</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+
+            <div class="filter-actions">
+              <button mat-raised-button class="btn btn-danger" (click)="loadProducts()">Apply Filters</button>
+              <button mat-stroked-button class="btn btn-outline-danger" (click)="clearFilters()">Reset</button>
+            </div>
+
+            <div *ngIf="loadingProducts" class="table-empty">Loading factory products...</div>
+            <div *ngIf="!loadingProducts && products.length === 0" class="table-empty">No factory products found.</div>
+
+            <div class="table-wrap" *ngIf="!loadingProducts && products.length > 0">
+              <table class="table item-table">
+                <thead>
+                  <tr>
+                    <th>Product</th>
+                    <th>Unit</th>
+                    <th>Std Labour</th>
+                    <th>Std Other</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let product of products">
+                    <td>
+                      <div class="table-primary">{{ product.name }}</div>
+                      <div class="table-note" *ngIf="product.code">#{{ product.code }}</div>
+                      <div class="table-note" *ngIf="product.note">{{ product.note }}</div>
+                    </td>
+                    <td>{{ product.unitLabel }}</td>
+                    <td>Rs {{ product.standardLabourCost | number: '1.0-2' }}</td>
+                    <td>Rs {{ product.standardOtherCost | number: '1.0-2' }}</td>
+                    <td><span class="status-chip" [class.inactive]="!product.active">{{ product.active ? 'Active' : 'Inactive' }}</span></td>
+                    <td>
+                      <div class="table-actions" *ngIf="canManage">
+                        <button mat-icon-button class="table-edit-btn" [disabled]="deletingId === product._id" (click)="startEdit(product)" aria-label="Edit product" title="Edit"><mat-icon>edit</mat-icon></button>
+                        <button mat-icon-button class="table-delete-btn" [disabled]="deletingId === product._id" (click)="deleteProduct(product)" aria-label="Delete product" title="Delete"><mat-icon>{{ deletingId === product._id ? 'hourglass_top' : 'delete' }}</mat-icon></button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

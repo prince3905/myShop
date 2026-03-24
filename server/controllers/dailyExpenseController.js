@@ -16,7 +16,10 @@ const endOfDay = (date) => {
 };
 
 const normalizeDate = (raw) => {
-  const d = raw ? new Date(raw) : new Date();
+  if (raw === undefined || raw === null || `${raw}`.trim() === "") {
+    return null;
+  }
+  const d = new Date(raw);
   return Number.isNaN(d.getTime()) ? null : d;
 };
 
@@ -26,7 +29,7 @@ exports.createExpense = async (req, res) => {
       return res.status(400).json({ success: false, message: "Please select a shop first" });
     }
 
-    const expenseDate = normalizeDate(req.body?.expenseDate);
+    const expenseDate = normalizeDate(req.body?.expenseDate) || new Date();
     if (!expenseDate) {
       return res.status(400).json({ success: false, message: "Valid expense date is required" });
     }

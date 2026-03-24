@@ -1,0 +1,167 @@
+<div class="main-content staff-work-items-page">
+  <div class="container-fluid">
+    <div class="card page-hero-card">
+      <div class="card-header card-header-danger work-item-hero">
+        <div>
+          <h2 class="work-item-hero-title">Item Rate Master</h2>
+          <p class="work-item-hero-subtitle">Box ya item-wise fixed rate set karo, taki piece-rate staff ka hisab automatic chale.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="row summary-row">
+      <div class="col-md-3 col-sm-6"><div class="card summary-card"><div class="card-body"><div class="summary-label">Total Items</div><div class="summary-value">{{ summary.totalItems || 0 }}</div></div></div></div>
+      <div class="col-md-3 col-sm-6"><div class="card summary-card"><div class="card-body"><div class="summary-label">Active</div><div class="summary-value">{{ summary.activeItems || 0 }}</div></div></div></div>
+      <div class="col-md-3 col-sm-6"><div class="card summary-card"><div class="card-body"><div class="summary-label">Avg Rate</div><div class="summary-value">Rs {{ summary.averageRate || 0 | number: '1.0-2' }}</div></div></div></div>
+      <div class="col-md-3 col-sm-6"><div class="card summary-card"><div class="card-body"><div class="summary-label">Rate Base</div><div class="summary-value">Rs {{ summary.totalRateBase || 0 | number: '1.0-2' }}</div></div></div></div>
+    </div>
+
+    <div class="row breakdown-row">
+      <div class="col-md-12">
+        <div class="card breakdown-card">
+          <div class="card-body">
+            <div class="breakdown-title">Work Type Breakdown</div>
+            <div *ngIf="loadingSummary" class="breakdown-empty">Loading breakdown...</div>
+            <div *ngIf="!loadingSummary && summary.byWorkType?.length === 0" class="breakdown-empty">No item rates added yet.</div>
+            <div class="breakdown-grid" *ngIf="!loadingSummary && summary.byWorkType?.length > 0">
+              <div class="breakdown-item" *ngFor="let row of summary.byWorkType; trackBy: trackBySummary">
+                <div class="breakdown-name">{{ row._id }}</div>
+                <div class="breakdown-meta">{{ row.count }} items</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-lg-4">
+        <div class="card">
+          <div class="card-header card-header-danger">
+            <h4 class="card-title">{{ getFormTitle() }}</h4>
+          </div>
+          <div class="card-body">
+            <form #itemNgForm="ngForm" (ngSubmit)="submitItem(itemNgForm)">
+              <mat-form-field class="example-full-width">
+                <mat-label>Work Type</mat-label>
+                <mat-select [(ngModel)]="itemForm.workTypeRef" name="workTypeRef" required>
+                  <mat-option *ngFor="let type of workTypeOptions" [value]="type._id">{{ type.name }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field class="example-full-width">
+                <mat-label>Item Name</mat-label>
+                <input matInput [(ngModel)]="itemForm.itemName" name="itemName" required>
+              </mat-form-field>
+
+              <div class="row">
+                <div class="col-md-6">
+                  <mat-form-field class="example-full-width">
+                    <mat-label>Unit</mat-label>
+                    <mat-select [(ngModel)]="itemForm.unit" name="unit" required>
+                      <mat-option *ngFor="let unit of units" [value]="unit">{{ unit }}</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+                <div class="col-md-6">
+                  <mat-form-field class="example-full-width">
+                    <mat-label>Piece Rate</mat-label>
+                    <input matInput type="number" min="0" [(ngModel)]="itemForm.pieceRate" name="pieceRate" required>
+                  </mat-form-field>
+                </div>
+              </div>
+
+              <mat-form-field class="example-full-width">
+                <mat-label>Note</mat-label>
+                <textarea matInput rows="2" [(ngModel)]="itemForm.note" name="note"></textarea>
+              </mat-form-field>
+
+              <mat-checkbox [(ngModel)]="itemForm.active" name="active">Active item rate</mat-checkbox>
+
+              <div class="form-actions">
+                <button mat-raised-button class="btn btn-danger submit-btn" [disabled]="savingItem || itemNgForm.invalid">{{ getSubmitLabel() }}</button>
+                <button *ngIf="editingItemId" type="button" mat-stroked-button class="btn btn-outline-danger submit-btn" (click)="cancelEdit(itemNgForm)">Cancel Edit</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-8">
+        <div class="card">
+          <div class="card-header card-header-danger">
+            <h4 class="card-title">Item Rate List</h4>
+          </div>
+          <div class="card-body">
+            <div class="filter-grid">
+              <mat-form-field class="example-full-width">
+                <mat-label>Search</mat-label>
+                <input matInput [(ngModel)]="filters.search" name="search" placeholder="Item, work type">
+              </mat-form-field>
+              <mat-form-field class="example-full-width">
+                <mat-label>Work Type</mat-label>
+                <mat-select [(ngModel)]="filters.workType" name="filterWorkType">
+                  <mat-option value="">All</mat-option>
+                  <mat-option *ngFor="let type of workTypeOptions" [value]="type.name">{{ type.name }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+              <mat-form-field class="example-full-width">
+                <mat-label>Status</mat-label>
+                <mat-select [(ngModel)]="filters.active" name="filterActive">
+                  <mat-option value="">All</mat-option>
+                  <mat-option value="true">Active</mat-option>
+                  <mat-option value="false">Inactive</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+
+            <div class="filter-actions">
+              <button mat-raised-button class="btn btn-danger" (click)="loadItems()">Apply Filters</button>
+              <button mat-stroked-button class="btn btn-outline-danger" (click)="clearFilters()">Reset</button>
+            </div>
+
+            <div *ngIf="loadingItems" class="table-empty">Loading item rates...</div>
+            <div *ngIf="!loadingItems && items.length === 0" class="table-empty">No item rates found.</div>
+
+            <div class="table-wrap" *ngIf="!loadingItems && items.length > 0">
+              <table class="table item-table">
+                <thead>
+                  <tr>
+                    <th>Item</th>
+                    <th>Work Type</th>
+                    <th>Unit</th>
+                    <th>Rate</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let item of items">
+                    <td>
+                      <div class="table-primary">{{ item.itemName }}</div>
+                      <div class="table-note" *ngIf="item.note">{{ item.note }}</div>
+                    </td>
+                    <td>{{ item.workType }}</td>
+                    <td>{{ item.unit }}</td>
+                    <td>Rs {{ item.pieceRate | number: '1.0-2' }}</td>
+                    <td><span class="status-chip" [class.inactive]="!item.active">{{ item.active ? 'Active' : 'Inactive' }}</span></td>
+                    <td>
+                      <div class="table-actions" *ngIf="canManage">
+                        <button mat-icon-button class="table-edit-btn" [disabled]="deletingId === item._id" (click)="startEdit(item)" aria-label="Edit item rate" title="Edit">
+                          <mat-icon>edit</mat-icon>
+                        </button>
+                        <button mat-icon-button class="table-delete-btn" [disabled]="deletingId === item._id" (click)="deleteItem(item)" aria-label="Delete item rate" title="Delete">
+                          <mat-icon>{{ deletingId === item._id ? 'hourglass_top' : 'delete' }}</mat-icon>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

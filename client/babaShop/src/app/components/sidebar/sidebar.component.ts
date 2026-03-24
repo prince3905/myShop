@@ -119,6 +119,12 @@ export const ROUTES: RouteInfo[] = [
         roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"],
       },
       {
+        path: "/staff-work-items",
+        title: "Item Rate Master",
+        icon: "sell",
+        roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"],
+      },
+      {
         path: "/staff-daily-work",
         title: "Daily Work",
         icon: "event_note",
@@ -144,6 +150,12 @@ export const ROUTES: RouteInfo[] = [
     icon: "precision_manufacturing",
     roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"],
     children: [
+      {
+        path: "/factory-product-master",
+        title: "Factory Product Master",
+        icon: "category",
+        roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"],
+      },
       {
         path: "/factory-production",
         title: "Production Register",

@@ -29,8 +29,9 @@
       <div class="col-md-3 col-sm-6">
         <div class="card summary-card">
           <div class="card-body">
-            <div class="summary-label">Net Balance</div>
-            <div class="summary-value">Rs {{ summary.netBalance || 0 | number: '1.2-2' }}</div>
+            <div class="summary-label">Total Entries</div>
+            <div class="summary-value">{{ totalEntriesCount }}</div>
+            <div class="summary-meta">Advance aur payment dono milakar</div>
           </div>
         </div>
       </div>
@@ -219,9 +220,11 @@
                     <td>{{ payment.createdBy?.pFname || payment.createdBy?.email || '-' }}</td>
                     <td>
                       <div class="table-actions" *ngIf="canManage">
-                        <button mat-button class="table-edit-btn" [disabled]="deletingId === payment._id" (click)="startEdit(payment)">Edit</button>
-                        <button mat-button class="table-delete-btn" [disabled]="deletingId === payment._id" (click)="deletePayment(payment)">
-                          {{ deletingId === payment._id ? 'Deleting...' : 'Delete' }}
+                        <button mat-icon-button class="table-edit-btn" [disabled]="deletingId === payment._id" (click)="startEdit(payment)" aria-label="Edit payment" title="Edit">
+                          <mat-icon>edit</mat-icon>
+                        </button>
+                        <button mat-icon-button class="table-delete-btn" [disabled]="deletingId === payment._id" (click)="deletePayment(payment)" aria-label="Delete payment" title="Delete">
+                          <mat-icon>{{ deletingId === payment._id ? 'hourglass_top' : 'delete' }}</mat-icon>
                         </button>
                       </div>
                     </td>

@@ -4,24 +4,16 @@
       <div class="card-header card-header-danger factory-hero">
         <div>
           <h2 class="factory-hero-title">Factory Production Register</h2>
-          <p class="factory-hero-subtitle">Yellow register style production + costing entry for ready maal, waste and per piece cost.</p>
+          <p class="factory-hero-subtitle">Yellow register style production + costing entry with product master and material line items.</p>
         </div>
       </div>
     </div>
 
     <div class="row summary-row">
-      <div class="col-md-3 col-sm-6">
-        <div class="card summary-card"><div class="card-body"><div class="summary-label">Total Entries</div><div class="summary-value">{{ summary.totalEntries || 0 }}</div></div></div>
-      </div>
-      <div class="col-md-3 col-sm-6">
-        <div class="card summary-card"><div class="card-body"><div class="summary-label">Total Qty</div><div class="summary-value">{{ summary.totalQty || 0 | number: '1.0-2' }}</div></div></div>
-      </div>
-      <div class="col-md-3 col-sm-6">
-        <div class="card summary-card"><div class="card-body"><div class="summary-label">Total Cost</div><div class="summary-value">Rs {{ summary.totalCost || 0 | number: '1.2-2' }}</div></div></div>
-      </div>
-      <div class="col-md-3 col-sm-6">
-        <div class="card summary-card"><div class="card-body"><div class="summary-label">Today Qty</div><div class="summary-value">{{ summary.todayQty || 0 | number: '1.0-2' }}</div></div></div>
-      </div>
+      <div class="col-md-3 col-sm-6"><div class="card summary-card"><div class="card-body"><div class="summary-label">Total Entries</div><div class="summary-value">{{ summary.totalEntries || 0 }}</div></div></div></div>
+      <div class="col-md-3 col-sm-6"><div class="card summary-card"><div class="card-body"><div class="summary-label">Total Qty</div><div class="summary-value">{{ summary.totalQty || 0 | number: '1.0-2' }}</div></div></div></div>
+      <div class="col-md-3 col-sm-6"><div class="card summary-card"><div class="card-body"><div class="summary-label">Total Cost</div><div class="summary-value">Rs {{ summary.totalCost || 0 | number: '1.2-2' }}</div></div></div></div>
+      <div class="col-md-3 col-sm-6"><div class="card summary-card"><div class="card-body"><div class="summary-label">Today Qty</div><div class="summary-value">{{ summary.todayQty || 0 | number: '1.0-2' }}</div></div></div></div>
     </div>
 
     <div class="row breakdown-row">
@@ -46,9 +38,7 @@
     <div class="row">
       <div class="col-lg-5">
         <div class="card">
-          <div class="card-header card-header-danger">
-            <h4 class="card-title">{{ getFormTitle() }}</h4>
-          </div>
+          <div class="card-header card-header-danger"><h4 class="card-title">{{ getFormTitle() }}</h4></div>
           <div class="card-body">
             <form #productionNgForm="ngForm" (ngSubmit)="submitProduction(productionNgForm)">
               <div class="edit-banner" *ngIf="editingProductionId">Editing selected production entry.</div>
@@ -69,25 +59,89 @@
               </div>
 
               <mat-form-field class="example-full-width">
-                <mat-label>Item Name</mat-label>
-                <input matInput [(ngModel)]="productionForm.itemName" name="itemName" required>
+                <mat-label>Factory Product</mat-label>
+                <mat-select [(ngModel)]="productionForm.productRef" name="productRef" (selectionChange)="onProductChange()">
+                  <mat-option value="">Manual Entry</mat-option>
+                  <mat-option *ngFor="let product of productOptions" [value]="product._id">{{ product.name }} <span *ngIf="product.code">({{ product.code }})</span></mat-option>
+                </mat-select>
               </mat-form-field>
+
+              <div class="row">
+                <div class="col-md-7">
+                  <mat-form-field class="example-full-width">
+                    <mat-label>Item Name</mat-label>
+                    <input matInput [(ngModel)]="productionForm.itemName" name="itemName" required>
+                  </mat-form-field>
+                </div>
+                <div class="col-md-5">
+                  <mat-form-field class="example-full-width">
+                    <mat-label>Unit</mat-label>
+                    <mat-select [(ngModel)]="productionForm.unitLabel" name="unitLabel" required>
+                      <mat-option *ngFor="let unit of unitOptions" [value]="unit">{{ unit }}</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+              </div>
 
               <mat-form-field class="example-full-width">
                 <mat-label>Item Description</mat-label>
                 <textarea matInput rows="2" [(ngModel)]="productionForm.itemDescription" name="itemDescription"></textarea>
               </mat-form-field>
 
-              <mat-form-field class="example-full-width">
-                <mat-label>Raw Material Details</mat-label>
-                <textarea matInput rows="3" [(ngModel)]="productionForm.rawMaterialDetails" name="rawMaterialDetails"></textarea>
-              </mat-form-field>
+              <div class="material-lines-card">
+                <div class="material-lines-header">
+                  <div>
+                    <div class="breakdown-title material-title">Material Lines</div>
+                    <div class="table-note">Raw material + qty + rate auto costing</div>
+                  </div>
+                  <button type="button" mat-stroked-button class="btn btn-outline-danger add-line-btn" (click)="addMaterialLine()">Add Material</button>
+                </div>
+
+                <div class="material-line" *ngFor="let line of productionForm.materialLines; let i = index">
+                  <div class="material-line-grid">
+                    <mat-form-field class="example-full-width material-select-field">
+                      <mat-label>Raw Material</mat-label>
+                      <mat-select [(ngModel)]="line.rawMaterial" [name]="'rawMaterial' + i" (selectionChange)="onMaterialChange(i)">
+                        <mat-option value="">Manual</mat-option>
+                        <mat-option *ngFor="let material of materialOptions" [value]="material._id">{{ material.name }}</mat-option>
+                      </mat-select>
+                    </mat-form-field>
+
+                    <mat-form-field class="example-full-width">
+                      <mat-label>Material Name</mat-label>
+                      <input matInput [(ngModel)]="line.materialName" [name]="'materialName' + i">
+                    </mat-form-field>
+
+                    <mat-form-field class="example-full-width material-mini-field">
+                      <mat-label>Qty</mat-label>
+                      <input matInput type="number" min="0" [(ngModel)]="line.qtyUsed" [name]="'qtyUsed' + i">
+                    </mat-form-field>
+
+                    <mat-form-field class="example-full-width material-mini-field">
+                      <mat-label>Unit</mat-label>
+                      <input matInput [(ngModel)]="line.unitLabel" [name]="'lineUnit' + i">
+                    </mat-form-field>
+
+                    <mat-form-field class="example-full-width material-mini-field">
+                      <mat-label>Rate</mat-label>
+                      <input matInput type="number" min="0" [(ngModel)]="line.rate" [name]="'rate' + i">
+                    </mat-form-field>
+                  </div>
+
+                  <div class="material-line-footer">
+                    <div class="line-amount">Amount: <strong>Rs {{ getMaterialLineAmount(line) | number: '1.2-2' }}</strong></div>
+                    <button type="button" mat-icon-button class="table-delete-btn" (click)="removeMaterialLine(i)" aria-label="Remove material line" title="Remove line">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </div>
+                </div>
+              </div>
 
               <div class="row">
                 <div class="col-md-4">
                   <mat-form-field class="example-full-width">
                     <mat-label>Material Cost</mat-label>
-                    <input matInput type="number" min="0" [(ngModel)]="productionForm.materialCost" name="materialCost" required>
+                    <input matInput [value]="materialCostPreview | number: '1.2-2'" readonly>
                   </mat-form-field>
                 </div>
                 <div class="col-md-4">
@@ -113,26 +167,20 @@
                 </div>
                 <div class="col-md-4">
                   <mat-form-field class="example-full-width">
-                    <mat-label>Unit</mat-label>
-                    <mat-select [(ngModel)]="productionForm.unitLabel" name="unitLabel" required>
-                      <mat-option *ngFor="let unit of unitOptions" [value]="unit">{{ unit }}</mat-option>
-                    </mat-select>
-                  </mat-form-field>
-                </div>
-                <div class="col-md-4">
-                  <mat-form-field class="example-full-width">
                     <mat-label>Waste Qty</mat-label>
                     <input matInput type="number" min="0" [(ngModel)]="productionForm.wasteQty" name="wasteQty">
                   </mat-form-field>
                 </div>
+                <div class="col-md-4">
+                  <mat-form-field class="example-full-width">
+                    <mat-label>Workers Involved</mat-label>
+                    <input matInput [(ngModel)]="productionForm.workersInvolved" name="workersInvolved">
+                  </mat-form-field>
+                </div>
               </div>
 
-              <mat-form-field class="example-full-width">
-                <mat-label>Workers Involved</mat-label>
-                <input matInput [(ngModel)]="productionForm.workersInvolved" name="workersInvolved">
-              </mat-form-field>
-
               <div class="cost-preview-card">
+                <div><span>Total Material</span><strong>Rs {{ materialCostPreview | number: '1.2-2' }}</strong></div>
                 <div><span>Total Cost</span><strong>Rs {{ totalCostPreview | number: '1.2-2' }}</strong></div>
                 <div><span>Cost / Unit</span><strong>Rs {{ costPerUnitPreview | number: '1.2-2' }}</strong></div>
               </div>
@@ -143,18 +191,8 @@
               </mat-form-field>
 
               <div class="form-actions">
-                <button mat-raised-button class="btn btn-danger submit-btn" [disabled]="savingProduction || productionNgForm.invalid">
-                  {{ getSubmitLabel() }}
-                </button>
-                <button
-                  *ngIf="editingProductionId"
-                  type="button"
-                  mat-stroked-button
-                  class="btn btn-outline-danger submit-btn"
-                  (click)="cancelEdit(productionNgForm)"
-                >
-                  Cancel Edit
-                </button>
+                <button mat-raised-button class="btn btn-danger submit-btn" [disabled]="savingProduction || productionNgForm.invalid">{{ getSubmitLabel() }}</button>
+                <button *ngIf="editingProductionId" type="button" mat-stroked-button class="btn btn-outline-danger submit-btn" (click)="cancelEdit(productionNgForm)">Cancel Edit</button>
               </div>
             </form>
           </div>
@@ -163,9 +201,7 @@
 
       <div class="col-lg-7">
         <div class="card">
-          <div class="card-header card-header-danger">
-            <h4 class="card-title">Production Entries</h4>
-          </div>
+          <div class="card-header card-header-danger"><h4 class="card-title">Production Entries</h4></div>
           <div class="card-body">
             <div class="filter-grid">
               <mat-form-field class="example-full-width">
@@ -209,7 +245,7 @@
                     <td>
                       <div class="table-primary">{{ production.itemName }}</div>
                       <div class="table-note" *ngIf="production.serialNo">#{{ production.serialNo }}</div>
-                      <div class="table-note" *ngIf="production.rawMaterialDetails">{{ production.rawMaterialDetails }}</div>
+                      <div class="table-note" *ngIf="production.materialLines?.length">{{ production.rawMaterialDetails }}</div>
                     </td>
                     <td>{{ production.qtyProduced | number: '1.0-2' }} {{ production.unitLabel }}</td>
                     <td class="amount-cell">Rs {{ production.totalCost | number: '1.2-2' }}</td>
@@ -217,10 +253,8 @@
                     <td>{{ production.createdBy?.pFname || production.createdBy?.email || '-' }}</td>
                     <td>
                       <div class="table-actions" *ngIf="canManage">
-                        <button mat-button class="table-edit-btn" [disabled]="deletingId === production._id" (click)="startEdit(production)">Edit</button>
-                        <button mat-button class="table-delete-btn" [disabled]="deletingId === production._id" (click)="deleteProduction(production)">
-                          {{ deletingId === production._id ? 'Deleting...' : 'Delete' }}
-                        </button>
+                        <button mat-icon-button class="table-edit-btn" [disabled]="deletingId === production._id" (click)="startEdit(production)" aria-label="Edit production" title="Edit"><mat-icon>edit</mat-icon></button>
+                        <button mat-icon-button class="table-delete-btn" [disabled]="deletingId === production._id" (click)="deleteProduction(production)" aria-label="Delete production" title="Delete"><mat-icon>{{ deletingId === production._id ? 'hourglass_top' : 'delete' }}</mat-icon></button>
                       </div>
                     </td>
                   </tr>

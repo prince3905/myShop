@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const staffSchema = new mongoose.Schema(
+const factoryProductSchema = new mongoose.Schema(
   {
     shop: {
       type: mongoose.Schema.Types.ObjectId,
@@ -13,36 +13,25 @@ const staffSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
-    phone: {
+    code: {
       type: String,
       trim: true,
       default: "",
     },
-    staffType: {
+    unitLabel: {
       type: String,
       trim: true,
-      default: "Worker",
+      default: "PCS",
     },
-    workType: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    workTypeRef: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "StaffWorkType",
-      default: null,
-    },
-    rateType: {
-      type: String,
-      enum: ["MONTHLY", "DAILY", "PIECE"],
-      default: "DAILY",
-      required: true,
-    },
-    rate: {
+    standardLabourCost: {
       type: Number,
-      required: true,
       min: 0,
+      default: 0,
+    },
+    standardOtherCost: {
+      type: Number,
+      min: 0,
+      default: 0,
     },
     note: {
       type: String,
@@ -72,8 +61,7 @@ const staffSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-staffSchema.index({ shop: 1, name: 1, workType: 1 });
-staffSchema.index({ shop: 1, staffType: 1, rateType: 1 });
-staffSchema.index({ shop: 1, active: 1, createdAt: -1 });
+factoryProductSchema.index({ shop: 1, name: 1 });
+factoryProductSchema.index({ shop: 1, active: 1, createdAt: -1 });
 
-module.exports = mongoose.model("Staff", staffSchema);
+module.exports = mongoose.model("FactoryProduct", factoryProductSchema);

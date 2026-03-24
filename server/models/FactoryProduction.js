@@ -1,5 +1,41 @@
 const mongoose = require("mongoose");
 
+const materialLineSchema = new mongoose.Schema(
+  {
+    rawMaterial: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "RawMaterial",
+      default: null,
+    },
+    materialName: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    qtyUsed: {
+      type: Number,
+      min: 0,
+      default: 0,
+    },
+    unitLabel: {
+      type: String,
+      trim: true,
+      default: "PCS",
+    },
+    rate: {
+      type: Number,
+      min: 0,
+      default: 0,
+    },
+    amount: {
+      type: Number,
+      min: 0,
+      default: 0,
+    },
+  },
+  { _id: false },
+);
+
 const factoryProductionSchema = new mongoose.Schema(
   {
     shop: {
@@ -18,6 +54,11 @@ const factoryProductionSchema = new mongoose.Schema(
       trim: true,
       default: "",
     },
+    productRef: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "FactoryProduct",
+      default: null,
+    },
     itemName: {
       type: String,
       required: true,
@@ -32,6 +73,10 @@ const factoryProductionSchema = new mongoose.Schema(
       type: String,
       trim: true,
       default: "",
+    },
+    materialLines: {
+      type: [materialLineSchema],
+      default: [],
     },
     materialCost: {
       type: Number,

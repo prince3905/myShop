@@ -68,7 +68,7 @@
   border: 1px solid #e6ecf4;
   border-radius: 12px;
   padding: 12px;
-  background: #fafcff;
+  background: #f8f9fb;
 }
 
 .breakdown-name {
@@ -168,7 +168,7 @@
 }
 
 .table-edit-btn {
-  color: #2563eb;
+  color: #4b5563;
   min-width: auto;
   padding: 0;
 }
@@ -185,7 +185,7 @@
   padding: 24px;
   text-align: center;
   color: #64748b;
-  background: #f8fbff;
+  background: #f8f9fb;
 }
 
 @media (max-width: 991px) {

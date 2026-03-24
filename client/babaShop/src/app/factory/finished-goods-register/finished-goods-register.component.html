@@ -174,9 +174,11 @@
                     <td class="amount-cell">Rs {{ entry.totalEstimatedValue | number: '1.2-2' }}</td>
                     <td>
                       <div class="table-actions" *ngIf="canManage">
-                        <button mat-button class="table-edit-btn" [disabled]="deletingId === entry._id" (click)="startEdit(entry)">Edit</button>
-                        <button mat-button class="table-delete-btn" [disabled]="deletingId === entry._id" (click)="deleteEntry(entry)">
-                          {{ deletingId === entry._id ? 'Deleting...' : 'Delete' }}
+                        <button mat-icon-button class="table-edit-btn" [disabled]="deletingId === entry._id" (click)="startEdit(entry)" aria-label="Edit finished goods entry" title="Edit">
+                          <mat-icon>edit</mat-icon>
+                        </button>
+                        <button mat-icon-button class="table-delete-btn" [disabled]="deletingId === entry._id" (click)="deleteEntry(entry)" aria-label="Delete finished goods entry" title="Delete">
+                          <mat-icon>{{ deletingId === entry._id ? 'hourglass_top' : 'delete' }}</mat-icon>
                         </button>
                       </div>
                     </td>

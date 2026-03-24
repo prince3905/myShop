@@ -58,7 +58,7 @@
 .breakdown-item {
   padding: 12px 14px;
   border-radius: 14px;
-  background: #fafbff;
+  background: #f8f9fb;
   border: 1px solid #edf0f7;
 }
 
@@ -86,6 +86,18 @@
   margin-top: 10px;
 }
 
+.quick-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.quick-toggle-btn {
+  min-height: 34px;
+  line-height: 1;
+}
+
 .edit-banner,
 .table-empty {
   padding: 12px 14px;
@@ -98,7 +110,7 @@
 .table-empty {
   text-align: center;
   color: #7a809a;
-  background: #fafbff;
+  background: #f8f9fb;
 }
 
 .value-preview-card {
@@ -109,8 +121,64 @@
   margin-top: 9px;
   padding: 14px;
   border-radius: 12px;
-  background: #fafbff;
+  background: #f8f9fb;
   border: 1px solid #edf0f7;
+}
+
+.value-preview-card.compact {
+  padding: 12px;
+}
+
+.quick-entry-shell {
+  display: grid;
+  gap: 10px;
+}
+
+.quick-info-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: -2px;
+}
+
+.quick-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.05);
+  color: #374151;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.quick-chip.muted {
+  background: rgba(100, 116, 139, 0.08);
+  color: #475569;
+}
+
+.quick-main-row {
+  margin-top: -6px;
+}
+
+.quick-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: -6px;
+}
+
+.advanced-panel {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed #e2e8f0;
+}
+
+.advanced-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #334155;
+  margin-bottom: 8px;
 }
 
 .daily-work-table-wrap {
@@ -151,7 +219,7 @@
 }
 
 .table-edit-btn {
-  color: #1d4ed8;
+  color: #4b5563;
 }
 
 .table-delete-btn {
@@ -162,5 +230,17 @@
   .breakdown-grid,
   .filter-grid {
     grid-template-columns: 1fr;
+  }
+
+  .quick-preview-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 767px) {
+  .quick-header,
+  .form-actions {
+    flex-direction: column;
+    align-items: stretch;
   }
 }

@@ -40,7 +40,8 @@
         </div>
         <div class="filter-actions">
           <button mat-raised-button class="btn btn-danger" (click)="loadReport()">Apply Filters</button>
-          <button mat-stroked-button class="btn btn-outline-danger" (click)="resetFilters()">Reset</button>
+          <button mat-stroked-button class="btn btn-outline-danger" (click)="showToday()">Today</button>
+          <button mat-stroked-button class="btn btn-outline-danger" (click)="resetFilters()">View All</button>
         </div>
       </div>
     </div>
@@ -48,9 +49,47 @@
     <div class="summary-grid">
       <div class="summary-card"><span class="summary-label">Total Expense</span><strong>Rs {{ summary.totalAmount | number: '1.2-2' }}</strong><small>{{ summary.totalEntries }} entries</small></div>
       <div class="summary-card"><span class="summary-label">Today Expense</span><strong>Rs {{ summary.todayAmount | number: '1.2-2' }}</strong><small>{{ summary.todayEntries }} entries</small></div>
+      <div class="summary-card"><span class="summary-label">This Month</span><strong>Rs {{ monthlyComparison.currentMonthAmount | number: '1.2-2' }}</strong><small>current month total</small></div>
+      <div class="summary-card"><span class="summary-label">Previous Month</span><strong>Rs {{ monthlyComparison.previousMonthAmount | number: '1.2-2' }}</strong><small>last month total</small></div>
+    </div>
+
+    <div class="comparison-grid" *ngIf="!loading">
+      <div class="comparison-card">
+        <span class="summary-label">Monthly Change</span>
+        <strong [class.negative]="monthlyComparison.changeAmount < 0">Rs {{ monthlyComparison.changeAmount | number: '1.2-2' }}</strong>
+        <small [class.negative]="monthlyComparison.changePercent < 0">
+          {{ monthlyComparison.changePercent | number: '1.0-2' }}%
+        </small>
+      </div>
+      <div class="comparison-card">
+        <span class="summary-label">Department Mini Report</span>
+        <div class="mini-department-list" *ngIf="departmentHighlights.length > 0">
+          <div class="mini-department-item" *ngFor="let item of departmentHighlights; trackBy: trackByLabel">
+            <span>{{ item.label }}</span>
+            <strong>Rs {{ item.amount | number: '1.2-2' }}</strong>
+          </div>
+        </div>
+        <small *ngIf="departmentHighlights.length === 0">No department data found.</small>
+      </div>
     </div>
 
     <div *ngIf="loading" class="table-empty">Loading expense report...</div>
+
+    <div class="card" *ngIf="!loading">
+      <div class="card-header card-header-danger"><h4 class="card-title">Date-wise Expense Summary</h4></div>
+      <div class="card-body">
+        <div *ngIf="dateWiseSummary.length === 0" class="table-empty">No date-wise expense data found.</div>
+        <div class="date-summary-grid" *ngIf="dateWiseSummary.length > 0">
+          <div class="date-summary-card" *ngFor="let item of dateWiseSummary; trackBy: trackByLabel">
+            <div>
+              <div class="breakdown-title">{{ item.label | date: 'dd/MM/yyyy' }}</div>
+              <div class="breakdown-subtitle">{{ item.count }} entries</div>
+            </div>
+            <strong>Rs {{ item.amount | number: '1.2-2' }}</strong>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <div class="row" *ngIf="!loading">
       <div class="col-lg-4">

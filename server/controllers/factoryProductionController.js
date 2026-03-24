@@ -1,4 +1,6 @@
 const FactoryProduction = require("../models/FactoryProduction");
+const FactoryProduct = require("../models/FactoryProduct");
+const RawMaterial = require("../models/RawMaterial");
 
 const STAFF_ONLY_FILTER = (req) => `${req.user?.role || ""}` === "STAFF";
 const MANAGER_AND_ABOVE = ["SUPER_ADMIN", "ADMIN", "MANAGER"];
@@ -20,9 +22,70 @@ const normalizeDate = (raw) => {
   return Number.isNaN(d.getTime()) ? null : d;
 };
 
+const normalizeOptionalDate = (raw) => {
+  if (raw === undefined || raw === null || `${raw}`.trim() === "") {
+    return null;
+  }
+  const d = new Date(raw);
+  return Number.isNaN(d.getTime()) ? null : d;
+};
+
 const toNumber = (value) => {
   const parsed = Number(value || 0);
   return Number.isFinite(parsed) ? parsed : NaN;
+};
+
+const normalizeMaterialLines = async (req, lines = []) => {
+  const normalized = [];
+
+  for (const line of lines || []) {
+    const qtyUsed = toNumber(line?.qtyUsed);
+    const rate = toNumber(line?.rate);
+    const amount = toNumber(line?.amount);
+    const rawMaterialId = `${line?.rawMaterial || ""}`.trim();
+
+    if (!rawMaterialId && !`${line?.materialName || ""}`.trim()) {
+      continue;
+    }
+
+    if (!Number.isFinite(qtyUsed) || qtyUsed <= 0) {
+      throw new Error("Material line quantity must be greater than 0");
+    }
+
+    let materialName = `${line?.materialName || ""}`.trim();
+    let unitLabel = `${line?.unitLabel || "PCS"}`.trim().toUpperCase();
+    let rawMaterial = null;
+
+    if (rawMaterialId) {
+      const rawMaterialDoc = await RawMaterial.findOne({
+        _id: rawMaterialId,
+        shop: req.shopId,
+        isDeleted: false,
+      }).lean();
+
+      if (!rawMaterialDoc) {
+        throw new Error("Selected raw material not found");
+      }
+
+      rawMaterial = rawMaterialDoc._id;
+      materialName = materialName || rawMaterialDoc.name;
+      unitLabel = unitLabel || rawMaterialDoc.unitLabel || "PCS";
+    }
+
+    const finalRate = Number.isFinite(rate) && rate >= 0 ? rate : 0;
+    const finalAmount = Number.isFinite(amount) && amount >= 0 ? amount : qtyUsed * finalRate;
+
+    normalized.push({
+      rawMaterial,
+      materialName,
+      qtyUsed,
+      unitLabel,
+      rate: finalRate,
+      amount: finalAmount,
+    });
+  }
+
+  return normalized;
 };
 
 exports.createProduction = async (req, res) => {
@@ -36,18 +99,34 @@ exports.createProduction = async (req, res) => {
       return res.status(400).json({ success: false, message: "Valid entry date is required" });
     }
 
+    const productId = `${req.body?.productRef || ""}`.trim();
+    let productDoc = null;
+    if (productId) {
+      productDoc = await FactoryProduct.findOne({ _id: productId, shop: req.shopId, isDeleted: false }).lean();
+      if (!productDoc) {
+        return res.status(400).json({ success: false, message: "Selected factory product not found" });
+      }
+    }
+
+    const materialLines = await normalizeMaterialLines(req, req.body?.materialLines || []);
+    const materialCostFromLines = materialLines.reduce((sum, line) => sum + Number(line.amount || 0), 0);
+
     const payload = {
       shop: req.shopId,
       entryDate,
       serialNo: `${req.body?.serialNo || ""}`.trim(),
-      itemName: `${req.body?.itemName || ""}`.trim(),
+      productRef: productDoc?._id || null,
+      itemName: `${req.body?.itemName || productDoc?.name || ""}`.trim(),
       itemDescription: `${req.body?.itemDescription || ""}`.trim(),
-      rawMaterialDetails: `${req.body?.rawMaterialDetails || ""}`.trim(),
-      materialCost: toNumber(req.body?.materialCost),
+      rawMaterialDetails: materialLines.length > 0
+        ? materialLines.map((line) => `${line.materialName} ${line.qtyUsed} ${line.unitLabel}`).join(", ")
+        : `${req.body?.rawMaterialDetails || ""}`.trim(),
+      materialLines,
+      materialCost: materialLines.length > 0 ? materialCostFromLines : toNumber(req.body?.materialCost),
       labourCost: toNumber(req.body?.labourCost),
       otherCost: toNumber(req.body?.otherCost),
       qtyProduced: toNumber(req.body?.qtyProduced),
-      unitLabel: `${req.body?.unitLabel || "PCS"}`.trim().toUpperCase(),
+      unitLabel: `${req.body?.unitLabel || productDoc?.unitLabel || "PCS"}`.trim().toUpperCase(),
       wasteQty: toNumber(req.body?.wasteQty),
       workersInvolved: `${req.body?.workersInvolved || ""}`.trim(),
       note: `${req.body?.note || ""}`.trim(),
@@ -70,16 +149,15 @@ exports.createProduction = async (req, res) => {
     }
 
     const production = await FactoryProduction.create(payload);
-    const populated = await FactoryProduction.findById(production._id).populate("createdBy", "email role pFname pLname");
+    const populated = await FactoryProduction.findById(production._id)
+      .populate("createdBy", "email role pFname pLname")
+      .populate("productRef", "name code unitLabel")
+      .populate("materialLines.rawMaterial", "name code unitLabel currentRate");
 
-    return res.status(201).json({
-      success: true,
-      message: "Production entry added",
-      production: populated,
-    });
+    return res.status(201).json({ success: true, message: "Production entry added", production: populated });
   } catch (error) {
     console.error("Create Factory Production Error:", error);
-    return res.status(500).json({ success: false, message: "Failed to create production entry" });
+    return res.status(500).json({ success: false, message: error.message || "Failed to create production entry" });
   }
 };
 
@@ -89,19 +167,16 @@ exports.getProductions = async (req, res) => {
       return res.status(400).json({ success: false, message: "Please select a shop first" });
     }
 
-    const filter = {
-      shop: req.shopId,
-      isDeleted: false,
-    };
+    const filter = { shop: req.shopId, isDeleted: false };
 
     if (STAFF_ONLY_FILTER(req)) {
       filter.createdBy = req.user._id;
     }
 
     const { search, dateFrom, dateTo } = req.query || {};
+    const from = normalizeOptionalDate(dateFrom);
+    const to = normalizeOptionalDate(dateTo);
 
-    const from = normalizeDate(dateFrom);
-    const to = normalizeDate(dateTo);
     if (from || to) {
       filter.entryDate = {};
       if (from) filter.entryDate.$gte = startOfDay(from);
@@ -115,6 +190,7 @@ exports.getProductions = async (req, res) => {
         { itemName: regex },
         { itemDescription: regex },
         { rawMaterialDetails: regex },
+        { "materialLines.materialName": regex },
         { workersInvolved: regex },
         { note: regex },
       ];
@@ -122,7 +198,9 @@ exports.getProductions = async (req, res) => {
 
     const productions = await FactoryProduction.find(filter)
       .sort({ entryDate: -1, createdAt: -1 })
-      .populate("createdBy", "email role pFname pLname");
+      .populate("createdBy", "email role pFname pLname")
+      .populate("productRef", "name code unitLabel")
+      .populate("materialLines.rawMaterial", "name code unitLabel currentRate");
 
     return res.json({ success: true, productions });
   } catch (error) {
@@ -137,11 +215,7 @@ exports.getProductionSummary = async (req, res) => {
       return res.status(400).json({ success: false, message: "Please select a shop first" });
     }
 
-    const baseMatch = {
-      shop: req.shopId,
-      isDeleted: false,
-    };
-
+    const baseMatch = { shop: req.shopId, isDeleted: false };
     if (STAFF_ONLY_FILTER(req)) {
       baseMatch.createdBy = req.user._id;
     }
@@ -212,12 +286,7 @@ exports.updateProduction = async (req, res) => {
       return res.status(403).json({ success: false, message: "You do not have permission to update entries" });
     }
 
-    const production = await FactoryProduction.findOne({
-      _id: req.params.id,
-      shop: req.shopId,
-      isDeleted: false,
-    });
-
+    const production = await FactoryProduction.findOne({ _id: req.params.id, shop: req.shopId, isDeleted: false });
     if (!production) {
       return res.status(404).json({ success: false, message: "Production entry not found" });
     }
@@ -227,16 +296,33 @@ exports.updateProduction = async (req, res) => {
       return res.status(400).json({ success: false, message: "Valid entry date is required" });
     }
 
+    const productId = req.body?.productRef !== undefined ? `${req.body?.productRef || ""}`.trim() : `${production.productRef || ""}`.trim();
+    let productDoc = null;
+    if (productId) {
+      productDoc = await FactoryProduct.findOne({ _id: productId, shop: req.shopId, isDeleted: false }).lean();
+      if (!productDoc) {
+        return res.status(400).json({ success: false, message: "Selected factory product not found" });
+      }
+    }
+
+    const incomingLines = req.body?.materialLines !== undefined ? req.body.materialLines : production.materialLines;
+    const materialLines = await normalizeMaterialLines(req, incomingLines || []);
+    const materialCostFromLines = materialLines.reduce((sum, line) => sum + Number(line.amount || 0), 0);
+
     production.entryDate = entryDate;
     production.serialNo = `${req.body?.serialNo ?? production.serialNo ?? ""}`.trim();
-    production.itemName = `${req.body?.itemName || production.itemName || ""}`.trim();
+    production.productRef = productDoc?._id || null;
+    production.itemName = `${req.body?.itemName || productDoc?.name || production.itemName || ""}`.trim();
     production.itemDescription = `${req.body?.itemDescription ?? production.itemDescription ?? ""}`.trim();
-    production.rawMaterialDetails = `${req.body?.rawMaterialDetails ?? production.rawMaterialDetails ?? ""}`.trim();
-    production.materialCost = toNumber(req.body?.materialCost ?? production.materialCost);
+    production.materialLines = materialLines;
+    production.rawMaterialDetails = materialLines.length > 0
+      ? materialLines.map((line) => `${line.materialName} ${line.qtyUsed} ${line.unitLabel}`).join(", ")
+      : `${req.body?.rawMaterialDetails ?? production.rawMaterialDetails ?? ""}`.trim();
+    production.materialCost = materialLines.length > 0 ? materialCostFromLines : toNumber(req.body?.materialCost ?? production.materialCost);
     production.labourCost = toNumber(req.body?.labourCost ?? production.labourCost);
     production.otherCost = toNumber(req.body?.otherCost ?? production.otherCost);
     production.qtyProduced = toNumber(req.body?.qtyProduced ?? production.qtyProduced);
-    production.unitLabel = `${req.body?.unitLabel ?? production.unitLabel ?? "PCS"}`.trim().toUpperCase();
+    production.unitLabel = `${req.body?.unitLabel || productDoc?.unitLabel || production.unitLabel || "PCS"}`.trim().toUpperCase();
     production.wasteQty = toNumber(req.body?.wasteQty ?? production.wasteQty);
     production.workersInvolved = `${req.body?.workersInvolved ?? production.workersInvolved ?? ""}`.trim();
     production.note = `${req.body?.note ?? production.note ?? ""}`.trim();
@@ -259,10 +345,15 @@ exports.updateProduction = async (req, res) => {
 
     await production.save();
 
-    return res.json({ success: true, message: "Production entry updated", production });
+    const populated = await FactoryProduction.findById(production._id)
+      .populate("createdBy", "email role pFname pLname")
+      .populate("productRef", "name code unitLabel")
+      .populate("materialLines.rawMaterial", "name code unitLabel currentRate");
+
+    return res.json({ success: true, message: "Production entry updated", production: populated });
   } catch (error) {
     console.error("Update Factory Production Error:", error);
-    return res.status(500).json({ success: false, message: "Failed to update production entry" });
+    return res.status(500).json({ success: false, message: error.message || "Failed to update production entry" });
   }
 };
 

@@ -185,9 +185,11 @@
                     <td class="amount-cell">Rs {{ inward.totalAmount | number: '1.2-2' }}</td>
                     <td>
                       <div class="table-actions" *ngIf="canManage">
-                        <button mat-button class="table-edit-btn" [disabled]="deletingId === inward._id" (click)="startEdit(inward)">Edit</button>
-                        <button mat-button class="table-delete-btn" [disabled]="deletingId === inward._id" (click)="deleteInward(inward)">
-                          {{ deletingId === inward._id ? 'Deleting...' : 'Delete' }}
+                        <button mat-icon-button class="table-edit-btn" [disabled]="deletingId === inward._id" (click)="startEdit(inward)" aria-label="Edit inward" title="Edit">
+                          <mat-icon>edit</mat-icon>
+                        </button>
+                        <button mat-icon-button class="table-delete-btn" [disabled]="deletingId === inward._id" (click)="deleteInward(inward)" aria-label="Delete inward" title="Delete">
+                          <mat-icon>{{ deletingId === inward._id ? 'hourglass_top' : 'delete' }}</mat-icon>
                         </button>
                       </div>
                     </td>

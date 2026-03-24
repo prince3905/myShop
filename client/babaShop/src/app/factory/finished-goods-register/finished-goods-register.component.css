@@ -59,7 +59,7 @@
   margin: 10px 0 14px;
   padding: 12px 14px;
   border-radius: 14px;
-  background: #fafbff;
+  background: #f8f9fb;
   border: 1px solid #edf0f7;
 }
 
@@ -105,7 +105,7 @@
 .table-empty {
   text-align: center;
   color: #7a809a;
-  background: #fafbff;
+  background: #f8f9fb;
 }
 
 .table-note {
@@ -128,7 +128,7 @@
 }
 
 .table-edit-btn {
-  color: #1d4ed8;
+  color: #4b5563;
 }
 
 .table-delete-btn {

@@ -67,6 +67,11 @@ export class StaffPaymentsComponent implements OnInit {
     return ["SUPER_ADMIN", "ADMIN", "MANAGER"].includes(`${this.userRole || ""}`);
   }
 
+  get totalEntriesCount(): number {
+    const rows = this.summary?.byType || [];
+    return rows.reduce((sum: number, row: any) => sum + Number(row?.count || 0), 0);
+  }
+
   loadAll(): void {
     this.loadSummary();
     this.loadPayments();

@@ -179,9 +179,11 @@
                     <td class="amount-cell">Rs {{ scrap.estimatedValue | number: '1.2-2' }}</td>
                     <td>
                       <div class="table-actions" *ngIf="canManage">
-                        <button mat-button class="table-edit-btn" [disabled]="deletingId === scrap._id" (click)="startEdit(scrap)">Edit</button>
-                        <button mat-button class="table-delete-btn" [disabled]="deletingId === scrap._id" (click)="deleteScrap(scrap)">
-                          {{ deletingId === scrap._id ? 'Deleting...' : 'Delete' }}
+                        <button mat-icon-button class="table-edit-btn" [disabled]="deletingId === scrap._id" (click)="startEdit(scrap)" aria-label="Edit scrap" title="Edit">
+                          <mat-icon>edit</mat-icon>
+                        </button>
+                        <button mat-icon-button class="table-delete-btn" [disabled]="deletingId === scrap._id" (click)="deleteScrap(scrap)" aria-label="Delete scrap" title="Delete">
+                          <mat-icon>{{ deletingId === scrap._id ? 'hourglass_top' : 'delete' }}</mat-icon>
                         </button>
                       </div>
                     </td>

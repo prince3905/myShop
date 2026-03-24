@@ -4,6 +4,7 @@ import { MatSnackBar } from "@angular/material/snack-bar";
 import { AuthService } from "app/shared/services/auth.service";
 import { StaffDailyWorkService } from "app/shared/services/staff-daily-work.service";
 import { StaffService } from "app/shared/services/staff.service";
+import { StaffWorkItemService } from "app/shared/services/staff-work-item.service";
 
 @Component({
   selector: "app-staff-daily-work",
@@ -12,12 +13,17 @@ import { StaffService } from "app/shared/services/staff.service";
 })
 export class StaffDailyWorkComponent implements OnInit {
   readonly attendanceOptions = ["PRESENT", "HALF_DAY", "ABSENT"];
+  showAdvanced = false;
 
   dailyWorkForm = {
     staff: "",
     entryDate: this.formatDate(new Date()),
     attendanceStatus: "PRESENT",
     workType: "",
+    workItem: "",
+    workItemName: "",
+    unit: "PCS",
+    pieceRate: 0,
     workDetails: "",
     linkedJob: "",
     unitsCompleted: 0,
@@ -44,6 +50,8 @@ export class StaffDailyWorkComponent implements OnInit {
   };
 
   staffOptions: any[] = [];
+  workItemOptions: any[] = [];
+  filteredWorkItemOptions: any[] = [];
   dailyWorks: any[] = [];
   editingDailyWorkId: string | null = null;
   loadingStaffs = false;
@@ -55,6 +63,7 @@ export class StaffDailyWorkComponent implements OnInit {
 
   constructor(
     private staffService: StaffService,
+    private staffWorkItemService: StaffWorkItemService,
     private staffDailyWorkService: StaffDailyWorkService,
     private snackBar: MatSnackBar,
     private authService: AuthService,
@@ -63,6 +72,7 @@ export class StaffDailyWorkComponent implements OnInit {
   ngOnInit(): void {
     this.userRole = this.authService.getUserRole();
     this.loadStaffs();
+    this.loadWorkItems();
     this.loadAll();
   }
 
@@ -77,7 +87,15 @@ export class StaffDailyWorkComponent implements OnInit {
     }
     const rate = Number(staff?.rate || 0);
     if (`${staff?.rateType || ""}` === "PIECE") {
-      return rate * Number(this.dailyWorkForm.unitsCompleted || 0);
+      const pieceRate = Number(this.selectedWorkItem?.pieceRate || this.dailyWorkForm.pieceRate || rate || 0);
+      return pieceRate * Number(this.dailyWorkForm.unitsCompleted || 0);
+    }
+    if (`${staff?.rateType || ""}` === "MONTHLY") {
+      if (this.dailyWorkForm.attendanceStatus === "ABSENT") {
+        return 0;
+      }
+      const perDay = rate / 30;
+      return this.dailyWorkForm.attendanceStatus === "HALF_DAY" ? perDay / 2 : perDay;
     }
     if (this.dailyWorkForm.attendanceStatus === "HALF_DAY") {
       return rate / 2;
@@ -86,6 +104,18 @@ export class StaffDailyWorkComponent implements OnInit {
       return 0;
     }
     return rate;
+  }
+
+  get selectedWorkItem(): any | null {
+    return this.filteredWorkItemOptions.find((row) => row?._id === this.dailyWorkForm.workItem) || null;
+  }
+
+  get selectedStaff(): any | null {
+    return this.staffOptions.find((row) => row?._id === this.dailyWorkForm.staff) || null;
+  }
+
+  get isPieceRateStaff(): boolean {
+    return `${this.selectedStaff?.rateType || ""}` === "PIECE";
   }
 
   loadAll(): void {
@@ -134,14 +164,42 @@ export class StaffDailyWorkComponent implements OnInit {
     });
   }
 
+  loadWorkItems(): void {
+    this.staffWorkItemService.getItems({ active: true }).subscribe({
+      next: (response) => {
+        this.workItemOptions = response?.items || [];
+        this.syncWorkItemsForSelectedStaff();
+      },
+      error: () => {
+        this.workItemOptions = [];
+        this.filteredWorkItemOptions = [];
+      },
+    });
+  }
+
   onStaffChange(): void {
     const staff = this.staffOptions.find((row) => row?._id === this.dailyWorkForm.staff);
-    if (!staff) return;
+    if (!staff) {
+      this.filteredWorkItemOptions = [];
+      return;
+    }
     this.dailyWorkForm.workType = staff.workType || "";
+    this.syncWorkItemsForSelectedStaff();
+    if (`${staff?.rateType || ""}` !== "PIECE") {
+      this.dailyWorkForm.unitsCompleted = 1;
+    }
     this.dailyWorkForm.earnedAmount = this.earnedAmountPreview;
   }
 
   onAttendanceChange(): void {
+    this.dailyWorkForm.earnedAmount = this.earnedAmountPreview;
+  }
+
+  onWorkItemChange(): void {
+    const item = this.selectedWorkItem;
+    this.dailyWorkForm.workItemName = item?.itemName || "";
+    this.dailyWorkForm.unit = item?.unit || "PCS";
+    this.dailyWorkForm.pieceRate = Number(item?.pieceRate || 0);
     this.dailyWorkForm.earnedAmount = this.earnedAmountPreview;
   }
 
@@ -158,6 +216,9 @@ export class StaffDailyWorkComponent implements OnInit {
     const payload = {
       ...this.dailyWorkForm,
       earnedAmount: this.earnedAmountPreview,
+      pieceRate: Number(this.selectedWorkItem?.pieceRate || this.dailyWorkForm.pieceRate || 0),
+      workItemName: this.selectedWorkItem?.itemName || this.dailyWorkForm.workItemName || "",
+      unit: this.selectedWorkItem?.unit || this.dailyWorkForm.unit || "PCS",
     };
 
     const request$ = this.editingDailyWorkId
@@ -193,12 +254,17 @@ export class StaffDailyWorkComponent implements OnInit {
       entryDate: this.formatDate(new Date(dailyWork.entryDate)),
       attendanceStatus: dailyWork.attendanceStatus || "PRESENT",
       workType: dailyWork.workType || "",
+      workItem: dailyWork.workItem?._id || dailyWork.workItem || "",
+      workItemName: dailyWork.workItemName || "",
+      unit: dailyWork.unit || "PCS",
+      pieceRate: Number(dailyWork.pieceRate || 0),
       workDetails: dailyWork.workDetails || "",
       linkedJob: dailyWork.linkedJob || "",
       unitsCompleted: Number(dailyWork.unitsCompleted || 0),
       earnedAmount: Number(dailyWork.earnedAmount || 0),
       note: dailyWork.note || "",
     };
+    this.syncWorkItemsForSelectedStaff();
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -209,6 +275,10 @@ export class StaffDailyWorkComponent implements OnInit {
       entryDate: this.formatDate(new Date()),
       attendanceStatus: "PRESENT",
       workType: "",
+      workItem: "",
+      workItemName: "",
+      unit: "PCS",
+      pieceRate: 0,
       workDetails: "",
       linkedJob: "",
       unitsCompleted: 0,
@@ -268,6 +338,19 @@ export class StaffDailyWorkComponent implements OnInit {
 
   trackBySummary(index: number, item: any): string {
     return `${item?._id || item?.label || "row"}-${index}`;
+  }
+
+  private syncWorkItemsForSelectedStaff(): void {
+    const staff = this.staffOptions.find((row) => row?._id === this.dailyWorkForm.staff);
+    const workType = `${staff?.workType || this.dailyWorkForm.workType || ""}`.trim();
+    this.filteredWorkItemOptions = this.workItemOptions.filter((row) => `${row?.workType || ""}`.trim() === workType);
+
+    if (!this.filteredWorkItemOptions.some((row) => row?._id === this.dailyWorkForm.workItem)) {
+      this.dailyWorkForm.workItem = "";
+      this.dailyWorkForm.workItemName = "";
+      this.dailyWorkForm.unit = "PCS";
+      this.dailyWorkForm.pieceRate = 0;
+    }
   }
 
   private formatDate(date: Date): string {

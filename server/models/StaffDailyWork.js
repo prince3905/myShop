@@ -30,6 +30,27 @@ const staffDailyWorkSchema = new mongoose.Schema(
       trim: true,
       default: "",
     },
+    workItem: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "StaffWorkItem",
+      default: null,
+      index: true,
+    },
+    workItemName: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    unit: {
+      type: String,
+      trim: true,
+      default: "PCS",
+    },
+    pieceRate: {
+      type: Number,
+      min: 0,
+      default: 0,
+    },
     workDetails: {
       type: String,
       trim: true,

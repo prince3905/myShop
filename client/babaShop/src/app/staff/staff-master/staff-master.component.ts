@@ -3,6 +3,7 @@ import { NgForm } from "@angular/forms";
 import { MatSnackBar } from "@angular/material/snack-bar";
 import { AuthService } from "app/shared/services/auth.service";
 import { StaffService } from "app/shared/services/staff.service";
+import { StaffWorkTypeService } from "app/shared/services/staff-work-type.service";
 
 @Component({
   selector: "app-staff-master",
@@ -10,21 +11,33 @@ import { StaffService } from "app/shared/services/staff.service";
   styleUrls: ["./staff-master.component.css"],
 })
 export class StaffMasterComponent implements OnInit {
-  readonly workTypes = ["Welding", "Cutting", "Fitting", "Painting", "Loading", "Helper", "Other"];
-  readonly rateTypes = ["DAILY", "PIECE"];
+  readonly staffTypes = ["Salesman", "Manager", "Helper", "Worker", "Supervisor", "Other"];
+  readonly payBasisOptions = [
+    { value: "MONTHLY", label: "Monthly Salary" },
+    { value: "DAILY", label: "Daily Wage" },
+    { value: "PIECE", label: "Piece / Box Rate" },
+  ];
 
   staffForm = {
     name: "",
     phone: "",
-    workType: "Welding",
+    staffType: "Worker",
+    workTypeRef: "",
     rateType: "DAILY",
     rate: null as number | null,
     note: "",
     active: true,
   };
 
+  workTypeForm = {
+    name: "",
+    description: "",
+    active: true,
+  };
+
   filters = {
     search: "",
+    staffType: "",
     workType: "",
     rateType: "",
     active: "",
@@ -36,18 +49,26 @@ export class StaffMasterComponent implements OnInit {
     activeStaffs: 0,
     inactiveStaffs: 0,
     byWorkType: [],
+    byStaffType: [],
+    byRateType: [],
   };
 
   staffs: any[] = [];
+  workTypeOptions: any[] = [];
   editingStaffId: string | null = null;
+  editingWorkTypeId: string | null = null;
   loadingSummary = false;
   loadingStaffs = false;
+  loadingWorkTypes = false;
   savingStaff = false;
+  savingWorkType = false;
   deletingId: string | null = null;
+  deletingWorkTypeId: string | null = null;
   userRole: string | null = null;
 
   constructor(
     private staffService: StaffService,
+    private staffWorkTypeService: StaffWorkTypeService,
     private snackBar: MatSnackBar,
     private authService: AuthService,
   ) {}
@@ -61,9 +82,38 @@ export class StaffMasterComponent implements OnInit {
     return ["SUPER_ADMIN", "ADMIN", "MANAGER"].includes(`${this.userRole || ""}`);
   }
 
+  get selectedPayBasisLabel(): string {
+    return this.payBasisOptions.find((row) => row.value === this.staffForm.rateType)?.label || "Pay Basis";
+  }
+
+  get rateFieldLabel(): string {
+    if (this.staffForm.rateType === "MONTHLY") {
+      return "Monthly Salary";
+    }
+    if (this.staffForm.rateType === "PIECE") {
+      return "Base Rate (Optional)";
+    }
+    return "Daily Wage";
+  }
+
+  get rateFieldHint(): string {
+    if (this.staffForm.rateType === "PIECE") {
+      return "Piece worker ka actual earning item rate master se aayega. Yahan 0 rakh sakte ho.";
+    }
+    if (this.staffForm.rateType === "MONTHLY") {
+      return "Monthly salary amount enter karo.";
+    }
+    return "Daily wage amount enter karo.";
+  }
+
+  get canShowWorkTypeSelect(): boolean {
+    return this.workTypeOptions.length > 0;
+  }
+
   loadAll(): void {
     this.loadSummary();
     this.loadStaffs();
+    this.loadWorkTypes();
   }
 
   loadSummary(): void {
@@ -94,15 +144,39 @@ export class StaffMasterComponent implements OnInit {
     });
   }
 
+  loadWorkTypes(): void {
+    this.loadingWorkTypes = true;
+    this.staffWorkTypeService.getWorkTypes({ active: true }).subscribe({
+      next: (response) => {
+        this.workTypeOptions = response?.workTypes || [];
+        this.loadingWorkTypes = false;
+      },
+      error: (error) => {
+        this.loadingWorkTypes = false;
+        this.showError(error?.error?.message || "Failed to load work types");
+      },
+    });
+  }
+
   submitStaff(form: NgForm): void {
     if (form.invalid || this.savingStaff) {
       return;
     }
 
+    if (!this.staffForm.workTypeRef) {
+      this.showError("Please add or select a work type first");
+      return;
+    }
+
     this.savingStaff = true;
+    const payload = {
+      ...this.staffForm,
+      workTypeRef: this.staffForm.workTypeRef || null,
+    };
+
     const request$ = this.editingStaffId
-      ? this.staffService.updateStaff(this.editingStaffId, this.staffForm)
-      : this.staffService.createStaff(this.staffForm);
+      ? this.staffService.updateStaff(this.editingStaffId, payload)
+      : this.staffService.createStaff(payload);
 
     request$.subscribe({
       next: (response) => {
@@ -120,6 +194,36 @@ export class StaffMasterComponent implements OnInit {
     });
   }
 
+  onRateTypeChange(): void {
+    if (this.staffForm.rateType === "PIECE" && (this.staffForm.rate === null || this.staffForm.rate === undefined)) {
+      this.staffForm.rate = 0;
+    }
+  }
+
+  submitWorkType(form: NgForm): void {
+    if (form.invalid || this.savingWorkType || !this.canManage) {
+      return;
+    }
+
+    this.savingWorkType = true;
+    const request$ = this.editingWorkTypeId
+      ? this.staffWorkTypeService.updateWorkType(this.editingWorkTypeId, this.workTypeForm)
+      : this.staffWorkTypeService.createWorkType(this.workTypeForm);
+
+    request$.subscribe({
+      next: (response) => {
+        this.savingWorkType = false;
+        this.snackBar.open(response?.message || "Work type saved", "Close", { duration: 2500 });
+        this.cancelWorkTypeEdit(form);
+        this.loadWorkTypes();
+      },
+      error: (error) => {
+        this.savingWorkType = false;
+        this.showError(error?.error?.message || "Failed to save work type");
+      },
+    });
+  }
+
   startEdit(staff: any): void {
     if (!this.canManage || !staff?._id) {
       return;
@@ -129,7 +233,8 @@ export class StaffMasterComponent implements OnInit {
     this.staffForm = {
       name: staff.name || "",
       phone: staff.phone || "",
-      workType: staff.workType || "Welding",
+      staffType: staff.staffType || "Worker",
+      workTypeRef: staff.workTypeRef?._id || staff.workTypeRef || "",
       rateType: staff.rateType || "DAILY",
       rate: Number(staff.rate || 0),
       note: staff.note || "",
@@ -138,12 +243,26 @@ export class StaffMasterComponent implements OnInit {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
+  startWorkTypeEdit(workType: any): void {
+    if (!this.canManage || !workType?._id) {
+      return;
+    }
+
+    this.editingWorkTypeId = workType._id;
+    this.workTypeForm = {
+      name: workType.name || "",
+      description: workType.description || "",
+      active: !!workType.active,
+    };
+  }
+
   cancelEdit(form?: NgForm): void {
     this.editingStaffId = null;
     this.staffForm = {
       name: "",
       phone: "",
-      workType: "Welding",
+      staffType: "Worker",
+      workTypeRef: "",
       rateType: "DAILY",
       rate: null,
       note: "",
@@ -154,9 +273,22 @@ export class StaffMasterComponent implements OnInit {
     }
   }
 
+  cancelWorkTypeEdit(form?: NgForm): void {
+    this.editingWorkTypeId = null;
+    this.workTypeForm = {
+      name: "",
+      description: "",
+      active: true,
+    };
+    if (form) {
+      form.resetForm(this.workTypeForm);
+    }
+  }
+
   clearFilters(): void {
     this.filters = {
       search: "",
+      staffType: "",
       workType: "",
       rateType: "",
       active: "",
@@ -188,6 +320,31 @@ export class StaffMasterComponent implements OnInit {
     });
   }
 
+  deleteWorkType(workType: any): void {
+    if (!this.canManage || !workType?._id || this.deletingWorkTypeId) {
+      return;
+    }
+
+    const confirmed = window.confirm(`Delete work type ${workType.name}?`);
+    if (!confirmed) {
+      return;
+    }
+
+    this.deletingWorkTypeId = workType._id;
+    this.staffWorkTypeService.deleteWorkType(workType._id).subscribe({
+      next: (response) => {
+        this.deletingWorkTypeId = null;
+        this.snackBar.open(response?.message || "Work type deleted", "Close", { duration: 2500 });
+        this.cancelWorkTypeEdit();
+        this.loadWorkTypes();
+      },
+      error: (error) => {
+        this.deletingWorkTypeId = null;
+        this.showError(error?.error?.message || "Failed to delete work type");
+      },
+    });
+  }
+
   getFormTitle(): string {
     return this.editingStaffId ? "Edit Staff / Worker" : "Add Staff / Worker";
   }
@@ -197,6 +354,13 @@ export class StaffMasterComponent implements OnInit {
       return this.editingStaffId ? "Updating..." : "Saving...";
     }
     return this.editingStaffId ? "Update Staff / Worker" : "Save Staff / Worker";
+  }
+
+  getWorkTypeSubmitLabel(): string {
+    if (this.savingWorkType) {
+      return this.editingWorkTypeId ? "Updating..." : "Saving...";
+    }
+    return this.editingWorkTypeId ? "Update Work Type" : "Save Work Type";
   }
 
   trackBySummary(index: number, item: any): string {

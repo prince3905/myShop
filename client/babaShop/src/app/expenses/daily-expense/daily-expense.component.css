@@ -1,56 +1,77 @@
 .daily-expense-page {
-  padding-top: 12px;
+  padding-top: 8px;
+}
+
+.daily-expense-page .container-fluid {
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+.daily-expense-page .row {
+  margin-left: -4px;
+  margin-right: -4px;
+  margin-bottom: 0;
+}
+
+.daily-expense-page [class*="col-"] {
+  padding-left: 4px;
+  padding-right: 4px;
 }
 
 .page-hero-card {
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .expense-hero {
   border-radius: 15px;
   margin-top: 0;
-  padding: 14px 18px;
+  padding: 12px 16px;
 }
 
 .expense-hero-title {
   margin: 0;
-  font-size: 1.6rem;
-  font-weight: 700;
+  font-size: 23px;
+  font-weight: 800;
 }
 
 .expense-hero-subtitle {
   margin: 6px 0 0;
-  font-size: 0.95rem;
   opacity: 0.92;
 }
 
-.summary-row {
-  margin-bottom: 8px;
-}
-
+.summary-row,
 .breakdown-row {
-  margin-bottom: 12px;
+  margin-bottom: 6px;
 }
 
-.summary-card {
-  height: 100%;
-  border: 1px solid rgba(210, 218, 232, 0.85);
-  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.06);
+.summary-card,
+.breakdown-card {
+  border: 1px solid #eef1f5;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+}
+
+.daily-expense-page .card-header.card-header-danger {
+  box-shadow: none;
+  margin-top: 0;
+  border-radius: 15px 15px 0 0;
+  padding: 11px 15px;
+}
+
+.daily-expense-page .card-header.card-header-danger .card-title {
+  color: #ffffff;
 }
 
 .summary-label {
-  font-size: 0.78rem;
+  font-size: 12px;
+  font-weight: 700;
+  color: #7a809a;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: #64748b;
-  margin-bottom: 8px;
 }
 
 .summary-value {
-  font-size: 1.45rem;
+  font-size: 24px;
   font-weight: 800;
-  color: #111827;
-  line-height: 1.2;
+  color: #2d3436;
 }
 
 .summary-value--sm {
@@ -59,20 +80,13 @@
 
 .summary-meta {
   margin-top: 6px;
-  font-size: 0.84rem;
-  color: #6b7280;
-}
-
-.breakdown-card {
-  height: 100%;
-  border: 1px solid rgba(210, 218, 232, 0.85);
+  color: #7a809a;
 }
 
 .breakdown-title {
-  font-size: 0.95rem;
   font-weight: 700;
-  color: #111827;
-  margin-bottom: 12px;
+  color: #2d3436;
+  margin-bottom: 10px;
 }
 
 .breakdown-item {
@@ -91,18 +105,25 @@
 
 .breakdown-name {
   font-weight: 700;
-  color: #1f2937;
+  color: #2d3436;
 }
 
 .breakdown-meta,
 .breakdown-empty {
-  font-size: 0.84rem;
-  color: #6b7280;
+  color: #7a809a;
+}
+
+.breakdown-empty {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #f8f9fb;
+  margin-bottom: 8px;
+  text-align: center;
 }
 
 .breakdown-amount {
   font-weight: 700;
-  color: #111827;
+  color: #2d3436;
   white-space: nowrap;
 }
 
@@ -129,13 +150,13 @@
 .filter-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px 12px;
+  gap: 8px;
 }
 
 .filter-actions {
   display: flex;
-  gap: 10px;
-  margin: 6px 0 14px;
+  gap: 8px;
+  margin-top: 4px;
 }
 
 .expense-table-wrap {
@@ -162,48 +183,78 @@
 
 .table-primary {
   font-weight: 700;
-  color: #1f2937;
+  color: #2d3436;
+}
+
+.table-category {
+  font-weight: 600;
+  color: #374151;
 }
 
 .table-note {
   margin-top: 3px;
-  font-size: 0.8rem;
-  color: #6b7280;
+  color: #7a809a;
   max-width: 240px;
 }
 
 .amount-cell {
   font-weight: 700;
-  color: #111827;
   white-space: nowrap;
 }
 
 .table-delete-btn {
   color: #c62828;
-  min-width: auto;
+  min-width: 34px;
+  width: 34px;
+  height: 34px;
   padding: 0;
+  border-radius: 999px;
+  background: rgba(220, 38, 38, 0.08);
 }
 
 .table-edit-btn {
-  color: #2563eb;
-  min-width: auto;
+  color: #4b5563;
+  min-width: 34px;
+  width: 34px;
+  height: 34px;
   padding: 0;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.05);
 }
 
 .table-actions {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+}
+
+.table-edit-btn mat-icon,
+.table-delete-btn mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  line-height: 18px;
+}
+
+.table-edit-btn:hover {
+  background: rgba(15, 23, 42, 0.08);
+}
+
+.table-delete-btn:hover {
+  background: rgba(220, 38, 38, 0.14);
 }
 
 .table-empty {
-  border: 1px dashed #d6dce8;
-  border-radius: 14px;
-  padding: 24px;
+  padding: 12px 14px;
+  border-radius: 12px;
   text-align: center;
-  color: #64748b;
-  background: #f8fbff;
+  color: #7a809a;
+  background: #f8f9fb;
+}
+
+.daily-expense-page .card-body {
+  padding: 14px;
 }
 
 @media (max-width: 991px) {

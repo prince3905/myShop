@@ -9,21 +9,16 @@ import { DailyExpenseService } from "app/shared/services/daily-expense.service";
 })
 export class ExpenseReportComponent implements OnInit {
   readonly categories = [
-    "CHAI_PANI",
-    "LABOUR",
-    "TRANSPORT",
-    "DIESEL",
-    "BIJLI",
-    "REPAIR",
-    "ADVANCE",
-    "FACTORY_EXPENSE",
-    "OFFICE_EXPENSE",
-    "MAINTENANCE",
-    "UTILITY",
-    "MISC",
+    "Chai Pani",
+    "Transport",
+    "Diesel",
+    "Repair",
+    "Factory Expense",
+    "Office Expense",
+    "Utility",
   ];
 
-  readonly departments = ["FACTORY", "OFFICE", "STAFF", "WORKSHOP", "TRANSPORT"];
+  readonly departments = ["Factory", "Office", "Shop", "Staff", "Transport", "Maintenance", "General"];
 
   readonly paymentMethods = ["CASH", "UPI", "BANK", "CARD", "ONLINE", "CHEQUE"];
 
@@ -32,8 +27,8 @@ export class ExpenseReportComponent implements OnInit {
     category: "",
     department: "",
     paymentMethod: "",
-    dateFrom: this.formatDate(new Date()),
-    dateTo: this.formatDate(new Date()),
+    dateFrom: "",
+    dateTo: "",
   };
 
   loading = false;
@@ -46,6 +41,14 @@ export class ExpenseReportComponent implements OnInit {
     byCategory: [] as Array<{ label: string; count: number; amount: number }>,
     byDepartment: [] as Array<{ label: string; count: number; amount: number }>,
     byPaymentMethod: [] as Array<{ label: string; count: number; amount: number }>,
+  };
+  dateWiseSummary: Array<{ label: string; amount: number; count: number }> = [];
+  departmentHighlights: Array<{ label: string; amount: number; count: number }> = [];
+  monthlyComparison = {
+    currentMonthAmount: 0,
+    previousMonthAmount: 0,
+    changeAmount: 0,
+    changePercent: 0,
   };
 
   constructor(
@@ -72,6 +75,9 @@ export class ExpenseReportComponent implements OnInit {
           byDepartment: this.groupBy(expenses, "department"),
           byPaymentMethod: this.groupBy(expenses, "paymentMethod"),
         };
+        this.dateWiseSummary = this.groupByDate(expenses);
+        this.departmentHighlights = this.summary.byDepartment.slice(0, 4);
+        this.monthlyComparison = this.buildMonthlyComparison(expenses);
         this.loading = false;
       },
       error: (error) => {
@@ -87,9 +93,16 @@ export class ExpenseReportComponent implements OnInit {
       category: "",
       department: "",
       paymentMethod: "",
-      dateFrom: this.formatDate(new Date()),
-      dateTo: this.formatDate(new Date()),
+      dateFrom: "",
+      dateTo: "",
     };
+    this.loadReport();
+  }
+
+  showToday(): void {
+    const today = this.formatDate(new Date());
+    this.filters.dateFrom = today;
+    this.filters.dateTo = today;
     this.loadReport();
   }
 
@@ -111,6 +124,55 @@ export class ExpenseReportComponent implements OnInit {
     return (Object.values(grouped) as Array<{ label: string; count: number; amount: number }>)
       .sort((a, b) => b.amount - a.amount)
       .slice(0, 8);
+  }
+
+  private groupByDate(rows: any[]): Array<{ label: string; amount: number; count: number }> {
+    const grouped = rows.reduce((acc: Record<string, { label: string; amount: number; count: number }>, row: any) => {
+      const key = this.formatDate(new Date(row?.expenseDate || row?.createdAt || new Date()));
+      if (!acc[key]) {
+        acc[key] = { label: key, amount: 0, count: 0 };
+      }
+      acc[key].amount += Number(row?.amount || 0);
+      acc[key].count += 1;
+      return acc;
+    }, {});
+
+    return (Object.values(grouped) as Array<{ label: string; amount: number; count: number }>)
+      .sort((a, b) => (a.label < b.label ? 1 : -1))
+      .slice(0, 14);
+  }
+
+  private buildMonthlyComparison(rows: any[]) {
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+    const previousMonthDate = new Date(currentYear, currentMonth - 1, 1);
+    const previousMonth = previousMonthDate.getMonth();
+    const previousYear = previousMonthDate.getFullYear();
+
+    const currentMonthAmount = rows.reduce((sum: number, row: any) => {
+      const date = new Date(row?.expenseDate || row?.createdAt || new Date());
+      return date.getMonth() === currentMonth && date.getFullYear() === currentYear
+        ? sum + Number(row?.amount || 0)
+        : sum;
+    }, 0);
+
+    const previousMonthAmount = rows.reduce((sum: number, row: any) => {
+      const date = new Date(row?.expenseDate || row?.createdAt || new Date());
+      return date.getMonth() === previousMonth && date.getFullYear() === previousYear
+        ? sum + Number(row?.amount || 0)
+        : sum;
+    }, 0);
+
+    const changeAmount = currentMonthAmount - previousMonthAmount;
+    const changePercent = previousMonthAmount > 0 ? (changeAmount / previousMonthAmount) * 100 : 0;
+
+    return {
+      currentMonthAmount,
+      previousMonthAmount,
+      changeAmount,
+      changePercent,
+    };
   }
 
   private sumToday(rows: any[]): number {

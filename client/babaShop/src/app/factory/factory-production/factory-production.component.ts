@@ -2,7 +2,9 @@ import { Component, OnInit } from "@angular/core";
 import { NgForm } from "@angular/forms";
 import { MatSnackBar } from "@angular/material/snack-bar";
 import { AuthService } from "app/shared/services/auth.service";
+import { FactoryProductService } from "app/shared/services/factory-product.service";
 import { FactoryProductionService } from "app/shared/services/factory-production.service";
+import { RawMaterialService } from "app/shared/services/raw-material.service";
 
 @Component({
   selector: "app-factory-production",
@@ -10,14 +12,16 @@ import { FactoryProductionService } from "app/shared/services/factory-production
   styleUrls: ["./factory-production.component.css"],
 })
 export class FactoryProductionComponent implements OnInit {
-  readonly unitOptions = ["PCS", "SET", "KG", "FEET", "MTR"];
+  readonly unitOptions = ["PCS", "SET", "KG", "FEET", "MTR", "BOX"];
 
   productionForm = {
     entryDate: this.formatDate(new Date()),
     serialNo: "",
+    productRef: "",
     itemName: "",
     itemDescription: "",
     rawMaterialDetails: "",
+    materialLines: [this.createMaterialLine()],
     materialCost: 0,
     labourCost: 0,
     otherCost: 0,
@@ -46,16 +50,22 @@ export class FactoryProductionComponent implements OnInit {
     byItem: [],
   };
 
+  productOptions: any[] = [];
+  materialOptions: any[] = [];
   productions: any[] = [];
   editingProductionId: string | null = null;
   loadingSummary = false;
   loadingProductions = false;
+  loadingProducts = false;
+  loadingMaterials = false;
   savingProduction = false;
   deletingId: string | null = null;
   userRole: string | null = null;
 
   constructor(
     private factoryProductionService: FactoryProductionService,
+    private factoryProductService: FactoryProductService,
+    private rawMaterialService: RawMaterialService,
     private snackBar: MatSnackBar,
     private authService: AuthService,
   ) {}
@@ -69,10 +79,12 @@ export class FactoryProductionComponent implements OnInit {
     return ["SUPER_ADMIN", "ADMIN", "MANAGER"].includes(`${this.userRole || ""}`);
   }
 
+  get materialCostPreview(): number {
+    return (this.productionForm.materialLines || []).reduce((sum, line: any) => sum + this.getMaterialLineAmount(line), 0);
+  }
+
   get totalCostPreview(): number {
-    return Number(this.productionForm.materialCost || 0)
-      + Number(this.productionForm.labourCost || 0)
-      + Number(this.productionForm.otherCost || 0);
+    return this.materialCostPreview + Number(this.productionForm.labourCost || 0) + Number(this.productionForm.otherCost || 0);
   }
 
   get costPerUnitPreview(): number {
@@ -81,9 +93,91 @@ export class FactoryProductionComponent implements OnInit {
     return this.totalCostPreview / qty;
   }
 
+  createMaterialLine(): any {
+    return {
+      rawMaterial: "",
+      materialName: "",
+      qtyUsed: null,
+      unitLabel: "PCS",
+      rate: 0,
+      amount: 0,
+    };
+  }
+
+  addMaterialLine(): void {
+    this.productionForm.materialLines.push(this.createMaterialLine());
+  }
+
+  removeMaterialLine(index: number): void {
+    if (this.productionForm.materialLines.length <= 1) {
+      this.productionForm.materialLines = [this.createMaterialLine()];
+      return;
+    }
+    this.productionForm.materialLines.splice(index, 1);
+  }
+
+  onProductChange(): void {
+    const selected = this.productOptions.find((product) => product._id === this.productionForm.productRef);
+    if (!selected) {
+      return;
+    }
+    this.productionForm.itemName = selected.name || this.productionForm.itemName;
+    this.productionForm.unitLabel = selected.unitLabel || this.productionForm.unitLabel;
+    if (!this.editingProductionId) {
+      this.productionForm.labourCost = Number(selected.standardLabourCost || 0);
+      this.productionForm.otherCost = Number(selected.standardOtherCost || 0);
+    }
+  }
+
+  onMaterialChange(index: number): void {
+    const line = this.productionForm.materialLines[index];
+    const selected = this.materialOptions.find((material) => material._id === line.rawMaterial);
+    if (!selected) {
+      return;
+    }
+    line.materialName = selected.name || line.materialName;
+    line.unitLabel = selected.unitLabel || line.unitLabel || "PCS";
+    line.rate = Number(selected.currentRate || 0);
+    line.amount = this.getMaterialLineAmount(line);
+  }
+
+  getMaterialLineAmount(line: any): number {
+    const qty = Number(line?.qtyUsed || 0);
+    const rate = Number(line?.rate || 0);
+    return qty > 0 && rate >= 0 ? qty * rate : 0;
+  }
+
   loadAll(): void {
     this.loadSummary();
     this.loadProductions();
+    this.loadProductOptions();
+    this.loadMaterialOptions();
+  }
+
+  loadProductOptions(): void {
+    this.loadingProducts = true;
+    this.factoryProductService.getProducts({ active: true }).subscribe({
+      next: (response) => {
+        this.productOptions = response?.products || [];
+        this.loadingProducts = false;
+      },
+      error: () => {
+        this.loadingProducts = false;
+      },
+    });
+  }
+
+  loadMaterialOptions(): void {
+    this.loadingMaterials = true;
+    this.rawMaterialService.getMaterials({ active: true }).subscribe({
+      next: (response) => {
+        this.materialOptions = response?.materials || [];
+        this.loadingMaterials = false;
+      },
+      error: () => {
+        this.loadingMaterials = false;
+      },
+    });
   }
 
   loadSummary(): void {
@@ -119,10 +213,25 @@ export class FactoryProductionComponent implements OnInit {
       return;
     }
 
+    const payload = {
+      ...this.productionForm,
+      materialCost: this.materialCostPreview,
+      materialLines: (this.productionForm.materialLines || [])
+        .map((line: any) => ({
+          rawMaterial: line.rawMaterial || null,
+          materialName: line.materialName || "",
+          qtyUsed: Number(line.qtyUsed || 0),
+          unitLabel: line.unitLabel || "PCS",
+          rate: Number(line.rate || 0),
+          amount: this.getMaterialLineAmount(line),
+        }))
+        .filter((line: any) => line.rawMaterial || line.materialName || line.qtyUsed > 0),
+    };
+
     this.savingProduction = true;
     const request$ = this.editingProductionId
-      ? this.factoryProductionService.updateProduction(this.editingProductionId, this.productionForm)
-      : this.factoryProductionService.createProduction(this.productionForm);
+      ? this.factoryProductionService.updateProduction(this.editingProductionId, payload)
+      : this.factoryProductionService.createProduction(payload);
 
     request$.subscribe({
       next: (response) => {
@@ -150,14 +259,25 @@ export class FactoryProductionComponent implements OnInit {
     this.productionForm = {
       entryDate: this.formatDate(new Date(production.entryDate)),
       serialNo: production.serialNo || "",
+      productRef: production.productRef?._id || production.productRef || "",
       itemName: production.itemName || "",
       itemDescription: production.itemDescription || "",
       rawMaterialDetails: production.rawMaterialDetails || "",
+      materialLines: (production.materialLines || []).length > 0
+        ? production.materialLines.map((line: any) => ({
+          rawMaterial: line.rawMaterial?._id || line.rawMaterial || "",
+          materialName: line.materialName || line.rawMaterial?.name || "",
+          qtyUsed: Number(line.qtyUsed || 0),
+          unitLabel: line.unitLabel || line.rawMaterial?.unitLabel || "PCS",
+          rate: Number(line.rate || line.rawMaterial?.currentRate || 0),
+          amount: Number(line.amount || 0),
+        }))
+        : [this.createMaterialLine()],
       materialCost: Number(production.materialCost || 0),
       labourCost: Number(production.labourCost || 0),
       otherCost: Number(production.otherCost || 0),
       qtyProduced: Number(production.qtyProduced || 0),
-      unitLabel: production.unitLabel || "PCS",
+      unitLabel: production.unitLabel || production.productRef?.unitLabel || "PCS",
       wasteQty: Number(production.wasteQty || 0),
       workersInvolved: production.workersInvolved || "",
       note: production.note || "",
@@ -170,9 +290,11 @@ export class FactoryProductionComponent implements OnInit {
     this.productionForm = {
       entryDate: this.formatDate(new Date()),
       serialNo: "",
+      productRef: "",
       itemName: "",
       itemDescription: "",
       rawMaterialDetails: "",
+      materialLines: [this.createMaterialLine()],
       materialCost: 0,
       labourCost: 0,
       otherCost: 0,
@@ -188,11 +310,7 @@ export class FactoryProductionComponent implements OnInit {
   }
 
   clearFilters(): void {
-    this.filters = {
-      search: "",
-      dateFrom: "",
-      dateTo: "",
-    };
+    this.filters = { search: "", dateFrom: "", dateTo: "" };
     this.loadProductions();
   }
 

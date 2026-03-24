@@ -4,7 +4,7 @@
       <div class="card-header card-header-danger staff-hero">
         <div>
           <h2 class="staff-hero-title">Staffs & Worker</h2>
-          <p class="staff-hero-subtitle">Shop-wise staff and worker list with work type and daily or piece rate tracking.</p>
+          <p class="staff-hero-subtitle">Manage monthly salary staff, daily wage workers, piece-rate box makers and custom work types shop-wise.</p>
         </div>
       </div>
     </div>
@@ -13,7 +13,7 @@
       <div class="col-md-3 col-sm-6">
         <div class="card summary-card">
           <div class="card-body">
-            <div class="summary-label">Total Staff</div>
+            <div class="summary-label">Total Team</div>
             <div class="summary-value">{{ summary.totalStaffs || 0 }}</div>
           </div>
         </div>
@@ -45,14 +45,44 @@
     </div>
 
     <div class="row breakdown-row">
-      <div class="col-md-12">
+      <div class="col-md-4">
         <div class="card breakdown-card">
           <div class="card-body">
             <div class="breakdown-title">Work Type Breakdown</div>
             <div *ngIf="loadingSummary" class="breakdown-empty">Loading work types...</div>
-            <div *ngIf="!loadingSummary && summary.byWorkType?.length === 0" class="breakdown-empty">No staff data yet.</div>
-            <div class="breakdown-grid" *ngIf="!loadingSummary && summary.byWorkType?.length > 0">
+            <div *ngIf="!loadingSummary && summary.byWorkType?.length === 0" class="breakdown-empty">No work type data yet.</div>
+            <div class="breakdown-grid compact" *ngIf="!loadingSummary && summary.byWorkType?.length > 0">
               <div *ngFor="let row of summary.byWorkType; trackBy: trackBySummary" class="breakdown-item">
+                <div class="breakdown-name">{{ row._id }}</div>
+                <div class="breakdown-meta">{{ row.count }} staff</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card breakdown-card">
+          <div class="card-body">
+            <div class="breakdown-title">Role Breakdown</div>
+            <div *ngIf="loadingSummary" class="breakdown-empty">Loading roles...</div>
+            <div *ngIf="!loadingSummary && summary.byStaffType?.length === 0" class="breakdown-empty">No role data yet.</div>
+            <div class="breakdown-grid compact" *ngIf="!loadingSummary && summary.byStaffType?.length > 0">
+              <div *ngFor="let row of summary.byStaffType; trackBy: trackBySummary" class="breakdown-item">
+                <div class="breakdown-name">{{ row._id }}</div>
+                <div class="breakdown-meta">{{ row.count }} members</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card breakdown-card">
+          <div class="card-body">
+            <div class="breakdown-title">Pay Basis</div>
+            <div *ngIf="loadingSummary" class="breakdown-empty">Loading pay basis...</div>
+            <div *ngIf="!loadingSummary && summary.byRateType?.length === 0" class="breakdown-empty">No pay basis data yet.</div>
+            <div class="breakdown-grid compact" *ngIf="!loadingSummary && summary.byRateType?.length > 0">
+              <div *ngFor="let row of summary.byRateType; trackBy: trackBySummary" class="breakdown-item">
                 <div class="breakdown-name">{{ row._id }}</div>
                 <div class="breakdown-meta">{{ row.count }} staff</div>
               </div>
@@ -63,7 +93,7 @@
     </div>
 
     <div class="row">
-      <div class="col-lg-4">
+      <div class="col-lg-5">
         <div class="card">
           <div class="card-header card-header-danger">
             <h4 class="card-title">{{ getFormTitle() }}</h4>
@@ -72,39 +102,62 @@
             <form #staffNgForm="ngForm" (ngSubmit)="submitStaff(staffNgForm)">
               <div class="edit-banner" *ngIf="editingStaffId">Editing selected staff or worker.</div>
 
-              <mat-form-field class="example-full-width">
-                <mat-label>Name</mat-label>
-                <input matInput [(ngModel)]="staffForm.name" name="name" required>
-              </mat-form-field>
-
-              <mat-form-field class="example-full-width">
-                <mat-label>Phone</mat-label>
-                <input matInput [(ngModel)]="staffForm.phone" name="phone">
-              </mat-form-field>
-
-              <mat-form-field class="example-full-width">
-                <mat-label>Work Type</mat-label>
-                <mat-select [(ngModel)]="staffForm.workType" name="workType" required>
-                  <mat-option *ngFor="let type of workTypes" [value]="type">{{ type }}</mat-option>
-                </mat-select>
-              </mat-form-field>
+              <div class="row">
+                <div class="col-md-7">
+                  <mat-form-field class="example-full-width">
+                    <mat-label>Name</mat-label>
+                    <input matInput [(ngModel)]="staffForm.name" name="name" required>
+                  </mat-form-field>
+                </div>
+                <div class="col-md-5">
+                  <mat-form-field class="example-full-width">
+                    <mat-label>Phone</mat-label>
+                    <input matInput [(ngModel)]="staffForm.phone" name="phone">
+                  </mat-form-field>
+                </div>
+              </div>
 
               <div class="row">
                 <div class="col-md-6">
                   <mat-form-field class="example-full-width">
-                    <mat-label>Rate Type</mat-label>
-                    <mat-select [(ngModel)]="staffForm.rateType" name="rateType" required>
-                      <mat-option *ngFor="let type of rateTypes" [value]="type">{{ type }}</mat-option>
+                    <mat-label>Role / Designation</mat-label>
+                    <mat-select [(ngModel)]="staffForm.staffType" name="staffType" required>
+                      <mat-option *ngFor="let type of staffTypes" [value]="type">{{ type }}</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+                <div class="col-md-6">
+                  <mat-form-field class="example-full-width" *ngIf="canShowWorkTypeSelect">
+                    <mat-label>Work Type</mat-label>
+                    <mat-select [(ngModel)]="staffForm.workTypeRef" name="workTypeRef" required>
+                      <mat-option *ngFor="let type of workTypeOptions" [value]="type._id">{{ type.name }}</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                  <div class="table-empty slim inline-empty" *ngIf="!canShowWorkTypeSelect">
+                    No work type added yet. Add one below first.
+                  </div>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-6">
+                  <mat-form-field class="example-full-width">
+                    <mat-label>Pay Basis</mat-label>
+                    <mat-select [(ngModel)]="staffForm.rateType" name="rateType" (selectionChange)="onRateTypeChange()" required>
+                      <mat-option *ngFor="let type of payBasisOptions" [value]="type.value">{{ type.label }}</mat-option>
                     </mat-select>
                   </mat-form-field>
                 </div>
                 <div class="col-md-6">
                   <mat-form-field class="example-full-width">
-                    <mat-label>Rate</mat-label>
-                    <input matInput type="number" min="0" [(ngModel)]="staffForm.rate" name="rate" required>
+                    <mat-label>{{ rateFieldLabel }}</mat-label>
+                    <input matInput type="number" min="0" [(ngModel)]="staffForm.rate" name="rate">
+                    <mat-hint>{{ rateFieldHint }}</mat-hint>
                   </mat-form-field>
                 </div>
               </div>
+
+              <div class="pay-basis-hint">Selected basis: {{ selectedPayBasisLabel }}</div>
 
               <mat-form-field class="example-full-width">
                 <mat-label>Note</mat-label>
@@ -130,31 +183,93 @@
             </form>
           </div>
         </div>
+
+        <div class="card work-type-card">
+          <div class="card-header card-header-danger">
+            <h4 class="card-title">Manage Work Types</h4>
+          </div>
+          <div class="card-body">
+            <form #workTypeNgForm="ngForm" (ngSubmit)="submitWorkType(workTypeNgForm)" *ngIf="canManage">
+              <div class="edit-banner alt" *ngIf="editingWorkTypeId">Editing selected work type.</div>
+              <mat-form-field class="example-full-width">
+                <mat-label>Work Type Name</mat-label>
+                <input matInput [(ngModel)]="workTypeForm.name" name="workTypeName" required>
+              </mat-form-field>
+              <mat-form-field class="example-full-width">
+                <mat-label>Description</mat-label>
+                <textarea matInput rows="2" [(ngModel)]="workTypeForm.description" name="workTypeDescription"></textarea>
+              </mat-form-field>
+              <mat-checkbox [(ngModel)]="workTypeForm.active" name="workTypeActive">Active work type</mat-checkbox>
+              <div class="form-actions compact-actions">
+                <button mat-raised-button class="btn btn-danger submit-btn" [disabled]="savingWorkType || workTypeNgForm.invalid">
+                  {{ getWorkTypeSubmitLabel() }}
+                </button>
+                <button
+                  *ngIf="editingWorkTypeId"
+                  type="button"
+                  mat-stroked-button
+                  class="btn btn-outline-danger submit-btn"
+                  (click)="cancelWorkTypeEdit(workTypeNgForm)"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+
+            <div *ngIf="!canManage" class="table-empty">Only manager and above can manage work types.</div>
+            <div *ngIf="loadingWorkTypes" class="table-empty slim">Loading work types...</div>
+            <div *ngIf="!loadingWorkTypes && workTypeOptions.length === 0" class="table-empty slim">No work types added yet.</div>
+
+            <div class="work-type-list" *ngIf="!loadingWorkTypes && workTypeOptions.length > 0">
+              <div class="work-type-item" *ngFor="let workType of workTypeOptions">
+                <div>
+                  <div class="table-primary">{{ workType.name }}</div>
+                  <div class="table-note" *ngIf="workType.description">{{ workType.description }}</div>
+                </div>
+                <div class="table-actions inline" *ngIf="canManage">
+                  <button mat-icon-button class="table-edit-btn" (click)="startWorkTypeEdit(workType)" aria-label="Edit work type" title="Edit">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <button mat-icon-button class="table-delete-btn" [disabled]="deletingWorkTypeId === workType._id" (click)="deleteWorkType(workType)" aria-label="Delete work type" title="Delete">
+                    <mat-icon>{{ deletingWorkTypeId === workType._id ? 'hourglass_top' : 'delete' }}</mat-icon>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div class="col-lg-8">
+      <div class="col-lg-7">
         <div class="card">
           <div class="card-header card-header-danger">
             <h4 class="card-title">Staff List</h4>
           </div>
           <div class="card-body">
-            <div class="filter-grid">
+            <div class="filter-grid wide">
               <mat-form-field class="example-full-width">
                 <mat-label>Search</mat-label>
-                <input matInput [(ngModel)]="filters.search" name="search" placeholder="Name, phone, work type">
+                <input matInput [(ngModel)]="filters.search" name="search" placeholder="Name, phone, work type, role">
+              </mat-form-field>
+              <mat-form-field class="example-full-width">
+                <mat-label>Role / Designation</mat-label>
+                <mat-select [(ngModel)]="filters.staffType" name="filterStaffType">
+                  <mat-option value="">All</mat-option>
+                  <mat-option *ngFor="let type of staffTypes" [value]="type">{{ type }}</mat-option>
+                </mat-select>
               </mat-form-field>
               <mat-form-field class="example-full-width">
                 <mat-label>Work Type</mat-label>
                 <mat-select [(ngModel)]="filters.workType" name="filterWorkType">
                   <mat-option value="">All</mat-option>
-                  <mat-option *ngFor="let type of workTypes" [value]="type">{{ type }}</mat-option>
+                  <mat-option *ngFor="let type of workTypeOptions" [value]="type.name">{{ type.name }}</mat-option>
                 </mat-select>
               </mat-form-field>
               <mat-form-field class="example-full-width">
-                <mat-label>Rate Type</mat-label>
+                <mat-label>Pay Basis</mat-label>
                 <mat-select [(ngModel)]="filters.rateType" name="filterRateType">
                   <mat-option value="">All</mat-option>
-                  <mat-option *ngFor="let type of rateTypes" [value]="type">{{ type }}</mat-option>
+                  <mat-option *ngFor="let type of payBasisOptions" [value]="type.value">{{ type.label }}</mat-option>
                 </mat-select>
               </mat-form-field>
               <mat-form-field class="example-full-width">
@@ -179,10 +294,10 @@
               <table class="table staff-table">
                 <thead>
                   <tr>
-                    <th>Name</th>
-                    <th>Phone</th>
+                    <th>Staff</th>
+                    <th>Role</th>
                     <th>Work Type</th>
-                    <th>Rate</th>
+                    <th>Pay Basis</th>
                     <th>Status</th>
                     <th>By</th>
                     <th>Action</th>
@@ -192,9 +307,10 @@
                   <tr *ngFor="let staff of staffs">
                     <td>
                       <div class="table-primary">{{ staff.name }}</div>
+                      <div class="table-note">{{ staff.phone || '-' }}</div>
                       <div class="table-note" *ngIf="staff.note">{{ staff.note }}</div>
                     </td>
-                    <td>{{ staff.phone || '-' }}</td>
+                    <td>{{ staff.staffType || '-' }}</td>
                     <td>{{ staff.workType }}</td>
                     <td>{{ staff.rateType }} · Rs {{ staff.rate | number: '1.0-0' }}</td>
                     <td>
@@ -202,10 +318,12 @@
                     </td>
                     <td>{{ staff.createdBy?.pFname || staff.createdBy?.email || '-' }}</td>
                     <td>
-                      <div class="table-actions" *ngIf="canManage">
-                        <button mat-button class="table-edit-btn" [disabled]="deletingId === staff._id" (click)="startEdit(staff)">Edit</button>
-                        <button mat-button class="table-delete-btn" [disabled]="deletingId === staff._id" (click)="deleteStaff(staff)">
-                          {{ deletingId === staff._id ? 'Deleting...' : 'Delete' }}
+                      <div class="table-actions inline" *ngIf="canManage">
+                        <button mat-icon-button class="table-edit-btn" [disabled]="deletingId === staff._id" (click)="startEdit(staff)" aria-label="Edit staff" title="Edit">
+                          <mat-icon>edit</mat-icon>
+                        </button>
+                        <button mat-icon-button class="table-delete-btn" [disabled]="deletingId === staff._id" (click)="deleteStaff(staff)" aria-label="Delete staff" title="Delete">
+                          <mat-icon>{{ deletingId === staff._id ? 'hourglass_top' : 'delete' }}</mat-icon>
                         </button>
                       </div>
                     </td>

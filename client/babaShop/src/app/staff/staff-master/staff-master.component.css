@@ -64,11 +64,15 @@
   gap: 10px;
 }
 
+.breakdown-grid.compact {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .breakdown-item {
   border: 1px solid #e6ecf4;
   border-radius: 12px;
   padding: 12px;
-  background: #fafcff;
+  background: #f8f9fb;
 }
 
 .breakdown-name {
@@ -89,8 +93,18 @@
   margin-top: 12px;
 }
 
+.compact-actions {
+  margin-top: 10px;
+}
+
 .submit-btn {
   width: 100%;
+}
+
+.pay-basis-hint {
+  margin: -2px 0 10px;
+  font-size: 0.82rem;
+  color: #64748b;
 }
 
 .edit-banner {
@@ -107,6 +121,10 @@
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px 12px;
+}
+
+.filter-grid.wide {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 
 .filter-actions {
@@ -156,8 +174,14 @@
   gap: 4px;
 }
 
+.table-actions.inline {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
 .table-edit-btn {
-  color: #2563eb;
+  color: #4b5563;
   min-width: auto;
   padding: 0;
 }
@@ -190,12 +214,55 @@
   padding: 24px;
   text-align: center;
   color: #64748b;
-  background: #f8fbff;
+  background: #f8f9fb;
+}
+
+.table-empty.slim {
+  padding: 14px;
+  margin-top: 10px;
+}
+
+.table-empty.inline-empty {
+  margin-top: 0;
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.work-type-card {
+  margin-top: 12px;
+}
+
+.work-type-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.work-type-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  border: 1px solid #e6ecf4;
+  border-radius: 12px;
+  padding: 12px;
+  background: #f8f9fb;
+}
+
+.edit-banner.alt {
+  background: rgba(15, 23, 42, 0.05);
+  color: #374151;
 }
 
 @media (max-width: 991px) {
   .filter-grid,
   .breakdown-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .filter-grid.wide {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -206,7 +273,16 @@
     grid-template-columns: 1fr;
   }
 
+  .filter-grid.wide,
+  .breakdown-grid.compact {
+    grid-template-columns: 1fr;
+  }
+
   .filter-actions {
+    flex-direction: column;
+  }
+
+  .work-type-item {
     flex-direction: column;
   }
 }

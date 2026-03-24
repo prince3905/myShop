@@ -41,72 +41,112 @@
       <div class="col-lg-4">
         <div class="card">
           <div class="card-header card-header-danger">
-            <h4 class="card-title">{{ getFormTitle() }}</h4>
+            <div class="quick-header">
+              <h4 class="card-title">{{ getFormTitle() }}</h4>
+              <button
+                type="button"
+                mat-stroked-button
+                class="quick-toggle-btn"
+                (click)="showAdvanced = !showAdvanced"
+              >
+                {{ showAdvanced ? 'Hide Details' : 'More Details' }}
+              </button>
+            </div>
           </div>
           <div class="card-body">
             <form #dailyWorkNgForm="ngForm" (ngSubmit)="submitDailyWork(dailyWorkNgForm)">
               <div class="edit-banner" *ngIf="editingDailyWorkId">Editing selected daily work entry.</div>
 
-              <mat-form-field class="example-full-width">
-                <mat-label>Staff / Worker</mat-label>
-                <mat-select [(ngModel)]="dailyWorkForm.staff" name="staff" (selectionChange)="onStaffChange()" required>
-                  <mat-option *ngFor="let staff of staffOptions" [value]="staff._id">
-                    {{ staff.name }} · {{ staff.workType }}
-                  </mat-option>
-                </mat-select>
-              </mat-form-field>
+              <div class="quick-entry-shell">
+                <mat-form-field class="example-full-width">
+                  <mat-label>Staff / Worker</mat-label>
+                  <mat-select [(ngModel)]="dailyWorkForm.staff" name="staff" (selectionChange)="onStaffChange()" required>
+                    <mat-option *ngFor="let staff of staffOptions" [value]="staff._id">
+                      {{ staff.name }} · {{ staff.staffType || 'Worker' }} · {{ staff.workType }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
 
-              <div class="row">
-                <div class="col-md-6">
-                  <mat-form-field class="example-full-width">
-                    <mat-label>Entry Date</mat-label>
-                    <input matInput type="date" [(ngModel)]="dailyWorkForm.entryDate" name="entryDate" required>
-                  </mat-form-field>
+                <div class="quick-info-row" *ngIf="selectedStaff">
+                  <div class="quick-chip">{{ selectedStaff.staffType || 'Worker' }}</div>
+                  <div class="quick-chip muted">{{ selectedStaff.workType }}</div>
+                  <div class="quick-chip muted">{{ selectedStaff.rateType }}</div>
                 </div>
-                <div class="col-md-6">
-                  <mat-form-field class="example-full-width">
-                    <mat-label>Attendance</mat-label>
-                    <mat-select [(ngModel)]="dailyWorkForm.attendanceStatus" name="attendanceStatus" (selectionChange)="onAttendanceChange()" required>
-                      <mat-option *ngFor="let status of attendanceOptions" [value]="status">{{ status }}</mat-option>
-                    </mat-select>
-                  </mat-form-field>
+
+                <div class="row quick-main-row">
+                  <div class="col-md-8">
+                    <mat-form-field class="example-full-width">
+                      <mat-label>{{ isPieceRateStaff ? 'Item / Box Name' : 'Work Item' }}</mat-label>
+                      <mat-select [(ngModel)]="dailyWorkForm.workItem" name="workItem" (selectionChange)="onWorkItemChange()">
+                        <mat-option value="" *ngIf="!isPieceRateStaff">None</mat-option>
+                        <mat-option *ngFor="let item of filteredWorkItemOptions" [value]="item._id">
+                          {{ item.itemName }} · Rs {{ item.pieceRate | number: '1.0-2' }}/{{ item.unit }}
+                        </mat-option>
+                      </mat-select>
+                    </mat-form-field>
+                  </div>
+                  <div class="col-md-4">
+                    <mat-form-field class="example-full-width">
+                      <mat-label>{{ isPieceRateStaff ? 'Qty' : 'Units' }}</mat-label>
+                      <input matInput type="number" min="0" [(ngModel)]="dailyWorkForm.unitsCompleted" name="unitsCompleted" (ngModelChange)="onUnitsChange()">
+                    </mat-form-field>
+                  </div>
                 </div>
-              </div>
 
-              <mat-form-field class="example-full-width">
-                <mat-label>Work Type</mat-label>
-                <input matInput [(ngModel)]="dailyWorkForm.workType" name="workType" required>
-              </mat-form-field>
-
-              <mat-form-field class="example-full-width">
-                <mat-label>Work Details</mat-label>
-                <textarea matInput rows="3" [(ngModel)]="dailyWorkForm.workDetails" name="workDetails"></textarea>
-              </mat-form-field>
-
-              <mat-form-field class="example-full-width">
-                <mat-label>Linked Job / Production Ref</mat-label>
-                <input matInput [(ngModel)]="dailyWorkForm.linkedJob" name="linkedJob">
-              </mat-form-field>
-
-              <div class="row">
-                <div class="col-md-6">
-                  <mat-form-field class="example-full-width">
-                    <mat-label>Units Completed</mat-label>
-                    <input matInput type="number" min="0" [(ngModel)]="dailyWorkForm.unitsCompleted" name="unitsCompleted" (ngModelChange)="onUnitsChange()">
-                  </mat-form-field>
-                </div>
-                <div class="col-md-6">
-                  <div class="value-preview-card">
+                <div class="quick-preview-grid">
+                  <div class="value-preview-card compact">
+                    <span>Item Rate</span>
+                    <strong>
+                      {{ selectedWorkItem ? ('Rs ' + (selectedWorkItem.pieceRate | number: '1.0-2') + '/' + selectedWorkItem.unit) : (isPieceRateStaff ? 'Select item' : 'Auto') }}
+                    </strong>
+                  </div>
+                  <div class="value-preview-card compact">
                     <span>Earned Amount</span>
                     <strong>Rs {{ earnedAmountPreview | number: '1.2-2' }}</strong>
                   </div>
                 </div>
               </div>
 
-              <mat-form-field class="example-full-width">
-                <mat-label>Note</mat-label>
-                <textarea matInput rows="2" [(ngModel)]="dailyWorkForm.note" name="note"></textarea>
-              </mat-form-field>
+              <div class="advanced-panel" *ngIf="showAdvanced">
+                <div class="advanced-title">More Details</div>
+
+                <div class="row">
+                  <div class="col-md-6">
+                    <mat-form-field class="example-full-width">
+                      <mat-label>Entry Date</mat-label>
+                      <input matInput type="date" [(ngModel)]="dailyWorkForm.entryDate" name="entryDate" required>
+                    </mat-form-field>
+                  </div>
+                  <div class="col-md-6">
+                    <mat-form-field class="example-full-width">
+                      <mat-label>Attendance</mat-label>
+                      <mat-select [(ngModel)]="dailyWorkForm.attendanceStatus" name="attendanceStatus" (selectionChange)="onAttendanceChange()" required>
+                        <mat-option *ngFor="let status of attendanceOptions" [value]="status">{{ status }}</mat-option>
+                      </mat-select>
+                    </mat-form-field>
+                  </div>
+                </div>
+
+                <mat-form-field class="example-full-width">
+                  <mat-label>Work Type</mat-label>
+                  <input matInput [(ngModel)]="dailyWorkForm.workType" name="workType" required>
+                </mat-form-field>
+
+                <mat-form-field class="example-full-width">
+                  <mat-label>Work Details</mat-label>
+                  <textarea matInput rows="3" [(ngModel)]="dailyWorkForm.workDetails" name="workDetails"></textarea>
+                </mat-form-field>
+
+                <mat-form-field class="example-full-width">
+                  <mat-label>Linked Job / Production Ref</mat-label>
+                  <input matInput [(ngModel)]="dailyWorkForm.linkedJob" name="linkedJob">
+                </mat-form-field>
+
+                <mat-form-field class="example-full-width">
+                  <mat-label>Note</mat-label>
+                  <textarea matInput rows="2" [(ngModel)]="dailyWorkForm.note" name="note"></textarea>
+                </mat-form-field>
+              </div>
 
               <div class="form-actions">
                 <button mat-raised-button class="btn btn-danger submit-btn" [disabled]="savingDailyWork || dailyWorkNgForm.invalid || loadingStaffs">
@@ -197,6 +237,7 @@
                     </td>
                     <td>
                       <div class="table-primary">{{ item.workType || '-' }}</div>
+                      <div class="table-note" *ngIf="item.workItemName">{{ item.workItemName }} · {{ item.unitsCompleted || 0 }} {{ item.unit || 'PCS' }}</div>
                       <div class="table-note" *ngIf="item.workDetails">{{ item.workDetails }}</div>
                       <div class="table-note" *ngIf="item.linkedJob">{{ item.linkedJob }}</div>
                     </td>
@@ -204,9 +245,11 @@
                     <td>{{ item.createdBy?.pFname || item.createdBy?.email || '-' }}</td>
                     <td>
                       <div class="table-actions" *ngIf="canManage">
-                        <button mat-button class="table-edit-btn" [disabled]="deletingId === item._id" (click)="startEdit(item)">Edit</button>
-                        <button mat-button class="table-delete-btn" [disabled]="deletingId === item._id" (click)="deleteDailyWork(item)">
-                          {{ deletingId === item._id ? 'Deleting...' : 'Delete' }}
+                        <button mat-icon-button class="table-edit-btn" [disabled]="deletingId === item._id" (click)="startEdit(item)" aria-label="Edit daily work" title="Edit">
+                          <mat-icon>edit</mat-icon>
+                        </button>
+                        <button mat-icon-button class="table-delete-btn" [disabled]="deletingId === item._id" (click)="deleteDailyWork(item)" aria-label="Delete daily work" title="Delete">
+                          <mat-icon>{{ deletingId === item._id ? 'hourglass_top' : 'delete' }}</mat-icon>
                         </button>
                       </div>
                     </td>

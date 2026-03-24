@@ -10,7 +10,7 @@
     </div>
 
     <div class="row summary-row">
-      <div class="col-md-3 col-sm-6">
+      <div class="col-md-6 col-sm-6">
         <div class="card summary-card">
           <div class="card-body">
             <div class="summary-label">Today Expense</div>
@@ -19,65 +19,12 @@
           </div>
         </div>
       </div>
-      <div class="col-md-3 col-sm-6">
+      <div class="col-md-6 col-sm-6">
         <div class="card summary-card">
           <div class="card-body">
             <div class="summary-label">Total Expense</div>
             <div class="summary-value">Rs {{ summary.totalAmount || 0 | number: '1.2-2' }}</div>
             <div class="summary-meta">{{ summary.totalEntries || 0 }} total entries</div>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-3 col-sm-6">
-        <div class="card summary-card">
-          <div class="card-body">
-            <div class="summary-label">Top Category</div>
-            <div class="summary-value summary-value--sm">{{ summary.byCategory?.[0]?._id || 'No data' }}</div>
-            <div class="summary-meta">Rs {{ summary.byCategory?.[0]?.totalAmount || 0 | number: '1.2-2' }}</div>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-3 col-sm-6">
-        <div class="card summary-card">
-          <div class="card-body">
-            <div class="summary-label">Top Department</div>
-            <div class="summary-value summary-value--sm">{{ summary.byDepartment?.[0]?._id || 'No data' }}</div>
-            <div class="summary-meta">Rs {{ summary.byDepartment?.[0]?.totalAmount || 0 | number: '1.2-2' }}</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="row breakdown-row">
-      <div class="col-md-6">
-        <div class="card breakdown-card">
-          <div class="card-body">
-            <div class="breakdown-title">Category Breakdown</div>
-            <div *ngIf="loadingSummary" class="breakdown-empty">Loading category summary...</div>
-            <div *ngIf="!loadingSummary && summary.byCategory?.length === 0" class="breakdown-empty">No category data yet.</div>
-            <div *ngFor="let row of summary.byCategory; trackBy: trackBySummary" class="breakdown-item">
-              <div>
-                <div class="breakdown-name">{{ row._id }}</div>
-                <div class="breakdown-meta">{{ row.count }} entries</div>
-              </div>
-              <div class="breakdown-amount">Rs {{ row.totalAmount | number: '1.2-2' }}</div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-6">
-        <div class="card breakdown-card">
-          <div class="card-body">
-            <div class="breakdown-title">Department Breakdown</div>
-            <div *ngIf="loadingSummary" class="breakdown-empty">Loading department summary...</div>
-            <div *ngIf="!loadingSummary && summary.byDepartment?.length === 0" class="breakdown-empty">No department data yet.</div>
-            <div *ngFor="let row of summary.byDepartment; trackBy: trackBySummary" class="breakdown-item">
-              <div>
-                <div class="breakdown-name">{{ row._id }}</div>
-                <div class="breakdown-meta">{{ row.count }} entries</div>
-              </div>
-              <div class="breakdown-amount">Rs {{ row.totalAmount | number: '1.2-2' }}</div>
-            </div>
           </div>
         </div>
       </div>
@@ -101,22 +48,22 @@
 
               <mat-form-field class="example-full-width">
                 <mat-label>Category</mat-label>
-                <mat-select [(ngModel)]="expenseForm.category" name="category" required>
+                <mat-select [(ngModel)]="expenseForm.category" name="category" (selectionChange)="onCategoryChange()" required>
                   <mat-option *ngFor="let category of categories" [value]="category">{{ category }}</mat-option>
                 </mat-select>
               </mat-form-field>
 
               <mat-form-field class="example-full-width">
                 <mat-label>Department</mat-label>
-                <mat-select [(ngModel)]="expenseForm.department" name="department" required>
-                  <mat-option *ngFor="let department of departments" [value]="department">{{ department }}</mat-option>
+                <mat-select [(ngModel)]="expenseForm.department" name="department" (selectionChange)="onDepartmentChange()" required>
+                  <mat-option *ngFor="let department of departmentOptions" [value]="department">{{ department }}</mat-option>
                 </mat-select>
               </mat-form-field>
 
               <mat-form-field class="example-full-width">
                 <mat-label>Account Head</mat-label>
                 <mat-select [(ngModel)]="expenseForm.accountHead" name="accountHead" required>
-                  <mat-option *ngFor="let head of accountHeads" [value]="head">{{ head }}</mat-option>
+                  <mat-option *ngFor="let head of accountHeadOptions" [value]="head">{{ head }}</mat-option>
                 </mat-select>
               </mat-form-field>
 
@@ -183,7 +130,13 @@
                 <mat-label>Department</mat-label>
                 <mat-select [(ngModel)]="filters.department" name="filterDepartment">
                   <mat-option value="">All</mat-option>
-                  <mat-option *ngFor="let department of departments" [value]="department">{{ department }}</mat-option>
+                  <mat-option value="Factory">Factory</mat-option>
+                  <mat-option value="Office">Office</mat-option>
+                  <mat-option value="Shop">Shop</mat-option>
+                  <mat-option value="Staff">Staff</mat-option>
+                  <mat-option value="Transport">Transport</mat-option>
+                  <mat-option value="Maintenance">Maintenance</mat-option>
+                  <mat-option value="General">General</mat-option>
                 </mat-select>
               </mat-form-field>
               <mat-form-field class="example-full-width">
@@ -205,7 +158,8 @@
 
             <div class="filter-actions">
               <button mat-raised-button class="btn btn-danger" (click)="loadExpenses()">Apply Filters</button>
-              <button mat-stroked-button class="btn btn-outline-danger" (click)="clearFilters()">Reset</button>
+              <button mat-stroked-button class="btn btn-outline-danger" (click)="showTodayExpenses()">Today</button>
+              <button mat-stroked-button class="btn btn-outline-danger" (click)="clearFilters()">View All</button>
             </div>
 
             <div *ngIf="loadingExpenses" class="table-empty">Loading expenses...</div>
@@ -232,7 +186,7 @@
                   <tr *ngFor="let expense of expenses">
                     <td>{{ expense.expenseDate | date: 'dd/MM/yyyy' }}</td>
                     <td>
-                      <div class="table-primary">{{ expense.category }}</div>
+                      <div class="table-category">{{ expense.category }}</div>
                       <div class="table-note" *ngIf="expense.note">{{ expense.note }}</div>
                     </td>
                     <td>{{ expense.department }}</td>
@@ -247,16 +201,20 @@
                           class="table-edit-btn"
                           [disabled]="deletingId === expense._id"
                           (click)="startEdit(expense)"
+                          aria-label="Edit expense"
+                          title="Edit"
                         >
-                          Edit
+                          <mat-icon>edit</mat-icon>
                         </button>
                         <button
                           mat-button
                           class="table-delete-btn"
                           [disabled]="deletingId === expense._id"
                           (click)="deleteExpense(expense)"
+                          aria-label="Delete expense"
+                          title="Delete"
                         >
-                          {{ deletingId === expense._id ? 'Deleting...' : 'Delete' }}
+                          <mat-icon>{{ deletingId === expense._id ? 'hourglass_top' : 'delete' }}</mat-icon>
                         </button>
                       </div>
                     </td>

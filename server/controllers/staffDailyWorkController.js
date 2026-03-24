@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const StaffDailyWork = require("../models/StaffDailyWork");
 const Staff = require("../models/Staff");
+const StaffWorkItem = require("../models/StaffWorkItem");
 
 const STAFF_ONLY_FILTER = (req) => `${req.user?.role || ""}` === "STAFF";
 const MANAGER_AND_ABOVE = ["SUPER_ADMIN", "ADMIN", "MANAGER"];
@@ -34,7 +35,7 @@ const resolveAccessibleStaffIds = async (req) => {
   return staffRows.map((row) => row._id);
 };
 
-const calculateEarnedAmount = (staff, attendanceStatus, unitsCompleted, incomingAmount) => {
+const calculateEarnedAmount = (staff, attendanceStatus, unitsCompleted, incomingAmount, pieceRate) => {
   const explicitAmount = Number(incomingAmount);
   if (Number.isFinite(explicitAmount) && explicitAmount > 0) {
     return explicitAmount;
@@ -46,8 +47,17 @@ const calculateEarnedAmount = (staff, attendanceStatus, unitsCompleted, incoming
   }
 
   if (`${staff?.rateType || ""}` === "PIECE") {
+    const resolvedPieceRate = Number(pieceRate ?? staff?.rate ?? 0);
     const units = Number(unitsCompleted || 0);
-    return Number.isFinite(units) && units > 0 ? rate * units : 0;
+    return Number.isFinite(units) && units > 0 ? resolvedPieceRate * units : 0;
+  }
+
+  if (`${staff?.rateType || ""}` === "MONTHLY") {
+    if (attendanceStatus === "ABSENT") {
+      return 0;
+    }
+    const dailyEquivalent = rate / 30;
+    return attendanceStatus === "HALF_DAY" ? dailyEquivalent / 2 : dailyEquivalent;
   }
 
   if (attendanceStatus === "HALF_DAY") {
@@ -57,6 +67,33 @@ const calculateEarnedAmount = (staff, attendanceStatus, unitsCompleted, incoming
     return 0;
   }
   return rate;
+};
+
+const resolveWorkItem = async (req, staff, rawWorkItemId) => {
+  const workItemId = `${rawWorkItemId || ""}`.trim();
+  if (!workItemId) {
+    return null;
+  }
+
+  if (!mongoose.Types.ObjectId.isValid(workItemId)) {
+    return { error: { status: 400, success: false, message: "Valid work item is required" } };
+  }
+
+  const item = await StaffWorkItem.findOne({
+    _id: workItemId,
+    shop: req.shopId,
+    isDeleted: false,
+  });
+
+  if (!item) {
+    return { error: { status: 404, success: false, message: "Work item not found" } };
+  }
+
+  if (`${staff?.workType || ""}`.trim() && `${item.workType || ""}`.trim() !== `${staff.workType || ""}`.trim()) {
+    return { error: { status: 400, success: false, message: "Selected item does not belong to the staff work type" } };
+  }
+
+  return item;
 };
 
 exports.createDailyWork = async (req, res) => {
@@ -99,22 +136,41 @@ exports.createDailyWork = async (req, res) => {
       return res.status(400).json({ success: false, message: "Units completed must be 0 or greater" });
     }
 
+    const workItem = await resolveWorkItem(req, staff, req.body?.workItem);
+    if (workItem?.error) {
+      return res.status(workItem.error.status).json(workItem.error);
+    }
+    if (`${staff?.rateType || ""}` === "PIECE" && !workItem) {
+      return res.status(400).json({ success: false, message: "Piece-rate staff requires a work item" });
+    }
+
     const dailyWork = await StaffDailyWork.create({
       shop: req.shopId,
       staff: staff._id,
       entryDate,
       attendanceStatus,
       workType: `${req.body?.workType || staff.workType || ""}`.trim(),
+      workItem: workItem?._id || null,
+      workItemName: `${workItem?.itemName || ""}`.trim(),
+      unit: `${workItem?.unit || "PCS"}`.trim(),
+      pieceRate: Number(workItem?.pieceRate || 0),
       workDetails: `${req.body?.workDetails || ""}`.trim(),
       linkedJob: `${req.body?.linkedJob || ""}`.trim(),
       unitsCompleted,
-      earnedAmount: calculateEarnedAmount(staff, attendanceStatus, unitsCompleted, req.body?.earnedAmount),
+      earnedAmount: calculateEarnedAmount(
+        staff,
+        attendanceStatus,
+        unitsCompleted,
+        req.body?.earnedAmount,
+        workItem?.pieceRate,
+      ),
       note: `${req.body?.note || ""}`.trim(),
       createdBy: req.user._id,
     });
 
     const populated = await StaffDailyWork.findById(dailyWork._id)
-      .populate("staff", "name phone workType rateType rate active")
+      .populate("staff", "name phone staffType workType rateType rate active")
+      .populate("workItem", "itemName workType pieceRate unit active")
       .populate("createdBy", "email role pFname pLname");
 
     return res.status(201).json({
@@ -174,6 +230,7 @@ exports.getDailyWorks = async (req, res) => {
       const matchedIds = staffMatches.map((row) => row._id);
       filter.$or = [
         { workType: regex },
+        { workItemName: regex },
         { workDetails: regex },
         { linkedJob: regex },
         { note: regex },
@@ -185,7 +242,8 @@ exports.getDailyWorks = async (req, res) => {
 
     const dailyWorks = await StaffDailyWork.find(filter)
       .sort({ entryDate: -1, createdAt: -1 })
-      .populate("staff", "name phone workType rateType rate active")
+      .populate("staff", "name phone staffType workType rateType rate active")
+      .populate("workItem", "itemName workType pieceRate unit active")
       .populate("createdBy", "email role pFname pLname");
 
     return res.json({ success: true, dailyWorks });
@@ -317,14 +375,32 @@ exports.updateDailyWork = async (req, res) => {
       return res.status(400).json({ success: false, message: "Units completed must be 0 or greater" });
     }
 
+    const workItem = await resolveWorkItem(req, staff, req.body?.workItem ?? dailyWork.workItem);
+    if (workItem?.error) {
+      return res.status(workItem.error.status).json(workItem.error);
+    }
+    if (`${staff?.rateType || ""}` === "PIECE" && !workItem) {
+      return res.status(400).json({ success: false, message: "Piece-rate staff requires a work item" });
+    }
+
     dailyWork.staff = staff._id;
     dailyWork.entryDate = entryDate;
     dailyWork.attendanceStatus = attendanceStatus;
     dailyWork.workType = `${req.body?.workType || dailyWork.workType || staff.workType || ""}`.trim();
+    dailyWork.workItem = workItem?._id || null;
+    dailyWork.workItemName = `${workItem?.itemName || ""}`.trim();
+    dailyWork.unit = `${workItem?.unit || dailyWork.unit || "PCS"}`.trim();
+    dailyWork.pieceRate = Number(workItem?.pieceRate || 0);
     dailyWork.workDetails = `${req.body?.workDetails ?? dailyWork.workDetails ?? ""}`.trim();
     dailyWork.linkedJob = `${req.body?.linkedJob ?? dailyWork.linkedJob ?? ""}`.trim();
     dailyWork.unitsCompleted = unitsCompleted;
-    dailyWork.earnedAmount = calculateEarnedAmount(staff, attendanceStatus, unitsCompleted, req.body?.earnedAmount ?? dailyWork.earnedAmount);
+    dailyWork.earnedAmount = calculateEarnedAmount(
+      staff,
+      attendanceStatus,
+      unitsCompleted,
+      req.body?.earnedAmount ?? dailyWork.earnedAmount,
+      workItem?.pieceRate ?? dailyWork.pieceRate,
+    );
     dailyWork.note = `${req.body?.note ?? dailyWork.note ?? ""}`.trim();
     dailyWork.updatedBy = req.user._id;
 

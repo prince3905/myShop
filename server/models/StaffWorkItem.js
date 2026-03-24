@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const staffSchema = new mongoose.Schema(
+const staffWorkItemSchema = new mongoose.Schema(
   {
     shop: {
       type: mongoose.Schema.Types.ObjectId,
@@ -8,41 +8,32 @@ const staffSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
-    name: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    phone: {
-      type: String,
-      trim: true,
-      default: "",
-    },
-    staffType: {
-      type: String,
-      trim: true,
-      default: "Worker",
+    workTypeRef: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "StaffWorkType",
+      default: null,
+      index: true,
     },
     workType: {
       type: String,
       required: true,
       trim: true,
     },
-    workTypeRef: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "StaffWorkType",
-      default: null,
-    },
-    rateType: {
+    itemName: {
       type: String,
-      enum: ["MONTHLY", "DAILY", "PIECE"],
-      default: "DAILY",
       required: true,
+      trim: true,
     },
-    rate: {
+    unit: {
+      type: String,
+      trim: true,
+      default: "PCS",
+    },
+    pieceRate: {
       type: Number,
       required: true,
       min: 0,
+      default: 0,
     },
     note: {
       type: String,
@@ -72,8 +63,10 @@ const staffSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-staffSchema.index({ shop: 1, name: 1, workType: 1 });
-staffSchema.index({ shop: 1, staffType: 1, rateType: 1 });
-staffSchema.index({ shop: 1, active: 1, createdAt: -1 });
+staffWorkItemSchema.index(
+  { shop: 1, workType: 1, itemName: 1 },
+  { unique: true, partialFilterExpression: { isDeleted: false } },
+);
+staffWorkItemSchema.index({ shop: 1, workType: 1, active: 1, createdAt: -1 });
 
-module.exports = mongoose.model("Staff", staffSchema);
+module.exports = mongoose.model("StaffWorkItem", staffWorkItemSchema);

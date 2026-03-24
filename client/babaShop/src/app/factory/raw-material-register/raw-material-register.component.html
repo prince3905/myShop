@@ -155,9 +155,11 @@
                     <td><span class="status-chip" [class.inactive]="!material.active">{{ material.active ? 'Active' : 'Inactive' }}</span></td>
                     <td>
                       <div class="table-actions" *ngIf="canManage">
-                        <button mat-button class="table-edit-btn" [disabled]="deletingId === material._id" (click)="startEdit(material)">Edit</button>
-                        <button mat-button class="table-delete-btn" [disabled]="deletingId === material._id" (click)="deleteMaterial(material)">
-                          {{ deletingId === material._id ? 'Deleting...' : 'Delete' }}
+                        <button mat-icon-button class="table-edit-btn" [disabled]="deletingId === material._id" (click)="startEdit(material)" aria-label="Edit raw material" title="Edit">
+                          <mat-icon>edit</mat-icon>
+                        </button>
+                        <button mat-icon-button class="table-delete-btn" [disabled]="deletingId === material._id" (click)="deleteMaterial(material)" aria-label="Delete raw material" title="Delete">
+                          <mat-icon>{{ deletingId === material._id ? 'hourglass_top' : 'delete' }}</mat-icon>
                         </button>
                       </div>
                     </td>

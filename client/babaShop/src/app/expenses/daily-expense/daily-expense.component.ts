@@ -17,30 +17,57 @@ export class DailyExpenseComponent implements OnInit {
     "Repair",
     "Factory Expense",
     "Office Expense",
-    "Advance Given",
     "Utility",
-    "Misc",
   ];
 
-  readonly departments = [
-    "Factory",
-    "Office",
-    "Staff",
-    "Transport",
-    "Maintenance",
-    "General",
-  ];
+  readonly categoryDepartmentMap: Record<string, string[]> = {
+    "Chai Pani": ["Factory", "Office", "Staff"],
+    Transport: ["Factory", "Office", "Shop"],
+    Diesel: ["Factory", "Office", "Shop"],
+    Repair: ["Maintenance", "Factory", "Office", "Shop"],
+    "Factory Expense": ["Factory"],
+    "Office Expense": ["Office"],
+    Utility: ["Factory", "Office", "Shop"],
+  };
 
-  readonly accountHeads = [
-    "Factory Expense",
-    "Office Expense",
-    "Staff Expense",
-    "Karigar Expense",
-    "Transport",
-    "Maintenance",
-    "Utility",
-    "Misc",
-  ];
+  readonly departmentAccountHeadMap: Record<string, string[]> = {
+    Factory: ["Factory Expense", "Consumables", "Karigar Expense", "Worker Payment", "Other"],
+    Office: ["Office Expense", "Staff Welfare", "Miscellaneous", "Other"],
+    Shop: ["Transport", "Loading & Unloading", "Vehicle Rent", "Toll & Parking", "Other"],
+    Staff: ["Staff Expense", "Staff Welfare", "Other"],
+    Transport: ["Transport", "Loading & Unloading", "Diesel & Fuel", "Other"],
+    Maintenance: ["Maintenance", "Machine Repair", "Consumables", "Other"],
+    General: ["Miscellaneous", "Other"],
+  };
+
+  readonly categoryDepartmentAccountHeadMap: Record<string, Record<string, string[]>> = {
+    "Chai Pani": {
+      Factory: ["Factory Expense", "Staff Welfare", "Other"],
+      Office: ["Office Expense", "Staff Welfare", "Other"],
+      Staff: ["Staff Welfare", "Staff Expense", "Other"],
+    },
+    Transport: {
+      Factory: ["Loading & Unloading", "Transport", "Vehicle Rent", "Other"],
+      Office: ["Transport", "Vehicle Rent", "Toll & Parking", "Other"],
+      Shop: ["Transport", "Loading & Unloading", "Vehicle Rent", "Toll & Parking", "Other"],
+    },
+    Diesel: {
+      Factory: ["Diesel & Fuel", "Factory Expense", "Other"],
+      Office: ["Diesel & Fuel", "Office Expense", "Other"],
+      Shop: ["Diesel & Fuel", "Transport", "Other"],
+    },
+    Repair: {
+      Maintenance: ["Maintenance", "Machine Repair", "Consumables", "Other"],
+      Factory: ["Maintenance", "Machine Repair", "Factory Expense", "Other"],
+      Office: ["Maintenance", "Office Expense", "Other"],
+      Shop: ["Maintenance", "Machine Repair", "Shop Expense", "Other"],
+    },
+    Utility: {
+      Factory: ["Utility", "Electricity & Power", "Water Expense", "Internet & Phone", "Other"],
+      Office: ["Utility", "Electricity & Power", "Water Expense", "Internet & Phone", "Other"],
+      Shop: ["Utility", "Electricity & Power", "Water Expense", "Internet & Phone", "Other"],
+    },
+  };
 
   readonly paymentMethods = ["CASH", "UPI", "BANK", "CARD", "ONLINE", "CHEQUE"];
 
@@ -88,11 +115,24 @@ export class DailyExpenseComponent implements OnInit {
 
   ngOnInit(): void {
     this.userRole = this.authService.getUserRole();
+    this.syncExpenseFormSelections();
     this.loadAll();
   }
 
   get canManage(): boolean {
     return ["SUPER_ADMIN", "ADMIN", "MANAGER"].includes(`${this.userRole || ""}`);
+  }
+
+  get departmentOptions(): string[] {
+    return this.categoryDepartmentMap[this.expenseForm.category] || ["General"];
+  }
+
+  get accountHeadOptions(): string[] {
+    const categoryHeads = this.categoryDepartmentAccountHeadMap[this.expenseForm.category]?.[this.expenseForm.department];
+    if (categoryHeads?.length) {
+      return categoryHeads;
+    }
+    return this.departmentAccountHeadMap[this.expenseForm.department] || ["Other"];
   }
 
   loadAll(): void {
@@ -140,6 +180,13 @@ export class DailyExpenseComponent implements OnInit {
     this.loadExpenses();
   }
 
+  showTodayExpenses(): void {
+    const today = this.formatDate(new Date());
+    this.filters.dateFrom = today;
+    this.filters.dateTo = today;
+    this.loadExpenses();
+  }
+
   deleteExpense(expense: any): void {
     if (!this.canManage || !expense?._id || this.deletingId) {
       return;
@@ -179,6 +226,7 @@ export class DailyExpenseComponent implements OnInit {
       paymentMethod: expense.paymentMethod || "CASH",
       note: expense.note || "",
     };
+    this.syncExpenseFormSelections();
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -193,8 +241,24 @@ export class DailyExpenseComponent implements OnInit {
       paymentMethod: "CASH",
       note: "",
     };
+    this.syncExpenseFormSelections();
     if (form) {
       form.resetForm(this.expenseForm);
+    }
+  }
+
+  onCategoryChange(): void {
+    const departments = this.departmentOptions;
+    if (!departments.includes(this.expenseForm.department)) {
+      this.expenseForm.department = departments[0];
+    }
+    this.onDepartmentChange();
+  }
+
+  onDepartmentChange(): void {
+    const heads = this.accountHeadOptions;
+    if (!heads.includes(this.expenseForm.accountHead)) {
+      this.expenseForm.accountHead = heads[0];
     }
   }
 
@@ -219,6 +283,10 @@ export class DailyExpenseComponent implements OnInit {
 
   private formatDate(date: Date): string {
     return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+  }
+
+  private syncExpenseFormSelections(): void {
+    this.onCategoryChange();
   }
 
   submitExpense(form: NgForm): void {
