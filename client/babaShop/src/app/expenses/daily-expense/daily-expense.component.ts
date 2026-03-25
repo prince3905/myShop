@@ -136,32 +136,21 @@ export class DailyExpenseComponent implements OnInit {
   }
 
   loadAll(): void {
-    this.loadSummary();
     this.loadExpenses();
   }
 
-  loadSummary(): void {
-    this.loadingSummary = true;
-    this.dailyExpenseService.getSummary().subscribe({
-      next: (response) => {
-        this.summary = response?.summary || this.summary;
-        this.loadingSummary = false;
-      },
-      error: (error) => {
-        this.loadingSummary = false;
-        this.showError(error?.error?.message || "Failed to load expense summary");
-      },
-    });
-  }
-
   loadExpenses(): void {
+    this.loadingSummary = true;
     this.loadingExpenses = true;
     this.dailyExpenseService.getExpenses(this.filters).subscribe({
       next: (response) => {
         this.expenses = response?.expenses || [];
+        this.summary = this.buildSummary(this.expenses);
+        this.loadingSummary = false;
         this.loadingExpenses = false;
       },
       error: (error) => {
+        this.loadingSummary = false;
         this.loadingExpenses = false;
         this.showError(error?.error?.message || "Failed to load daily expenses");
       },
@@ -283,6 +272,28 @@ export class DailyExpenseComponent implements OnInit {
 
   private formatDate(date: Date): string {
     return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+  }
+
+  private buildSummary(expenses: any[]): any {
+    const today = this.formatDate(new Date());
+    return expenses.reduce((acc: any, expense: any) => {
+      const amount = Number(expense?.amount || 0);
+      const rowDate = this.formatDate(new Date(expense?.expenseDate || expense?.createdAt || new Date()));
+      acc.totalAmount += amount;
+      acc.totalEntries += 1;
+      if (rowDate === today) {
+        acc.todayAmount += amount;
+        acc.todayEntries += 1;
+      }
+      return acc;
+    }, {
+      totalAmount: 0,
+      totalEntries: 0,
+      todayAmount: 0,
+      todayEntries: 0,
+      byCategory: [],
+      byDepartment: [],
+    });
   }
 
   private syncExpenseFormSelections(): void {

@@ -1,5 +1,36 @@
 const mongoose = require("mongoose");
 
+const standardMaterialLineSchema = new mongoose.Schema(
+  {
+    rawMaterial: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "RawMaterial",
+      default: null,
+    },
+    materialName: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    qtyPerUnit: {
+      type: Number,
+      min: 0,
+      default: 0,
+    },
+    unitLabel: {
+      type: String,
+      trim: true,
+      default: "PCS",
+    },
+    rate: {
+      type: Number,
+      min: 0,
+      default: 0,
+    },
+  },
+  { _id: false },
+);
+
 const factoryProductSchema = new mongoose.Schema(
   {
     shop: {
@@ -23,6 +54,11 @@ const factoryProductSchema = new mongoose.Schema(
       trim: true,
       default: "PCS",
     },
+    workerPieceRate: {
+      type: Number,
+      min: 0,
+      default: 0,
+    },
     standardLabourCost: {
       type: Number,
       min: 0,
@@ -32,6 +68,25 @@ const factoryProductSchema = new mongoose.Schema(
       type: Number,
       min: 0,
       default: 0,
+    },
+    standardWasteQtyPerUnit: {
+      type: Number,
+      min: 0,
+      default: 0,
+    },
+    standardWasteUnitLabel: {
+      type: String,
+      trim: true,
+      default: "KG",
+    },
+    standardWasteValuePerUnit: {
+      type: Number,
+      min: 0,
+      default: 0,
+    },
+    standardMaterialLines: {
+      type: [standardMaterialLineSchema],
+      default: [],
     },
     note: {
       type: String,

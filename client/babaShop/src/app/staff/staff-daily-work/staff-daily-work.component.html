@@ -76,13 +76,19 @@
                 <div class="row quick-main-row">
                   <div class="col-md-8">
                     <mat-form-field class="example-full-width">
-                      <mat-label>{{ isPieceRateStaff ? 'Item / Box Name' : 'Work Item' }}</mat-label>
-                      <mat-select [(ngModel)]="dailyWorkForm.workItem" name="workItem" (selectionChange)="onWorkItemChange()">
+                      <mat-label>{{ isPieceRateStaff ? 'Factory Product' : 'Factory Product' }}</mat-label>
+                      <mat-select
+                        [(ngModel)]="dailyWorkForm.factoryProduct"
+                        name="factoryProduct"
+                        (selectionChange)="onFactoryProductChange()"
+                        [required]="isPieceRateStaff"
+                      >
                         <mat-option value="" *ngIf="!isPieceRateStaff">None</mat-option>
-                        <mat-option *ngFor="let item of filteredWorkItemOptions" [value]="item._id">
-                          {{ item.itemName }} · Rs {{ item.pieceRate | number: '1.0-2' }}/{{ item.unit }}
+                        <mat-option *ngFor="let item of factoryProductOptions" [value]="item._id">
+                          {{ item.name }} · Rs {{ item.workerPieceRate | number: '1.0-2' }}/{{ item.unitLabel }}
                         </mat-option>
                       </mat-select>
+                      <mat-hint *ngIf="isPieceRateStaff">Piece worker ke liye factory product select karna zaroori hai.</mat-hint>
                     </mat-form-field>
                   </div>
                   <div class="col-md-4">
@@ -97,7 +103,7 @@
                   <div class="value-preview-card compact">
                     <span>Item Rate</span>
                     <strong>
-                      {{ selectedWorkItem ? ('Rs ' + (selectedWorkItem.pieceRate | number: '1.0-2') + '/' + selectedWorkItem.unit) : (isPieceRateStaff ? 'Select item' : 'Auto') }}
+                      {{ selectedFactoryProduct ? ('Rs ' + (selectedFactoryProduct.workerPieceRate | number: '1.0-2') + '/' + selectedFactoryProduct.unitLabel) : (isPieceRateStaff ? 'Select product' : 'Auto') }}
                     </strong>
                   </div>
                   <div class="value-preview-card compact">
@@ -237,7 +243,8 @@
                     </td>
                     <td>
                       <div class="table-primary">{{ item.workType || '-' }}</div>
-                      <div class="table-note" *ngIf="item.workItemName">{{ item.workItemName }} · {{ item.unitsCompleted || 0 }} {{ item.unit || 'PCS' }}</div>
+                      <div class="table-note" *ngIf="item.factoryProductName">{{ item.factoryProductName }} · {{ item.unitsCompleted || 0 }} {{ item.unit || 'PCS' }}</div>
+                      <div class="table-note" *ngIf="!item.factoryProductName && item.workItemName">{{ item.workItemName }} · {{ item.unitsCompleted || 0 }} {{ item.unit || 'PCS' }}</div>
                       <div class="table-note" *ngIf="item.workDetails">{{ item.workDetails }}</div>
                       <div class="table-note" *ngIf="item.linkedJob">{{ item.linkedJob }}</div>
                     </td>

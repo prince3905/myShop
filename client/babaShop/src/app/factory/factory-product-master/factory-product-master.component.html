@@ -4,7 +4,7 @@
       <div class="card-header card-header-danger factory-hero">
         <div>
           <h2 class="factory-hero-title">Factory Product Master</h2>
-          <p class="factory-hero-subtitle">Ready maal ki fixed list banao, taki production register me product select karke costing fast ho.</p>
+          <p class="factory-hero-subtitle">Ready maal ki fixed list, worker rate, material template aur waste rule yahin set karo. Daily work isi se auto factory hisab banayega.</p>
         </div>
       </div>
     </div>
@@ -64,15 +64,101 @@
               <div class="row">
                 <div class="col-md-6">
                   <mat-form-field class="example-full-width">
+                    <mat-label>Worker Piece Rate</mat-label>
+                    <input matInput type="number" min="0" [(ngModel)]="productForm.workerPieceRate" name="workerPieceRate" required>
+                  </mat-form-field>
+                </div>
+                <div class="col-md-6">
+                  <mat-form-field class="example-full-width">
                     <mat-label>Std Labour Cost</mat-label>
                     <input matInput type="number" min="0" [(ngModel)]="productForm.standardLabourCost" name="standardLabourCost" required>
                   </mat-form-field>
                 </div>
+              </div>
+
+              <div class="row">
                 <div class="col-md-6">
                   <mat-form-field class="example-full-width">
                     <mat-label>Std Other Cost</mat-label>
                     <input matInput type="number" min="0" [(ngModel)]="productForm.standardOtherCost" name="standardOtherCost" required>
                   </mat-form-field>
+                </div>
+                <div class="col-md-6">
+                  <mat-form-field class="example-full-width">
+                    <mat-label>Waste Qty Per Unit</mat-label>
+                    <input matInput type="number" min="0" [(ngModel)]="productForm.standardWasteQtyPerUnit" name="standardWasteQtyPerUnit" required>
+                  </mat-form-field>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-6">
+                  <mat-form-field class="example-full-width">
+                    <mat-label>Waste Unit</mat-label>
+                    <mat-select [(ngModel)]="productForm.standardWasteUnitLabel" name="standardWasteUnitLabel" required>
+                      <mat-option *ngFor="let unit of wasteUnitOptions" [value]="unit">{{ unit }}</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+                <div class="col-md-6">
+                  <mat-form-field class="example-full-width">
+                    <mat-label>Waste Value Per Unit</mat-label>
+                    <input matInput type="number" min="0" [(ngModel)]="productForm.standardWasteValuePerUnit" name="standardWasteValuePerUnit" required>
+                  </mat-form-field>
+                </div>
+              </div>
+
+              <div class="template-block">
+                <div class="template-header">
+                  <div>
+                    <h5>Standard Material Template</h5>
+                    <p>1 piece/product banane me kitna material lagta hai.</p>
+                  </div>
+                  <button type="button" mat-stroked-button class="btn btn-outline-danger btn-sm" (click)="addMaterialLine()">
+                    Add Material
+                  </button>
+                </div>
+
+                <div class="template-empty" *ngIf="productForm.standardMaterialLines.length === 0">
+                  No material template added yet.
+                </div>
+
+                <div class="template-line" *ngFor="let line of productForm.standardMaterialLines; let i = index">
+                  <div class="row">
+                    <div class="col-md-4">
+                      <mat-form-field class="example-full-width">
+                        <mat-label>Raw Material</mat-label>
+                        <mat-select [(ngModel)]="line.rawMaterial" [name]="'rawMaterial' + i" (selectionChange)="onMaterialChange(i)">
+                          <mat-option *ngFor="let material of rawMaterialOptions" [value]="material._id">
+                            {{ material.name }}
+                          </mat-option>
+                        </mat-select>
+                      </mat-form-field>
+                    </div>
+                    <div class="col-md-3">
+                      <mat-form-field class="example-full-width">
+                        <mat-label>Qty / Unit</mat-label>
+                        <input matInput type="number" min="0" [(ngModel)]="line.qtyPerUnit" [name]="'qtyPerUnit' + i">
+                      </mat-form-field>
+                    </div>
+                    <div class="col-md-2">
+                      <mat-form-field class="example-full-width">
+                        <mat-label>Unit</mat-label>
+                        <input matInput [(ngModel)]="line.unitLabel" [name]="'unitLabel' + i">
+                      </mat-form-field>
+                    </div>
+                    <div class="col-md-2">
+                      <mat-form-field class="example-full-width">
+                        <mat-label>Rate</mat-label>
+                        <input matInput type="number" min="0" [(ngModel)]="line.rate" [name]="'rate' + i">
+                      </mat-form-field>
+                    </div>
+                    <div class="col-md-1 template-remove-col">
+                      <button type="button" mat-icon-button class="table-delete-btn" (click)="removeMaterialLine(i)" title="Remove">
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -125,8 +211,9 @@
                   <tr>
                     <th>Product</th>
                     <th>Unit</th>
-                    <th>Std Labour</th>
-                    <th>Std Other</th>
+                    <th>Worker Rate</th>
+                    <th>Materials</th>
+                    <th>Waste</th>
                     <th>Status</th>
                     <th>Action</th>
                   </tr>
@@ -139,8 +226,9 @@
                       <div class="table-note" *ngIf="product.note">{{ product.note }}</div>
                     </td>
                     <td>{{ product.unitLabel }}</td>
-                    <td>Rs {{ product.standardLabourCost | number: '1.0-2' }}</td>
-                    <td>Rs {{ product.standardOtherCost | number: '1.0-2' }}</td>
+                    <td>Rs {{ product.workerPieceRate | number: '1.0-2' }}</td>
+                    <td>{{ product.standardMaterialLines?.length || 0 }} lines</td>
+                    <td>{{ product.standardWasteQtyPerUnit | number: '1.0-2' }} {{ product.standardWasteUnitLabel || 'KG' }}</td>
                     <td><span class="status-chip" [class.inactive]="!product.active">{{ product.active ? 'Active' : 'Inactive' }}</span></td>
                     <td>
                       <div class="table-actions" *ngIf="canManage">

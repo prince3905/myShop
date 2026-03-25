@@ -67,14 +67,9 @@ import { StaffPaymentsComponent } from "app/staff/staff-payments/staff-payments.
 import { StaffDailyWorkComponent } from "app/staff/staff-daily-work/staff-daily-work.component";
 import { StaffPayableSummaryComponent } from "app/staff/staff-payable-summary/staff-payable-summary.component";
 import { StaffWorkItemsComponent } from "app/staff/staff-work-items/staff-work-items.component";
-import { FactoryProductionComponent } from "app/factory/factory-production/factory-production.component";
 import { FactoryProductMasterComponent } from "app/factory/factory-product-master/factory-product-master.component";
 import { RawMaterialRegisterComponent } from "app/factory/raw-material-register/raw-material-register.component";
-import { ScrapRegisterComponent } from "app/factory/scrap-register/scrap-register.component";
 import { FactoryReportComponent } from "app/factory/factory-report/factory-report.component";
-import { MaterialInwardComponent } from "app/factory/material-inward/material-inward.component";
-import { FinishedGoodsRegisterComponent } from "app/factory/finished-goods-register/finished-goods-register.component";
-import { FactoryDailyCostingComponent } from "app/factory/factory-daily-costing/factory-daily-costing.component";
 
 @NgModule({
   imports: [
@@ -147,12 +142,7 @@ import { FactoryDailyCostingComponent } from "app/factory/factory-daily-costing/
     StaffPaymentsComponent,
     StaffPayableSummaryComponent,
     FactoryProductMasterComponent,
-    FactoryProductionComponent,
     RawMaterialRegisterComponent,
-    MaterialInwardComponent,
-    FinishedGoodsRegisterComponent,
-    FactoryDailyCostingComponent,
-    ScrapRegisterComponent,
     FactoryReportComponent,
     HasRoleDirective,
     CapitalizeFirstDirective,

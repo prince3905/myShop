@@ -33,7 +33,10 @@ export class RawMaterialRegisterComponent implements OnInit {
     activeMaterials: 0,
     inactiveMaterials: 0,
     totalOpeningQty: 0,
-    totalValue: 0,
+    totalOpeningValue: 0,
+    totalConsumedQty: 0,
+    currentBalanceQty: 0,
+    currentBalanceValue: 0,
   };
 
   materials: any[] = [];
@@ -64,32 +67,21 @@ export class RawMaterialRegisterComponent implements OnInit {
   }
 
   loadAll(): void {
-    this.loadSummary();
     this.loadMaterials();
   }
 
-  loadSummary(): void {
-    this.loadingSummary = true;
-    this.rawMaterialService.getSummary().subscribe({
-      next: (response) => {
-        this.summary = response?.summary || this.summary;
-        this.loadingSummary = false;
-      },
-      error: (error) => {
-        this.loadingSummary = false;
-        this.showError(error?.error?.message || "Failed to load raw material summary");
-      },
-    });
-  }
-
   loadMaterials(): void {
+    this.loadingSummary = true;
     this.loadingMaterials = true;
     this.rawMaterialService.getMaterials(this.filters).subscribe({
       next: (response) => {
         this.materials = response?.materials || [];
+        this.summary = this.buildSummary(this.materials);
+        this.loadingSummary = false;
         this.loadingMaterials = false;
       },
       error: (error) => {
+        this.loadingSummary = false;
         this.loadingMaterials = false;
         this.showError(error?.error?.message || "Failed to load raw materials");
       },
@@ -202,5 +194,28 @@ export class RawMaterialRegisterComponent implements OnInit {
 
   private showError(message: string): void {
     this.snackBar.open(message, "Close", { duration: 3000 });
+  }
+
+  private buildSummary(materials: any[]): any {
+    return materials.reduce((acc: any, material: any) => {
+      acc.totalMaterials += 1;
+      acc.activeMaterials += material?.active ? 1 : 0;
+      acc.inactiveMaterials += material?.active ? 0 : 1;
+      acc.totalOpeningQty += Number(material?.openingQty || 0);
+      acc.totalOpeningValue += Number(material?.openingValue || 0);
+      acc.totalConsumedQty += Number(material?.consumedQty || 0);
+      acc.currentBalanceQty += Number(material?.currentBalanceQty || 0);
+      acc.currentBalanceValue += Number(material?.currentBalanceValue || 0);
+      return acc;
+    }, {
+      totalMaterials: 0,
+      activeMaterials: 0,
+      inactiveMaterials: 0,
+      totalOpeningQty: 0,
+      totalOpeningValue: 0,
+      totalConsumedQty: 0,
+      currentBalanceQty: 0,
+      currentBalanceValue: 0,
+    });
   }
 }

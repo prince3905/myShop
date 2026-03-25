@@ -4,7 +4,7 @@ import { MatSnackBar } from "@angular/material/snack-bar";
 import { AuthService } from "app/shared/services/auth.service";
 import { StaffDailyWorkService } from "app/shared/services/staff-daily-work.service";
 import { StaffService } from "app/shared/services/staff.service";
-import { StaffWorkItemService } from "app/shared/services/staff-work-item.service";
+import { FactoryProductService } from "app/shared/services/factory-product.service";
 
 @Component({
   selector: "app-staff-daily-work",
@@ -20,6 +20,8 @@ export class StaffDailyWorkComponent implements OnInit {
     entryDate: this.formatDate(new Date()),
     attendanceStatus: "PRESENT",
     workType: "",
+    factoryProduct: "",
+    factoryProductName: "",
     workItem: "",
     workItemName: "",
     unit: "PCS",
@@ -50,8 +52,7 @@ export class StaffDailyWorkComponent implements OnInit {
   };
 
   staffOptions: any[] = [];
-  workItemOptions: any[] = [];
-  filteredWorkItemOptions: any[] = [];
+  factoryProductOptions: any[] = [];
   dailyWorks: any[] = [];
   editingDailyWorkId: string | null = null;
   loadingStaffs = false;
@@ -63,7 +64,7 @@ export class StaffDailyWorkComponent implements OnInit {
 
   constructor(
     private staffService: StaffService,
-    private staffWorkItemService: StaffWorkItemService,
+    private factoryProductService: FactoryProductService,
     private staffDailyWorkService: StaffDailyWorkService,
     private snackBar: MatSnackBar,
     private authService: AuthService,
@@ -72,7 +73,7 @@ export class StaffDailyWorkComponent implements OnInit {
   ngOnInit(): void {
     this.userRole = this.authService.getUserRole();
     this.loadStaffs();
-    this.loadWorkItems();
+    this.loadFactoryProducts();
     this.loadAll();
   }
 
@@ -87,7 +88,7 @@ export class StaffDailyWorkComponent implements OnInit {
     }
     const rate = Number(staff?.rate || 0);
     if (`${staff?.rateType || ""}` === "PIECE") {
-      const pieceRate = Number(this.selectedWorkItem?.pieceRate || this.dailyWorkForm.pieceRate || rate || 0);
+      const pieceRate = Number(this.selectedFactoryProduct?.workerPieceRate || this.dailyWorkForm.pieceRate || rate || 0);
       return pieceRate * Number(this.dailyWorkForm.unitsCompleted || 0);
     }
     if (`${staff?.rateType || ""}` === "MONTHLY") {
@@ -106,8 +107,8 @@ export class StaffDailyWorkComponent implements OnInit {
     return rate;
   }
 
-  get selectedWorkItem(): any | null {
-    return this.filteredWorkItemOptions.find((row) => row?._id === this.dailyWorkForm.workItem) || null;
+  get selectedFactoryProduct(): any | null {
+    return this.factoryProductOptions.find((row) => row?._id === this.dailyWorkForm.factoryProduct) || null;
   }
 
   get selectedStaff(): any | null {
@@ -119,7 +120,6 @@ export class StaffDailyWorkComponent implements OnInit {
   }
 
   loadAll(): void {
-    this.loadSummary();
     this.loadDailyWorks();
   }
 
@@ -136,43 +136,31 @@ export class StaffDailyWorkComponent implements OnInit {
     });
   }
 
-  loadSummary(): void {
-    this.loadingSummary = true;
-    this.staffDailyWorkService.getSummary().subscribe({
-      next: (response) => {
-        this.summary = response?.summary || this.summary;
-        this.loadingSummary = false;
-      },
-      error: (error) => {
-        this.loadingSummary = false;
-        this.showError(error?.error?.message || "Failed to load daily work summary");
-      },
-    });
-  }
-
   loadDailyWorks(): void {
+    this.loadingSummary = true;
     this.loadingDailyWorks = true;
     this.staffDailyWorkService.getDailyWorks(this.filters).subscribe({
       next: (response) => {
         this.dailyWorks = response?.dailyWorks || [];
+        this.summary = this.buildSummary(this.dailyWorks);
+        this.loadingSummary = false;
         this.loadingDailyWorks = false;
       },
       error: (error) => {
+        this.loadingSummary = false;
         this.loadingDailyWorks = false;
         this.showError(error?.error?.message || "Failed to load daily work entries");
       },
     });
   }
 
-  loadWorkItems(): void {
-    this.staffWorkItemService.getItems({ active: true }).subscribe({
+  loadFactoryProducts(): void {
+    this.factoryProductService.getProducts({ active: true }).subscribe({
       next: (response) => {
-        this.workItemOptions = response?.items || [];
-        this.syncWorkItemsForSelectedStaff();
+        this.factoryProductOptions = response?.products || [];
       },
       error: () => {
-        this.workItemOptions = [];
-        this.filteredWorkItemOptions = [];
+        this.factoryProductOptions = [];
       },
     });
   }
@@ -180,11 +168,9 @@ export class StaffDailyWorkComponent implements OnInit {
   onStaffChange(): void {
     const staff = this.staffOptions.find((row) => row?._id === this.dailyWorkForm.staff);
     if (!staff) {
-      this.filteredWorkItemOptions = [];
       return;
     }
     this.dailyWorkForm.workType = staff.workType || "";
-    this.syncWorkItemsForSelectedStaff();
     if (`${staff?.rateType || ""}` !== "PIECE") {
       this.dailyWorkForm.unitsCompleted = 1;
     }
@@ -195,11 +181,11 @@ export class StaffDailyWorkComponent implements OnInit {
     this.dailyWorkForm.earnedAmount = this.earnedAmountPreview;
   }
 
-  onWorkItemChange(): void {
-    const item = this.selectedWorkItem;
-    this.dailyWorkForm.workItemName = item?.itemName || "";
-    this.dailyWorkForm.unit = item?.unit || "PCS";
-    this.dailyWorkForm.pieceRate = Number(item?.pieceRate || 0);
+  onFactoryProductChange(): void {
+    const product = this.selectedFactoryProduct;
+    this.dailyWorkForm.factoryProductName = product?.name || "";
+    this.dailyWorkForm.unit = product?.unitLabel || "PCS";
+    this.dailyWorkForm.pieceRate = Number(product?.workerPieceRate || 0);
     this.dailyWorkForm.earnedAmount = this.earnedAmountPreview;
   }
 
@@ -216,9 +202,9 @@ export class StaffDailyWorkComponent implements OnInit {
     const payload = {
       ...this.dailyWorkForm,
       earnedAmount: this.earnedAmountPreview,
-      pieceRate: Number(this.selectedWorkItem?.pieceRate || this.dailyWorkForm.pieceRate || 0),
-      workItemName: this.selectedWorkItem?.itemName || this.dailyWorkForm.workItemName || "",
-      unit: this.selectedWorkItem?.unit || this.dailyWorkForm.unit || "PCS",
+      pieceRate: Number(this.selectedFactoryProduct?.workerPieceRate || this.dailyWorkForm.pieceRate || 0),
+      factoryProductName: this.selectedFactoryProduct?.name || this.dailyWorkForm.factoryProductName || "",
+      unit: this.selectedFactoryProduct?.unitLabel || this.dailyWorkForm.unit || "PCS",
     };
 
     const request$ = this.editingDailyWorkId
@@ -254,6 +240,8 @@ export class StaffDailyWorkComponent implements OnInit {
       entryDate: this.formatDate(new Date(dailyWork.entryDate)),
       attendanceStatus: dailyWork.attendanceStatus || "PRESENT",
       workType: dailyWork.workType || "",
+      factoryProduct: dailyWork.factoryProduct?._id || dailyWork.factoryProduct || "",
+      factoryProductName: dailyWork.factoryProductName || "",
       workItem: dailyWork.workItem?._id || dailyWork.workItem || "",
       workItemName: dailyWork.workItemName || "",
       unit: dailyWork.unit || "PCS",
@@ -264,7 +252,6 @@ export class StaffDailyWorkComponent implements OnInit {
       earnedAmount: Number(dailyWork.earnedAmount || 0),
       note: dailyWork.note || "",
     };
-    this.syncWorkItemsForSelectedStaff();
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -275,6 +262,8 @@ export class StaffDailyWorkComponent implements OnInit {
       entryDate: this.formatDate(new Date()),
       attendanceStatus: "PRESENT",
       workType: "",
+      factoryProduct: "",
+      factoryProductName: "",
       workItem: "",
       workItemName: "",
       unit: "PCS",
@@ -340,24 +329,33 @@ export class StaffDailyWorkComponent implements OnInit {
     return `${item?._id || item?.label || "row"}-${index}`;
   }
 
-  private syncWorkItemsForSelectedStaff(): void {
-    const staff = this.staffOptions.find((row) => row?._id === this.dailyWorkForm.staff);
-    const workType = `${staff?.workType || this.dailyWorkForm.workType || ""}`.trim();
-    this.filteredWorkItemOptions = this.workItemOptions.filter((row) => `${row?.workType || ""}`.trim() === workType);
-
-    if (!this.filteredWorkItemOptions.some((row) => row?._id === this.dailyWorkForm.workItem)) {
-      this.dailyWorkForm.workItem = "";
-      this.dailyWorkForm.workItemName = "";
-      this.dailyWorkForm.unit = "PCS";
-      this.dailyWorkForm.pieceRate = 0;
-    }
-  }
-
   private formatDate(date: Date): string {
     return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
   }
 
   private showError(message: string): void {
     this.snackBar.open(message, "Close", { duration: 3000 });
+  }
+
+  private buildSummary(rows: any[]): any {
+    const byAttendanceMap = rows.reduce((acc: Record<string, any>, row: any) => {
+      const label = row?.attendanceStatus || "UNKNOWN";
+      if (!acc[label]) {
+        acc[label] = { _id: label, count: 0, totalEarned: 0 };
+      }
+      acc[label].count += 1;
+      acc[label].totalEarned += Number(row?.earnedAmount || 0);
+      return acc;
+    }, {});
+
+    return {
+      totalEntries: rows.length,
+      presentCount: rows.filter((row: any) => row?.attendanceStatus === "PRESENT").length,
+      halfDayCount: rows.filter((row: any) => row?.attendanceStatus === "HALF_DAY").length,
+      absentCount: rows.filter((row: any) => row?.attendanceStatus === "ABSENT").length,
+      totalEarned: rows.reduce((sum: number, row: any) => sum + Number(row?.earnedAmount || 0), 0),
+      totalUnitsCompleted: rows.reduce((sum: number, row: any) => sum + Number(row?.unitsCompleted || 0), 0),
+      byAttendance: Object.values(byAttendanceMap),
+    };
   }
 }

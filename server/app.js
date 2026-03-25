@@ -88,11 +88,7 @@ const staffWorkItemRoutes = require("./routes/staffWorkItemRoutes");
 const staffPaymentRoutes = require("./routes/staffPaymentRoutes");
 const staffDailyWorkRoutes = require("./routes/staffDailyWorkRoutes");
 const factoryProductRoutes = require("./routes/factoryProductRoutes");
-const factoryProductionRoutes = require("./routes/factoryProductionRoutes");
 const rawMaterialRoutes = require("./routes/rawMaterialRoutes");
-const scrapRegisterRoutes = require("./routes/scrapRegisterRoutes");
-const materialInwardRoutes = require("./routes/materialInwardRoutes");
-const finishedGoodsRegisterRoutes = require("./routes/finishedGoodsRegisterRoutes");
 
 
 //Middleware
@@ -144,11 +140,7 @@ app.use("/api/staff-work-items", staffWorkItemRoutes);
 app.use("/api/staff-payments", staffPaymentRoutes);
 app.use("/api/staff-daily-work", staffDailyWorkRoutes);
 app.use("/api/factory-products", factoryProductRoutes);
-app.use("/api/factory-productions", factoryProductionRoutes);
 app.use("/api/raw-materials", rawMaterialRoutes);
-app.use("/api/scrap-registers", scrapRegisterRoutes);
-app.use("/api/material-inwards", materialInwardRoutes);
-app.use("/api/finished-goods-register", finishedGoodsRegisterRoutes);
 
 app.get("/api/health", (req, res) => {
   res.status(200).json({

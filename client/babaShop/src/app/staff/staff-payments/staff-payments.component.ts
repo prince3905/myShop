@@ -73,7 +73,6 @@ export class StaffPaymentsComponent implements OnInit {
   }
 
   loadAll(): void {
-    this.loadSummary();
     this.loadPayments();
   }
 
@@ -91,28 +90,18 @@ export class StaffPaymentsComponent implements OnInit {
     });
   }
 
-  loadSummary(): void {
-    this.loadingSummary = true;
-    this.staffPaymentService.getSummary().subscribe({
-      next: (response) => {
-        this.summary = response?.summary || this.summary;
-        this.loadingSummary = false;
-      },
-      error: (error) => {
-        this.loadingSummary = false;
-        this.showError(error?.error?.message || "Failed to load payment summary");
-      },
-    });
-  }
-
   loadPayments(): void {
+    this.loadingSummary = true;
     this.loadingPayments = true;
     this.staffPaymentService.getPayments(this.filters).subscribe({
       next: (response) => {
         this.payments = response?.payments || [];
+        this.summary = this.buildSummary(this.payments);
+        this.loadingSummary = false;
         this.loadingPayments = false;
       },
       error: (error) => {
+        this.loadingSummary = false;
         this.loadingPayments = false;
         this.showError(error?.error?.message || "Failed to load entries");
       },
@@ -231,5 +220,25 @@ export class StaffPaymentsComponent implements OnInit {
 
   private showError(message: string): void {
     this.snackBar.open(message, "Close", { duration: 3000 });
+  }
+
+  private buildSummary(rows: any[]): any {
+    const today = this.formatDate(new Date());
+    const byTypeMap = rows.reduce((acc: Record<string, any>, row: any) => {
+      const label = row?.entryType || "UNKNOWN";
+      if (!acc[label]) {
+        acc[label] = { _id: label, count: 0, totalAmount: 0 };
+      }
+      acc[label].count += 1;
+      acc[label].totalAmount += Number(row?.amount || 0);
+      return acc;
+    }, {});
+
+    return {
+      totalAdvance: rows.filter((row: any) => row?.entryType === "ADVANCE").reduce((sum: number, row: any) => sum + Number(row?.amount || 0), 0),
+      totalPayment: rows.filter((row: any) => row?.entryType === "PAYMENT").reduce((sum: number, row: any) => sum + Number(row?.amount || 0), 0),
+      todayEntries: rows.filter((row: any) => this.formatDate(new Date(row?.entryDate || row?.createdAt || new Date())) === today).length,
+      byType: Object.values(byTypeMap),
+    };
   }
 }

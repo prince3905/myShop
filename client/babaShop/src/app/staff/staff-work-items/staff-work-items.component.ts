@@ -64,33 +64,22 @@ export class StaffWorkItemsComponent implements OnInit {
   }
 
   loadAll(): void {
-    this.loadSummary();
     this.loadItems();
     this.loadWorkTypes();
   }
 
-  loadSummary(): void {
-    this.loadingSummary = true;
-    this.staffWorkItemService.getSummary().subscribe({
-      next: (response) => {
-        this.summary = response?.summary || this.summary;
-        this.loadingSummary = false;
-      },
-      error: (error) => {
-        this.loadingSummary = false;
-        this.showError(error?.error?.message || "Failed to load item summary");
-      },
-    });
-  }
-
   loadItems(): void {
+    this.loadingSummary = true;
     this.loadingItems = true;
     this.staffWorkItemService.getItems(this.filters).subscribe({
       next: (response) => {
         this.items = response?.items || [];
+        this.summary = this.buildSummary(this.items);
+        this.loadingSummary = false;
         this.loadingItems = false;
       },
       error: (error) => {
+        this.loadingSummary = false;
         this.loadingItems = false;
         this.showError(error?.error?.message || "Failed to load item rate list");
       },
@@ -222,5 +211,27 @@ export class StaffWorkItemsComponent implements OnInit {
 
   private showError(message: string): void {
     this.snackBar.open(message, "Close", { duration: 3000 });
+  }
+
+  private buildSummary(items: any[]): any {
+    const byWorkTypeMap = items.reduce((acc: Record<string, any>, row: any) => {
+      const label = row?.workType || row?.workTypeRef?.name || "Unknown";
+      if (!acc[label]) {
+        acc[label] = { _id: label, count: 0 };
+      }
+      acc[label].count += 1;
+      return acc;
+    }, {});
+
+    const totalRateBase = items.reduce((sum: number, row: any) => sum + Number(row?.pieceRate || 0), 0);
+
+    return {
+      totalItems: items.length,
+      averageRate: items.length ? totalRateBase / items.length : 0,
+      totalRateBase,
+      activeItems: items.filter((row: any) => !!row?.active).length,
+      inactiveItems: items.filter((row: any) => !row?.active).length,
+      byWorkType: Object.values(byWorkTypeMap),
+    };
   }
 }

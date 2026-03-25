@@ -111,33 +111,22 @@ export class StaffMasterComponent implements OnInit {
   }
 
   loadAll(): void {
-    this.loadSummary();
     this.loadStaffs();
     this.loadWorkTypes();
   }
 
-  loadSummary(): void {
-    this.loadingSummary = true;
-    this.staffService.getSummary().subscribe({
-      next: (response) => {
-        this.summary = response?.summary || this.summary;
-        this.loadingSummary = false;
-      },
-      error: (error) => {
-        this.loadingSummary = false;
-        this.showError(error?.error?.message || "Failed to load staff summary");
-      },
-    });
-  }
-
   loadStaffs(): void {
+    this.loadingSummary = true;
     this.loadingStaffs = true;
     this.staffService.getStaffs(this.filters).subscribe({
       next: (response) => {
         this.staffs = response?.staffs || [];
+        this.summary = this.buildSummary(this.staffs);
+        this.loadingSummary = false;
         this.loadingStaffs = false;
       },
       error: (error) => {
+        this.loadingSummary = false;
         this.loadingStaffs = false;
         this.showError(error?.error?.message || "Failed to load staff list");
       },
@@ -369,5 +358,29 @@ export class StaffMasterComponent implements OnInit {
 
   private showError(message: string): void {
     this.snackBar.open(message, "Close", { duration: 3000 });
+  }
+
+  private buildSummary(staffs: any[]): any {
+    const groupedBy = (rows: any[], getter: (row: any) => string) => {
+      const map = rows.reduce((acc: Record<string, any>, row: any) => {
+        const label = getter(row) || "Unknown";
+        if (!acc[label]) {
+          acc[label] = { _id: label, count: 0 };
+        }
+        acc[label].count += 1;
+        return acc;
+      }, {});
+      return Object.values(map);
+    };
+
+    return {
+      totalStaffs: staffs.length,
+      totalRateBase: staffs.reduce((sum: number, row: any) => sum + Number(row?.rate || 0), 0),
+      activeStaffs: staffs.filter((row: any) => !!row?.active).length,
+      inactiveStaffs: staffs.filter((row: any) => !row?.active).length,
+      byWorkType: groupedBy(staffs, (row) => row?.workType || row?.workTypeRef?.name || ""),
+      byStaffType: groupedBy(staffs, (row) => row?.staffType || ""),
+      byRateType: groupedBy(staffs, (row) => row?.rateType || ""),
+    };
   }
 }

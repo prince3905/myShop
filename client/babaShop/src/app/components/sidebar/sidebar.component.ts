@@ -119,12 +119,6 @@ export const ROUTES: RouteInfo[] = [
         roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"],
       },
       {
-        path: "/staff-work-items",
-        title: "Item Rate Master",
-        icon: "sell",
-        roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"],
-      },
-      {
         path: "/staff-daily-work",
         title: "Daily Work",
         icon: "event_note",
@@ -152,50 +146,20 @@ export const ROUTES: RouteInfo[] = [
     children: [
       {
         path: "/factory-product-master",
-        title: "Factory Product Master",
+        title: "Factory Production",
         icon: "category",
         roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"],
       },
       {
-        path: "/factory-production",
-        title: "Production Register",
-        icon: "construction",
-        roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"],
-      },
-      {
         path: "/raw-material-register",
-        title: "Raw Material Register",
+        title: "Raw Material",
         icon: "inventory",
-        roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"],
-      },
-      {
-        path: "/material-inward",
-        title: "Material Inward",
-        icon: "inventory",
-        roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"],
-      },
-      {
-        path: "/finished-goods-register",
-        title: "Finished Goods Register",
-        icon: "inventory_2",
-        roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"],
-      },
-      {
-        path: "/scrap-register",
-        title: "Scrap / Waste Register",
-        icon: "delete_sweep",
         roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"],
       },
       {
         path: "/factory-report",
         title: "Factory Report",
         icon: "assessment",
-        roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"],
-      },
-      {
-        path: "/factory-daily-costing",
-        title: "Daily Costing Report",
-        icon: "analytics",
         roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"],
       },
     ],

@@ -1,8 +1,7 @@
 import { Component, OnInit } from "@angular/core";
 import { MatSnackBar } from "@angular/material/snack-bar";
-import { FactoryProductionService } from "app/shared/services/factory-production.service";
 import { RawMaterialService } from "app/shared/services/raw-material.service";
-import { ScrapRegisterService } from "app/shared/services/scrap-register.service";
+import { StaffDailyWorkService } from "app/shared/services/staff-daily-work.service";
 import { forkJoin } from "rxjs";
 
 @Component({
@@ -37,9 +36,8 @@ export class FactoryReportComponent implements OnInit {
   rawMaterialSnapshot: any[] = [];
 
   constructor(
-    private factoryProductionService: FactoryProductionService,
+    private staffDailyWorkService: StaffDailyWorkService,
     private rawMaterialService: RawMaterialService,
-    private scrapRegisterService: ScrapRegisterService,
     private snackBar: MatSnackBar,
   ) {}
 
@@ -51,14 +49,14 @@ export class FactoryReportComponent implements OnInit {
     this.loading = true;
 
     forkJoin({
-      productionsResponse: this.factoryProductionService.getProductions(this.filters),
-      scrapsResponse: this.scrapRegisterService.getScraps(this.filters),
+      dailyWorksResponse: this.staffDailyWorkService.getDailyWorks(this.filters),
       materialsResponse: this.rawMaterialService.getMaterials({ search: this.filters.search }),
     }).subscribe({
-      next: ({ productionsResponse, scrapsResponse, materialsResponse }) => {
-        const productions = productionsResponse?.productions || [];
-        const scraps = scrapsResponse?.scraps || [];
+      next: ({ dailyWorksResponse, materialsResponse }) => {
+        const dailyWorks = (dailyWorksResponse?.dailyWorks || []).filter((row: any) => !!row?.factoryProduct);
         const materials = materialsResponse?.materials || [];
+        const productions = this.buildProductionRows(dailyWorks);
+        const scraps = this.buildScrapRows(dailyWorks);
 
         this.recentProductions = productions.slice(0, 8);
         this.recentScraps = scraps.slice(0, 8);
@@ -72,10 +70,7 @@ export class FactoryReportComponent implements OnInit {
           scrapQty: scraps.reduce((sum: number, item: any) => sum + Number(item?.qty || 0), 0),
           scrapValue: scraps.reduce((sum: number, item: any) => sum + Number(item?.estimatedValue || 0), 0),
           materialCount: materials.length,
-          materialValue: materials.reduce(
-            (sum: number, item: any) => sum + (Number(item?.openingQty || 0) * Number(item?.currentRate || 0)),
-            0,
-          ),
+          materialValue: materials.reduce((sum: number, item: any) => sum + Number(item?.currentBalanceValue || 0), 0),
           topProducedItems: this.buildTopProducedItems(productions),
           scrapBySource: this.buildScrapBySource(scraps),
         };
@@ -100,6 +95,26 @@ export class FactoryReportComponent implements OnInit {
 
   trackByLabel(index: number, item: any): string {
     return `${item?.label || "row"}-${index}`;
+  }
+
+  private buildProductionRows(dailyWorks: any[]): any[] {
+    return dailyWorks.map((row: any) => {
+      const product = row?.factoryProduct || {};
+      const qty = Number(row?.unitsCompleted || 0);
+      const materialCost = (product?.standardMaterialLines || []).reduce((sum: number, line: any) => {
+        return sum + (Number(line?.qtyPerUnit || 0) * Number(line?.rate || 0) * qty);
+      }, 0);
+      const labourCost = Number(product?.standardLabourCost || 0) * qty;
+      const otherCost = Number(product?.standardOtherCost || 0) * qty;
+      return {
+        entryDate: row.entryDate,
+        itemName: row.factoryProductName || product?.name || row.workItemName || row.workType,
+        serialNo: row.staff?.name || "",
+        qtyProduced: qty,
+        unitLabel: row.unit || product?.unitLabel || "PCS",
+        totalCost: materialCost + labourCost + otherCost,
+      };
+    });
   }
 
   private buildTopProducedItems(productions: any[]): Array<{ label: string; qty: number; value: number }> {
@@ -132,5 +147,27 @@ export class FactoryReportComponent implements OnInit {
     return (Object.values(grouped) as Array<{ label: string; qty: number; count: number }>)
       .sort((a, b) => b.qty - a.qty)
       .slice(0, 5);
+  }
+
+  private buildScrapRows(dailyWorks: any[]): any[] {
+    return dailyWorks
+      .map((row: any) => {
+        const product = row?.factoryProduct || {};
+        const qty = Number(row?.unitsCompleted || 0);
+        const wasteQty = Number(product?.standardWasteQtyPerUnit || 0) * qty;
+        if (wasteQty <= 0) {
+          return null;
+        }
+        return {
+          entryDate: row.entryDate,
+          itemName: row.factoryProductName || product?.name || "Unknown",
+          sourceType: "PRODUCTION",
+          sourceRef: row.staff?.name || "",
+          qty: wasteQty,
+          unitLabel: product?.standardWasteUnitLabel || "KG",
+          estimatedValue: Number(product?.standardWasteValuePerUnit || 0) * qty,
+        };
+      })
+      .filter((row: any) => !!row);
   }
 }

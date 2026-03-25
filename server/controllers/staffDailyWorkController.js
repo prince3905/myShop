@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const StaffDailyWork = require("../models/StaffDailyWork");
 const Staff = require("../models/Staff");
 const StaffWorkItem = require("../models/StaffWorkItem");
+const FactoryProduct = require("../models/FactoryProduct");
 
 const STAFF_ONLY_FILTER = (req) => `${req.user?.role || ""}` === "STAFF";
 const MANAGER_AND_ABOVE = ["SUPER_ADMIN", "ADMIN", "MANAGER"];
@@ -96,6 +97,29 @@ const resolveWorkItem = async (req, staff, rawWorkItemId) => {
   return item;
 };
 
+const resolveFactoryProduct = async (req, rawFactoryProductId) => {
+  const factoryProductId = `${rawFactoryProductId || ""}`.trim();
+  if (!factoryProductId) {
+    return null;
+  }
+
+  if (!mongoose.Types.ObjectId.isValid(factoryProductId)) {
+    return { error: { status: 400, success: false, message: "Valid factory product is required" } };
+  }
+
+  const product = await FactoryProduct.findOne({
+    _id: factoryProductId,
+    shop: req.shopId,
+    isDeleted: false,
+  }).lean();
+
+  if (!product) {
+    return { error: { status: 404, success: false, message: "Factory product not found" } };
+  }
+
+  return product;
+};
+
 exports.createDailyWork = async (req, res) => {
   try {
     if (!req.shopId) {
@@ -136,12 +160,17 @@ exports.createDailyWork = async (req, res) => {
       return res.status(400).json({ success: false, message: "Units completed must be 0 or greater" });
     }
 
+    const factoryProduct = await resolveFactoryProduct(req, req.body?.factoryProduct);
+    if (factoryProduct?.error) {
+      return res.status(factoryProduct.error.status).json(factoryProduct.error);
+    }
+
     const workItem = await resolveWorkItem(req, staff, req.body?.workItem);
     if (workItem?.error) {
       return res.status(workItem.error.status).json(workItem.error);
     }
-    if (`${staff?.rateType || ""}` === "PIECE" && !workItem) {
-      return res.status(400).json({ success: false, message: "Piece-rate staff requires a work item" });
+    if (`${staff?.rateType || ""}` === "PIECE" && !factoryProduct) {
+      return res.status(400).json({ success: false, message: "Piece-rate staff requires a factory product" });
     }
 
     const dailyWork = await StaffDailyWork.create({
@@ -150,10 +179,12 @@ exports.createDailyWork = async (req, res) => {
       entryDate,
       attendanceStatus,
       workType: `${req.body?.workType || staff.workType || ""}`.trim(),
+      factoryProduct: factoryProduct?._id || null,
+      factoryProductName: `${factoryProduct?.name || ""}`.trim(),
       workItem: workItem?._id || null,
       workItemName: `${workItem?.itemName || ""}`.trim(),
-      unit: `${workItem?.unit || "PCS"}`.trim(),
-      pieceRate: Number(workItem?.pieceRate || 0),
+      unit: `${factoryProduct?.unitLabel || workItem?.unit || "PCS"}`.trim(),
+      pieceRate: Number(factoryProduct?.workerPieceRate || workItem?.pieceRate || 0),
       workDetails: `${req.body?.workDetails || ""}`.trim(),
       linkedJob: `${req.body?.linkedJob || ""}`.trim(),
       unitsCompleted,
@@ -162,7 +193,7 @@ exports.createDailyWork = async (req, res) => {
         attendanceStatus,
         unitsCompleted,
         req.body?.earnedAmount,
-        workItem?.pieceRate,
+        factoryProduct?.workerPieceRate ?? workItem?.pieceRate,
       ),
       note: `${req.body?.note || ""}`.trim(),
       createdBy: req.user._id,
@@ -170,6 +201,7 @@ exports.createDailyWork = async (req, res) => {
 
     const populated = await StaffDailyWork.findById(dailyWork._id)
       .populate("staff", "name phone staffType workType rateType rate active")
+      .populate("factoryProduct", "name code unitLabel workerPieceRate standardWasteQtyPerUnit standardWasteUnitLabel standardWasteValuePerUnit standardMaterialLines")
       .populate("workItem", "itemName workType pieceRate unit active")
       .populate("createdBy", "email role pFname pLname");
 
@@ -230,6 +262,7 @@ exports.getDailyWorks = async (req, res) => {
       const matchedIds = staffMatches.map((row) => row._id);
       filter.$or = [
         { workType: regex },
+        { factoryProductName: regex },
         { workItemName: regex },
         { workDetails: regex },
         { linkedJob: regex },
@@ -243,6 +276,7 @@ exports.getDailyWorks = async (req, res) => {
     const dailyWorks = await StaffDailyWork.find(filter)
       .sort({ entryDate: -1, createdAt: -1 })
       .populate("staff", "name phone staffType workType rateType rate active")
+      .populate("factoryProduct", "name code unitLabel workerPieceRate standardWasteQtyPerUnit standardWasteUnitLabel standardWasteValuePerUnit standardMaterialLines")
       .populate("workItem", "itemName workType pieceRate unit active")
       .populate("createdBy", "email role pFname pLname");
 
@@ -375,22 +409,29 @@ exports.updateDailyWork = async (req, res) => {
       return res.status(400).json({ success: false, message: "Units completed must be 0 or greater" });
     }
 
+    const factoryProduct = await resolveFactoryProduct(req, req.body?.factoryProduct ?? dailyWork.factoryProduct);
+    if (factoryProduct?.error) {
+      return res.status(factoryProduct.error.status).json(factoryProduct.error);
+    }
+
     const workItem = await resolveWorkItem(req, staff, req.body?.workItem ?? dailyWork.workItem);
     if (workItem?.error) {
       return res.status(workItem.error.status).json(workItem.error);
     }
-    if (`${staff?.rateType || ""}` === "PIECE" && !workItem) {
-      return res.status(400).json({ success: false, message: "Piece-rate staff requires a work item" });
+    if (`${staff?.rateType || ""}` === "PIECE" && !factoryProduct) {
+      return res.status(400).json({ success: false, message: "Piece-rate staff requires a factory product" });
     }
 
     dailyWork.staff = staff._id;
     dailyWork.entryDate = entryDate;
     dailyWork.attendanceStatus = attendanceStatus;
     dailyWork.workType = `${req.body?.workType || dailyWork.workType || staff.workType || ""}`.trim();
+    dailyWork.factoryProduct = factoryProduct?._id || null;
+    dailyWork.factoryProductName = `${factoryProduct?.name || ""}`.trim();
     dailyWork.workItem = workItem?._id || null;
     dailyWork.workItemName = `${workItem?.itemName || ""}`.trim();
-    dailyWork.unit = `${workItem?.unit || dailyWork.unit || "PCS"}`.trim();
-    dailyWork.pieceRate = Number(workItem?.pieceRate || 0);
+    dailyWork.unit = `${factoryProduct?.unitLabel || workItem?.unit || dailyWork.unit || "PCS"}`.trim();
+    dailyWork.pieceRate = Number(factoryProduct?.workerPieceRate || workItem?.pieceRate || 0);
     dailyWork.workDetails = `${req.body?.workDetails ?? dailyWork.workDetails ?? ""}`.trim();
     dailyWork.linkedJob = `${req.body?.linkedJob ?? dailyWork.linkedJob ?? ""}`.trim();
     dailyWork.unitsCompleted = unitsCompleted;
@@ -399,7 +440,7 @@ exports.updateDailyWork = async (req, res) => {
       attendanceStatus,
       unitsCompleted,
       req.body?.earnedAmount ?? dailyWork.earnedAmount,
-      workItem?.pieceRate ?? dailyWork.pieceRate,
+      factoryProduct?.workerPieceRate ?? workItem?.pieceRate ?? dailyWork.pieceRate,
     );
     dailyWork.note = `${req.body?.note ?? dailyWork.note ?? ""}`.trim();
     dailyWork.updatedBy = req.user._id;

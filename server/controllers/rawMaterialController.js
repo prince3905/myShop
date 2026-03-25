@@ -1,7 +1,85 @@
 const RawMaterial = require("../models/RawMaterial");
+const StaffDailyWork = require("../models/StaffDailyWork");
 
 const STAFF_ONLY_FILTER = (req) => `${req.user?.role || ""}` === "STAFF";
 const MANAGER_AND_ABOVE = ["SUPER_ADMIN", "ADMIN", "MANAGER"];
+
+const objectIds = (materials) => materials.map((item) => item._id);
+
+const buildMovementMatch = (req, extra = {}) => {
+  const match = {
+    shop: req.shopId,
+    isDeleted: false,
+    ...extra,
+  };
+
+  if (STAFF_ONLY_FILTER(req)) {
+    match.createdBy = req.user._id;
+  }
+
+  return match;
+};
+
+const attachStockMetrics = async (req, materials) => {
+  if (!materials.length) {
+    return [];
+  }
+
+  const ids = objectIds(materials);
+
+  const [dailyWorks] = await Promise.all([
+    StaffDailyWork.find(
+      buildMovementMatch(req, {
+        factoryProduct: { $ne: null },
+        attendanceStatus: { $ne: "ABSENT" },
+        unitsCompleted: { $gt: 0 },
+      }),
+    )
+      .select("factoryProduct unitsCompleted")
+      .populate("factoryProduct", "standardMaterialLines")
+      .lean(),
+  ]);
+
+  const consumedMap = new Map();
+
+  for (const row of dailyWorks || []) {
+    const unitsCompleted = Number(row?.unitsCompleted || 0);
+    if (unitsCompleted <= 0) {
+      continue;
+    }
+    for (const line of row?.factoryProduct?.standardMaterialLines || []) {
+      const rawMaterialId = line?.rawMaterial ? String(line.rawMaterial) : "";
+      if (!rawMaterialId || !ids.some((id) => String(id) === rawMaterialId)) {
+        continue;
+      }
+      const qtyPerUnit = Number(line?.qtyPerUnit || 0);
+      const rate = Number(line?.rate || 0);
+      const consumedQty = qtyPerUnit * unitsCompleted;
+      const existing = consumedMap.get(rawMaterialId) || { consumedQty: 0, consumedValue: 0 };
+      existing.consumedQty = Number(existing.consumedQty || 0) + consumedQty;
+      existing.consumedValue = Number(existing.consumedValue || 0) + (consumedQty * rate);
+      consumedMap.set(rawMaterialId, existing);
+    }
+  }
+
+  return materials.map((material) => {
+    const key = String(material._id);
+    const consumed = consumedMap.get(key) || {};
+    const openingQty = Number(material.openingQty || 0);
+    const currentRate = Number(material.currentRate || 0);
+    const consumedQty = Number(consumed.consumedQty || 0);
+    const currentBalanceQty = openingQty - consumedQty;
+
+    return {
+      ...material,
+      openingValue: openingQty * currentRate,
+      consumedQty,
+      consumedValue: Number(consumed.consumedValue || 0),
+      currentBalanceQty,
+      currentBalanceValue: currentBalanceQty * currentRate,
+    };
+  });
+};
 
 exports.createRawMaterial = async (req, res) => {
   try {
@@ -79,9 +157,12 @@ exports.getRawMaterials = async (req, res) => {
 
     const materials = await RawMaterial.find(filter)
       .sort({ active: -1, createdAt: -1 })
-      .populate("createdBy", "email role pFname pLname");
+      .populate("createdBy", "email role pFname pLname")
+      .lean();
 
-    return res.json({ success: true, materials });
+    const materialsWithMetrics = await attachStockMetrics(req, materials);
+
+    return res.json({ success: true, materials: materialsWithMetrics });
   } catch (error) {
     console.error("Get Raw Materials Error:", error);
     return res.status(500).json({ success: false, message: "Failed to fetch raw materials" });
@@ -103,29 +184,44 @@ exports.getRawMaterialSummary = async (req, res) => {
       baseMatch.createdBy = req.user._id;
     }
 
-    const [totals, activeCount] = await Promise.all([
-      RawMaterial.aggregate([
-        { $match: baseMatch },
-        {
-          $group: {
-            _id: null,
-            totalMaterials: { $sum: 1 },
-            totalOpeningQty: { $sum: "$openingQty" },
-            totalValue: { $sum: { $multiply: ["$openingQty", "$currentRate"] } },
-          },
-        },
-      ]),
+    const [materials, activeCount] = await Promise.all([
+      RawMaterial.find(baseMatch).lean(),
       RawMaterial.countDocuments({ ...baseMatch, active: true }),
     ]);
+
+    const materialsWithMetrics = await attachStockMetrics(req, materials);
+
+    const summary = materialsWithMetrics.reduce((acc, item) => {
+      acc.totalMaterials += 1;
+      acc.totalOpeningQty += Number(item.openingQty || 0);
+      acc.totalOpeningValue += Number(item.openingValue || 0);
+      acc.totalConsumedQty += Number(item.consumedQty || 0);
+      acc.totalConsumedValue += Number(item.consumedValue || 0);
+      acc.currentBalanceQty += Number(item.currentBalanceQty || 0);
+      acc.currentBalanceValue += Number(item.currentBalanceValue || 0);
+      return acc;
+    }, {
+      totalMaterials: 0,
+      totalOpeningQty: 0,
+      totalOpeningValue: 0,
+      totalConsumedQty: 0,
+      totalConsumedValue: 0,
+      currentBalanceQty: 0,
+      currentBalanceValue: 0,
+    });
 
     return res.json({
       success: true,
       summary: {
-        totalMaterials: Number(totals?.[0]?.totalMaterials || 0),
+        totalMaterials: Number(summary.totalMaterials || 0),
         activeMaterials: Number(activeCount || 0),
-        inactiveMaterials: Number((totals?.[0]?.totalMaterials || 0) - activeCount || 0),
-        totalOpeningQty: Number(totals?.[0]?.totalOpeningQty || 0),
-        totalValue: Number(totals?.[0]?.totalValue || 0),
+        inactiveMaterials: Number((summary.totalMaterials || 0) - activeCount || 0),
+        totalOpeningQty: Number(summary.totalOpeningQty || 0),
+        totalOpeningValue: Number(summary.totalOpeningValue || 0),
+        totalConsumedQty: Number(summary.totalConsumedQty || 0),
+        totalConsumedValue: Number(summary.totalConsumedValue || 0),
+        currentBalanceQty: Number(summary.currentBalanceQty || 0),
+        currentBalanceValue: Number(summary.currentBalanceValue || 0),
       },
     });
   } catch (error) {
