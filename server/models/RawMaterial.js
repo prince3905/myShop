@@ -23,6 +23,16 @@ const rawMaterialSchema = new mongoose.Schema(
       trim: true,
       default: "PCS",
     },
+    sizeLabel: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    colorLabel: {
+      type: String,
+      trim: true,
+      default: "",
+    },
     openingQty: {
       type: Number,
       required: true,

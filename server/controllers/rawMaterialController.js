@@ -1,4 +1,5 @@
 const RawMaterial = require("../models/RawMaterial");
+const RawMaterialPurchase = require("../models/RawMaterialPurchase");
 const StaffDailyWork = require("../models/StaffDailyWork");
 
 const STAFF_ONLY_FILTER = (req) => `${req.user?.role || ""}` === "STAFF";
@@ -27,7 +28,14 @@ const attachStockMetrics = async (req, materials) => {
 
   const ids = objectIds(materials);
 
-  const [dailyWorks] = await Promise.all([
+  const [approvedPurchases, dailyWorks] = await Promise.all([
+    RawMaterialPurchase.find(
+      buildMovementMatch(req, {
+        status: "APPROVED",
+      }),
+    )
+      .select("items")
+      .lean(),
     StaffDailyWork.find(
       buildMovementMatch(req, {
         factoryProduct: { $ne: null },
@@ -39,6 +47,22 @@ const attachStockMetrics = async (req, materials) => {
       .populate("factoryProduct", "standardMaterialLines")
       .lean(),
   ]);
+
+  const receivedMap = new Map();
+  for (const purchase of approvedPurchases || []) {
+    for (const item of purchase?.items || []) {
+      const rawMaterialId = item?.rawMaterial ? String(item.rawMaterial) : "";
+      if (!rawMaterialId || !ids.some((id) => String(id) === rawMaterialId)) {
+        continue;
+      }
+      const receivedQty = Number(item?.receivedQty || 0);
+      const rate = Number(item?.rate || 0);
+      const existing = receivedMap.get(rawMaterialId) || { receivedQty: 0, receivedValue: 0 };
+      existing.receivedQty = Number(existing.receivedQty || 0) + receivedQty;
+      existing.receivedValue = Number(existing.receivedValue || 0) + (receivedQty * rate);
+      receivedMap.set(rawMaterialId, existing);
+    }
+  }
 
   const consumedMap = new Map();
 
@@ -64,15 +88,17 @@ const attachStockMetrics = async (req, materials) => {
 
   return materials.map((material) => {
     const key = String(material._id);
+    const received = receivedMap.get(key) || {};
     const consumed = consumedMap.get(key) || {};
-    const openingQty = Number(material.openingQty || 0);
     const currentRate = Number(material.currentRate || 0);
+    const receivedQty = Number(received.receivedQty || 0);
     const consumedQty = Number(consumed.consumedQty || 0);
-    const currentBalanceQty = openingQty - consumedQty;
+    const currentBalanceQty = receivedQty - consumedQty;
 
     return {
       ...material,
-      openingValue: openingQty * currentRate,
+      receivedQty,
+      receivedValue: Number(received.receivedValue || 0),
       consumedQty,
       consumedValue: Number(consumed.consumedValue || 0),
       currentBalanceQty,
@@ -92,9 +118,11 @@ exports.createRawMaterial = async (req, res) => {
       name: `${req.body?.name || ""}`.trim(),
       code: `${req.body?.code || ""}`.trim(),
       unitLabel: `${req.body?.unitLabel || "PCS"}`.trim().toUpperCase(),
-      openingQty: Number(req.body?.openingQty || 0),
+      sizeLabel: `${req.body?.sizeLabel || ""}`.trim(),
+      colorLabel: `${req.body?.colorLabel || ""}`.trim(),
+      openingQty: 0,
       currentRate: Number(req.body?.currentRate || 0),
-      supplierName: `${req.body?.supplierName || ""}`.trim(),
+      supplierName: "",
       note: `${req.body?.note || ""}`.trim(),
       active: req.body?.active !== false,
       createdBy: req.user._id,
@@ -102,10 +130,6 @@ exports.createRawMaterial = async (req, res) => {
 
     if (!payload.name) {
       return res.status(400).json({ success: false, message: "Material name is required" });
-    }
-
-    if (!Number.isFinite(payload.openingQty) || payload.openingQty < 0) {
-      return res.status(400).json({ success: false, message: "Opening quantity must be 0 or greater" });
     }
 
     if (!Number.isFinite(payload.currentRate) || payload.currentRate < 0) {
@@ -150,7 +174,8 @@ exports.getRawMaterials = async (req, res) => {
       filter.$or = [
         { name: regex },
         { code: regex },
-        { supplierName: regex },
+        { sizeLabel: regex },
+        { colorLabel: regex },
         { note: regex },
       ];
     }
@@ -193,8 +218,6 @@ exports.getRawMaterialSummary = async (req, res) => {
 
     const summary = materialsWithMetrics.reduce((acc, item) => {
       acc.totalMaterials += 1;
-      acc.totalOpeningQty += Number(item.openingQty || 0);
-      acc.totalOpeningValue += Number(item.openingValue || 0);
       acc.totalConsumedQty += Number(item.consumedQty || 0);
       acc.totalConsumedValue += Number(item.consumedValue || 0);
       acc.currentBalanceQty += Number(item.currentBalanceQty || 0);
@@ -202,8 +225,6 @@ exports.getRawMaterialSummary = async (req, res) => {
       return acc;
     }, {
       totalMaterials: 0,
-      totalOpeningQty: 0,
-      totalOpeningValue: 0,
       totalConsumedQty: 0,
       totalConsumedValue: 0,
       currentBalanceQty: 0,
@@ -216,8 +237,6 @@ exports.getRawMaterialSummary = async (req, res) => {
         totalMaterials: Number(summary.totalMaterials || 0),
         activeMaterials: Number(activeCount || 0),
         inactiveMaterials: Number((summary.totalMaterials || 0) - activeCount || 0),
-        totalOpeningQty: Number(summary.totalOpeningQty || 0),
-        totalOpeningValue: Number(summary.totalOpeningValue || 0),
         totalConsumedQty: Number(summary.totalConsumedQty || 0),
         totalConsumedValue: Number(summary.totalConsumedValue || 0),
         currentBalanceQty: Number(summary.currentBalanceQty || 0),
@@ -227,6 +246,99 @@ exports.getRawMaterialSummary = async (req, res) => {
   } catch (error) {
     console.error("Raw Material Summary Error:", error);
     return res.status(500).json({ success: false, message: "Failed to fetch raw material summary" });
+  }
+};
+
+exports.getRawMaterialHistory = async (req, res) => {
+  try {
+    if (!req.shopId) {
+      return res.status(400).json({ success: false, message: "Please select a shop first" });
+    }
+
+    const material = await RawMaterial.findOne({
+      _id: req.params.id,
+      shop: req.shopId,
+      isDeleted: false,
+    }).lean();
+
+    if (!material) {
+      return res.status(404).json({ success: false, message: "Raw material not found" });
+    }
+
+    const purchases = await RawMaterialPurchase.find({
+      ...buildMovementMatch(req),
+      "items.rawMaterial": material._id,
+    })
+      .sort({ purchaseDate: -1, createdAt: -1 })
+      .populate("distributor", "name phone shopName")
+      .populate("createdBy", "email role pFname pLname")
+      .populate("approvedBy", "email role pFname pLname")
+      .lean();
+
+    const history = [];
+    for (const purchase of purchases || []) {
+      for (const item of purchase?.items || []) {
+        if (`${item?.rawMaterial || ""}` !== `${material._id}`) {
+          continue;
+        }
+        history.push({
+          purchaseId: purchase._id,
+          invoiceNo: purchase.invoiceNo || "",
+          purchaseDate: purchase.purchaseDate,
+          distributor: purchase.distributor || null,
+          status: purchase.status,
+          orderedQty: Number(item?.orderedQty || 0),
+          receivedQty: Number(item?.receivedQty || 0),
+          sizeLabel: item?.sizeLabel || "",
+          colorLabel: item?.colorLabel || "",
+          rate: Number(item?.rate || 0),
+          totalAmount: Number(item?.totalAmount || 0),
+          unitLabel: item?.unitLabel || material.unitLabel || "PCS",
+          note: item?.note || purchase?.note || "",
+          createdBy: purchase.createdBy || null,
+          approvedAt: purchase.approvedAt || null,
+          approvedBy: purchase.approvedBy || null,
+        });
+      }
+    }
+
+    const summary = history.reduce((acc, row) => {
+      acc.purchaseCount += 1;
+      acc.totalOrderedQty += Number(row.orderedQty || 0);
+      acc.totalReceivedQty += Number(row.receivedQty || 0);
+      acc.totalValue += Number(row.totalAmount || 0);
+      if (row.rate > 0) {
+        acc.lastRate = acc.lastRate || row.rate;
+        acc.highestRate = Math.max(acc.highestRate, row.rate);
+        acc.lowestRate = acc.lowestRate === 0 ? row.rate : Math.min(acc.lowestRate, row.rate);
+      }
+      return acc;
+    }, {
+      purchaseCount: 0,
+      totalOrderedQty: 0,
+      totalReceivedQty: 0,
+      totalValue: 0,
+      lastRate: 0,
+      highestRate: 0,
+      lowestRate: 0,
+    });
+
+    const averageRate = summary.totalReceivedQty > 0
+      ? summary.totalValue / summary.totalReceivedQty
+      : 0;
+
+    return res.json({
+      success: true,
+      material,
+      history,
+      summary: {
+        ...summary,
+        averageRate,
+      },
+    });
+  } catch (error) {
+    console.error("Raw Material History Error:", error);
+    return res.status(500).json({ success: false, message: "Failed to load raw material history" });
   }
 };
 
@@ -253,19 +365,17 @@ exports.updateRawMaterial = async (req, res) => {
     material.name = `${req.body?.name || material.name || ""}`.trim();
     material.code = `${req.body?.code ?? material.code ?? ""}`.trim();
     material.unitLabel = `${req.body?.unitLabel || material.unitLabel || "PCS"}`.trim().toUpperCase();
-    material.openingQty = Number(req.body?.openingQty ?? material.openingQty ?? 0);
+    material.sizeLabel = `${req.body?.sizeLabel ?? material.sizeLabel ?? ""}`.trim();
+    material.colorLabel = `${req.body?.colorLabel ?? material.colorLabel ?? ""}`.trim();
+    material.openingQty = 0;
     material.currentRate = Number(req.body?.currentRate ?? material.currentRate ?? 0);
-    material.supplierName = `${req.body?.supplierName ?? material.supplierName ?? ""}`.trim();
+    material.supplierName = "";
     material.note = `${req.body?.note ?? material.note ?? ""}`.trim();
     material.active = req.body?.active !== undefined ? !!req.body.active : material.active;
     material.updatedBy = req.user._id;
 
     if (!material.name) {
       return res.status(400).json({ success: false, message: "Material name is required" });
-    }
-
-    if (!Number.isFinite(material.openingQty) || material.openingQty < 0) {
-      return res.status(400).json({ success: false, message: "Opening quantity must be 0 or greater" });
     }
 
     if (!Number.isFinite(material.currentRate) || material.currentRate < 0) {

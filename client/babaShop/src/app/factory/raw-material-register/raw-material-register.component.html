@@ -3,17 +3,17 @@
     <div class="card page-hero-card">
       <div class="card-header card-header-danger raw-material-hero">
         <div>
-          <h2 class="raw-material-hero-title">Raw Material Register</h2>
-          <p class="raw-material-hero-subtitle">Factory raw material master for code, unit, opening quantity and current rate.</p>
+          <h2 class="raw-material-hero-title">Raw Material Master</h2>
+          <p class="raw-material-hero-subtitle">Factory raw material master for item list, unit and last known rate.</p>
         </div>
       </div>
     </div>
 
     <div class="row summary-row">
       <div class="col-lg-2 col-md-4 col-sm-6"><div class="card summary-card"><div class="card-body"><div class="summary-label">Total Materials</div><div class="summary-value">{{ summary.totalMaterials || 0 }}</div></div></div></div>
-      <div class="col-lg-4 col-md-4 col-sm-6"><div class="card summary-card"><div class="card-body"><div class="summary-label">Opening Qty</div><div class="summary-value">{{ summary.totalOpeningQty || 0 | number: '1.0-2' }}</div></div></div></div>
-      <div class="col-lg-3 col-md-4 col-sm-6"><div class="card summary-card"><div class="card-body"><div class="summary-label">Used Qty</div><div class="summary-value">{{ summary.totalConsumedQty || 0 | number: '1.0-2' }}</div></div></div></div>
-      <div class="col-lg-3 col-md-4 col-sm-6"><div class="card summary-card"><div class="card-body"><div class="summary-label">Balance Qty</div><div class="summary-value">{{ summary.currentBalanceQty || 0 | number: '1.0-2' }}</div></div></div></div>
+      <div class="col-lg-3 col-md-4 col-sm-6"><div class="card summary-card"><div class="card-body"><div class="summary-label">Received Qty</div><div class="summary-value">{{ summary.totalReceivedQty || 0 | number: '1.0-2' }}</div></div></div></div>
+      <div class="col-lg-2 col-md-4 col-sm-6"><div class="card summary-card"><div class="card-body"><div class="summary-label">Used Qty</div><div class="summary-value">{{ summary.totalConsumedQty || 0 | number: '1.0-2' }}</div></div></div></div>
+      <div class="col-lg-2 col-md-4 col-sm-6"><div class="card summary-card"><div class="card-body"><div class="summary-label">Balance Qty</div><div class="summary-value">{{ summary.currentBalanceQty || 0 | number: '1.0-2' }}</div></div></div></div>
       <div class="col-lg-2 col-md-4 col-sm-6"><div class="card summary-card"><div class="card-body"><div class="summary-label">Balance Value</div><div class="summary-value">Rs {{ summary.currentBalanceValue || 0 | number: '1.2-2' }}</div></div></div></div>
     </div>
 
@@ -33,13 +33,13 @@
               </mat-form-field>
 
               <div class="row">
-                <div class="col-md-6">
+                <div class="col-md-3">
                   <mat-form-field class="example-full-width">
                     <mat-label>Code</mat-label>
                     <input matInput [(ngModel)]="materialForm.code" name="code">
                   </mat-form-field>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-3">
                   <mat-form-field class="example-full-width">
                     <mat-label>Unit</mat-label>
                     <mat-select [(ngModel)]="materialForm.unitLabel" name="unitLabel" required>
@@ -47,32 +47,24 @@
                     </mat-select>
                   </mat-form-field>
                 </div>
-              </div>
-
-              <div class="row">
-                <div class="col-md-6">
+                <div class="col-md-3">
                   <mat-form-field class="example-full-width">
-                    <mat-label>Opening Qty</mat-label>
-                    <input matInput type="number" min="0" [(ngModel)]="materialForm.openingQty" name="openingQty" required>
+                    <mat-label>Size</mat-label>
+                    <input matInput [(ngModel)]="materialForm.sizeLabel" name="sizeLabel" [matAutocomplete]="sizeAuto">
                   </mat-form-field>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-3">
                   <mat-form-field class="example-full-width">
-                    <mat-label>Current Rate</mat-label>
-                    <input matInput type="number" min="0" [(ngModel)]="materialForm.currentRate" name="currentRate" required>
+                    <mat-label>Color</mat-label>
+                    <input matInput [(ngModel)]="materialForm.colorLabel" name="colorLabel" [matAutocomplete]="colorAuto">
                   </mat-form-field>
                 </div>
               </div>
 
               <mat-form-field class="example-full-width">
-                <mat-label>Supplier Name</mat-label>
-                <input matInput [(ngModel)]="materialForm.supplierName" name="supplierName">
+                <mat-label>Last Rate</mat-label>
+                <input matInput type="number" min="0" [(ngModel)]="materialForm.currentRate" name="currentRate" required>
               </mat-form-field>
-
-              <div class="value-preview-card">
-                <span>Opening Value</span>
-                <strong>Rs {{ openingValuePreview | number: '1.2-2' }}</strong>
-              </div>
 
               <mat-form-field class="example-full-width">
                 <mat-label>Note</mat-label>
@@ -103,13 +95,13 @@
       <div class="col-lg-8">
         <div class="card">
           <div class="card-header card-header-danger">
-            <h4 class="card-title">Raw Materials</h4>
+            <h4 class="card-title">Raw Material List</h4>
           </div>
           <div class="card-body">
             <div class="filter-grid">
               <mat-form-field class="example-full-width">
                 <mat-label>Search</mat-label>
-                <input matInput [(ngModel)]="filters.search" name="search" placeholder="Name, code, supplier">
+                <input matInput [(ngModel)]="filters.search" name="search" placeholder="Name, code, size or color">
               </mat-form-field>
               <mat-form-field class="example-full-width">
                 <mat-label>Status</mat-label>
@@ -134,11 +126,13 @@
                 <thead>
                   <tr>
                     <th>Name</th>
+                    <th>Size</th>
+                    <th>Color</th>
                     <th>Unit</th>
-                    <th>Opening</th>
+                    <th>Received</th>
                     <th>Used</th>
                     <th>Balance</th>
-                    <th>Rate</th>
+                    <th>Last Rate</th>
                     <th>Value</th>
                     <th>Status</th>
                     <th>Action</th>
@@ -147,12 +141,15 @@
                 <tbody>
                   <tr *ngFor="let material of materials">
                     <td>
-                      <div class="table-primary">{{ material.name }}</div>
+                      <button type="button" class="material-name-btn" (click)="viewHistory(material)">
+                        {{ material.name }}
+                      </button>
                       <div class="table-note" *ngIf="material.code">#{{ material.code }}</div>
-                      <div class="table-note" *ngIf="material.supplierName">{{ material.supplierName }}</div>
                     </td>
+                    <td>{{ material.sizeLabel || '-' }}</td>
+                    <td>{{ material.colorLabel || '-' }}</td>
                     <td>{{ material.unitLabel }}</td>
-                    <td>{{ material.openingQty | number: '1.0-2' }}</td>
+                    <td>{{ material.receivedQty | number: '1.0-2' }}</td>
                     <td>{{ material.consumedQty | number: '1.0-2' }}</td>
                     <td class="amount-cell">{{ material.currentBalanceQty | number: '1.0-2' }}</td>
                     <td class="amount-cell">Rs {{ material.currentRate | number: '1.2-2' }}</td>
@@ -176,5 +173,68 @@
         </div>
       </div>
     </div>
+
+    <div class="card history-card" *ngIf="selectedMaterial">
+      <div class="card-header card-header-danger history-head">
+        <div>
+          <h4 class="card-title">Material History</h4>
+          <p class="card-category">{{ selectedMaterial.name }}</p>
+        </div>
+        <button type="button" mat-stroked-button class="btn btn-outline-danger" (click)="clearHistory()">Close</button>
+      </div>
+      <div class="card-body">
+        <div *ngIf="loadingHistory" class="table-empty">Loading material history...</div>
+
+        <div class="row summary-row history-summary-row" *ngIf="!loadingHistory && historySummary">
+          <div class="col-lg-2 col-md-4 col-sm-6"><div class="card summary-card"><div class="card-body"><div class="summary-label">Purchases</div><div class="summary-value">{{ historySummary.purchaseCount || 0 }}</div></div></div></div>
+          <div class="col-lg-3 col-md-4 col-sm-6"><div class="card summary-card"><div class="card-body"><div class="summary-label">Received Qty</div><div class="summary-value">{{ historySummary.totalReceivedQty || 0 | number:'1.0-2' }}</div></div></div></div>
+          <div class="col-lg-2 col-md-4 col-sm-6"><div class="card summary-card"><div class="card-body"><div class="summary-label">Last Rate</div><div class="summary-value">Rs {{ historySummary.lastRate || 0 | number:'1.2-2' }}</div></div></div></div>
+          <div class="col-lg-2 col-md-4 col-sm-6"><div class="card summary-card"><div class="card-body"><div class="summary-label">Highest</div><div class="summary-value">Rs {{ historySummary.highestRate || 0 | number:'1.2-2' }}</div></div></div></div>
+          <div class="col-lg-3 col-md-4 col-sm-6"><div class="card summary-card"><div class="card-body"><div class="summary-label">Average Rate</div><div class="summary-value">Rs {{ historySummary.averageRate || 0 | number:'1.2-2' }}</div></div></div></div>
+        </div>
+
+        <div *ngIf="!loadingHistory && historyRows.length === 0" class="table-empty">No purchase history found for this material.</div>
+
+        <div class="material-table-wrap" *ngIf="!loadingHistory && historyRows.length > 0">
+          <table class="table material-table history-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Distributor</th>
+                <th>Invoice</th>
+                <th>Ordered</th>
+                <th>Received</th>
+                <th>Rate</th>
+                <th>Total</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let row of historyRows">
+                <td>{{ row.purchaseDate | date:'dd/MM/yyyy' }}</td>
+                <td>
+                  <div class="table-primary">{{ row.distributor?.name || '-' }}</div>
+                  <div class="table-note" *ngIf="row.distributor?.phone">{{ row.distributor.phone }}</div>
+                </td>
+                <td>{{ row.invoiceNo || '-' }}</td>
+                <td>{{ row.orderedQty | number:'1.0-2' }} {{ row.unitLabel }}</td>
+                <td>{{ row.receivedQty | number:'1.0-2' }} {{ row.unitLabel }}</td>
+                <td class="amount-cell">Rs {{ row.rate | number:'1.2-2' }}</td>
+                <td class="amount-cell">Rs {{ row.totalAmount | number:'1.2-2' }}</td>
+                <td><span class="status-chip" [ngClass]="getHistoryStatusClass(row.status)">{{ row.status }}</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
+
+<mat-autocomplete #sizeAuto="matAutocomplete">
+  <mat-option *ngFor="let size of defaultSizeOptions" [value]="size">{{ size }}</mat-option>
+</mat-autocomplete>
+
+<mat-autocomplete #colorAuto="matAutocomplete">
+  <mat-option *ngFor="let color of defaultColorOptions" [value]="color">{{ color }}</mat-option>
+</mat-autocomplete>

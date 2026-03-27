@@ -8,6 +8,7 @@ router.use(attachShop);
 router.use(requireShopSelectionForWrite);
 
 router.get("/summary", authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"), rawMaterialController.getRawMaterialSummary);
+router.get("/:id/history", authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"), rawMaterialController.getRawMaterialHistory);
 router.get("/", authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"), rawMaterialController.getRawMaterials);
 router.post("/", authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"), rawMaterialController.createRawMaterial);
 router.put("/:id", authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER"), rawMaterialController.updateRawMaterial);

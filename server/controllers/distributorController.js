@@ -31,7 +31,9 @@ exports.allDistributors = async (req, res) => {
   try {
     const { name, phone, page = 1, perPage = 10 } = req.query;
 
-    let query = isSuperAdminGlobal(req) ? {} : { shop: req.shopId };
+    let query = isSuperAdminGlobal(req)
+      ? { isDeleted: { $ne: true } }
+      : { shop: req.shopId, isDeleted: { $ne: true } };
 
     if (name) {
       query.name = { $regex: name, $options: "i" };
@@ -277,6 +279,7 @@ exports.distributorSuggestions = async (req, res) => {
 
     let query = {
       name: { $regex: term, $options: "i" },
+      isDeleted: { $ne: true },
     };
     if (!isSuperAdminGlobal(req)) {
       query.shop = req.shopId;

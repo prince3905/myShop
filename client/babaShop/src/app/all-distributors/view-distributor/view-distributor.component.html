@@ -219,6 +219,37 @@
 
   <div class="section-title">Ledger History</div>
 
+  <div class="section-title" *ngIf="invoiceSummary.length">Invoice-wise Outstanding</div>
+
+  <table *ngIf="invoiceSummary.length" class="ledger-table">
+    <thead>
+      <tr>
+        <th>Invoice</th>
+        <th>Last Activity</th>
+        <th>Last Payment Mode</th>
+        <th class="right">Purchase</th>
+        <th class="right">Paid</th>
+        <th class="right">Due</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let row of invoiceSummary">
+        <td>{{ row.invoiceNo }}</td>
+        <td>{{ row.lastDate | date: "dd/MM/yyyy hh:mm a" }}</td>
+        <td>{{ row.lastPaymentMode | titlecase }}</td>
+        <td class="right debit">₹ {{ row.purchaseAmount | number:'1.2-2' }}</td>
+        <td class="right credit">₹ {{ row.paidAmount | number:'1.2-2' }}</td>
+        <td class="right balance" [ngClass]="{
+          'positive-balance': row.dueAmount > 0,
+          'zero-balance': row.dueAmount === 0,
+          'negative-balance': row.dueAmount < 0
+        }">
+          ₹ {{ row.dueAmount | number:'1.2-2' }}
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
   <table *ngIf="ledger.length" class="ledger-table">
     <thead>
       <tr>

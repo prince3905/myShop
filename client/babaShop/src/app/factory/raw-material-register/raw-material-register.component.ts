@@ -11,14 +11,16 @@ import { RawMaterialService } from "app/shared/services/raw-material.service";
 })
 export class RawMaterialRegisterComponent implements OnInit {
   readonly unitOptions = ["PCS", "SET", "KG", "FEET", "MTR", "LTR", "BAG"];
+  readonly defaultSizeOptions = ["30mm", "32mm", "35mm", "40mm", "45mm", "50mm", "72\"", "62\""];
+  readonly defaultColorOptions = ["Red Oxide", "Black", "Silver", "Blue", "Green", "Natural"];
 
   materialForm = {
     name: "",
     code: "",
     unitLabel: "PCS",
-    openingQty: 0,
+    sizeLabel: "",
+    colorLabel: "",
     currentRate: 0,
-    supplierName: "",
     note: "",
     active: true,
   };
@@ -32,17 +34,20 @@ export class RawMaterialRegisterComponent implements OnInit {
     totalMaterials: 0,
     activeMaterials: 0,
     inactiveMaterials: 0,
-    totalOpeningQty: 0,
-    totalOpeningValue: 0,
+    totalReceivedQty: 0,
     totalConsumedQty: 0,
     currentBalanceQty: 0,
     currentBalanceValue: 0,
   };
 
   materials: any[] = [];
+  selectedMaterial: any = null;
+  historyRows: any[] = [];
+  historySummary: any = null;
   editingMaterialId: string | null = null;
   loadingSummary = false;
   loadingMaterials = false;
+  loadingHistory = false;
   savingMaterial = false;
   deletingId: string | null = null;
   userRole: string | null = null;
@@ -60,10 +65,6 @@ export class RawMaterialRegisterComponent implements OnInit {
 
   get canManage(): boolean {
     return ["SUPER_ADMIN", "ADMIN", "MANAGER"].includes(`${this.userRole || ""}`);
-  }
-
-  get openingValuePreview(): number {
-    return Number(this.materialForm.openingQty || 0) * Number(this.materialForm.currentRate || 0);
   }
 
   loadAll(): void {
@@ -125,9 +126,9 @@ export class RawMaterialRegisterComponent implements OnInit {
       name: material.name || "",
       code: material.code || "",
       unitLabel: material.unitLabel || "PCS",
-      openingQty: Number(material.openingQty || 0),
+      sizeLabel: material.sizeLabel || "",
+      colorLabel: material.colorLabel || "",
       currentRate: Number(material.currentRate || 0),
-      supplierName: material.supplierName || "",
       note: material.note || "",
       active: !!material.active,
     };
@@ -140,9 +141,9 @@ export class RawMaterialRegisterComponent implements OnInit {
       name: "",
       code: "",
       unitLabel: "PCS",
-      openingQty: 0,
+      sizeLabel: "",
+      colorLabel: "",
       currentRate: 0,
-      supplierName: "",
       note: "",
       active: true,
     };
@@ -157,6 +158,34 @@ export class RawMaterialRegisterComponent implements OnInit {
       active: "",
     };
     this.loadMaterials();
+  }
+
+  viewHistory(material: any): void {
+    if (!material?._id) {
+      return;
+    }
+    this.selectedMaterial = material;
+    this.loadingHistory = true;
+    this.historyRows = [];
+    this.historySummary = null;
+    this.rawMaterialService.getMaterialHistory(material._id).subscribe({
+      next: (response: any) => {
+        this.historyRows = Array.isArray(response?.history) ? response.history : [];
+        this.historySummary = response?.summary || null;
+        this.loadingHistory = false;
+      },
+      error: (error) => {
+        this.loadingHistory = false;
+        this.showError(error?.error?.message || "Failed to load material history");
+      },
+    });
+  }
+
+  clearHistory(): void {
+    this.selectedMaterial = null;
+    this.historyRows = [];
+    this.historySummary = null;
+    this.loadingHistory = false;
   }
 
   deleteMaterial(material: any): void {
@@ -192,6 +221,13 @@ export class RawMaterialRegisterComponent implements OnInit {
     return this.editingMaterialId ? "Update Raw Material" : "Save Raw Material";
   }
 
+  getHistoryStatusClass(status: string): string {
+    const normalized = `${status || ""}`.toUpperCase();
+    if (normalized === "APPROVED") return "approved";
+    if (normalized === "CANCELLED") return "cancelled";
+    return "pending";
+  }
+
   private showError(message: string): void {
     this.snackBar.open(message, "Close", { duration: 3000 });
   }
@@ -201,8 +237,7 @@ export class RawMaterialRegisterComponent implements OnInit {
       acc.totalMaterials += 1;
       acc.activeMaterials += material?.active ? 1 : 0;
       acc.inactiveMaterials += material?.active ? 0 : 1;
-      acc.totalOpeningQty += Number(material?.openingQty || 0);
-      acc.totalOpeningValue += Number(material?.openingValue || 0);
+      acc.totalReceivedQty += Number(material?.receivedQty || 0);
       acc.totalConsumedQty += Number(material?.consumedQty || 0);
       acc.currentBalanceQty += Number(material?.currentBalanceQty || 0);
       acc.currentBalanceValue += Number(material?.currentBalanceValue || 0);
@@ -211,8 +246,7 @@ export class RawMaterialRegisterComponent implements OnInit {
       totalMaterials: 0,
       activeMaterials: 0,
       inactiveMaterials: 0,
-      totalOpeningQty: 0,
-      totalOpeningValue: 0,
+      totalReceivedQty: 0,
       totalConsumedQty: 0,
       currentBalanceQty: 0,
       currentBalanceValue: 0,

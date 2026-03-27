@@ -61,6 +61,7 @@ export class StaffDailyWorkComponent implements OnInit {
   savingDailyWork = false;
   deletingId: string | null = null;
   userRole: string | null = null;
+  currentShopLabel = "-";
 
   constructor(
     private staffService: StaffService,
@@ -72,6 +73,8 @@ export class StaffDailyWorkComponent implements OnInit {
 
   ngOnInit(): void {
     this.userRole = this.authService.getUserRole();
+    const user = this.authService.getCurrentUser();
+    this.currentShopLabel = user?.shopCode || user?.shop || "-";
     this.loadStaffs();
     this.loadFactoryProducts();
     this.loadAll();
@@ -288,6 +291,31 @@ export class StaffDailyWorkComponent implements OnInit {
       dateTo: "",
     };
     this.loadDailyWorks();
+  }
+
+  showToday(): void {
+    const today = this.formatDate(new Date());
+    this.filters.dateFrom = today;
+    this.filters.dateTo = today;
+    this.loadDailyWorks();
+  }
+
+  viewAll(): void {
+    this.clearFilters();
+  }
+
+  get activeFilterSummary(): string {
+    const parts: string[] = [];
+    if (this.filters.search) parts.push(`Search: ${this.filters.search}`);
+    if (this.filters.staff) {
+      const staff = this.staffOptions.find((row) => row?._id === this.filters.staff);
+      parts.push(`Staff: ${staff?.name || "Selected"}`);
+    }
+    if (this.filters.attendanceStatus) parts.push(`Attendance: ${this.filters.attendanceStatus}`);
+    if (this.filters.dateFrom || this.filters.dateTo) {
+      parts.push(`Date: ${this.filters.dateFrom || "..." } to ${this.filters.dateTo || "..."}`);
+    }
+    return parts.join(" | ");
   }
 
   deleteDailyWork(dailyWork: any): void {

@@ -61,6 +61,11 @@
         <small>Registered materials</small>
       </div>
       <div class="summary-card">
+        <span class="summary-label">Used Qty</span>
+        <strong>{{ report.materialUsedQty | number: "1.0-2" }}</strong>
+        <small>Total material used</small>
+      </div>
+      <div class="summary-card">
         <span class="summary-label">Material Value</span>
         <strong>Rs {{ report.materialValue | number: "1.2-2" }}</strong>
         <small>Current balance value</small>
@@ -193,8 +198,9 @@
               <tr>
                 <th>Material</th>
                 <th>Code</th>
+                <th>Used Qty</th>
                 <th>Balance Qty</th>
-                <th>Current Rate</th>
+                <th>Last Rate</th>
                 <th>Balance Value</th>
               </tr>
             </thead>
@@ -202,9 +208,9 @@
               <tr *ngFor="let item of rawMaterialSnapshot">
                 <td>
                   <div class="table-primary">{{ item.name }}</div>
-                  <div class="table-note" *ngIf="item.supplierName">{{ item.supplierName }}</div>
                 </td>
                 <td>{{ item.code || "-" }}</td>
+                <td>{{ item.consumedQty | number: "1.0-2" }} {{ item.unitLabel }}</td>
                 <td>{{ item.currentBalanceQty | number: "1.0-2" }} {{ item.unitLabel }}</td>
                 <td>Rs {{ item.currentRate | number: "1.2-2" }}</td>
                 <td class="amount-cell">Rs {{ item.currentBalanceValue | number: "1.2-2" }}</td>

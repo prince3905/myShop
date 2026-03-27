@@ -10,6 +10,7 @@ const getPeriodYYMM = (date = new Date()) => {
 const getPrefixByType = (type) => {
   const t = `${type || ""}`.trim().toUpperCase();
   if (t === "PURCHASE") return "PINV";
+  if (t === "RAW_MATERIAL_PURCHASE") return "RMINV";
   if (t === "ORDER") return "OINV";
   return "SINV";
 };

@@ -1,6 +1,7 @@
 const DistributorLedger = require("../models/DistributorLedger");
 const Purchase = require("../models/Purchase");
-const { createDistributorLedgerEntry } = require("../utils/distributorLedger.service");
+const RawMaterialPurchase = require("../models/RawMaterialPurchase");
+const { createDistributorLedgerEntry, rebuildDistributorLedgerBalances } = require("../utils/distributorLedger.service");
 const { syncDistributorPurchaseSnapshots } = require("../utils/purchaseAccount.service");
 
 const isSuperAdminGlobal = (req) =>
@@ -31,18 +32,31 @@ exports.createLedger = async (req, res) => {
       note,
       referenceId,
       purchaseId,
+      referenceType,
     } = req.body;
     const normalizedType = `${type || ""}`.trim().toLowerCase();
     const normalizedPaymentMethod = `${paymentMethod || paymentMode || ""}`.trim().toUpperCase();
     const normalizedReferenceId = `${referenceId || purchaseId || ""}`.trim();
+    const normalizedReferenceType = `${referenceType || "PURCHASE"}`.trim().toUpperCase();
 
     if (normalizedReferenceId) {
-      const purchase = await Purchase.findOne({
-        _id: normalizedReferenceId,
-        distributor: distributorId,
-        shop: req.shopId,
-      }).select("_id dueAmount");
-      if (!purchase) {
+      let targetPurchase = null;
+      if (normalizedReferenceType === "RAW_MATERIAL_PURCHASE") {
+        targetPurchase = await RawMaterialPurchase.findOne({
+          _id: normalizedReferenceId,
+          distributor: distributorId,
+          shop: req.shopId,
+          isDeleted: { $ne: true },
+        }).select("_id dueAmount paidAmount subtotal paymentMethod");
+      } else {
+        targetPurchase = await Purchase.findOne({
+          _id: normalizedReferenceId,
+          distributor: distributorId,
+          shop: req.shopId,
+        }).select("_id dueAmount");
+      }
+
+      if (!targetPurchase) {
         return res.status(404).json({
           success: false,
           message: "Selected purchase not found for this distributor",
@@ -51,7 +65,7 @@ exports.createLedger = async (req, res) => {
 
       if (normalizedType === "payment") {
         const paymentAmount = Math.max(0, Number(amount || 0));
-        const purchaseDueAmount = Math.max(0, Number(purchase.dueAmount || 0));
+        const purchaseDueAmount = Math.max(0, Number(targetPurchase.dueAmount || 0));
         if (paymentAmount > purchaseDueAmount) {
           return res.status(400).json({
             success: false,
@@ -77,6 +91,22 @@ exports.createLedger = async (req, res) => {
       shopId: req.shopId,
     });
 
+    if (normalizedReferenceId && normalizedType === "payment" && normalizedReferenceType === "RAW_MATERIAL_PURCHASE") {
+      const rawMaterialPurchase = await RawMaterialPurchase.findOne({
+        _id: normalizedReferenceId,
+        distributor: distributorId,
+        shop: req.shopId,
+        isDeleted: { $ne: true },
+      });
+
+      if (rawMaterialPurchase) {
+        rawMaterialPurchase.paidAmount = Math.max(0, Number(rawMaterialPurchase.paidAmount || 0) + Number(amount || 0));
+        rawMaterialPurchase.dueAmount = Math.max(0, Number(rawMaterialPurchase.subtotal || 0) - Number(rawMaterialPurchase.paidAmount || 0));
+        rawMaterialPurchase.paymentMethod = normalizedPaymentMethod || rawMaterialPurchase.paymentMethod || "CASH";
+        await rawMaterialPurchase.save();
+      }
+    }
+
     res.status(201).json({
       success: true,
       ledger,
@@ -93,15 +123,26 @@ exports.createLedger = async (req, res) => {
 // GET LEDGER
 exports.getDistributorLedger = async (req, res) => {
   try {
+    if (!isSuperAdminGlobal(req) && req.shopId) {
+      await rebuildDistributorLedgerBalances({
+        shopId: req.shopId,
+        distributorId: req.params.distributorId,
+      });
+    }
+
     const filter = {
       distributor: req.params.distributorId,
-      isDeleted: false,
+      isDeleted: { $ne: true },
     };
     if (!isSuperAdminGlobal(req)) {
       filter.shop = req.shopId;
     }
 
-    const ledger = await DistributorLedger.find(filter).sort({ createdAt: -1 });
+    const ledger = await DistributorLedger.find(filter).sort({
+      transactionDate: -1,
+      createdAt: -1,
+      _id: -1,
+    });
 
     const missingPaymentModeRefs = ledger
       .filter((e) => e?.type === "payment" && !(`${e?.paymentMethod || ""}`.trim()) && e?.referenceId)

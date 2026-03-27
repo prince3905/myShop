@@ -18,8 +18,8 @@ exports.createDistributorLedgerEntry = async ({
   const lastEntry = await DistributorLedger.findOne({
     distributor,
     shop,
-    isDeleted: false,
-  }).sort({ createdAt: -1 });
+    isDeleted: { $ne: true },
+  }).sort({ transactionDate: -1, createdAt: -1, _id: -1 });
 
   let previousBalance = lastEntry
     ? lastEntry.balanceAfterTransaction
@@ -85,4 +85,50 @@ exports.createDistributorLedgerEntry = async ({
   }
 
   return ledger;
+};
+
+exports.rebuildDistributorLedgerBalances = async ({ shopId, distributorId }) => {
+  if (!shopId || !distributorId) {
+    return [];
+  }
+
+  const entries = await DistributorLedger.find({
+    shop: shopId,
+    distributor: distributorId,
+    isDeleted: { $ne: true },
+  }).sort({ transactionDate: 1, createdAt: 1, _id: 1 });
+
+  let runningBalance = 0;
+
+  for (const entry of entries) {
+    const amount = Number(entry.amount || 0);
+    switch (`${entry.type || ""}`) {
+      case "opening":
+        runningBalance = amount;
+        break;
+      case "purchase":
+        runningBalance += amount;
+        break;
+      case "payment":
+      case "purchase_return":
+        runningBalance -= amount;
+        break;
+      case "adjustment":
+        runningBalance += amount;
+        break;
+      default:
+        break;
+    }
+
+    if (Number(entry.balanceAfterTransaction || 0) !== runningBalance) {
+      entry.balanceAfterTransaction = runningBalance;
+      await entry.save();
+    }
+  }
+
+  await Distributor.findByIdAndUpdate(distributorId, {
+    currentBalance: runningBalance,
+  });
+
+  return entries;
 };

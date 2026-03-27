@@ -179,6 +179,12 @@
             <h4 class="card-title">Daily Work Entries</h4>
           </div>
           <div class="card-body">
+            <div class="quick-info-row page-context-row">
+              <div class="quick-chip">Current Shop: {{ currentShopLabel }}</div>
+              <div class="quick-chip muted" *ngIf="activeFilterSummary">Filters: {{ activeFilterSummary }}</div>
+              <div class="quick-chip muted" *ngIf="!activeFilterSummary">Filters: View All</div>
+            </div>
+
             <div class="filter-grid">
               <mat-form-field class="example-full-width">
                 <mat-label>Search</mat-label>
@@ -210,6 +216,8 @@
 
             <div class="filter-actions">
               <button mat-raised-button class="btn btn-danger" (click)="loadDailyWorks()">Apply Filters</button>
+              <button mat-stroked-button class="btn btn-outline-danger" (click)="showToday()">Today</button>
+              <button mat-stroked-button class="btn btn-outline-danger" (click)="viewAll()">View All</button>
               <button mat-stroked-button class="btn btn-outline-danger" (click)="clearFilters()">Reset</button>
             </div>
 

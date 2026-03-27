@@ -5,6 +5,8 @@ import { DistributorService } from '../../shared/services/distributor.service';
 import { AuthService } from 'app/shared/services/auth.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { PurchaseService } from 'app/shared/services/purchase.service';
+import { RawMaterialPurchaseService } from 'app/shared/services/raw-material-purchase.service';
+import { forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-ledger-entry',
@@ -25,6 +27,7 @@ export class LedgerEntryComponent implements OnInit {
     private fb: FormBuilder,
     private distributorService: DistributorService,
     private purchaseService: PurchaseService,
+    private rawMaterialPurchaseService: RawMaterialPurchaseService,
     private authService: AuthService,
     private snackBar: MatSnackBar,
     private dialogRef: MatDialogRef<LedgerEntryComponent>,
@@ -66,22 +69,47 @@ export class LedgerEntryComponent implements OnInit {
   }
 
   loadPendingPurchases(): void {
-    this.purchaseService
-      .listPurchases({
-        distributor: this.data.distributorId,
-        status: 'CONFIRMED',
-        limit: 100,
-      })
-      .subscribe({
-        next: (res: any) => {
-          const rows = Array.isArray(res?.data) ? res.data : [];
-          this.purchaseOptions = rows.filter((row: any) => Number(row?.dueAmount || 0) > 0);
-          this.syncPaymentLimit();
-        },
-        error: () => {
-          this.purchaseOptions = [];
-        },
-      });
+    forkJoin([
+      this.purchaseService
+        .listPurchases({
+          distributor: this.data.distributorId,
+          status: 'CONFIRMED',
+          limit: 100,
+        }),
+      this.rawMaterialPurchaseService
+        .listPurchases({
+          distributor: this.data.distributorId,
+          status: 'APPROVED',
+          limit: 100,
+        }),
+    ]).subscribe({
+      next: ([purchaseRes, rawPurchaseRes]: any[]) => {
+      const purchaseRows = Array.isArray(purchaseRes?.data) ? purchaseRes.data : [];
+      const rawRows = Array.isArray(rawPurchaseRes?.purchases) ? rawPurchaseRes.purchases : [];
+
+      const normalizedPurchases = purchaseRows
+        .filter((row: any) => Number(row?.dueAmount || 0) > 0)
+        .map((row: any) => ({
+          ...row,
+          referenceType: 'PURCHASE',
+          optionLabel: `${row.invoiceNo || row._id} | Due ₹${Number(row.dueAmount || 0).toFixed(2)}`,
+        }));
+
+      const normalizedRawPurchases = rawRows
+        .filter((row: any) => Number(row?.dueAmount || 0) > 0)
+        .map((row: any) => ({
+          ...row,
+          referenceType: 'RAW_MATERIAL_PURCHASE',
+          optionLabel: `RM ${row.invoiceNo || row._id} | Due ₹${Number(row.dueAmount || 0).toFixed(2)}`,
+        }));
+
+      this.purchaseOptions = [...normalizedPurchases, ...normalizedRawPurchases];
+      this.syncPaymentLimit();
+      },
+      error: () => {
+        this.purchaseOptions = [];
+      },
+    });
   }
 
   submit() {
@@ -101,6 +129,7 @@ export class LedgerEntryComponent implements OnInit {
       amount: this.form.value.amount,
       paymentMode: this.form.value.paymentMode,
       referenceId: this.form.value.referenceId || undefined,
+      referenceType: this.getSelectedReferenceType(),
       note: this.form.value.note
     };
 
@@ -121,6 +150,12 @@ export class LedgerEntryComponent implements OnInit {
     const referenceId = `${this.form?.value?.referenceId || ""}`;
     const matched = this.purchaseOptions.find((row: any) => `${row?._id}` === referenceId);
     return Math.max(0, Number(matched?.dueAmount || 0));
+  }
+
+  getSelectedReferenceType(): string | undefined {
+    const referenceId = `${this.form?.value?.referenceId || ""}`;
+    const matched = this.purchaseOptions.find((row: any) => `${row?._id}` === referenceId);
+    return matched?.referenceType || undefined;
   }
 
   private syncPaymentLimit(): void {

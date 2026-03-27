@@ -24,8 +24,27 @@
   opacity: 0.92;
 }
 
+.material-name-btn {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: #1f2937;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
+.material-name-btn:hover {
+  color: #c62828;
+  text-decoration: underline;
+}
+
 .summary-row {
   margin-bottom: 12px;
+}
+
+.history-summary-row {
+  margin-top: 0;
 }
 
 .summary-card {
@@ -108,6 +127,7 @@
 
 .material-table {
   margin-bottom: 0;
+  min-width: 940px;
 }
 
 .material-table th {
@@ -122,6 +142,13 @@
   vertical-align: top;
   padding-top: 12px;
   padding-bottom: 12px;
+}
+
+.material-table th:last-child,
+.material-table td:last-child {
+  width: 92px;
+  min-width: 92px;
+  text-align: center;
 }
 
 .table-primary {
@@ -143,21 +170,27 @@
 
 .table-actions {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: nowrap;
 }
 
 .table-edit-btn {
   color: #4b5563;
   min-width: auto;
   padding: 0;
+  width: 32px;
+  height: 32px;
 }
 
 .table-delete-btn {
   color: #c62828;
   min-width: auto;
   padding: 0;
+  width: 32px;
+  height: 32px;
 }
 
 .status-chip {
@@ -183,6 +216,17 @@
   text-align: center;
   color: #64748b;
   background: #f8f9fb;
+}
+
+.history-card {
+  margin-top: 14px;
+}
+
+.history-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 @media (max-width: 767px) {

@@ -28,6 +28,10 @@ export class RawMaterialService {
     return this.http.get(`${this.baseURL}/api/raw-materials`, { params });
   }
 
+  getMaterialHistory(id: string): Observable<any> {
+    return this.http.get(`${this.baseURL}/api/raw-materials/${id}/history`);
+  }
+
   createMaterial(payload: any): Observable<any> {
     return this.http.post(`${this.baseURL}/api/raw-materials`, payload);
   }

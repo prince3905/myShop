@@ -107,6 +107,9 @@ async function syncDistributorPurchaseSnapshots({ distributorId, shopId } = {}) 
     const referencedState = ledger.referenceId
       ? purchaseStateMap.get(`${ledger.referenceId}`)
       : null;
+    if (ledger.referenceId && !referencedState) {
+      continue;
+    }
     if (referencedState) {
       const applied = appendPayment(referencedState, remaining);
       remaining = roundAmount(remaining - applied);

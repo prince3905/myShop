@@ -35,7 +35,7 @@
       <mat-select formControlName="referenceId">
         <mat-option value="">General Payment</mat-option>
         <mat-option *ngFor="let p of purchaseOptions" [value]="p._id">
-          {{ p.invoiceNo || p._id }} | Due ₹{{ p.dueAmount | number:'1.2-2' }}
+          {{ p.optionLabel || (p.invoiceNo || p._id) }}
         </mat-option>
       </mat-select>
       <mat-hint *ngIf="!purchaseOptions.length">

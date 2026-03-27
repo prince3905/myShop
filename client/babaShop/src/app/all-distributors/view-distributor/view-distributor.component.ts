@@ -13,6 +13,7 @@ import { MatSnackBar } from "@angular/material/snack-bar";
 })
 export class ViewDistributorComponent implements OnInit {
   ledger: any[] = [];
+  invoiceSummary: any[] = [];
   ledgerLoading = false;
   totalDebit: number = 0;
   totalCredit: number = 0;
@@ -57,6 +58,7 @@ export class ViewDistributorComponent implements OnInit {
     });
 
     this.calculateSummary();
+    this.buildInvoiceSummary();
   }
 
   resetFilter() {
@@ -64,6 +66,7 @@ export class ViewDistributorComponent implements OnInit {
     this.toDate = null;
     this.ledger = [...this.originalLedger];
     this.calculateSummary();
+    this.buildInvoiceSummary();
   }
 
   loadLedger() {
@@ -73,13 +76,10 @@ export class ViewDistributorComponent implements OnInit {
 
     this.distributorService.getDistributorLedger(this.data._id).subscribe({
       next: (res: any) => {
-        this.ledger = (res.ledger || []).sort(
-          (a: any, b: any) =>
-            new Date(a.transactionDate).getTime() -
-            new Date(b.transactionDate).getTime(),
-        );
+        this.ledger = this.sortLedgerRows(res.ledger || []);
         this.originalLedger = [...this.ledger];
         this.calculateSummary();
+        this.buildInvoiceSummary();
         this.ledgerLoading = false;
       },
       error: () => {
@@ -311,14 +311,87 @@ export class ViewDistributorComponent implements OnInit {
       }
     });
 
-    // Closing balance (last entry ka balance)
     if (this.ledger.length > 0) {
       this.closingBalance =
         this.ledger[this.ledger.length - 1].balanceAfterTransaction;
+    } else {
+      this.closingBalance = 0;
     }
+  }
+
+  private buildInvoiceSummary() {
+    const map = new Map<string, any>();
+
+    for (const entry of this.ledger) {
+      const invoiceNo = this.extractInvoiceNo(entry?.note || "");
+      if (!invoiceNo) {
+        continue;
+      }
+
+      if (!map.has(invoiceNo)) {
+        map.set(invoiceNo, {
+          invoiceNo,
+          purchaseAmount: 0,
+          paidAmount: 0,
+          dueAmount: 0,
+          lastPaymentMode: "-",
+          lastDate: entry?.transactionDate || entry?.createdAt || null,
+        });
+      }
+
+      const summaryRow = map.get(invoiceNo);
+      const amount = Math.abs(Number(entry?.amount || 0));
+
+      if (entry?.type === "purchase" || entry?.type === "opening" || (entry?.type === "adjustment" && Number(entry?.amount || 0) > 0)) {
+        summaryRow.purchaseAmount += amount;
+      }
+
+      if (entry?.type === "payment" || entry?.type === "purchase_return" || (entry?.type === "adjustment" && Number(entry?.amount || 0) < 0)) {
+        summaryRow.paidAmount += amount;
+        summaryRow.lastPaymentMode = this.resolvePaymentMethod(entry);
+      }
+
+      const rowDate = new Date(entry?.transactionDate || entry?.createdAt || 0).getTime();
+      const currentLastDate = new Date(summaryRow.lastDate || 0).getTime();
+      if (rowDate > currentLastDate) {
+        summaryRow.lastDate = entry?.transactionDate || entry?.createdAt || null;
+      }
+    }
+
+    this.invoiceSummary = [...map.values()]
+      .map((row) => ({
+        ...row,
+        purchaseAmount: Number(row.purchaseAmount || 0),
+        paidAmount: Number(row.paidAmount || 0),
+        dueAmount: Number((Number(row.purchaseAmount || 0) - Number(row.paidAmount || 0)).toFixed(2)),
+      }))
+      .sort((a, b) => new Date(b.lastDate || 0).getTime() - new Date(a.lastDate || 0).getTime());
   }
 
   close() {
     this.dialogRef.close();
+  }
+
+  private sortLedgerRows(rows: any[]): any[] {
+    return [...rows].sort((a: any, b: any) => {
+      const transactionDiff =
+        new Date(a?.transactionDate || 0).getTime() -
+        new Date(b?.transactionDate || 0).getTime();
+      if (transactionDiff !== 0) return transactionDiff;
+
+      const createdDiff =
+        new Date(a?.createdAt || 0).getTime() -
+        new Date(b?.createdAt || 0).getTime();
+      if (createdDiff !== 0) return createdDiff;
+
+      return `${a?._id || ""}`.localeCompare(`${b?._id || ""}`);
+    });
+  }
+
+  private extractInvoiceNo(note: string): string {
+    const normalized = `${note || ""}`.trim();
+    if (!normalized) return "";
+    const match = normalized.match(/\b((?:RMINV|PINV)-\d{4}-\d{4})\b/i);
+    return match?.[1]?.toUpperCase() || "";
   }
 }

@@ -142,6 +142,7 @@ exports.createDraft = async (req, res) => {
     const distributorExists = await Distributor.findOne({
       _id: distributor,
       shop: req.shopId,
+      isDeleted: { $ne: true },
     });
     if (!distributorExists) {
       return res.status(404).json({ success: false, message: "Distributor not found for selected shop" });
@@ -651,6 +652,7 @@ exports.updateDraft = async (req, res) => {
     const distributorExists = await Distributor.findOne({
       _id: distributor,
       shop: req.shopId,
+      isDeleted: { $ne: true },
     });
     if (!distributorExists) {
       return res.status(404).json({ success: false, message: "Distributor not found for selected shop" });
