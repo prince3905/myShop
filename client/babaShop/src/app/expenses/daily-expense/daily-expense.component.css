@@ -30,13 +30,16 @@
 
 .expense-hero-title {
   margin: 0;
-  font-size: 23px;
+  font-size: 22px;
   font-weight: 800;
+  line-height: 1.2;
 }
 
 .expense-hero-subtitle {
   margin: 6px 0 0;
   opacity: 0.92;
+  font-size: 12px;
+  line-height: 1.45;
 }
 
 .summary-row,
@@ -62,16 +65,18 @@
 }
 
 .summary-label {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   color: #7a809a;
   text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .summary-value {
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 800;
   color: #2d3436;
+  line-height: 1.15;
 }
 
 .summary-value--sm {
@@ -80,7 +85,9 @@
 
 .summary-meta {
   margin-top: 6px;
-  color: #7a809a;
+  color: #64748b;
+  font-size: 11px;
+  line-height: 1.4;
 }
 
 .breakdown-title {
@@ -110,7 +117,8 @@
 
 .breakdown-meta,
 .breakdown-empty {
-  color: #7a809a;
+  color: #64748b;
+  font-size: 11px;
 }
 
 .breakdown-empty {
@@ -155,6 +163,7 @@
 
 .filter-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   margin-top: 4px;
 }
@@ -193,7 +202,8 @@
 
 .table-note {
   margin-top: 3px;
-  color: #7a809a;
+  color: #64748b;
+  font-size: 11px;
   max-width: 240px;
 }
 

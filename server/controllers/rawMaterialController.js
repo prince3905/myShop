@@ -265,15 +265,29 @@ exports.getRawMaterialHistory = async (req, res) => {
       return res.status(404).json({ success: false, message: "Raw material not found" });
     }
 
-    const purchases = await RawMaterialPurchase.find({
-      ...buildMovementMatch(req),
-      "items.rawMaterial": material._id,
-    })
-      .sort({ purchaseDate: -1, createdAt: -1 })
-      .populate("distributor", "name phone shopName")
-      .populate("createdBy", "email role pFname pLname")
-      .populate("approvedBy", "email role pFname pLname")
-      .lean();
+    const [purchases, dailyWorks] = await Promise.all([
+      RawMaterialPurchase.find({
+        ...buildMovementMatch(req),
+        "items.rawMaterial": material._id,
+      })
+        .sort({ purchaseDate: -1, createdAt: -1 })
+        .populate("distributor", "name phone shopName")
+        .populate("createdBy", "email role pFname pLname")
+        .populate("approvedBy", "email role pFname pLname")
+        .lean(),
+      StaffDailyWork.find({
+        ...buildMovementMatch(req),
+        factoryProduct: { $ne: null },
+        attendanceStatus: { $ne: "ABSENT" },
+        unitsCompleted: { $gt: 0 },
+      })
+        .sort({ entryDate: -1, createdAt: -1 })
+        .select("entryDate staff factoryProduct factoryProductName unitsCompleted unit createdBy")
+        .populate("staff", "name phone workType")
+        .populate("createdBy", "email role pFname pLname")
+        .populate("factoryProduct", "name unitLabel standardWasteQtyPerUnit standardWasteUnitLabel standardWasteValuePerUnit standardMaterialLines")
+        .lean(),
+    ]);
 
     const history = [];
     for (const purchase of purchases || []) {
@@ -298,6 +312,42 @@ exports.getRawMaterialHistory = async (req, res) => {
           createdBy: purchase.createdBy || null,
           approvedAt: purchase.approvedAt || null,
           approvedBy: purchase.approvedBy || null,
+        });
+      }
+    }
+
+    const usageHistory = [];
+    for (const row of dailyWorks || []) {
+      const unitsCompleted = Number(row?.unitsCompleted || 0);
+      if (unitsCompleted <= 0) {
+        continue;
+      }
+
+      for (const line of row?.factoryProduct?.standardMaterialLines || []) {
+        if (`${line?.rawMaterial || ""}` !== `${material._id}`) {
+          continue;
+        }
+
+        const usedQty = Number(line?.qtyPerUnit || 0) * unitsCompleted;
+        if (usedQty <= 0) {
+          continue;
+        }
+
+        usageHistory.push({
+          entryDate: row.entryDate,
+          staff: row.staff || null,
+          factoryProductName: row.factoryProductName || row?.factoryProduct?.name || "",
+          unitsCompleted,
+          usedQty,
+          unitLabel: line?.unitLabel || material.unitLabel || "PCS",
+          rate: Number(line?.rate || 0),
+          totalValue: usedQty * Number(line?.rate || 0),
+          wasteQty:
+            Number(row?.factoryProduct?.standardWasteQtyPerUnit || 0) * unitsCompleted,
+          wasteUnitLabel: row?.factoryProduct?.standardWasteUnitLabel || "KG",
+          wasteValue:
+            Number(row?.factoryProduct?.standardWasteValuePerUnit || 0) * unitsCompleted,
+          createdBy: row.createdBy || null,
         });
       }
     }
@@ -327,14 +377,31 @@ exports.getRawMaterialHistory = async (req, res) => {
       ? summary.totalValue / summary.totalReceivedQty
       : 0;
 
+    const usageSummary = usageHistory.reduce((acc, row) => {
+      acc.usageCount += 1;
+      acc.totalUsedQty += Number(row.usedQty || 0);
+      acc.totalUsedValue += Number(row.totalValue || 0);
+      acc.totalWasteQty += Number(row.wasteQty || 0);
+      acc.totalWasteValue += Number(row.wasteValue || 0);
+      return acc;
+    }, {
+      usageCount: 0,
+      totalUsedQty: 0,
+      totalUsedValue: 0,
+      totalWasteQty: 0,
+      totalWasteValue: 0,
+    });
+
     return res.json({
       success: true,
       material,
       history,
+      usageHistory,
       summary: {
         ...summary,
         averageRate,
       },
+      usageSummary,
     });
   } catch (error) {
     console.error("Raw Material History Error:", error);

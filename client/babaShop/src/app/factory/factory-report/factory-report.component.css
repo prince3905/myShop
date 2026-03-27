@@ -15,13 +15,16 @@
 
 .page-header-card h2 {
   margin: 0;
-  font-size: 28px;
+  font-size: 22px;
   font-weight: 800;
+  line-height: 1.2;
 }
 
 .page-header-card p {
   margin: 4px 0 0;
   color: #6c757d;
+  font-size: 12px;
+  line-height: 1.45;
 }
 
 .filter-card {
@@ -36,13 +39,14 @@
 
 .filter-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
   margin-top: 6px;
 }
 
 .summary-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
   margin-bottom: 14px;
 }
@@ -59,7 +63,7 @@
 }
 
 .summary-label {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   color: #7a809a;
   text-transform: uppercase;
@@ -67,13 +71,16 @@
 }
 
 .summary-card strong {
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 800;
   color: #2d3436;
+  line-height: 1.15;
 }
 
 .summary-card small {
-  color: #7a809a;
+  color: #64748b;
+  font-size: 11px;
+  line-height: 1.4;
 }
 
 .breakdown-list {
@@ -101,8 +108,8 @@
 
 .breakdown-subtitle,
 .table-note {
-  font-size: 12px;
-  color: #7a809a;
+  font-size: 11px;
+  color: #64748b;
 }
 
 .table-wrap {
@@ -111,6 +118,12 @@
 
 .report-table {
   margin: 0;
+  min-width: 760px;
+}
+
+.report-table th:nth-child(2),
+.report-table td:nth-child(2) {
+  min-width: 320px;
 }
 
 .report-table th {

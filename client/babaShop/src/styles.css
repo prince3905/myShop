@@ -320,6 +320,146 @@ distributors .table {
   table-layout: auto;
 }
 
+.staff-daily-work-page .card,
+.raw-material-page .card,
+.raw-material-purchase-page .card,
+.page-shell .card {
+  border: 1px solid #e8edf4;
+  border-radius: 16px;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.05);
+  overflow: hidden;
+}
+
+.staff-daily-work-page .card .card-header.card-header-danger,
+.raw-material-page .card .card-header.card-header-danger,
+.raw-material-purchase-page .card .card-header.card-header-danger,
+.page-shell .card .card-header.card-header-danger {
+  margin: 0;
+  border-radius: 0;
+  padding: 14px 16px;
+  box-shadow: none;
+}
+
+.staff-daily-work-page .card .card-body,
+.raw-material-page .card .card-body,
+.raw-material-purchase-page .card .card-body,
+.page-shell .card .card-body {
+  padding: 16px;
+}
+
+.staff-daily-work-page .card-title,
+.raw-material-page .card-title,
+.raw-material-purchase-page .card-title,
+.page-shell .card-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.staff-daily-work-page .card-category,
+.raw-material-page .card-category,
+.raw-material-purchase-page .card-category,
+.page-shell .card-category {
+  margin-top: 4px;
+  font-size: 0.84rem;
+  opacity: 0.88;
+}
+
+.staff-daily-work-page .example-full-width,
+.raw-material-page .example-full-width,
+.raw-material-purchase-page .example-full-width,
+.page-shell .example-full-width {
+  width: 100%;
+}
+
+.staff-daily-work-page .table,
+.raw-material-page .table,
+.raw-material-purchase-page .table,
+.page-shell .table {
+  margin-bottom: 0;
+}
+
+.staff-daily-work-page .table th,
+.raw-material-page .table th,
+.raw-material-purchase-page .table th,
+.page-shell .table th {
+  white-space: nowrap;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6b7280;
+  border-top: 0;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.staff-daily-work-page .table td,
+.raw-material-page .table td,
+.raw-material-purchase-page .table td,
+.page-shell .table td {
+  vertical-align: top;
+  color: #1f2937;
+  word-break: break-word;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  font-size: 12px;
+}
+
+.staff-daily-work-page .table-note,
+.raw-material-page .table-note,
+.raw-material-purchase-page .table-note,
+.page-shell .table-note {
+  line-height: 1.45;
+  font-size: 11px !important;
+  color: #64748b !important;
+}
+
+.staff-daily-work-page .table-primary,
+.raw-material-page .table-primary,
+.raw-material-purchase-page .table-primary,
+.page-shell .table-primary {
+  font-size: 13px;
+  font-weight: 800;
+  color: #1f2937;
+}
+
+.staff-daily-work-page .btn,
+.raw-material-page .btn,
+.raw-material-purchase-page .btn,
+.page-shell .btn {
+  min-height: 38px;
+  border-radius: 10px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  text-transform: none;
+}
+
+.staff-daily-work-page .btn-outline-danger,
+.raw-material-page .btn-outline-danger,
+.raw-material-purchase-page .btn-outline-danger,
+.page-shell .btn-outline-danger {
+  border-color: #e5e7eb;
+  color: #374151;
+}
+
+.staff-daily-work-page .btn-outline-danger:hover,
+.raw-material-page .btn-outline-danger:hover,
+.raw-material-purchase-page .btn-outline-danger:hover,
+.page-shell .btn-outline-danger:hover {
+  border-color: #d1d5db;
+  background: #f8fafc;
+  color: #111827;
+}
+
+.staff-daily-work-page .mat-mdc-form-field-subscript-wrapper,
+.raw-material-page .mat-mdc-form-field-subscript-wrapper,
+.raw-material-purchase-page .mat-mdc-form-field-subscript-wrapper,
+.page-shell .mat-mdc-form-field-subscript-wrapper {
+  min-height: 18px;
+}
+
 app-purchase-console .table th,
 sales-list .table th,
 app-returns .table th,

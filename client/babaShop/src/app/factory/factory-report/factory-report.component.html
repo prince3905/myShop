@@ -98,15 +98,15 @@
       <div class="col-lg-6">
         <div class="card">
           <div class="card-header card-header-danger">
-            <h4 class="card-title">Scrap By Source</h4>
+            <h4 class="card-title">Worker Production Summary</h4>
           </div>
           <div class="card-body">
-            <div *ngIf="report.scrapBySource.length === 0" class="table-empty">No scrap data found.</div>
-            <div class="breakdown-list" *ngIf="report.scrapBySource.length > 0">
-              <div class="breakdown-row" *ngFor="let item of report.scrapBySource; trackBy: trackByLabel">
+            <div *ngIf="report.workerProduction.length === 0" class="table-empty">No worker production data found.</div>
+            <div class="breakdown-list" *ngIf="report.workerProduction.length > 0">
+              <div class="breakdown-row" *ngFor="let item of report.workerProduction; trackBy: trackByLabel">
                 <div>
                   <div class="breakdown-title">{{ item.label }}</div>
-                  <div class="breakdown-subtitle">{{ item.count }} entries</div>
+                  <div class="breakdown-subtitle">{{ item.count }} entries · Rs {{ item.earned | number: "1.2-2" }}</div>
                 </div>
                 <strong>{{ item.qty | number: "1.0-2" }}</strong>
               </div>
@@ -140,9 +140,20 @@
                     <td>
                       <div class="table-primary">{{ item.itemName }}</div>
                       <div class="table-note" *ngIf="item.serialNo">{{ item.serialNo }}</div>
+                      <div class="table-note" *ngIf="item.materialLines?.length">
+                        <span *ngFor="let line of item.materialLines; let last = last">
+                          {{ line.label }} {{ line.qty | number: "1.0-2" }} {{ line.unit }}<span *ngIf="!last"> | </span>
+                        </span>
+                      </div>
+                      <div class="table-note" *ngIf="item.wasteQty > 0">
+                        Waste {{ item.wasteQty | number: "1.0-2" }} {{ item.wasteUnitLabel }} · Rs {{ item.wasteValue | number: "1.2-2" }}
+                      </div>
                     </td>
                     <td>{{ item.qtyProduced | number: "1.0-2" }} {{ item.unitLabel }}</td>
-                    <td class="amount-cell">Rs {{ item.totalCost | number: "1.2-2" }}</td>
+                    <td class="amount-cell">
+                      <div>Rs {{ item.totalCost | number: "1.2-2" }}</div>
+                      <div class="table-note">M {{ item.materialCost | number: "1.2-2" }} · L {{ item.labourCost | number: "1.2-2" }} · O {{ item.otherCost | number: "1.2-2" }}</div>
+                    </td>
                   </tr>
                 </tbody>
               </table>
@@ -154,32 +165,18 @@
       <div class="col-lg-6">
         <div class="card">
           <div class="card-header card-header-danger">
-            <h4 class="card-title">Recent Scrap / Waste</h4>
+            <h4 class="card-title">Waste By Worker</h4>
           </div>
           <div class="card-body">
-            <div *ngIf="recentScraps.length === 0" class="table-empty">No auto waste found in selected range.</div>
-            <div class="table-wrap" *ngIf="recentScraps.length > 0">
-              <table class="table report-table">
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>Item</th>
-                    <th>Source</th>
-                    <th>Qty</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let item of recentScraps">
-                    <td>{{ item.entryDate | date: "dd/MM/yyyy" }}</td>
-                    <td>
-                      <div class="table-primary">{{ item.itemName }}</div>
-                      <div class="table-note" *ngIf="item.sourceRef">{{ item.sourceRef }}</div>
-                    </td>
-                    <td>{{ item.sourceType }}</td>
-                    <td>{{ item.qty | number: "1.0-2" }} {{ item.unitLabel }}</td>
-                  </tr>
-                </tbody>
-              </table>
+            <div *ngIf="report.wasteByWorker.length === 0" class="table-empty">No waste data found.</div>
+            <div class="breakdown-list" *ngIf="report.wasteByWorker.length > 0">
+              <div class="breakdown-row" *ngFor="let item of report.wasteByWorker; trackBy: trackByLabel">
+                <div>
+                  <div class="breakdown-title">{{ item.label }}</div>
+                  <div class="breakdown-subtitle">{{ item.count }} entries · Rs {{ item.value | number: "1.2-2" }}</div>
+                </div>
+                <strong>{{ item.qty | number: "1.0-2" }}</strong>
+              </div>
             </div>
           </div>
         </div>

@@ -253,6 +253,8 @@
                       <div class="table-primary">{{ item.workType || '-' }}</div>
                       <div class="table-note" *ngIf="item.factoryProductName">{{ item.factoryProductName }} · {{ item.unitsCompleted || 0 }} {{ item.unit || 'PCS' }}</div>
                       <div class="table-note" *ngIf="!item.factoryProductName && item.workItemName">{{ item.workItemName }} · {{ item.unitsCompleted || 0 }} {{ item.unit || 'PCS' }}</div>
+                      <div class="table-note" *ngIf="getMaterialUsagePreview(item)">{{ getMaterialUsagePreview(item) }}</div>
+                      <div class="table-note" *ngIf="getWastePreview(item)">{{ getWastePreview(item) }}</div>
                       <div class="table-note" *ngIf="item.workDetails">{{ item.workDetails }}</div>
                       <div class="table-note" *ngIf="item.linkedJob">{{ item.linkedJob }}</div>
                     </td>

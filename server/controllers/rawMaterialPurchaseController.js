@@ -307,8 +307,9 @@ exports.approvePurchase = async (req, res) => {
       return res.status(400).json({ success: false, message: "Cancelled purchase cannot be approved" });
     }
 
+    const approvalTime = new Date();
     purchase.status = "APPROVED";
-    purchase.approvedAt = new Date();
+    purchase.approvedAt = approvalTime;
     purchase.approvedBy = req.user._id;
     purchase.updatedBy = req.user._id;
     await purchase.save();
@@ -320,7 +321,7 @@ exports.approvePurchase = async (req, res) => {
       amount: Number(purchase.subtotal || 0),
       referenceId: purchase._id,
       note: `Raw Material Purchase ${purchase.invoiceNo || ""}`.trim(),
-      transactionDate: purchase.purchaseDate || new Date(),
+      transactionDate: approvalTime,
       createdBy: req.user._id,
     });
 
@@ -333,7 +334,7 @@ exports.approvePurchase = async (req, res) => {
         paymentMethod: purchase.paymentMethod || "CASH",
         referenceId: purchase._id,
         note: `Raw Material Purchase Payment ${purchase.invoiceNo || ""}`.trim(),
-        transactionDate: purchase.purchaseDate || new Date(),
+        transactionDate: approvalTime,
         createdBy: req.user._id,
       });
     }

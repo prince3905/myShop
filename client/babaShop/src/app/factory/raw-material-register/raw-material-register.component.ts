@@ -43,7 +43,9 @@ export class RawMaterialRegisterComponent implements OnInit {
   materials: any[] = [];
   selectedMaterial: any = null;
   historyRows: any[] = [];
+  usageRows: any[] = [];
   historySummary: any = null;
+  usageSummary: any = null;
   editingMaterialId: string | null = null;
   loadingSummary = false;
   loadingMaterials = false;
@@ -167,11 +169,15 @@ export class RawMaterialRegisterComponent implements OnInit {
     this.selectedMaterial = material;
     this.loadingHistory = true;
     this.historyRows = [];
+    this.usageRows = [];
     this.historySummary = null;
+    this.usageSummary = null;
     this.rawMaterialService.getMaterialHistory(material._id).subscribe({
       next: (response: any) => {
         this.historyRows = Array.isArray(response?.history) ? response.history : [];
+        this.usageRows = Array.isArray(response?.usageHistory) ? response.usageHistory : [];
         this.historySummary = response?.summary || null;
+        this.usageSummary = response?.usageSummary || null;
         this.loadingHistory = false;
       },
       error: (error) => {
@@ -184,7 +190,9 @@ export class RawMaterialRegisterComponent implements OnInit {
   clearHistory(): void {
     this.selectedMaterial = null;
     this.historyRows = [];
+    this.usageRows = [];
     this.historySummary = null;
+    this.usageSummary = null;
     this.loadingHistory = false;
   }
 

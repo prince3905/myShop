@@ -226,6 +226,45 @@
             </tbody>
           </table>
         </div>
+
+        <div class="row summary-row history-summary-row" *ngIf="!loadingHistory && usageSummary && usageSummary.usageCount">
+          <div class="col-lg-3 col-md-4 col-sm-6"><div class="card summary-card"><div class="card-body"><div class="summary-label">Usage Entries</div><div class="summary-value">{{ usageSummary.usageCount || 0 }}</div></div></div></div>
+          <div class="col-lg-3 col-md-4 col-sm-6"><div class="card summary-card"><div class="card-body"><div class="summary-label">Used Qty</div><div class="summary-value">{{ usageSummary.totalUsedQty || 0 | number:'1.0-2' }}</div></div></div></div>
+          <div class="col-lg-3 col-md-4 col-sm-6"><div class="card summary-card"><div class="card-body"><div class="summary-label">Used Value</div><div class="summary-value">Rs {{ usageSummary.totalUsedValue || 0 | number:'1.2-2' }}</div></div></div></div>
+          <div class="col-lg-3 col-md-4 col-sm-6"><div class="card summary-card"><div class="card-body"><div class="summary-label">Waste Qty</div><div class="summary-value">{{ usageSummary.totalWasteQty || 0 | number:'1.0-2' }}</div></div></div></div>
+        </div>
+
+        <div *ngIf="!loadingHistory && usageRows.length === 0" class="table-empty">No usage history found for this material.</div>
+
+        <div class="material-table-wrap" *ngIf="!loadingHistory && usageRows.length > 0">
+          <table class="table material-table history-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Worker</th>
+                <th>Product</th>
+                <th>Built Qty</th>
+                <th>Used Qty</th>
+                <th>Used Value</th>
+                <th>Waste</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let row of usageRows">
+                <td>{{ row.entryDate | date:'dd/MM/yyyy' }}</td>
+                <td>
+                  <div class="table-primary">{{ row.staff?.name || '-' }}</div>
+                  <div class="table-note" *ngIf="row.staff?.workType">{{ row.staff.workType }}</div>
+                </td>
+                <td>{{ row.factoryProductName || '-' }}</td>
+                <td>{{ row.unitsCompleted | number:'1.0-2' }}</td>
+                <td>{{ row.usedQty | number:'1.0-2' }} {{ row.unitLabel }}</td>
+                <td class="amount-cell">Rs {{ row.totalValue | number:'1.2-2' }}</td>
+                <td>{{ row.wasteQty | number:'1.0-2' }} {{ row.wasteUnitLabel }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>

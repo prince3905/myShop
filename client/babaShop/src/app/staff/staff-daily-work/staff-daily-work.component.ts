@@ -318,6 +318,45 @@ export class StaffDailyWorkComponent implements OnInit {
     return parts.join(" | ");
   }
 
+  getMaterialUsagePreview(item: any): string {
+    const product = item?.factoryProduct;
+    const qty = Number(item?.unitsCompleted || 0);
+    const lines = product?.standardMaterialLines || [];
+    if (!product || qty <= 0 || !lines.length) {
+      return "";
+    }
+
+    return lines
+      .map((line: any) => {
+        const usedQty = Number(line?.qtyPerUnit || 0) * qty;
+        const label = `${line?.materialName || line?.rawMaterial?.name || "Material"}`.trim();
+        const unit = `${line?.unitLabel || "PCS"}`.trim();
+        return usedQty > 0 ? `${label} ${usedQty} ${unit}` : "";
+      })
+      .filter((row: string) => !!row)
+      .join(" | ");
+  }
+
+  getWastePreview(item: any): string {
+    const product = item?.factoryProduct;
+    const qty = Number(item?.unitsCompleted || 0);
+    if (!product || qty <= 0) {
+      return "";
+    }
+
+    const wasteQty = Number(product?.standardWasteQtyPerUnit || 0) * qty;
+    if (wasteQty <= 0) {
+      return "";
+    }
+
+    const wasteUnit = `${product?.standardWasteUnitLabel || "KG"}`.trim();
+    const wasteValue = Number(product?.standardWasteValuePerUnit || 0) * qty;
+    const wasteLabel = `Waste ${wasteQty} ${wasteUnit}`;
+    return wasteValue > 0
+      ? `${wasteLabel} · Rs ${wasteValue.toFixed(2)}`
+      : wasteLabel;
+  }
+
   deleteDailyWork(dailyWork: any): void {
     if (!this.canManage || !dailyWork?._id || this.deletingId) {
       return;

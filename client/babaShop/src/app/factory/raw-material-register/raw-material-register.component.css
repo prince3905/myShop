@@ -14,13 +14,15 @@
 
 .raw-material-hero-title {
   margin: 0;
-  font-size: 1.6rem;
-  font-weight: 700;
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.2;
 }
 
 .raw-material-hero-subtitle {
   margin: 6px 0 0;
-  font-size: 0.95rem;
+  font-size: 12px;
+  line-height: 1.45;
   opacity: 0.92;
 }
 
@@ -41,6 +43,7 @@
 
 .summary-row {
   margin-bottom: 12px;
+  row-gap: 10px;
 }
 
 .history-summary-row {
@@ -54,7 +57,7 @@
 }
 
 .summary-label {
-  font-size: 0.78rem;
+  font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: #64748b;
@@ -62,7 +65,7 @@
 }
 
 .summary-value {
-  font-size: 1.45rem;
+  font-size: 22px;
   font-weight: 800;
   color: #111827;
   line-height: 1.2;
@@ -117,6 +120,7 @@
 
 .filter-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
   margin: 6px 0 14px;
 }
@@ -127,7 +131,7 @@
 
 .material-table {
   margin-bottom: 0;
-  min-width: 940px;
+  min-width: 1080px;
 }
 
 .material-table th {
@@ -144,6 +148,21 @@
   padding-bottom: 12px;
 }
 
+.material-table th:first-child,
+.material-table td:first-child {
+  min-width: 180px;
+}
+
+.history-table th:nth-child(2),
+.history-table td:nth-child(2) {
+  min-width: 180px;
+}
+
+.history-table th:nth-child(3),
+.history-table td:nth-child(3) {
+  min-width: 140px;
+}
+
 .material-table th:last-child,
 .material-table td:last-child {
   width: 92px;
@@ -158,7 +177,7 @@
 
 .table-note {
   margin-top: 3px;
-  font-size: 0.8rem;
+  font-size: 11px;
   color: #6b7280;
 }
 

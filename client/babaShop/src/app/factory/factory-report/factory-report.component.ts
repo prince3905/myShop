@@ -29,7 +29,9 @@ export class FactoryReportComponent implements OnInit {
     materialUsedQty: 0,
     materialValue: 0,
     topProducedItems: [] as Array<{ label: string; qty: number; value: number }>,
+    workerProduction: [] as Array<{ label: string; qty: number; earned: number; count: number }>,
     scrapBySource: [] as Array<{ label: string; qty: number; count: number }>,
+    wasteByWorker: [] as Array<{ label: string; qty: number; value: number; count: number }>,
   };
 
   recentProductions: any[] = [];
@@ -74,7 +76,9 @@ export class FactoryReportComponent implements OnInit {
           materialUsedQty: materials.reduce((sum: number, item: any) => sum + Number(item?.consumedQty || 0), 0),
           materialValue: materials.reduce((sum: number, item: any) => sum + Number(item?.currentBalanceValue || 0), 0),
           topProducedItems: this.buildTopProducedItems(productions),
+          workerProduction: this.buildWorkerProduction(dailyWorks),
           scrapBySource: this.buildScrapBySource(scraps),
+          wasteByWorker: this.buildWasteByWorker(scraps),
         };
 
         this.loading = false;
@@ -103,11 +107,28 @@ export class FactoryReportComponent implements OnInit {
     return dailyWorks.map((row: any) => {
       const product = row?.factoryProduct || {};
       const qty = Number(row?.unitsCompleted || 0);
-      const materialCost = (product?.standardMaterialLines || []).reduce((sum: number, line: any) => {
-        return sum + (Number(line?.qtyPerUnit || 0) * Number(line?.rate || 0) * qty);
+      const materialLines = (product?.standardMaterialLines || []).map((line: any) => {
+        const usedQty = Number(line?.qtyPerUnit || 0) * qty;
+        const label = `${line?.materialName || line?.rawMaterial?.name || "Material"}`.trim();
+        const unit = `${line?.unitLabel || "PCS"}`.trim();
+        return {
+          label,
+          qty: usedQty,
+          unit,
+          rate: Number(line?.rate || 0),
+          cost: usedQty * Number(line?.rate || 0),
+        };
+      }).filter((line: any) => line.qty > 0);
+
+      const materialCost = materialLines.reduce((sum: number, line: any) => {
+        return sum + Number(line?.cost || 0);
       }, 0);
+
       const labourCost = Number(product?.standardLabourCost || 0) * qty;
       const otherCost = Number(product?.standardOtherCost || 0) * qty;
+      const wasteQty = Number(product?.standardWasteQtyPerUnit || 0) * qty;
+      const wasteValue = Number(product?.standardWasteValuePerUnit || 0) * qty;
+
       return {
         entryDate: row.entryDate,
         itemName: row.factoryProductName || product?.name || row.workItemName || row.workType,
@@ -115,6 +136,13 @@ export class FactoryReportComponent implements OnInit {
         qtyProduced: qty,
         unitLabel: row.unit || product?.unitLabel || "PCS",
         totalCost: materialCost + labourCost + otherCost,
+        materialCost,
+        labourCost,
+        otherCost,
+        materialLines,
+        wasteQty,
+        wasteUnitLabel: product?.standardWasteUnitLabel || "KG",
+        wasteValue,
       };
     });
   }
@@ -149,6 +177,40 @@ export class FactoryReportComponent implements OnInit {
     return (Object.values(grouped) as Array<{ label: string; qty: number; count: number }>)
       .sort((a, b) => b.qty - a.qty)
       .slice(0, 5);
+  }
+
+  private buildWorkerProduction(dailyWorks: any[]): Array<{ label: string; qty: number; earned: number; count: number }> {
+    const grouped = dailyWorks.reduce((acc: Record<string, { label: string; qty: number; earned: number; count: number }>, row: any) => {
+      const label = `${row?.staff?.name || "Unknown Worker"}`.trim();
+      if (!acc[label]) {
+        acc[label] = { label, qty: 0, earned: 0, count: 0 };
+      }
+      acc[label].qty += Number(row?.unitsCompleted || 0);
+      acc[label].earned += Number(row?.earnedAmount || 0);
+      acc[label].count += 1;
+      return acc;
+    }, {});
+
+    return (Object.values(grouped) as Array<{ label: string; qty: number; earned: number; count: number }>)
+      .sort((a, b) => b.qty - a.qty || b.earned - a.earned)
+      .slice(0, 8);
+  }
+
+  private buildWasteByWorker(scraps: any[]): Array<{ label: string; qty: number; value: number; count: number }> {
+    const grouped = scraps.reduce((acc: Record<string, { label: string; qty: number; value: number; count: number }>, row: any) => {
+      const label = `${row?.sourceRef || "Unknown Worker"}`.trim() || "Unknown Worker";
+      if (!acc[label]) {
+        acc[label] = { label, qty: 0, value: 0, count: 0 };
+      }
+      acc[label].qty += Number(row?.qty || 0);
+      acc[label].value += Number(row?.estimatedValue || 0);
+      acc[label].count += 1;
+      return acc;
+    }, {});
+
+    return (Object.values(grouped) as Array<{ label: string; qty: number; value: number; count: number }>)
+      .sort((a, b) => b.qty - a.qty || b.value - a.value)
+      .slice(0, 8);
   }
 
   private buildScrapRows(dailyWorks: any[]): any[] {
