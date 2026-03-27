@@ -10,7 +10,7 @@ router.use(requireShopSelectionForWrite);
 router.get("/summary", authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"), staffDailyWorkController.getDailyWorkSummary);
 router.get("/", authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"), staffDailyWorkController.getDailyWorks);
 router.post("/", authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"), staffDailyWorkController.createDailyWork);
-router.put("/:id", authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER"), staffDailyWorkController.updateDailyWork);
+router.put("/:id", authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"), staffDailyWorkController.updateDailyWork);
 router.delete("/:id", authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER"), staffDailyWorkController.deleteDailyWork);
 
 module.exports = router;

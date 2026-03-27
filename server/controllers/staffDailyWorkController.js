@@ -3,6 +3,7 @@ const StaffDailyWork = require("../models/StaffDailyWork");
 const Staff = require("../models/Staff");
 const StaffWorkItem = require("../models/StaffWorkItem");
 const FactoryProduct = require("../models/FactoryProduct");
+const RawMaterialPurchase = require("../models/RawMaterialPurchase");
 
 const STAFF_ONLY_FILTER = (req) => `${req.user?.role || ""}` === "STAFF";
 const MANAGER_AND_ABOVE = ["SUPER_ADMIN", "ADMIN", "MANAGER"];
@@ -128,6 +129,110 @@ const resolveFactoryProduct = async (req, rawFactoryProductId) => {
   return product;
 };
 
+const validateFactoryProductStock = async ({ req, factoryProduct, unitsCompleted, excludeDailyWorkId = null }) => {
+  if (!factoryProduct || Number(unitsCompleted || 0) <= 0) {
+    return null;
+  }
+
+  const requiredMap = new Map();
+  for (const line of factoryProduct?.standardMaterialLines || []) {
+    const rawMaterialId = line?.rawMaterial ? String(line.rawMaterial) : "";
+    const qtyPerUnit = Number(line?.qtyPerUnit || 0);
+    if (qtyPerUnit <= 0) {
+      continue;
+    }
+    if (!rawMaterialId) {
+      return {
+        status: 400,
+        success: false,
+        message: `Factory product "${factoryProduct.name}" me raw material mapping missing hai. Product template thik karo.`,
+      };
+    }
+
+    const existing = requiredMap.get(rawMaterialId) || {
+      materialName: `${line?.materialName || "Raw Material"}`.trim(),
+      unitLabel: `${line?.unitLabel || "PCS"}`.trim(),
+      requiredQty: 0,
+    };
+    existing.requiredQty += qtyPerUnit * Number(unitsCompleted || 0);
+    requiredMap.set(rawMaterialId, existing);
+  }
+
+  if (!requiredMap.size) {
+    return null;
+  }
+
+  const materialIds = Array.from(requiredMap.keys()).map((id) => new mongoose.Types.ObjectId(id));
+
+  const [approvedPurchases, dailyWorks] = await Promise.all([
+    RawMaterialPurchase.find({
+      shop: req.shopId,
+      isDeleted: false,
+      status: "APPROVED",
+      "items.rawMaterial": { $in: materialIds },
+    })
+      .select("items")
+      .lean(),
+    StaffDailyWork.find({
+      shop: req.shopId,
+      isDeleted: false,
+      attendanceStatus: { $ne: "ABSENT" },
+      unitsCompleted: { $gt: 0 },
+      factoryProduct: { $ne: null },
+      ...(excludeDailyWorkId && mongoose.Types.ObjectId.isValid(`${excludeDailyWorkId}`)
+        ? { _id: { $ne: new mongoose.Types.ObjectId(`${excludeDailyWorkId}`) } }
+        : {}),
+    })
+      .select("factoryProduct unitsCompleted")
+      .populate("factoryProduct", "standardMaterialLines")
+      .lean(),
+  ]);
+
+  const receivedMap = new Map();
+  for (const purchase of approvedPurchases || []) {
+    for (const item of purchase?.items || []) {
+      const rawMaterialId = item?.rawMaterial ? String(item.rawMaterial) : "";
+      if (!requiredMap.has(rawMaterialId)) {
+        continue;
+      }
+      const existing = receivedMap.get(rawMaterialId) || 0;
+      receivedMap.set(rawMaterialId, existing + Number(item?.receivedQty || 0));
+    }
+  }
+
+  const consumedMap = new Map();
+  for (const row of dailyWorks || []) {
+    const doneQty = Number(row?.unitsCompleted || 0);
+    if (doneQty <= 0) {
+      continue;
+    }
+    for (const line of row?.factoryProduct?.standardMaterialLines || []) {
+      const rawMaterialId = line?.rawMaterial ? String(line.rawMaterial) : "";
+      if (!requiredMap.has(rawMaterialId)) {
+        continue;
+      }
+      const qtyPerUnit = Number(line?.qtyPerUnit || 0);
+      const existing = consumedMap.get(rawMaterialId) || 0;
+      consumedMap.set(rawMaterialId, existing + (qtyPerUnit * doneQty));
+    }
+  }
+
+  for (const [rawMaterialId, required] of requiredMap.entries()) {
+    const receivedQty = Number(receivedMap.get(rawMaterialId) || 0);
+    const consumedQty = Number(consumedMap.get(rawMaterialId) || 0);
+    const availableQty = receivedQty - consumedQty;
+    if (required.requiredQty > availableQty + 0.0001) {
+      return {
+        status: 400,
+        success: false,
+        message: `${required.materialName} ka stock kam hai. Required ${required.requiredQty} ${required.unitLabel}, available ${Math.max(0, availableQty)} ${required.unitLabel}.`,
+      };
+    }
+  }
+
+  return null;
+};
+
 exports.createDailyWork = async (req, res) => {
   try {
     if (!req.shopId) {
@@ -179,6 +284,15 @@ exports.createDailyWork = async (req, res) => {
     }
     if (`${staff?.rateType || ""}` === "PIECE" && !factoryProduct) {
       return res.status(400).json({ success: false, message: "Piece-rate staff requires a factory product" });
+    }
+
+    const stockError = await validateFactoryProductStock({
+      req,
+      factoryProduct,
+      unitsCompleted,
+    });
+    if (stockError) {
+      return res.status(stockError.status).json(stockError);
     }
 
     const dailyWork = await StaffDailyWork.create({
@@ -373,10 +487,6 @@ exports.updateDailyWork = async (req, res) => {
       return res.status(400).json({ success: false, message: "Please select a shop first" });
     }
 
-    if (!MANAGER_AND_ABOVE.includes(`${req.user?.role || ""}`)) {
-      return res.status(403).json({ success: false, message: "You do not have permission to update daily work entries" });
-    }
-
     const dailyWork = await StaffDailyWork.findOne({
       _id: req.params.id,
       shop: req.shopId,
@@ -385,6 +495,10 @@ exports.updateDailyWork = async (req, res) => {
 
     if (!dailyWork) {
       return res.status(404).json({ success: false, message: "Daily work entry not found" });
+    }
+
+    if (STAFF_ONLY_FILTER(req) && `${dailyWork.createdBy}` !== `${req.user._id}`) {
+      return res.status(403).json({ success: false, message: "You can only update your own daily work entries" });
     }
 
     const staffId = `${req.body?.staff || dailyWork.staff || ""}`.trim();
@@ -400,6 +514,10 @@ exports.updateDailyWork = async (req, res) => {
 
     if (!staff) {
       return res.status(404).json({ success: false, message: "Staff not found" });
+    }
+
+    if (STAFF_ONLY_FILTER(req) && `${staff.createdBy}` !== `${req.user._id}`) {
+      return res.status(403).json({ success: false, message: "You can only update entries for your own staff records" });
     }
 
     const entryDate = req.body?.entryDate ? normalizeDate(req.body.entryDate) : dailyWork.entryDate;
@@ -430,6 +548,16 @@ exports.updateDailyWork = async (req, res) => {
       return res.status(400).json({ success: false, message: "Piece-rate staff requires a factory product" });
     }
 
+    const stockError = await validateFactoryProductStock({
+      req,
+      factoryProduct,
+      unitsCompleted,
+      excludeDailyWorkId: dailyWork._id,
+    });
+    if (stockError) {
+      return res.status(stockError.status).json(stockError);
+    }
+
     dailyWork.staff = staff._id;
     dailyWork.entryDate = entryDate;
     dailyWork.attendanceStatus = attendanceStatus;
@@ -455,7 +583,13 @@ exports.updateDailyWork = async (req, res) => {
 
     await dailyWork.save();
 
-    return res.json({ success: true, message: "Daily work entry updated", dailyWork });
+    const populated = await StaffDailyWork.findById(dailyWork._id)
+      .populate("staff", "name phone staffType workType rateType rate active")
+      .populate("factoryProduct", "name code unitLabel workerPieceRate standardWasteQtyPerUnit standardWasteUnitLabel standardWasteValuePerUnit standardMaterialLines")
+      .populate("workItem", "itemName workType pieceRate unit active")
+      .populate("createdBy", "email role pFname pLname");
+
+    return res.json({ success: true, message: "Daily work entry updated", dailyWork: populated });
   } catch (error) {
     console.error("Update Staff Daily Work Error:", error);
     return res.status(500).json({ success: false, message: "Failed to update daily work entry" });

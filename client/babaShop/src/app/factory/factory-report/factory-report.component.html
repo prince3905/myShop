@@ -137,7 +137,7 @@
                 <tbody>
                   <tr *ngFor="let item of recentProductions">
                     <td>{{ item.entryDate | date: "dd/MM/yyyy" }}</td>
-                    <td>
+                    <td class="clickable-cell" (click)="selectProduction(item)">
                       <div class="table-primary">{{ item.itemName }}</div>
                       <div class="table-note" *ngIf="item.serialNo">{{ item.serialNo }}</div>
                       <div class="table-note" *ngIf="item.materialLines?.length">
@@ -157,6 +157,68 @@
                   </tr>
                 </tbody>
               </table>
+            </div>
+
+            <div class="production-detail-card" *ngIf="selectedProduction">
+              <div class="production-detail-header">
+                <div>
+                  <div class="detail-title">{{ selectedProduction.itemName }}</div>
+                  <div class="detail-subtitle">
+                    {{ selectedProduction.entryDate | date: "dd/MM/yyyy" }}
+                    <span *ngIf="selectedProduction.workerName"> · {{ selectedProduction.workerName }}</span>
+                    <span> · {{ selectedProduction.qtyProduced | number: "1.0-2" }} {{ selectedProduction.unitLabel }}</span>
+                  </div>
+                </div>
+                <div class="detail-cost">Rs {{ selectedProduction.totalCost | number: "1.2-2" }}</div>
+              </div>
+
+              <div class="detail-grid">
+                <div class="detail-pill">
+                  <span>Material Cost</span>
+                  <strong>Rs {{ selectedProduction.materialCost | number: "1.2-2" }}</strong>
+                </div>
+                <div class="detail-pill">
+                  <span>Labour Cost</span>
+                  <strong>Rs {{ selectedProduction.labourCost | number: "1.2-2" }}</strong>
+                </div>
+                <div class="detail-pill">
+                  <span>Other Cost</span>
+                  <strong>Rs {{ selectedProduction.otherCost | number: "1.2-2" }}</strong>
+                </div>
+                <div class="detail-pill">
+                  <span>Worker Earned</span>
+                  <strong>Rs {{ selectedProduction.earnedAmount | number: "1.2-2" }}</strong>
+                </div>
+                <div class="detail-pill" *ngIf="selectedProduction.wasteQty > 0">
+                  <span>Waste</span>
+                  <strong>{{ selectedProduction.wasteQty | number: "1.0-2" }} {{ selectedProduction.wasteUnitLabel }}</strong>
+                </div>
+                <div class="detail-pill" *ngIf="selectedProduction.wasteValue > 0">
+                  <span>Waste Value</span>
+                  <strong>Rs {{ selectedProduction.wasteValue | number: "1.2-2" }}</strong>
+                </div>
+              </div>
+
+              <div class="detail-section">
+                <div class="detail-section-title">Material Used</div>
+                <div *ngIf="!selectedProduction.materialLines?.length" class="table-empty compact-empty">No material template linked.</div>
+                <div class="detail-lines" *ngIf="selectedProduction.materialLines?.length">
+                  <div class="detail-line" *ngFor="let line of selectedProduction.materialLines">
+                    <div>
+                      <div class="table-primary">{{ line.label }}</div>
+                      <div class="table-note">{{ line.qty | number: "1.0-2" }} {{ line.unit }} × Rs {{ line.rate | number: "1.2-2" }}</div>
+                    </div>
+                    <strong>Rs {{ line.cost | number: "1.2-2" }}</strong>
+                  </div>
+                </div>
+              </div>
+
+              <div class="detail-notes" *ngIf="selectedProduction.workDetails || selectedProduction.linkedJob || selectedProduction.note">
+                <div class="detail-section-title">Extra Details</div>
+                <div class="table-note" *ngIf="selectedProduction.workDetails">Work: {{ selectedProduction.workDetails }}</div>
+                <div class="table-note" *ngIf="selectedProduction.linkedJob">Job Ref: {{ selectedProduction.linkedJob }}</div>
+                <div class="table-note" *ngIf="selectedProduction.note">Note: {{ selectedProduction.note }}</div>
+              </div>
             </div>
           </div>
         </div>

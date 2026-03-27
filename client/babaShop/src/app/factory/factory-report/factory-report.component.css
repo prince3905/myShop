@@ -116,6 +116,16 @@
   overflow-x: auto;
 }
 
+.clickable-cell {
+  cursor: pointer;
+}
+
+.clickable-cell .table-primary {
+  text-decoration: underline;
+  text-decoration-color: rgba(220, 53, 69, 0.24);
+  text-underline-offset: 3px;
+}
+
 .report-table {
   margin: 0;
   min-width: 760px;
@@ -144,9 +154,127 @@
   color: #7a809a;
 }
 
+.compact-empty {
+  padding: 12px 0 6px;
+  text-align: left;
+}
+
+.production-detail-card {
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px solid #eef1f5;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
+}
+
+.production-detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.detail-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #2d3436;
+}
+
+.detail-subtitle {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.detail-cost {
+  font-size: 18px;
+  font-weight: 800;
+  color: #c62828;
+  white-space: nowrap;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.detail-pill {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+  border-radius: 14px;
+  background: #f8f9fb;
+  border: 1px solid #edf0f7;
+}
+
+.detail-pill span {
+  font-size: 11px;
+  font-weight: 700;
+  color: #7a809a;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.detail-pill strong {
+  font-size: 15px;
+  font-weight: 800;
+  color: #2d3436;
+}
+
+.detail-section {
+  margin-top: 12px;
+}
+
+.detail-section-title {
+  margin-bottom: 10px;
+  font-size: 12px;
+  font-weight: 800;
+  color: #7a809a;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.detail-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.detail-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #f8f9fb;
+  border: 1px solid #edf0f7;
+}
+
+.detail-notes {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
 @media (max-width: 991px) {
   .filter-grid,
   .summary-grid {
     grid-template-columns: 1fr;
+  }
+
+  .detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .production-detail-header,
+  .detail-line {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }

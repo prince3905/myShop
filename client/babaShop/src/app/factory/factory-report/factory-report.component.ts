@@ -37,6 +37,7 @@ export class FactoryReportComponent implements OnInit {
   recentProductions: any[] = [];
   recentScraps: any[] = [];
   rawMaterialSnapshot: any[] = [];
+  selectedProduction: any | null = null;
 
   constructor(
     private staffDailyWorkService: StaffDailyWorkService,
@@ -64,6 +65,7 @@ export class FactoryReportComponent implements OnInit {
         this.recentProductions = productions.slice(0, 8);
         this.recentScraps = scraps.slice(0, 8);
         this.rawMaterialSnapshot = materials.slice(0, 8);
+        this.selectedProduction = this.recentProductions[0] || null;
 
         this.report = {
           productionEntries: productions.length,
@@ -103,6 +105,10 @@ export class FactoryReportComponent implements OnInit {
     return `${item?.label || "row"}-${index}`;
   }
 
+  selectProduction(item: any): void {
+    this.selectedProduction = item || null;
+  }
+
   private buildProductionRows(dailyWorks: any[]): any[] {
     return dailyWorks.map((row: any) => {
       const product = row?.factoryProduct || {};
@@ -130,9 +136,11 @@ export class FactoryReportComponent implements OnInit {
       const wasteValue = Number(product?.standardWasteValuePerUnit || 0) * qty;
 
       return {
+        sourceId: row?._id || null,
         entryDate: row.entryDate,
         itemName: row.factoryProductName || product?.name || row.workItemName || row.workType,
         serialNo: row.staff?.name || "",
+        workerName: row.staff?.name || "",
         qtyProduced: qty,
         unitLabel: row.unit || product?.unitLabel || "PCS",
         totalCost: materialCost + labourCost + otherCost,
@@ -143,6 +151,10 @@ export class FactoryReportComponent implements OnInit {
         wasteQty,
         wasteUnitLabel: product?.standardWasteUnitLabel || "KG",
         wasteValue,
+        earnedAmount: Number(row?.earnedAmount || 0),
+        linkedJob: row?.linkedJob || "",
+        workDetails: row?.workDetails || "",
+        note: row?.note || "",
       };
     });
   }

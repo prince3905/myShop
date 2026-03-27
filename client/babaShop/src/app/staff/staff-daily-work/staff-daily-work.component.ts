@@ -5,6 +5,7 @@ import { AuthService } from "app/shared/services/auth.service";
 import { StaffDailyWorkService } from "app/shared/services/staff-daily-work.service";
 import { StaffService } from "app/shared/services/staff.service";
 import { FactoryProductService } from "app/shared/services/factory-product.service";
+import { RawMaterialService } from "app/shared/services/raw-material.service";
 
 @Component({
   selector: "app-staff-daily-work",
@@ -53,6 +54,7 @@ export class StaffDailyWorkComponent implements OnInit {
 
   staffOptions: any[] = [];
   factoryProductOptions: any[] = [];
+  rawMaterialOptions: any[] = [];
   dailyWorks: any[] = [];
   editingDailyWorkId: string | null = null;
   loadingStaffs = false;
@@ -61,11 +63,13 @@ export class StaffDailyWorkComponent implements OnInit {
   savingDailyWork = false;
   deletingId: string | null = null;
   userRole: string | null = null;
+  currentUserId: string | null = null;
   currentShopLabel = "-";
 
   constructor(
     private staffService: StaffService,
     private factoryProductService: FactoryProductService,
+    private rawMaterialService: RawMaterialService,
     private staffDailyWorkService: StaffDailyWorkService,
     private snackBar: MatSnackBar,
     private authService: AuthService,
@@ -74,14 +78,30 @@ export class StaffDailyWorkComponent implements OnInit {
   ngOnInit(): void {
     this.userRole = this.authService.getUserRole();
     const user = this.authService.getCurrentUser();
+    this.currentUserId = user?._id || null;
     this.currentShopLabel = user?.shopCode || user?.shop || "-";
     this.loadStaffs();
     this.loadFactoryProducts();
+    this.loadRawMaterials();
     this.loadAll();
   }
 
   get canManage(): boolean {
     return ["SUPER_ADMIN", "ADMIN", "MANAGER"].includes(`${this.userRole || ""}`);
+  }
+
+  canEditRow(dailyWork: any): boolean {
+    if (!dailyWork?._id) {
+      return false;
+    }
+    if (this.canManage) {
+      return true;
+    }
+    return `${dailyWork?.createdBy?._id || dailyWork?.createdBy || ""}` === `${this.currentUserId || ""}`;
+  }
+
+  canDeleteRow(dailyWork: any): boolean {
+    return this.canManage && !!dailyWork?._id;
   }
 
   get earnedAmountPreview(): number {
@@ -120,6 +140,36 @@ export class StaffDailyWorkComponent implements OnInit {
 
   get isPieceRateStaff(): boolean {
     return `${this.selectedStaff?.rateType || ""}` === "PIECE";
+  }
+
+  get materialRequirementPreview(): any[] {
+    const product = this.selectedFactoryProduct;
+    const qty = Number(this.dailyWorkForm.unitsCompleted || 0);
+    const lines = product?.standardMaterialLines || [];
+    if (!product || qty <= 0 || !lines.length) {
+      return [];
+    }
+
+    return lines
+      .map((line: any) => {
+        const rawMaterialId = `${line?.rawMaterial?._id || line?.rawMaterial || ""}`.trim();
+        const material = this.rawMaterialOptions.find((row) => row?._id === rawMaterialId);
+        const requiredQty = Number(line?.qtyPerUnit || 0) * qty;
+        const availableQty = Number(material?.currentBalanceQty || 0);
+        return {
+          materialName: line?.materialName || material?.name || "Raw Material",
+          unitLabel: line?.unitLabel || material?.unitLabel || "PCS",
+          requiredQty,
+          availableQty,
+          shortageQty: Math.max(0, requiredQty - availableQty),
+          hasShortage: requiredQty > availableQty,
+        };
+      })
+      .filter((row: any) => Number(row.requiredQty || 0) > 0);
+  }
+
+  get hasMaterialShortage(): boolean {
+    return this.materialRequirementPreview.some((row) => !!row?.hasShortage);
   }
 
   loadAll(): void {
@@ -164,6 +214,17 @@ export class StaffDailyWorkComponent implements OnInit {
       },
       error: () => {
         this.factoryProductOptions = [];
+      },
+    });
+  }
+
+  loadRawMaterials(): void {
+    this.rawMaterialService.getMaterials({ active: true }).subscribe({
+      next: (response) => {
+        this.rawMaterialOptions = response?.materials || [];
+      },
+      error: () => {
+        this.rawMaterialOptions = [];
       },
     });
   }
@@ -233,7 +294,7 @@ export class StaffDailyWorkComponent implements OnInit {
   }
 
   startEdit(dailyWork: any): void {
-    if (!this.canManage || !dailyWork?._id) {
+    if (!this.canEditRow(dailyWork)) {
       return;
     }
 
@@ -358,7 +419,7 @@ export class StaffDailyWorkComponent implements OnInit {
   }
 
   deleteDailyWork(dailyWork: any): void {
-    if (!this.canManage || !dailyWork?._id || this.deletingId) {
+    if (!this.canDeleteRow(dailyWork) || this.deletingId) {
       return;
     }
 

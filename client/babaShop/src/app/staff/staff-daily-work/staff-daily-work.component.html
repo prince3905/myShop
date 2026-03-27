@@ -111,6 +111,32 @@
                     <strong>Rs {{ earnedAmountPreview | number: '1.2-2' }}</strong>
                   </div>
                 </div>
+
+                <div class="material-preview-card" *ngIf="materialRequirementPreview.length > 0">
+                  <div class="material-preview-header">
+                    <div class="table-primary">Material Requirement</div>
+                    <div class="table-note" *ngIf="hasMaterialShortage">Stock shortage detected</div>
+                    <div class="table-note" *ngIf="!hasMaterialShortage">Available stock looks sufficient</div>
+                  </div>
+
+                  <div class="material-preview-list">
+                    <div class="material-preview-row" *ngFor="let row of materialRequirementPreview" [class.shortage]="row.hasShortage">
+                      <div>
+                        <div class="table-primary">{{ row.materialName }}</div>
+                        <div class="table-note">
+                          Required {{ row.requiredQty | number: '1.0-2' }} {{ row.unitLabel }}
+                          · Available {{ row.availableQty | number: '1.0-2' }} {{ row.unitLabel }}
+                        </div>
+                      </div>
+                      <strong *ngIf="!row.hasShortage">OK</strong>
+                      <strong *ngIf="row.hasShortage">Short {{ row.shortageQty | number: '1.0-2' }}</strong>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="edit-banner stock-warning-banner" *ngIf="hasMaterialShortage">
+                  Selected product ke liye raw material stock kam hai. Save backend se block ho jayega jab tak stock available na ho.
+                </div>
               </div>
 
               <div class="advanced-panel" *ngIf="showAdvanced">
@@ -155,7 +181,7 @@
               </div>
 
               <div class="form-actions">
-                <button mat-raised-button class="btn btn-danger submit-btn" [disabled]="savingDailyWork || dailyWorkNgForm.invalid || loadingStaffs">
+                <button mat-raised-button class="btn btn-danger submit-btn" [disabled]="savingDailyWork || dailyWorkNgForm.invalid || loadingStaffs || hasMaterialShortage">
                   {{ getSubmitLabel() }}
                 </button>
                 <button
@@ -261,11 +287,11 @@
                     <td class="amount-cell">Rs {{ item.earnedAmount | number: '1.2-2' }}</td>
                     <td>{{ item.createdBy?.pFname || item.createdBy?.email || '-' }}</td>
                     <td>
-                      <div class="table-actions" *ngIf="canManage">
+                      <div class="table-actions" *ngIf="canEditRow(item) || canDeleteRow(item)">
                         <button mat-icon-button class="table-edit-btn" [disabled]="deletingId === item._id" (click)="startEdit(item)" aria-label="Edit daily work" title="Edit">
                           <mat-icon>edit</mat-icon>
                         </button>
-                        <button mat-icon-button class="table-delete-btn" [disabled]="deletingId === item._id" (click)="deleteDailyWork(item)" aria-label="Delete daily work" title="Delete">
+                        <button *ngIf="canDeleteRow(item)" mat-icon-button class="table-delete-btn" [disabled]="deletingId === item._id" (click)="deleteDailyWork(item)" aria-label="Delete daily work" title="Delete">
                           <mat-icon>{{ deletingId === item._id ? 'hourglass_top' : 'delete' }}</mat-icon>
                         </button>
                       </div>
