@@ -1,6 +1,7 @@
 const StaffWorkType = require("../models/StaffWorkType");
 
 const MANAGER_AND_ABOVE = ["SUPER_ADMIN", "ADMIN", "MANAGER"];
+const escapeRegex = (value = "") => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 exports.getStaffWorkTypes = async (req, res) => {
   try {
@@ -88,6 +89,16 @@ exports.updateStaffWorkType = async (req, res) => {
     const name = `${req.body?.name || workType.name || ""}`.trim();
     if (!name) {
       return res.status(400).json({ success: false, message: "Work type name is required" });
+    }
+
+    const existing = await StaffWorkType.findOne({
+      _id: { $ne: workType._id },
+      shop: req.shopId,
+      isDeleted: false,
+      name: new RegExp(`^${escapeRegex(name)}$`, "i"),
+    });
+    if (existing) {
+      return res.status(409).json({ success: false, message: "Work type already exists" });
     }
 
     workType.name = name;

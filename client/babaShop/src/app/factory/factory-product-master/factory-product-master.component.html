@@ -221,7 +221,7 @@
                 <tbody>
                   <tr *ngFor="let product of products">
                     <td>
-                      <div class="table-primary">{{ product.name }}</div>
+                      <div class="table-primary clickable-text" (click)="selectProduct(product)">{{ product.name }}</div>
                       <div class="table-note" *ngIf="product.code">#{{ product.code }}</div>
                       <div class="table-note" *ngIf="product.note">{{ product.note }}</div>
                     </td>
@@ -239,6 +239,69 @@
                   </tr>
                 </tbody>
               </table>
+            </div>
+
+            <div class="product-detail-card" *ngIf="selectedProduct">
+              <div class="product-detail-header">
+                <div>
+                  <div class="product-detail-title">{{ selectedProduct.name }}</div>
+                  <div class="table-note">
+                    {{ selectedProduct.unitLabel }}
+                    <span *ngIf="selectedProduct.code"> · #{{ selectedProduct.code }}</span>
+                    <span *ngIf="selectedProduct.active"> · Active</span>
+                    <span *ngIf="!selectedProduct.active"> · Inactive</span>
+                  </div>
+                </div>
+                <div class="product-detail-rate">Worker Rate: Rs {{ selectedProduct.workerPieceRate | number: '1.0-2' }}</div>
+              </div>
+
+              <div class="product-detail-grid">
+                <div class="detail-pill">
+                  <span>Material Lines</span>
+                  <strong>{{ selectedProduct.standardMaterialLines?.length || 0 }}</strong>
+                </div>
+                <div class="detail-pill">
+                  <span>Template Material Cost</span>
+                  <strong>Rs {{ selectedProductTemplateCost | number: '1.2-2' }}</strong>
+                </div>
+                <div class="detail-pill">
+                  <span>Std Labour</span>
+                  <strong>Rs {{ selectedProduct.standardLabourCost | number: '1.2-2' }}</strong>
+                </div>
+                <div class="detail-pill">
+                  <span>Std Other</span>
+                  <strong>Rs {{ selectedProduct.standardOtherCost | number: '1.2-2' }}</strong>
+                </div>
+                <div class="detail-pill">
+                  <span>Waste Qty</span>
+                  <strong>{{ selectedProduct.standardWasteQtyPerUnit | number: '1.0-2' }} {{ selectedProduct.standardWasteUnitLabel || 'KG' }}</strong>
+                </div>
+                <div class="detail-pill">
+                  <span>Waste Value</span>
+                  <strong>Rs {{ selectedProduct.standardWasteValuePerUnit | number: '1.2-2' }}</strong>
+                </div>
+              </div>
+
+              <div class="product-detail-section">
+                <div class="detail-section-title">Material Template</div>
+                <div *ngIf="!selectedProduct.standardMaterialLines?.length" class="table-empty compact-empty">No material lines added.</div>
+                <div class="detail-line-list" *ngIf="selectedProduct.standardMaterialLines?.length">
+                  <div class="detail-line-row" *ngFor="let line of selectedProduct.standardMaterialLines">
+                    <div>
+                      <div class="table-primary">{{ line.materialName || line.rawMaterial?.name || '-' }}</div>
+                      <div class="table-note">
+                        {{ line.qtyPerUnit | number: '1.0-2' }} {{ line.unitLabel || 'PCS' }} × Rs {{ line.rate | number: '1.2-2' }}
+                      </div>
+                    </div>
+                    <strong>Rs {{ (line.qtyPerUnit || 0) * (line.rate || 0) | number: '1.2-2' }}</strong>
+                  </div>
+                </div>
+              </div>
+
+              <div class="product-detail-section" *ngIf="selectedProduct.note">
+                <div class="detail-section-title">Note</div>
+                <div class="table-note">{{ selectedProduct.note }}</div>
+              </div>
             </div>
           </div>
         </div>

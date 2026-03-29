@@ -14,13 +14,13 @@ export class StaffPayableSummaryComponent implements OnInit {
   filters = {
     search: "",
     staff: "",
-    dateFrom: this.formatDate(new Date()),
-    dateTo: this.formatDate(new Date()),
+    dateFrom: "",
+    dateTo: "",
   };
 
   loading = false;
   staffOptions: any[] = [];
-  rows: Array<{ staffId: string; name: string; workType: string; earned: number; advance: number; payment: number; payable: number; workEntries: number }> = [];
+  rows: Array<{ staffId: string; name: string; workType: string; earned: number; advance: number; payment: number; payable: number; workEntries: number; lastWorkDate: string; lastPaymentDate: string }> = [];
   summary = {
     totalEarned: 0,
     totalAdvance: 0,
@@ -63,6 +63,8 @@ export class StaffPayableSummaryComponent implements OnInit {
             payment: 0,
             payable: 0,
             workEntries: 0,
+            lastWorkDate: "",
+            lastPaymentDate: "",
           };
           return acc;
         }, {});
@@ -80,10 +82,16 @@ export class StaffPayableSummaryComponent implements OnInit {
               payment: 0,
               payable: 0,
               workEntries: 0,
+              lastWorkDate: "",
+              lastPaymentDate: "",
             };
           }
           byId[staffId].earned += Number(row?.earnedAmount || 0);
           byId[staffId].workEntries += 1;
+          const workDate = this.formatDate(new Date(row?.entryDate || row?.createdAt || new Date()));
+          if (!byId[staffId].lastWorkDate || workDate > byId[staffId].lastWorkDate) {
+            byId[staffId].lastWorkDate = workDate;
+          }
         });
 
         payments.forEach((row: any) => {
@@ -99,6 +107,8 @@ export class StaffPayableSummaryComponent implements OnInit {
               payment: 0,
               payable: 0,
               workEntries: 0,
+              lastWorkDate: "",
+              lastPaymentDate: "",
             };
           }
           const amount = Number(row?.amount || 0);
@@ -106,6 +116,10 @@ export class StaffPayableSummaryComponent implements OnInit {
             byId[staffId].advance += amount;
           } else {
             byId[staffId].payment += amount;
+          }
+          const paymentDate = this.formatDate(new Date(row?.entryDate || row?.createdAt || new Date()));
+          if (!byId[staffId].lastPaymentDate || paymentDate > byId[staffId].lastPaymentDate) {
+            byId[staffId].lastPaymentDate = paymentDate;
           }
         });
 
@@ -137,10 +151,31 @@ export class StaffPayableSummaryComponent implements OnInit {
     this.filters = {
       search: "",
       staff: "",
-      dateFrom: this.formatDate(new Date()),
-      dateTo: this.formatDate(new Date()),
+      dateFrom: "",
+      dateTo: "",
     };
     this.loadReport();
+  }
+
+  showToday(): void {
+    const today = this.formatDate(new Date());
+    this.filters.dateFrom = today;
+    this.filters.dateTo = today;
+    this.loadReport();
+  }
+
+  viewAll(): void {
+    this.resetFilters();
+  }
+
+  get filterSummary(): string {
+    if (!this.filters.dateFrom && !this.filters.dateTo) {
+      return "View All Dates";
+    }
+    if (this.filters.dateFrom && this.filters.dateTo && this.filters.dateFrom === this.filters.dateTo) {
+      return `Date: ${this.filters.dateFrom}`;
+    }
+    return `Date: ${this.filters.dateFrom || "..."} to ${this.filters.dateTo || "..."}`;
   }
 
   trackByRow(index: number, item: any): string {

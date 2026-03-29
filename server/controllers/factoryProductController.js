@@ -3,6 +3,7 @@ const RawMaterial = require("../models/RawMaterial");
 
 const STAFF_ONLY_FILTER = (req) => `${req.user?.role || ""}` === "STAFF";
 const MANAGER_AND_ABOVE = ["SUPER_ADMIN", "ADMIN", "MANAGER"];
+const escapeRegex = (value = "") => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 const toNumber = (value) => {
   const parsed = Number(value || 0);
@@ -107,6 +108,15 @@ exports.createFactoryProduct = async (req, res) => {
 
     if (!Number.isFinite(payload.standardWasteValuePerUnit) || payload.standardWasteValuePerUnit < 0) {
       return res.status(400).json({ success: false, message: "Standard waste value must be 0 or greater" });
+    }
+
+    const existingProduct = await FactoryProduct.findOne({
+      shop: req.shopId,
+      isDeleted: false,
+      name: new RegExp(`^${escapeRegex(payload.name)}$`, "i"),
+    }).select("_id name");
+    if (existingProduct) {
+      return res.status(409).json({ success: false, message: `Factory product "${existingProduct.name}" already exists` });
     }
 
     const product = await FactoryProduct.create(payload);
@@ -268,6 +278,16 @@ exports.updateFactoryProduct = async (req, res) => {
 
     if (!Number.isFinite(product.standardWasteValuePerUnit) || product.standardWasteValuePerUnit < 0) {
       return res.status(400).json({ success: false, message: "Standard waste value must be 0 or greater" });
+    }
+
+    const existingProduct = await FactoryProduct.findOne({
+      _id: { $ne: product._id },
+      shop: req.shopId,
+      isDeleted: false,
+      name: new RegExp(`^${escapeRegex(product.name)}$`, "i"),
+    }).select("_id name");
+    if (existingProduct) {
+      return res.status(409).json({ success: false, message: `Factory product "${existingProduct.name}" already exists` });
     }
 
     await product.save();

@@ -115,6 +115,29 @@
   font-weight: 600;
 }
 
+.quick-info-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.quick-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.05);
+  color: #374151;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.quick-chip.muted {
+  background: rgba(100, 116, 139, 0.08);
+  color: #475569;
+}
+
 .filter-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

@@ -4,6 +4,7 @@ const StaffDailyWork = require("../models/StaffDailyWork");
 
 const STAFF_ONLY_FILTER = (req) => `${req.user?.role || ""}` === "STAFF";
 const MANAGER_AND_ABOVE = ["SUPER_ADMIN", "ADMIN", "MANAGER"];
+const escapeRegex = (value = "") => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 const objectIds = (materials) => materials.map((item) => item._id);
 
@@ -134,6 +135,17 @@ exports.createRawMaterial = async (req, res) => {
 
     if (!Number.isFinite(payload.currentRate) || payload.currentRate < 0) {
       return res.status(400).json({ success: false, message: "Current rate must be 0 or greater" });
+    }
+
+    const existingMaterial = await RawMaterial.findOne({
+      shop: req.shopId,
+      isDeleted: false,
+      name: new RegExp(`^${escapeRegex(payload.name)}$`, "i"),
+      sizeLabel: new RegExp(`^${escapeRegex(payload.sizeLabel)}$`, "i"),
+      colorLabel: new RegExp(`^${escapeRegex(payload.colorLabel)}$`, "i"),
+    }).select("_id name sizeLabel colorLabel");
+    if (existingMaterial) {
+      return res.status(409).json({ success: false, message: "Raw material with same name, size and color already exists" });
     }
 
     const material = await RawMaterial.create(payload);
@@ -447,6 +459,18 @@ exports.updateRawMaterial = async (req, res) => {
 
     if (!Number.isFinite(material.currentRate) || material.currentRate < 0) {
       return res.status(400).json({ success: false, message: "Current rate must be 0 or greater" });
+    }
+
+    const existingMaterial = await RawMaterial.findOne({
+      _id: { $ne: material._id },
+      shop: req.shopId,
+      isDeleted: false,
+      name: new RegExp(`^${escapeRegex(material.name)}$`, "i"),
+      sizeLabel: new RegExp(`^${escapeRegex(material.sizeLabel || "")}$`, "i"),
+      colorLabel: new RegExp(`^${escapeRegex(material.colorLabel || "")}$`, "i"),
+    }).select("_id");
+    if (existingMaterial) {
+      return res.status(409).json({ success: false, message: "Raw material with same name, size and color already exists" });
     }
 
     await material.save();

@@ -43,6 +43,7 @@ export class FactoryProductMasterComponent implements OnInit {
 
   products: any[] = [];
   rawMaterialOptions: any[] = [];
+  selectedProduct: any | null = null;
   editingProductId: string | null = null;
   loadingSummary = false;
   loadingProducts = false;
@@ -78,6 +79,7 @@ export class FactoryProductMasterComponent implements OnInit {
     this.factoryProductService.getProducts(this.filters).subscribe({
       next: (response) => {
         this.products = response?.products || [];
+        this.selectedProduct = this.products[0] || null;
         this.summary = this.buildSummary(this.products);
         this.loadingSummary = false;
         this.loadingProducts = false;
@@ -182,6 +184,10 @@ export class FactoryProductMasterComponent implements OnInit {
     this.loadProducts();
   }
 
+  selectProduct(product: any): void {
+    this.selectedProduct = product || null;
+  }
+
   deleteProduct(product: any): void {
     if (!this.canManage || !product?._id || this.deletingId) {
       return;
@@ -217,6 +223,12 @@ export class FactoryProductMasterComponent implements OnInit {
 
   trackBySummary(index: number, item: any): string {
     return `${item?._id || item?.name || "row"}-${index}`;
+  }
+
+  get selectedProductTemplateCost(): number {
+    return (this.selectedProduct?.standardMaterialLines || []).reduce((sum: number, line: any) => {
+      return sum + (Number(line?.qtyPerUnit || 0) * Number(line?.rate || 0));
+    }, 0);
   }
 
   addMaterialLine(): void {

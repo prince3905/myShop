@@ -6,6 +6,7 @@ const {
 
 const isSuperAdminGlobal = (req) =>
   req.user?.role === "SUPER_ADMIN" && !req.shopId;
+const escapeRegex = (value = "") => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 const normalizeDistributorPayload = (body = {}, { includeOpeningBalance = false } = {}) => {
   const payload = {
@@ -96,6 +97,23 @@ exports.addDistributor = async (req, res) => {
       includeOpeningBalance: true,
     });
 
+    const duplicateDistributor = await Distributor.findOne({
+      shop: targetShopId,
+      isDeleted: { $ne: true },
+      $or: [
+        ...(payload.phone ? [{ phone: payload.phone }] : []),
+        { name: new RegExp(`^${escapeRegex(payload.name)}$`, "i") },
+      ],
+    }).select("name phone");
+    if (duplicateDistributor) {
+      return res.status(409).json({
+        success: false,
+        message: payload.phone && duplicateDistributor.phone === payload.phone
+          ? `Distributor phone already used by ${duplicateDistributor.name}`
+          : `Distributor "${duplicateDistributor.name}" already exists in this shop`,
+      });
+    }
+
     const distributor = new Distributor({
       ...payload,
       shop: targetShopId,
@@ -169,6 +187,24 @@ exports.updateDistributor = async (req, res) => {
     const updateData = {
       ...normalizeDistributorPayload(req.body),
     };
+
+    const duplicateDistributor = await Distributor.findOne({
+      _id: { $ne: distributorId },
+      shop: req.shopId,
+      isDeleted: { $ne: true },
+      $or: [
+        ...(updateData.phone ? [{ phone: updateData.phone }] : []),
+        { name: new RegExp(`^${escapeRegex(updateData.name)}$`, "i") },
+      ],
+    }).select("name phone");
+    if (duplicateDistributor) {
+      return res.status(409).json({
+        success: false,
+        message: updateData.phone && duplicateDistributor.phone === updateData.phone
+          ? `Distributor phone already used by ${duplicateDistributor.name}`
+          : `Distributor "${duplicateDistributor.name}" already exists in this shop`,
+      });
+    }
 
     const updatedDistributor = await Distributor.findOneAndUpdate(
       { _id: distributorId, shop: req.shopId },

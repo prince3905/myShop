@@ -3,6 +3,7 @@ const StaffWorkType = require("../models/StaffWorkType");
 
 const STAFF_ONLY_FILTER = (req) => `${req.user?.role || ""}` === "STAFF";
 const MANAGER_AND_ABOVE = ["SUPER_ADMIN", "ADMIN", "MANAGER"];
+const escapeRegex = (value = "") => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 const resolveWorkType = async (req, rawWorkTypeRef, rawWorkTypeName) => {
   const workTypeRef = `${rawWorkTypeRef || ""}`.trim();
@@ -66,6 +67,27 @@ exports.createStaff = async (req, res) => {
 
     if (!Number.isFinite(payload.rate) || payload.rate < 0) {
       return res.status(400).json({ success: false, message: "Rate must be 0 or greater" });
+    }
+
+    if (payload.phone) {
+      const existingPhone = await Staff.findOne({
+        shop: req.shopId,
+        isDeleted: false,
+        phone: payload.phone,
+      }).select("_id name");
+      if (existingPhone) {
+        return res.status(409).json({ success: false, message: `Phone already used by ${existingPhone.name}` });
+      }
+    }
+
+    const existingStaff = await Staff.findOne({
+      shop: req.shopId,
+      isDeleted: false,
+      name: new RegExp(`^${escapeRegex(payload.name)}$`, "i"),
+      workType: new RegExp(`^${escapeRegex(payload.workType)}$`, "i"),
+    }).select("_id name workType");
+    if (existingStaff) {
+      return res.status(409).json({ success: false, message: `Staff "${existingStaff.name}" with work type "${existingStaff.workType}" already exists` });
     }
 
     const staff = await Staff.create(payload);
@@ -246,6 +268,29 @@ exports.updateStaff = async (req, res) => {
 
     if (!Number.isFinite(staff.rate) || staff.rate < 0) {
       return res.status(400).json({ success: false, message: "Rate must be 0 or greater" });
+    }
+
+    if (staff.phone) {
+      const existingPhone = await Staff.findOne({
+        _id: { $ne: staff._id },
+        shop: req.shopId,
+        isDeleted: false,
+        phone: staff.phone,
+      }).select("_id name");
+      if (existingPhone) {
+        return res.status(409).json({ success: false, message: `Phone already used by ${existingPhone.name}` });
+      }
+    }
+
+    const existingStaff = await Staff.findOne({
+      _id: { $ne: staff._id },
+      shop: req.shopId,
+      isDeleted: false,
+      name: new RegExp(`^${escapeRegex(staff.name)}$`, "i"),
+      workType: new RegExp(`^${escapeRegex(staff.workType)}$`, "i"),
+    }).select("_id name workType");
+    if (existingStaff) {
+      return res.status(409).json({ success: false, message: `Staff "${existingStaff.name}" with work type "${existingStaff.workType}" already exists` });
     }
 
     await staff.save();

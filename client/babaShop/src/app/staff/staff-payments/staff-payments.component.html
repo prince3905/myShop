@@ -76,12 +76,19 @@
 
               <mat-form-field class="example-full-width">
                 <mat-label>Staff / Worker</mat-label>
-                <mat-select [(ngModel)]="paymentForm.staff" name="staff" required>
+                <mat-select [(ngModel)]="paymentForm.staff" name="staff" (selectionChange)="onStaffChange()" required>
                   <mat-option *ngFor="let staff of staffOptions" [value]="staff._id">
                     {{ staff.name }} · {{ staff.workType }}
                   </mat-option>
                 </mat-select>
               </mat-form-field>
+
+              <div class="quick-info-row" *ngIf="selectedStaff">
+                <div class="quick-chip">Rate: Rs {{ selectedStaff.rate || 0 | number: '1.2-2' }}</div>
+                <div class="quick-chip muted">Earned: Rs {{ selectedStaffBalance.earned || 0 | number: '1.2-2' }}</div>
+                <div class="quick-chip muted">Payable: Rs {{ selectedStaffBalance.payable || 0 | number: '1.2-2' }}</div>
+                <div class="quick-chip muted">Suggested: Rs {{ suggestedAmount || 0 | number: '1.2-2' }}</div>
+              </div>
 
               <div class="row">
                 <div class="col-md-6">
@@ -93,7 +100,7 @@
                 <div class="col-md-6">
                   <mat-form-field class="example-full-width">
                     <mat-label>Entry Type</mat-label>
-                    <mat-select [(ngModel)]="paymentForm.entryType" name="entryType" required>
+                    <mat-select [(ngModel)]="paymentForm.entryType" name="entryType" (selectionChange)="onEntryTypeChange()" required>
                       <mat-option *ngFor="let type of entryTypes" [value]="type">{{ type }}</mat-option>
                     </mat-select>
                   </mat-form-field>
@@ -105,6 +112,9 @@
                   <mat-form-field class="example-full-width">
                     <mat-label>Amount</mat-label>
                     <input matInput type="number" min="1" [(ngModel)]="paymentForm.amount" name="amount" required>
+                    <mat-hint *ngIf="selectedStaff">
+                      {{ paymentForm.entryType === 'PAYMENT' ? 'Default pending payable set hua hai, aap amount change kar sakte ho.' : 'Default base rate set hua hai, aap amount change kar sakte ho.' }}
+                    </mat-hint>
                   </mat-form-field>
                 </div>
                 <div class="col-md-6">
@@ -184,7 +194,9 @@
             </div>
 
             <div class="filter-actions">
-              <button mat-raised-button class="btn btn-danger" (click)="loadPayments()">Apply Filters</button>
+              <button mat-raised-button class="btn btn-danger" (click)="loadPaymentContext()">Apply Filters</button>
+              <button mat-stroked-button class="btn btn-outline-danger" (click)="showToday()">Today</button>
+              <button mat-stroked-button class="btn btn-outline-danger" (click)="viewAll()">View All</button>
               <button mat-stroked-button class="btn btn-outline-danger" (click)="clearFilters()">Reset</button>
             </div>
 

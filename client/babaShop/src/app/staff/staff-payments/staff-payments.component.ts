@@ -2,8 +2,10 @@ import { Component, OnInit } from "@angular/core";
 import { NgForm } from "@angular/forms";
 import { MatSnackBar } from "@angular/material/snack-bar";
 import { AuthService } from "app/shared/services/auth.service";
+import { StaffDailyWorkService } from "app/shared/services/staff-daily-work.service";
 import { StaffService } from "app/shared/services/staff.service";
 import { StaffPaymentService } from "app/shared/services/staff-payment.service";
+import { forkJoin } from "rxjs";
 
 @Component({
   selector: "app-staff-payments",
@@ -42,6 +44,8 @@ export class StaffPaymentsComponent implements OnInit {
 
   staffOptions: any[] = [];
   payments: any[] = [];
+  dailyWorks: any[] = [];
+  staffBalanceMap: Record<string, { earned: number; advance: number; payment: number; payable: number }> = {};
   editingPaymentId: string | null = null;
   loadingSummary = false;
   loadingPayments = false;
@@ -53,6 +57,7 @@ export class StaffPaymentsComponent implements OnInit {
   constructor(
     private staffService: StaffService,
     private staffPaymentService: StaffPaymentService,
+    private staffDailyWorkService: StaffDailyWorkService,
     private snackBar: MatSnackBar,
     private authService: AuthService,
   ) {}
@@ -72,8 +77,27 @@ export class StaffPaymentsComponent implements OnInit {
     return rows.reduce((sum: number, row: any) => sum + Number(row?.count || 0), 0);
   }
 
+  get selectedStaff(): any | null {
+    return this.staffOptions.find((row) => row?._id === this.paymentForm.staff) || null;
+  }
+
+  get selectedStaffBalance(): { earned: number; advance: number; payment: number; payable: number } {
+    return this.staffBalanceMap[this.paymentForm.staff] || { earned: 0, advance: 0, payment: 0, payable: 0 };
+  }
+
+  get suggestedAmount(): number {
+    const staff = this.selectedStaff;
+    if (!staff) {
+      return 0;
+    }
+    if (this.paymentForm.entryType === "PAYMENT") {
+      return Math.max(0, Number(this.selectedStaffBalance.payable || 0));
+    }
+    return Math.max(0, Number(staff?.rate || 0));
+  }
+
   loadAll(): void {
-    this.loadPayments();
+    this.loadPaymentContext();
   }
 
   loadStaffOptions(): void {
@@ -90,15 +114,23 @@ export class StaffPaymentsComponent implements OnInit {
     });
   }
 
-  loadPayments(): void {
+  loadPaymentContext(): void {
     this.loadingSummary = true;
     this.loadingPayments = true;
-    this.staffPaymentService.getPayments(this.filters).subscribe({
-      next: (response) => {
-        this.payments = response?.payments || [];
+    forkJoin({
+      paymentsResponse: this.staffPaymentService.getPayments(this.filters),
+      dailyWorksResponse: this.staffDailyWorkService.getDailyWorks({}),
+    }).subscribe({
+      next: ({ paymentsResponse, dailyWorksResponse }) => {
+        this.payments = paymentsResponse?.payments || [];
+        this.dailyWorks = dailyWorksResponse?.dailyWorks || [];
+        this.staffBalanceMap = this.buildStaffBalanceMap(this.dailyWorks, this.payments);
         this.summary = this.buildSummary(this.payments);
         this.loadingSummary = false;
         this.loadingPayments = false;
+        if (!this.editingPaymentId && this.paymentForm.staff) {
+          this.applySuggestedAmount();
+        }
       },
       error: (error) => {
         this.loadingSummary = false;
@@ -174,7 +206,18 @@ export class StaffPaymentsComponent implements OnInit {
       dateFrom: "",
       dateTo: "",
     };
-    this.loadPayments();
+    this.loadPaymentContext();
+  }
+
+  showToday(): void {
+    const today = this.formatDate(new Date());
+    this.filters.dateFrom = today;
+    this.filters.dateTo = today;
+    this.loadPaymentContext();
+  }
+
+  viewAll(): void {
+    this.clearFilters();
   }
 
   deletePayment(payment: any): void {
@@ -214,6 +257,29 @@ export class StaffPaymentsComponent implements OnInit {
     return `${item?._id || "row"}-${index}`;
   }
 
+  onStaffChange(): void {
+    if (this.editingPaymentId) {
+      return;
+    }
+    this.applySuggestedAmount();
+  }
+
+  onEntryTypeChange(): void {
+    if (this.editingPaymentId && this.paymentForm.amount !== null) {
+      return;
+    }
+    this.applySuggestedAmount();
+  }
+
+  private applySuggestedAmount(): void {
+    const staff = this.selectedStaff;
+    if (!staff) {
+      this.paymentForm.amount = null;
+      return;
+    }
+    this.paymentForm.amount = this.suggestedAmount > 0 ? this.suggestedAmount : null;
+  }
+
   private formatDate(date: Date): string {
     return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
   }
@@ -240,5 +306,41 @@ export class StaffPaymentsComponent implements OnInit {
       todayEntries: rows.filter((row: any) => this.formatDate(new Date(row?.entryDate || row?.createdAt || new Date())) === today).length,
       byType: Object.values(byTypeMap),
     };
+  }
+
+  private buildStaffBalanceMap(dailyWorks: any[], payments: any[]): Record<string, { earned: number; advance: number; payment: number; payable: number }> {
+    const map: Record<string, { earned: number; advance: number; payment: number; payable: number }> = {};
+
+    for (const row of dailyWorks || []) {
+      const staffId = `${row?.staff?._id || row?.staff || ""}`;
+      if (!staffId) {
+        continue;
+      }
+      if (!map[staffId]) {
+        map[staffId] = { earned: 0, advance: 0, payment: 0, payable: 0 };
+      }
+      map[staffId].earned += Number(row?.earnedAmount || 0);
+    }
+
+    for (const row of payments || []) {
+      const staffId = `${row?.staff?._id || row?.staff || ""}`;
+      if (!staffId) {
+        continue;
+      }
+      if (!map[staffId]) {
+        map[staffId] = { earned: 0, advance: 0, payment: 0, payable: 0 };
+      }
+      if (`${row?.entryType || ""}` === "ADVANCE") {
+        map[staffId].advance += Number(row?.amount || 0);
+      } else if (`${row?.entryType || ""}` === "PAYMENT") {
+        map[staffId].payment += Number(row?.amount || 0);
+      }
+    }
+
+    Object.keys(map).forEach((staffId) => {
+      map[staffId].payable = Number(map[staffId].earned || 0) - Number(map[staffId].advance || 0) - Number(map[staffId].payment || 0);
+    });
+
+    return map;
   }
 }

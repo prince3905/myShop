@@ -147,6 +147,13 @@
   color: #1f2937;
 }
 
+.clickable-text {
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: rgba(220, 53, 69, 0.22);
+  text-underline-offset: 3px;
+}
+
 .table-actions {
   display: flex;
   flex-direction: row;
@@ -196,6 +203,103 @@
   text-align: center;
   color: #64748b;
   background: #f8f9fb;
+}
+
+.compact-empty {
+  padding: 12px 0 6px;
+  border: 0;
+  background: transparent;
+  text-align: left;
+}
+
+.product-detail-card {
+  margin-top: 16px;
+  padding: 16px;
+  border-radius: 16px;
+  border: 1px solid #e6ecf4;
+  background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
+}
+
+.product-detail-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.product-detail-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #111827;
+}
+
+.product-detail-rate {
+  font-size: 18px;
+  font-weight: 800;
+  color: #111827;
+  white-space: nowrap;
+}
+
+.product-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.detail-pill {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+  border-radius: 12px;
+  background: #f8f9fb;
+  border: 1px solid #e6ecf4;
+}
+
+.detail-pill span {
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.detail-pill strong {
+  font-size: 15px;
+  font-weight: 800;
+  color: #111827;
+}
+
+.product-detail-section + .product-detail-section {
+  margin-top: 12px;
+}
+
+.detail-section-title {
+  margin-bottom: 10px;
+  font-size: 12px;
+  font-weight: 800;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.detail-line-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.detail-line-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #f8f9fb;
+  border: 1px solid #e6ecf4;
 }
 
 .template-block {
@@ -283,5 +387,15 @@
 
   .template-header {
     flex-direction: column;
+  }
+
+  .product-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .product-detail-header,
+  .detail-line-row {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }

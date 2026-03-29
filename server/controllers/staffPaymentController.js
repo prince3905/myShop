@@ -22,6 +22,14 @@ const normalizeDate = (raw) => {
   return Number.isNaN(d.getTime()) ? null : d;
 };
 
+const normalizeOptionalDate = (raw) => {
+  if (raw === undefined || raw === null || `${raw}`.trim() === "") {
+    return null;
+  }
+  const d = new Date(raw);
+  return Number.isNaN(d.getTime()) ? null : d;
+};
+
 const resolveAccessibleStaffIds = async (req) => {
   if (!STAFF_ONLY_FILTER(req)) {
     return null;
@@ -130,8 +138,8 @@ exports.getStaffPayments = async (req, res) => {
       filter.paymentMethod = `${paymentMethod}`.trim().toUpperCase();
     }
 
-    const from = normalizeDate(dateFrom);
-    const to = normalizeDate(dateTo);
+    const from = normalizeOptionalDate(dateFrom);
+    const to = normalizeOptionalDate(dateTo);
     if (from || to) {
       filter.entryDate = {};
       if (from) filter.entryDate.$gte = startOfDay(from);

@@ -4,6 +4,7 @@
       <div>
         <h2>Staff Payable / Summary</h2>
         <p>Earned amount, advance, payment aur net payable worker-wise.</p>
+        <p class="page-filter-note">{{ filterSummary }}</p>
       </div>
     </div>
 
@@ -18,6 +19,8 @@
         </div>
         <div class="filter-actions">
           <button mat-raised-button class="btn btn-danger" (click)="loadReport()">Apply Filters</button>
+          <button mat-stroked-button class="btn btn-outline-danger" (click)="showToday()">Today</button>
+          <button mat-stroked-button class="btn btn-outline-danger" (click)="viewAll()">View All</button>
           <button mat-stroked-button class="btn btn-outline-danger" (click)="resetFilters()">Reset</button>
         </div>
       </div>
@@ -38,11 +41,13 @@
         <div *ngIf="rows.length === 0" class="table-empty">No staff summary found.</div>
         <div class="table-wrap" *ngIf="rows.length > 0">
           <table class="table report-table">
-            <thead><tr><th>Staff</th><th>Work Type</th><th>Work Entries</th><th>Earned</th><th>Advance</th><th>Payment</th><th>Payable</th></tr></thead>
+            <thead><tr><th>Staff</th><th>Work Type</th><th>Last Work</th><th>Last Payment</th><th>Work Entries</th><th>Earned</th><th>Advance</th><th>Payment</th><th>Payable</th></tr></thead>
             <tbody>
               <tr *ngFor="let row of rows; trackBy: trackByRow">
                 <td class="table-primary">{{ row.name }}</td>
                 <td>{{ row.workType || '-' }}</td>
+                <td>{{ row.lastWorkDate || '-' }}</td>
+                <td>{{ row.lastPaymentDate || '-' }}</td>
                 <td>{{ row.workEntries }}</td>
                 <td class="amount-cell">Rs {{ row.earned | number: '1.2-2' }}</td>
                 <td class="amount-cell">Rs {{ row.advance | number: '1.2-2' }}</td>
