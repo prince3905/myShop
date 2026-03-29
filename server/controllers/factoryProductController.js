@@ -1,4 +1,9 @@
 const FactoryProduct = require("../models/FactoryProduct");
+const Brand = require("../models/Brand");
+const Category = require("../models/Category");
+const Product = require("../models/Product");
+const ProductModel = require("../models/ProductModel");
+const ProductVariation = require("../models/ProductVariation");
 const RawMaterial = require("../models/RawMaterial");
 
 const STAFF_ONLY_FILTER = (req) => `${req.user?.role || ""}` === "STAFF";
@@ -8,6 +13,134 @@ const escapeRegex = (value = "") => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
 const toNumber = (value) => {
   const parsed = Number(value || 0);
   return Number.isFinite(parsed) ? parsed : NaN;
+};
+
+const toObjectIdOrNull = (value) => {
+  const normalized = `${value || ""}`.trim();
+  return normalized || null;
+};
+
+const populateFactoryProduct = (query) =>
+  query
+    .populate("createdBy", "email role pFname pLname")
+    .populate("updatedBy", "email role pFname pLname")
+    .populate("shopCategory", "name")
+    .populate("shopBrand", "name")
+    .populate("shopProduct", "name slug category brand")
+    .populate("shopModel", "name product")
+    .populate("shopVariation", "sku sellingPrice costPrice attributes product model")
+    .populate("standardMaterialLines.rawMaterial", "name code unitLabel currentRate");
+
+const validateShopMapping = async (req, payload = {}) => {
+  const mapping = {
+    shopCategory: toObjectIdOrNull(payload.shopCategory),
+    shopBrand: toObjectIdOrNull(payload.shopBrand),
+    shopProduct: toObjectIdOrNull(payload.shopProduct),
+    shopModel: toObjectIdOrNull(payload.shopModel),
+    shopVariation: toObjectIdOrNull(payload.shopVariation),
+    variationColor: `${payload.variationColor || ""}`.trim(),
+    variationSize: `${payload.variationSize || ""}`.trim(),
+    defaultSellingPrice: toNumber(payload.defaultSellingPrice),
+  };
+
+  if (!Number.isFinite(mapping.defaultSellingPrice) || mapping.defaultSellingPrice < 0) {
+    return { error: "Default selling price must be 0 or greater" };
+  }
+
+  let categoryDoc = null;
+  let brandDoc = null;
+  let productDoc = null;
+  let modelDoc = null;
+  let variationDoc = null;
+
+  if (mapping.shopCategory) {
+    categoryDoc = await Category.findOne({ _id: mapping.shopCategory, shop: req.shopId });
+    if (!categoryDoc) {
+      return { error: "Selected category not found for current shop" };
+    }
+  }
+
+  if (mapping.shopBrand) {
+    brandDoc = await Brand.findOne({ _id: mapping.shopBrand, shop: req.shopId });
+    if (!brandDoc) {
+      return { error: "Selected brand not found for current shop" };
+    }
+  }
+
+  if (mapping.shopProduct) {
+    productDoc = await Product.findOne({
+      _id: mapping.shopProduct,
+      shop: req.shopId,
+      isDeleted: { $ne: true },
+    }).select("_id category brand name");
+
+    if (!productDoc) {
+      return { error: "Selected shop product not found for current shop" };
+    }
+
+    if (mapping.shopCategory && `${productDoc.category || ""}` !== `${mapping.shopCategory}`) {
+      return { error: "Selected shop product does not belong to selected category" };
+    }
+
+    if (mapping.shopBrand && `${productDoc.brand || ""}` !== `${mapping.shopBrand}`) {
+      return { error: "Selected shop product does not belong to selected brand" };
+    }
+  }
+
+  if (mapping.shopModel) {
+    modelDoc = await ProductModel.findOne({
+      _id: mapping.shopModel,
+      shop: req.shopId,
+      isDeleted: { $ne: true },
+    }).select("_id product name");
+
+    if (!modelDoc) {
+      return { error: "Selected shop model not found for current shop" };
+    }
+
+    if (mapping.shopProduct && `${modelDoc.product || ""}` !== `${mapping.shopProduct}`) {
+      return { error: "Selected shop model does not belong to selected shop product" };
+    }
+  }
+
+  if (mapping.shopVariation) {
+    variationDoc = await ProductVariation.findOne({
+      _id: mapping.shopVariation,
+      shop: req.shopId,
+    }).select("_id product model sku sellingPrice attributes");
+
+    if (!variationDoc) {
+      return { error: "Selected shop variation not found for current shop" };
+    }
+
+    if (mapping.shopProduct && `${variationDoc.product || ""}` !== `${mapping.shopProduct}`) {
+      return { error: "Selected shop variation does not belong to selected shop product" };
+    }
+
+    if (mapping.shopModel && `${variationDoc.model || ""}` !== `${mapping.shopModel}`) {
+      return { error: "Selected shop variation does not belong to selected shop model" };
+    }
+
+    mapping.shopProduct = mapping.shopProduct || `${variationDoc.product}`;
+    mapping.shopModel = mapping.shopModel || `${variationDoc.model}`;
+    mapping.variationColor = mapping.variationColor || `${variationDoc.attributes?.color || ""}`.trim();
+    mapping.variationSize = mapping.variationSize || `${variationDoc.attributes?.size || ""}`.trim();
+    mapping.defaultSellingPrice =
+      Number.isFinite(mapping.defaultSellingPrice) && mapping.defaultSellingPrice > 0
+        ? mapping.defaultSellingPrice
+        : Number(variationDoc.sellingPrice || 0);
+  }
+
+  return {
+    mapping: {
+      ...mapping,
+      shopCategory: categoryDoc?._id || mapping.shopCategory,
+      shopBrand: brandDoc?._id || mapping.shopBrand,
+      shopProduct: productDoc?._id || mapping.shopProduct,
+      shopModel: modelDoc?._id || mapping.shopModel,
+      shopVariation: variationDoc?._id || mapping.shopVariation,
+    },
+  };
 };
 
 const normalizeMaterialLines = async (req, lines = []) => {
@@ -68,6 +201,14 @@ exports.createFactoryProduct = async (req, res) => {
       shop: req.shopId,
       name: `${req.body?.name || ""}`.trim(),
       code: `${req.body?.code || ""}`.trim(),
+      shopCategory: null,
+      shopBrand: null,
+      shopProduct: null,
+      shopModel: null,
+      shopVariation: null,
+      variationColor: "",
+      variationSize: "",
+      defaultSellingPrice: 0,
       unitLabel: `${req.body?.unitLabel || "PCS"}`.trim().toUpperCase(),
       workerPieceRate: toNumber(req.body?.workerPieceRate),
       standardLabourCost: toNumber(req.body?.standardLabourCost),
@@ -85,6 +226,12 @@ exports.createFactoryProduct = async (req, res) => {
       return res.status(400).json({ success: false, message: materialLines.error });
     }
     payload.standardMaterialLines = materialLines.lines;
+
+    const validatedMapping = await validateShopMapping(req, req.body || {});
+    if (validatedMapping.error) {
+      return res.status(400).json({ success: false, message: validatedMapping.error });
+    }
+    Object.assign(payload, validatedMapping.mapping);
 
     if (!payload.name) {
       return res.status(400).json({ success: false, message: "Product name is required" });
@@ -120,9 +267,7 @@ exports.createFactoryProduct = async (req, res) => {
     }
 
     const product = await FactoryProduct.create(payload);
-    const populated = await FactoryProduct.findById(product._id)
-      .populate("createdBy", "email role pFname pLname")
-      .populate("standardMaterialLines.rawMaterial", "name code unitLabel currentRate");
+    const populated = await populateFactoryProduct(FactoryProduct.findById(product._id));
 
     return res.status(201).json({ success: true, message: "Factory product added", product: populated });
   } catch (error) {
@@ -157,10 +302,9 @@ exports.getFactoryProducts = async (req, res) => {
       filter.active = `${active}` === "true";
     }
 
-    const products = await FactoryProduct.find(filter)
-      .sort({ active: -1, name: 1, createdAt: -1 })
-      .populate("createdBy", "email role pFname pLname")
-      .populate("standardMaterialLines.rawMaterial", "name code unitLabel currentRate");
+    const products = await populateFactoryProduct(
+      FactoryProduct.find(filter).sort({ active: -1, name: 1, createdAt: -1 }),
+    );
 
     return res.json({ success: true, products });
   } catch (error) {
@@ -256,6 +400,29 @@ exports.updateFactoryProduct = async (req, res) => {
     }
     product.standardMaterialLines = materialLines.lines;
 
+    const validatedMapping = await validateShopMapping(req, {
+      shopCategory: req.body?.shopCategory ?? product.shopCategory,
+      shopBrand: req.body?.shopBrand ?? product.shopBrand,
+      shopProduct: req.body?.shopProduct ?? product.shopProduct,
+      shopModel: req.body?.shopModel ?? product.shopModel,
+      shopVariation: req.body?.shopVariation ?? product.shopVariation,
+      variationColor: req.body?.variationColor ?? product.variationColor,
+      variationSize: req.body?.variationSize ?? product.variationSize,
+      defaultSellingPrice: req.body?.defaultSellingPrice ?? product.defaultSellingPrice,
+    });
+    if (validatedMapping.error) {
+      return res.status(400).json({ success: false, message: validatedMapping.error });
+    }
+
+    product.shopCategory = validatedMapping.mapping.shopCategory;
+    product.shopBrand = validatedMapping.mapping.shopBrand;
+    product.shopProduct = validatedMapping.mapping.shopProduct;
+    product.shopModel = validatedMapping.mapping.shopModel;
+    product.shopVariation = validatedMapping.mapping.shopVariation;
+    product.variationColor = validatedMapping.mapping.variationColor;
+    product.variationSize = validatedMapping.mapping.variationSize;
+    product.defaultSellingPrice = validatedMapping.mapping.defaultSellingPrice;
+
     if (!product.name) {
       return res.status(400).json({ success: false, message: "Product name is required" });
     }
@@ -291,7 +458,8 @@ exports.updateFactoryProduct = async (req, res) => {
     }
 
     await product.save();
-    return res.json({ success: true, message: "Factory product updated", product });
+    const populated = await populateFactoryProduct(FactoryProduct.findById(product._id));
+    return res.json({ success: true, message: "Factory product updated", product: populated });
   } catch (error) {
     console.error("Update Factory Product Error:", error);
     return res.status(500).json({ success: false, message: "Failed to update factory product" });

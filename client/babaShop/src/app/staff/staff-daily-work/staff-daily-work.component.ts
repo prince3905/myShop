@@ -38,6 +38,7 @@ export class StaffDailyWorkComponent implements OnInit {
     search: "",
     staff: "",
     attendanceStatus: "",
+    verificationStatus: "",
     dateFrom: "",
     dateTo: "",
   };
@@ -348,6 +349,7 @@ export class StaffDailyWorkComponent implements OnInit {
       search: "",
       staff: "",
       attendanceStatus: "",
+      verificationStatus: "",
       dateFrom: "",
       dateTo: "",
     };
@@ -373,6 +375,7 @@ export class StaffDailyWorkComponent implements OnInit {
       parts.push(`Staff: ${staff?.name || "Selected"}`);
     }
     if (this.filters.attendanceStatus) parts.push(`Attendance: ${this.filters.attendanceStatus}`);
+    if (this.filters.verificationStatus) parts.push(`Verify: ${this.filters.verificationStatus}`);
     if (this.filters.dateFrom || this.filters.dateTo) {
       parts.push(`Date: ${this.filters.dateFrom || "..." } to ${this.filters.dateTo || "..."}`);
     }
@@ -416,6 +419,37 @@ export class StaffDailyWorkComponent implements OnInit {
     return wasteValue > 0
       ? `${wasteLabel} · Rs ${wasteValue.toFixed(2)}`
       : wasteLabel;
+  }
+
+  getWorkerRatePreview(item: any): string {
+    const qty = Number(item?.unitsCompleted || 0);
+    const total = Number(item?.earnedAmount || 0);
+    const rate = Number(item?.pieceRate || item?.factoryProduct?.workerPieceRate || 0);
+    const unit = `${item?.unit || item?.factoryProduct?.unitLabel || "PCS"}`.trim();
+
+    if (rate > 0) {
+      return `Rs ${rate.toFixed(2)}/${unit}`;
+    }
+    if (qty > 0 && total > 0) {
+      return `Rs ${(total / qty).toFixed(2)}/${unit}`;
+    }
+    return "";
+  }
+
+  getActualBoxCostPreview(item: any): number {
+    const product = item?.factoryProduct;
+    const qty = Number(item?.unitsCompleted || 0);
+    if (!product || qty <= 0) {
+      return 0;
+    }
+
+    const materialCost = (product?.standardMaterialLines || []).reduce((sum: number, line: any) => {
+      return sum + (Number(line?.qtyPerUnit || 0) * qty * Number(line?.rate || 0));
+    }, 0);
+    const workerCost = Number(item?.earnedAmount || 0);
+    const otherCost = Number(product?.standardOtherCost || 0) * qty;
+    const totalBatchCost = materialCost + workerCost + otherCost;
+    return qty > 0 ? totalBatchCost / qty : 0;
   }
 
   deleteDailyWork(dailyWork: any): void {

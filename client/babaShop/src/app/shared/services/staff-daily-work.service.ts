@@ -36,6 +36,14 @@ export class StaffDailyWorkService {
     return this.http.put(`${this.baseURL}/api/staff-daily-work/${id}`, payload);
   }
 
+  verifyDailyWork(id: string, payload: any): Observable<any> {
+    return this.http.patch(`${this.baseURL}/api/staff-daily-work/${id}/verification`, payload);
+  }
+
+  pushDailyWorkToStock(id: string): Observable<any> {
+    return this.http.patch(`${this.baseURL}/api/staff-daily-work/${id}/push-stock`, {});
+  }
+
   deleteDailyWork(id: string): Observable<any> {
     return this.http.delete(`${this.baseURL}/api/staff-daily-work/${id}`);
   }

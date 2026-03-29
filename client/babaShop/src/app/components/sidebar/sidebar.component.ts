@@ -151,6 +151,12 @@ export const ROUTES: RouteInfo[] = [
         roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"],
       },
       {
+        path: "/factory-verification",
+        title: "Factory Verification",
+        icon: "fact_check",
+        roles: ["SUPER_ADMIN", "ADMIN", "MANAGER"],
+      },
+      {
         path: "/raw-material-purchase",
         title: "Raw Material Purchase",
         icon: "shopping_cart",

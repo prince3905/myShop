@@ -57,7 +57,9 @@ export class FactoryReportComponent implements OnInit {
       materialsResponse: this.rawMaterialService.getMaterials({ search: this.filters.search }),
     }).subscribe({
       next: ({ dailyWorksResponse, materialsResponse }) => {
-        const dailyWorks = (dailyWorksResponse?.dailyWorks || []).filter((row: any) => !!row?.factoryProduct);
+        const dailyWorks = (dailyWorksResponse?.dailyWorks || []).filter((row: any) =>
+          !!row?.factoryProduct && ["APPROVED", "PARTIAL"].includes(`${row?.verificationStatus || ""}`),
+        );
         const materials = materialsResponse?.materials || [];
         const productions = this.buildProductionRows(dailyWorks);
         const scraps = this.buildScrapRows(dailyWorks);
@@ -134,6 +136,9 @@ export class FactoryReportComponent implements OnInit {
       const otherCost = Number(product?.standardOtherCost || 0) * qty;
       const wasteQty = Number(product?.standardWasteQtyPerUnit || 0) * qty;
       const wasteValue = Number(product?.standardWasteValuePerUnit || 0) * qty;
+      const workerCost = Number(row?.earnedAmount || 0);
+      const factoryCost = materialCost + labourCost + otherCost;
+      const actualBatchCost = materialCost + workerCost + otherCost;
 
       return {
         sourceId: row?._id || null,
@@ -143,7 +148,11 @@ export class FactoryReportComponent implements OnInit {
         workerName: row.staff?.name || "",
         qtyProduced: qty,
         unitLabel: row.unit || product?.unitLabel || "PCS",
-        totalCost: materialCost + labourCost + otherCost,
+        totalCost: factoryCost,
+        costPerUnit: qty > 0 ? factoryCost / qty : 0,
+        workerCost,
+        actualBatchCost,
+        actualCostPerUnit: qty > 0 ? actualBatchCost / qty : 0,
         materialCost,
         labourCost,
         otherCost,
@@ -152,6 +161,7 @@ export class FactoryReportComponent implements OnInit {
         wasteUnitLabel: product?.standardWasteUnitLabel || "KG",
         wasteValue,
         earnedAmount: Number(row?.earnedAmount || 0),
+        workerRatePerUnit: qty > 0 ? workerCost / qty : Number(product?.workerPieceRate || row?.pieceRate || 0),
         linkedJob: row?.linkedJob || "",
         workDetails: row?.workDetails || "",
         note: row?.note || "",

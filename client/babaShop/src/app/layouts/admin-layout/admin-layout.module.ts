@@ -68,6 +68,7 @@ import { StaffDailyWorkComponent } from "app/staff/staff-daily-work/staff-daily-
 import { StaffPayableSummaryComponent } from "app/staff/staff-payable-summary/staff-payable-summary.component";
 import { StaffWorkItemsComponent } from "app/staff/staff-work-items/staff-work-items.component";
 import { FactoryProductMasterComponent } from "app/factory/factory-product-master/factory-product-master.component";
+import { FactoryVerificationComponent } from "app/factory/factory-verification/factory-verification.component";
 import { RawMaterialPurchaseComponent } from "app/factory/raw-material-purchase/raw-material-purchase.component";
 import { RawMaterialRegisterComponent } from "app/factory/raw-material-register/raw-material-register.component";
 import { FactoryReportComponent } from "app/factory/factory-report/factory-report.component";
@@ -143,6 +144,7 @@ import { FactoryReportComponent } from "app/factory/factory-report/factory-repor
     StaffPaymentsComponent,
     StaffPayableSummaryComponent,
     FactoryProductMasterComponent,
+    FactoryVerificationComponent,
     RawMaterialPurchaseComponent,
     RawMaterialRegisterComponent,
     FactoryReportComponent,

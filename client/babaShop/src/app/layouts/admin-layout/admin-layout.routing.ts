@@ -33,6 +33,7 @@ import { StaffDailyWorkComponent } from "app/staff/staff-daily-work/staff-daily-
 import { StaffPayableSummaryComponent } from "app/staff/staff-payable-summary/staff-payable-summary.component";
 import { StaffWorkItemsComponent } from "app/staff/staff-work-items/staff-work-items.component";
 import { FactoryProductMasterComponent } from "app/factory/factory-product-master/factory-product-master.component";
+import { FactoryVerificationComponent } from "app/factory/factory-verification/factory-verification.component";
 import { RawMaterialPurchaseComponent } from "app/factory/raw-material-purchase/raw-material-purchase.component";
 import { RawMaterialRegisterComponent } from "app/factory/raw-material-register/raw-material-register.component";
 import { FactoryReportComponent } from "app/factory/factory-report/factory-report.component";
@@ -78,6 +79,7 @@ export const AdminLayoutRoutes: Routes = [
   { path: "staff-payments", component: StaffPaymentsComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ALL_ROLES, requireShop: true } },
   { path: "staff-payable-summary", component: StaffPayableSummaryComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ALL_ROLES, requireShop: true } },
   { path: "factory-product-master", component: FactoryProductMasterComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ALL_ROLES, requireShop: true } },
+  { path: "factory-verification", component: FactoryVerificationComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: MANAGER_AND_ABOVE, requireShop: true } },
   { path: "raw-material-purchase", component: RawMaterialPurchaseComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ALL_ROLES, requireShop: true } },
   { path: "raw-material-register", component: RawMaterialRegisterComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ALL_ROLES, requireShop: true } },
   { path: "factory-report", component: FactoryReportComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ALL_ROLES, requireShop: true } },

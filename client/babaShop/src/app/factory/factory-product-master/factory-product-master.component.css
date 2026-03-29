@@ -28,7 +28,7 @@
 
 .summary-row,
 .breakdown-row {
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   row-gap: 10px;
 }
 
@@ -36,7 +36,7 @@
 .breakdown-card {
   height: 100%;
   border: 1px solid rgba(210, 218, 232, 0.85);
-  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.06);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
 }
 
 .summary-label {
@@ -63,7 +63,7 @@
 
 .breakdown-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
 }
 
@@ -84,6 +84,7 @@
 .breakdown-empty {
   font-size: 11px;
   color: #6b7280;
+  line-height: 1.45;
 }
 
 .form-actions {
@@ -120,7 +121,7 @@
 
 .item-table {
   margin-bottom: 0;
-  min-width: 860px;
+  min-width: 920px;
 }
 
 .item-table th {
@@ -133,8 +134,8 @@
 
 .item-table td {
   vertical-align: top;
-  padding-top: 10px;
-  padding-bottom: 10px;
+  padding-top: 9px;
+  padding-bottom: 9px;
 }
 
 .item-table th:first-child,
@@ -214,7 +215,7 @@
 
 .product-detail-card {
   margin-top: 16px;
-  padding: 16px;
+  padding: 14px;
   border-radius: 16px;
   border: 1px solid #e6ecf4;
   background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
@@ -248,11 +249,15 @@
   margin-bottom: 14px;
 }
 
+.compact-detail-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 .detail-pill {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding: 12px;
+  padding: 10px 11px;
   border-radius: 12px;
   background: #f8f9fb;
   border: 1px solid #e6ecf4;
@@ -267,7 +272,7 @@
 }
 
 .detail-pill strong {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 800;
   color: #111827;
 }
@@ -296,15 +301,15 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 10px 12px;
+  padding: 9px 11px;
   border-radius: 12px;
   background: #f8f9fb;
   border: 1px solid #e6ecf4;
 }
 
 .template-block {
-  margin: 14px 0 12px;
-  padding: 14px;
+  margin: 12px 0 10px;
+  padding: 12px;
   border-radius: 14px;
   border: 1px solid #e6ecf4;
   background: #fafbfc;
@@ -315,59 +320,60 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .template-header h5 {
   margin: 0;
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: #111827;
+  font-size: 14px;
+  font-weight: 800;
 }
 
 .template-header p {
   margin: 4px 0 0;
-  font-size: 0.82rem;
+  font-size: 11px;
+  line-height: 1.45;
   color: #6b7280;
 }
 
-.template-empty {
-  border: 1px dashed #d7deea;
-  border-radius: 12px;
-  padding: 14px;
-  text-align: center;
-  color: #64748b;
-  background: #fff;
+.compact-map-row {
+  margin-bottom: -4px;
 }
 
-.template-line {
-  padding: 12px;
-  border-radius: 12px;
-  border: 1px solid #e7edf5;
-  background: #fff;
+.factory-product-table .cell-product {
+  min-width: 220px;
+}
+
+.factory-product-table .cell-link {
+  min-width: 170px;
 }
 
 .template-line + .template-line {
-  margin-top: 10px;
+  margin-top: 6px;
 }
 
-.template-remove-col {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.template-empty {
+  border: 1px dashed #d6dce8;
+  border-radius: 12px;
+  padding: 12px;
+  background: #fff;
+  color: #64748b;
+  font-size: 12px;
 }
 
-@media (max-width: 991px) {
-  .filter-grid,
-  .breakdown-grid,
-  .two-col-grid {
+@media (max-width: 1199px) {
+  .compact-detail-grid,
+  .product-detail-grid,
+  .breakdown-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 767px) {
-  .filter-grid,
+  .compact-detail-grid,
+  .product-detail-grid,
   .breakdown-grid,
+  .filter-grid,
   .two-col-grid {
     grid-template-columns: 1fr;
   }
@@ -389,13 +395,22 @@
     flex-direction: column;
   }
 
-  .product-detail-grid {
-    grid-template-columns: 1fr;
-  }
-
   .product-detail-header,
   .detail-line-row {
     flex-direction: column;
     align-items: flex-start;
   }
+}
+
+.template-line {
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid #e7edf5;
+  background: #fff;
+}
+
+.template-remove-col {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }

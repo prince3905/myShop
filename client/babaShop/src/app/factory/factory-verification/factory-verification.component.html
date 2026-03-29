@@ -1,0 +1,164 @@
+<div class="main-content page-shell">
+  <div class="container-fluid">
+    <div class="page-header-card">
+      <div>
+        <h2>Factory Verification</h2>
+        <p>Daily work se bana maal verify karo. Approve hone ke baad hi aage shop push flow chalega.</p>
+      </div>
+    </div>
+
+    <div class="summary-grid">
+      <div class="summary-card">
+        <span class="summary-label">Pending</span>
+        <strong>{{ summary.pending }}</strong>
+      </div>
+      <div class="summary-card">
+        <span class="summary-label">Approved</span>
+        <strong>{{ summary.approved }}</strong>
+      </div>
+      <div class="summary-card">
+        <span class="summary-label">Partial</span>
+        <strong>{{ summary.partial }}</strong>
+      </div>
+      <div class="summary-card">
+        <span class="summary-label">Rejected</span>
+        <strong>{{ summary.rejected }}</strong>
+      </div>
+    </div>
+
+    <div class="filter-actions status-shortcuts">
+      <button mat-stroked-button class="btn btn-outline-danger" [class.active-status]="!filters.verificationStatus" (click)="showAll()">All</button>
+      <button mat-stroked-button class="btn btn-outline-danger" [class.active-status]="filters.verificationStatus === 'PENDING'" (click)="showStatus('PENDING')">Pending</button>
+      <button mat-stroked-button class="btn btn-outline-danger" [class.active-status]="filters.verificationStatus === 'APPROVED'" (click)="showStatus('APPROVED')">Approved</button>
+      <button mat-stroked-button class="btn btn-outline-danger" [class.active-status]="filters.verificationStatus === 'PARTIAL'" (click)="showStatus('PARTIAL')">Partial</button>
+      <button mat-stroked-button class="btn btn-outline-danger" [class.active-status]="filters.verificationStatus === 'REJECTED'" (click)="showStatus('REJECTED')">Rejected</button>
+    </div>
+
+    <div class="card filter-card">
+      <div class="card-header card-header-danger">
+        <h4 class="card-title">Verification Filters</h4>
+      </div>
+      <div class="card-body">
+        <div class="filter-grid">
+          <mat-form-field class="example-full-width">
+            <mat-label>Search</mat-label>
+            <input matInput [(ngModel)]="filters.search" name="search" placeholder="Worker, product, note">
+          </mat-form-field>
+          <mat-form-field class="example-full-width">
+            <mat-label>Status</mat-label>
+            <mat-select [(ngModel)]="filters.verificationStatus" name="verificationStatus">
+              <mat-option value="">All</mat-option>
+              <mat-option value="PENDING">Pending</mat-option>
+              <mat-option value="APPROVED">Approved</mat-option>
+              <mat-option value="PARTIAL">Partial</mat-option>
+              <mat-option value="REJECTED">Rejected</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field class="example-full-width">
+            <mat-label>From Date</mat-label>
+            <input matInput type="date" [(ngModel)]="filters.dateFrom" name="dateFrom">
+          </mat-form-field>
+          <mat-form-field class="example-full-width">
+            <mat-label>To Date</mat-label>
+            <input matInput type="date" [(ngModel)]="filters.dateTo" name="dateTo">
+          </mat-form-field>
+        </div>
+
+        <div class="filter-actions">
+          <button mat-raised-button class="btn btn-danger" (click)="loadRows()">Apply Filters</button>
+          <button mat-stroked-button class="btn btn-outline-danger" (click)="resetFilters()">Reset</button>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="loading" class="table-empty">Loading verification list...</div>
+
+    <div class="card" *ngIf="!loading">
+      <div class="card-header card-header-danger">
+        <h4 class="card-title">Factory Verification Entries</h4>
+      </div>
+      <div class="card-body">
+        <div *ngIf="rows.length === 0" class="table-empty">No factory verification entries found.</div>
+        <div class="table-wrap" *ngIf="rows.length > 0">
+          <table class="table report-table verification-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Worker</th>
+                <th>Product</th>
+                <th>Qty</th>
+                <th>Cost / Box</th>
+                <th>Pricing</th>
+                <th>Status</th>
+                <th>Shop Push</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let row of rows">
+                <td class="cell-date">{{ row.entryDate | date: "dd/MM/yyyy" }}</td>
+                <td class="cell-worker">
+                  <div class="table-primary">{{ row.staff?.name || '-' }}</div>
+                  <div class="table-note">{{ row.workType || '-' }}</div>
+                </td>
+                <td class="cell-product">
+                  <div class="table-primary">{{ row.factoryProductName || row.factoryProduct?.name || '-' }}</div>
+                  <div class="table-note material-preview">{{ getMaterialPreview(row) }}</div>
+                  <div class="table-note" *ngIf="row.verificationNote">{{ row.verificationNote }}</div>
+                </td>
+                <td class="cell-qty">
+                  <div>{{ row.unitsCompleted || 0 }} {{ row.unit || 'PCS' }}</div>
+                  <div class="table-note" *ngIf="row.verifiedQty">Verified {{ row.verifiedQty }} {{ row.unit || 'PCS' }}</div>
+                </td>
+                <td class="amount-cell cell-cost">
+                  <div>Rs {{ getActualBoxCost(row) | number: "1.2-2" }}</div>
+                  <div class="table-note">
+                    M {{ getMaterialCost(row) | number: "1.2-2" }} · W {{ row.earnedAmount | number: "1.2-2" }}
+                  </div>
+                </td>
+                <td class="amount-cell cell-pricing">
+                  <div>Sell Rs {{ getShopSellingPrice(row) | number: "1.2-2" }}</div>
+                  <div class="table-note" *ngIf="row.stockPushStatus === 'PUSHED'">
+                    Shop Cost Rs {{ getDisplayedCostPrice(row) | number: "1.2-2" }}
+                  </div>
+                  <div class="table-note" *ngIf="row.stockPushStatus !== 'PUSHED'">
+                    Will Push Cost Rs {{ getActualBoxCost(row) | number: "1.2-2" }}
+                  </div>
+                </td>
+                <td class="cell-status">
+                  <span class="status-chip" [class.inactive]="row.verificationStatus === 'REJECTED'">
+                    {{ row.verificationStatus || 'PENDING' }}
+                  </span>
+                </td>
+                <td class="cell-push">
+                  <div class="table-note" *ngIf="row.stockPushStatus === 'PUSHED'">
+                    Pushed {{ row.pushedQty || 0 }} {{ row.unit || 'PCS' }}
+                  </div>
+                  <button
+                    *ngIf="row.stockPushStatus !== 'PUSHED' && (row.verificationStatus === 'APPROVED' || row.verificationStatus === 'PARTIAL')"
+                    mat-stroked-button
+                    class="btn btn-outline-danger btn-sm"
+                    [disabled]="actingId === row._id"
+                    (click)="pushToShop(row)"
+                  >
+                    Push To Shop
+                  </button>
+                  <div class="table-note" *ngIf="row.stockPushStatus !== 'PUSHED' && row.verificationStatus !== 'APPROVED' && row.verificationStatus !== 'PARTIAL'">
+                    Verify first
+                  </div>
+                </td>
+                <td class="cell-actions">
+                  <div class="table-actions">
+                    <button mat-stroked-button class="btn btn-outline-danger btn-sm" [disabled]="actingId === row._id || row.stockPushStatus === 'PUSHED'" (click)="approve(row)">Approve</button>
+                    <button mat-stroked-button class="btn btn-outline-danger btn-sm" [disabled]="actingId === row._id || row.stockPushStatus === 'PUSHED'" (click)="partialApprove(row)">Partial</button>
+                    <button mat-stroked-button class="btn btn-outline-danger btn-sm" [disabled]="actingId === row._id || row.stockPushStatus === 'PUSHED'" (click)="reject(row)">Reject</button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

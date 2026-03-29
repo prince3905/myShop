@@ -2,8 +2,13 @@ import { Component, OnInit } from "@angular/core";
 import { NgForm } from "@angular/forms";
 import { MatSnackBar } from "@angular/material/snack-bar";
 import { AuthService } from "app/shared/services/auth.service";
+import { BrandService } from "app/shared/services/brand.service";
+import { CategoryService } from "app/shared/services/category.service";
 import { FactoryProductService } from "app/shared/services/factory-product.service";
+import { ProductModelService } from "app/shared/services/product-model.service";
+import { ProductService } from "app/shared/services/product.service";
 import { RawMaterialService } from "app/shared/services/raw-material.service";
+import { VariationService } from "app/shared/services/variation.service";
 
 @Component({
   selector: "app-factory-product-master",
@@ -16,7 +21,14 @@ export class FactoryProductMasterComponent implements OnInit {
 
   productForm = {
     name: "",
-    code: "",
+    shopCategory: "",
+    shopBrand: "",
+    shopProduct: "",
+    shopModel: "",
+    shopVariation: "",
+    variationColor: "",
+    variationSize: "",
+    defaultSellingPrice: 0,
     unitLabel: "PCS",
     workerPieceRate: 0,
     standardLabourCost: 0,
@@ -43,6 +55,11 @@ export class FactoryProductMasterComponent implements OnInit {
 
   products: any[] = [];
   rawMaterialOptions: any[] = [];
+  categoryOptions: any[] = [];
+  brandOptions: any[] = [];
+  shopProductOptions: any[] = [];
+  shopModelOptions: any[] = [];
+  shopVariationOptions: any[] = [];
   selectedProduct: any | null = null;
   editingProductId: string | null = null;
   loadingSummary = false;
@@ -55,6 +72,11 @@ export class FactoryProductMasterComponent implements OnInit {
   constructor(
     private factoryProductService: FactoryProductService,
     private rawMaterialService: RawMaterialService,
+    private categoryService: CategoryService,
+    private brandService: BrandService,
+    private productService: ProductService,
+    private productModelService: ProductModelService,
+    private variationService: VariationService,
     private authService: AuthService,
     private snackBar: MatSnackBar,
   ) {}
@@ -62,6 +84,11 @@ export class FactoryProductMasterComponent implements OnInit {
   ngOnInit(): void {
     this.userRole = this.authService.getUserRole();
     this.loadRawMaterials();
+    this.loadCategoryOptions();
+    this.loadBrandOptions();
+    this.loadShopProducts();
+    this.loadShopModels();
+    this.loadShopVariations();
     this.loadAll();
   }
 
@@ -76,10 +103,14 @@ export class FactoryProductMasterComponent implements OnInit {
   loadProducts(): void {
     this.loadingSummary = true;
     this.loadingProducts = true;
+    const previousSelectedId = this.selectedProduct?._id || null;
     this.factoryProductService.getProducts(this.filters).subscribe({
       next: (response) => {
         this.products = response?.products || [];
-        this.selectedProduct = this.products[0] || null;
+        this.selectedProduct =
+          this.products.find((row: any) => row?._id === previousSelectedId) ||
+          this.products[0] ||
+          null;
         this.summary = this.buildSummary(this.products);
         this.loadingSummary = false;
         this.loadingProducts = false;
@@ -102,6 +133,61 @@ export class FactoryProductMasterComponent implements OnInit {
       error: () => {
         this.rawMaterialOptions = [];
         this.loadingRawMaterials = false;
+      },
+    });
+  }
+
+  loadCategoryOptions(): void {
+    this.categoryService.getAllCategories().subscribe({
+      next: (response) => {
+        this.categoryOptions = response?.data || [];
+      },
+      error: () => {
+        this.categoryOptions = [];
+      },
+    });
+  }
+
+  loadBrandOptions(): void {
+    this.brandService.getAllBrands().subscribe({
+      next: (response) => {
+        this.brandOptions = response?.data || [];
+      },
+      error: () => {
+        this.brandOptions = [];
+      },
+    });
+  }
+
+  loadShopProducts(): void {
+    this.productService.getAllProducts().subscribe({
+      next: (response) => {
+        this.shopProductOptions = response?.data || [];
+      },
+      error: () => {
+        this.shopProductOptions = [];
+      },
+    });
+  }
+
+  loadShopModels(): void {
+    this.productModelService.getModels().subscribe({
+      next: (response) => {
+        this.shopModelOptions = response?.data || [];
+      },
+      error: () => {
+        this.shopModelOptions = [];
+      },
+    });
+  }
+
+  loadShopVariations(): void {
+    this.variationService.getVariations({ limit: 300, sort: "sku" }).subscribe({
+      next: (response) => {
+        this.shopVariationOptions = response?.data || [];
+      },
+      error: () => {
+        this.shopVariationOptions = [];
       },
     });
   }
@@ -137,7 +223,14 @@ export class FactoryProductMasterComponent implements OnInit {
     this.editingProductId = product._id;
     this.productForm = {
       name: product.name || "",
-      code: product.code || "",
+      shopCategory: product.shopCategory?._id || product.shopCategory || "",
+      shopBrand: product.shopBrand?._id || product.shopBrand || "",
+      shopProduct: product.shopProduct?._id || product.shopProduct || "",
+      shopModel: product.shopModel?._id || product.shopModel || "",
+      shopVariation: product.shopVariation?._id || product.shopVariation || "",
+      variationColor: product.variationColor || "",
+      variationSize: product.variationSize || "",
+      defaultSellingPrice: Number(product.defaultSellingPrice || 0),
       unitLabel: product.unitLabel || "PCS",
       workerPieceRate: Number(product.workerPieceRate || 0),
       standardLabourCost: Number(product.standardLabourCost || 0),
@@ -162,7 +255,14 @@ export class FactoryProductMasterComponent implements OnInit {
     this.editingProductId = null;
     this.productForm = {
       name: "",
-      code: "",
+      shopCategory: "",
+      shopBrand: "",
+      shopProduct: "",
+      shopModel: "",
+      shopVariation: "",
+      variationColor: "",
+      variationSize: "",
+      defaultSellingPrice: 0,
       unitLabel: "PCS",
       workerPieceRate: 0,
       standardLabourCost: 0,
@@ -231,6 +331,38 @@ export class FactoryProductMasterComponent implements OnInit {
     }, 0);
   }
 
+  get filteredShopModelOptions(): any[] {
+    const productId = `${this.productForm.shopProduct || ""}`.trim();
+    if (!productId) {
+      return this.shopModelOptions;
+    }
+    return this.shopModelOptions.filter((row) => `${row?.product?._id || row?.product || ""}` === productId);
+  }
+
+  get filteredShopVariationOptions(): any[] {
+    const modelId = `${this.productForm.shopModel || ""}`.trim();
+    const productId = `${this.productForm.shopProduct || ""}`.trim();
+    return this.shopVariationOptions.filter((row) => {
+      const rowProductId = `${row?.product?._id || row?.product || ""}`;
+      const rowModelId = `${row?.model?._id || row?.model || ""}`;
+      if (modelId) {
+        return rowModelId === modelId;
+      }
+      if (productId) {
+        return rowProductId === productId;
+      }
+      return true;
+    });
+  }
+
+  get currentCategoryName(): string {
+    return this.categoryOptions.find((row) => row?._id === this.productForm.shopCategory)?.name || "Auto from product";
+  }
+
+  get currentBrandName(): string {
+    return this.brandOptions.find((row) => row?._id === this.productForm.shopBrand)?.name || "Auto from product";
+  }
+
   addMaterialLine(): void {
     this.productForm.standardMaterialLines.push({
       rawMaterial: "",
@@ -254,6 +386,61 @@ export class FactoryProductMasterComponent implements OnInit {
     line.materialName = material.name || "";
     line.unitLabel = material.unitLabel || "PCS";
     line.rate = Number(material.currentRate || 0);
+  }
+
+  onShopProductChange(): void {
+    const product = this.shopProductOptions.find((row) => row?._id === this.productForm.shopProduct);
+    if (!product) {
+      this.productForm.name = "";
+      this.productForm.shopCategory = "";
+      this.productForm.shopBrand = "";
+      this.productForm.shopModel = "";
+      this.productForm.shopVariation = "";
+      this.productForm.variationColor = "";
+      this.productForm.variationSize = "";
+      this.productForm.defaultSellingPrice = 0;
+      return;
+    }
+    this.productForm.name = product.name || "";
+    this.productForm.shopCategory = product.category?._id || product.category || this.productForm.shopCategory;
+    this.productForm.shopBrand = product.brand?._id || product.brand || this.productForm.shopBrand;
+    if (this.productForm.shopModel && !this.filteredShopModelOptions.some((row) => row?._id === this.productForm.shopModel)) {
+      this.productForm.shopModel = "";
+    }
+    if (this.productForm.shopVariation && !this.filteredShopVariationOptions.some((row) => row?._id === this.productForm.shopVariation)) {
+      this.productForm.shopVariation = "";
+    }
+  }
+
+  onShopModelChange(): void {
+    if (this.productForm.shopVariation && !this.filteredShopVariationOptions.some((row) => row?._id === this.productForm.shopVariation)) {
+      this.productForm.shopVariation = "";
+      this.productForm.variationColor = "";
+      this.productForm.variationSize = "";
+    }
+  }
+
+  onShopVariationChange(): void {
+    const variation = this.shopVariationOptions.find((row) => row?._id === this.productForm.shopVariation);
+    if (!variation) {
+      this.productForm.variationColor = "";
+      this.productForm.variationSize = "";
+      return;
+    }
+
+    const productId = variation?.product?._id || variation?.product || "";
+    const modelId = variation?.model?._id || variation?.model || "";
+    if (productId) {
+      this.productForm.shopProduct = productId;
+      this.onShopProductChange();
+    }
+    if (modelId) {
+      this.productForm.shopModel = modelId;
+    }
+
+    this.productForm.variationColor = variation?.attributes?.color || this.productForm.variationColor;
+    this.productForm.variationSize = variation?.attributes?.size || this.productForm.variationSize;
+    this.productForm.defaultSellingPrice = Number(variation?.sellingPrice || 0);
   }
 
   private showError(message: string): void {

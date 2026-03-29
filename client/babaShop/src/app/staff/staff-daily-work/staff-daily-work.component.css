@@ -71,6 +71,7 @@
 .table-note {
   color: #64748b;
   font-size: 11px;
+  line-height: 1.45;
 }
 
 .breakdown-amount {
@@ -90,6 +91,10 @@
   flex-wrap: wrap;
   gap: 10px;
   margin-top: 10px;
+}
+
+.page-context-row {
+  margin-bottom: 8px;
 }
 
 .quick-header {
@@ -247,6 +252,16 @@
   min-width: 980px;
 }
 
+.compact-work-table {
+  margin-bottom: 0;
+}
+
+.compact-work-table td {
+  vertical-align: top;
+  padding-top: 9px;
+  padding-bottom: 9px;
+}
+
 .daily-work-table th:nth-child(4),
 .daily-work-table td:nth-child(4) {
   min-width: 320px;
@@ -286,11 +301,17 @@
   white-space: nowrap;
 }
 
+.cell-work .table-note {
+  max-width: 360px;
+  word-break: break-word;
+}
+
 .table-actions {
   display: flex;
   gap: 6px;
   align-items: center;
   justify-content: center;
+  min-width: 72px;
 }
 
 .table-edit-btn {
@@ -315,6 +336,11 @@
 @media (max-width: 767px) {
   .quick-header,
   .form-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filter-actions {
     flex-direction: column;
     align-items: stretch;
   }

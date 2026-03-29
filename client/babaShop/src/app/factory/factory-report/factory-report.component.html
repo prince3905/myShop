@@ -34,7 +34,7 @@
       </div>
     </div>
 
-    <div class="summary-grid">
+    <div class="summary-grid compact-summary-grid">
       <div class="summary-card">
         <span class="summary-label">Daily Production</span>
         <strong>{{ report.productionEntries }}</strong>
@@ -125,7 +125,7 @@
           <div class="card-body">
             <div *ngIf="recentProductions.length === 0" class="table-empty">No auto production found in selected range.</div>
             <div class="table-wrap" *ngIf="recentProductions.length > 0">
-              <table class="table report-table">
+              <table class="table report-table production-table">
                 <thead>
                   <tr>
                     <th>Date</th>
@@ -136,8 +136,8 @@
                 </thead>
                 <tbody>
                   <tr *ngFor="let item of recentProductions">
-                    <td>{{ item.entryDate | date: "dd/MM/yyyy" }}</td>
-                    <td class="clickable-cell" (click)="selectProduction(item)">
+                    <td class="cell-date">{{ item.entryDate | date: "dd/MM/yyyy" }}</td>
+                    <td class="clickable-cell cell-item" (click)="selectProduction(item)">
                       <div class="table-primary">{{ item.itemName }}</div>
                       <div class="table-note" *ngIf="item.serialNo">{{ item.serialNo }}</div>
                       <div class="table-note" *ngIf="item.materialLines?.length">
@@ -149,10 +149,11 @@
                         Waste {{ item.wasteQty | number: "1.0-2" }} {{ item.wasteUnitLabel }} · Rs {{ item.wasteValue | number: "1.2-2" }}
                       </div>
                     </td>
-                    <td>{{ item.qtyProduced | number: "1.0-2" }} {{ item.unitLabel }}</td>
-                    <td class="amount-cell">
-                      <div>Rs {{ item.totalCost | number: "1.2-2" }}</div>
-                      <div class="table-note">M {{ item.materialCost | number: "1.2-2" }} · L {{ item.labourCost | number: "1.2-2" }} · O {{ item.otherCost | number: "1.2-2" }}</div>
+                    <td class="cell-qty">{{ item.qtyProduced | number: "1.0-2" }} {{ item.unitLabel }}</td>
+                    <td class="amount-cell cell-cost">
+                      <div>Rs {{ item.actualBatchCost | number: "1.2-2" }}</div>
+                      <div class="table-note">1 box cost Rs {{ item.actualCostPerUnit | number: "1.2-2" }}</div>
+                      <div class="table-note">M {{ item.materialCost | number: "1.2-2" }} · W {{ item.workerCost | number: "1.2-2" }} · O {{ item.otherCost | number: "1.2-2" }}</div>
                     </td>
                   </tr>
                 </tbody>
@@ -178,6 +179,10 @@
                   <strong>Rs {{ selectedProduction.materialCost | number: "1.2-2" }}</strong>
                 </div>
                 <div class="detail-pill">
+                  <span>Worker Cost</span>
+                  <strong>Rs {{ selectedProduction.workerCost | number: "1.2-2" }}</strong>
+                </div>
+                <div class="detail-pill">
                   <span>Labour Cost</span>
                   <strong>Rs {{ selectedProduction.labourCost | number: "1.2-2" }}</strong>
                 </div>
@@ -188,6 +193,18 @@
                 <div class="detail-pill">
                   <span>Worker Earned</span>
                   <strong>Rs {{ selectedProduction.earnedAmount | number: "1.2-2" }}</strong>
+                </div>
+                <div class="detail-pill">
+                  <span>Worker Rate / Box</span>
+                  <strong>Rs {{ selectedProduction.workerRatePerUnit | number: "1.2-2" }}</strong>
+                </div>
+                <div class="detail-pill">
+                  <span>Cost / Box</span>
+                  <strong>Rs {{ selectedProduction.costPerUnit | number: "1.2-2" }}</strong>
+                </div>
+                <div class="detail-pill">
+                  <span>Actual Box Cost</span>
+                  <strong>Rs {{ selectedProduction.actualCostPerUnit | number: "1.2-2" }}</strong>
                 </div>
                 <div class="detail-pill" *ngIf="selectedProduction.wasteQty > 0">
                   <span>Waste</span>
@@ -252,7 +269,7 @@
       <div class="card-body">
         <div *ngIf="rawMaterialSnapshot.length === 0" class="table-empty">No raw materials found.</div>
         <div class="table-wrap" *ngIf="rawMaterialSnapshot.length > 0">
-          <table class="table report-table">
+          <table class="table report-table material-snapshot-table">
             <thead>
               <tr>
                 <th>Material</th>
@@ -265,7 +282,7 @@
             </thead>
             <tbody>
               <tr *ngFor="let item of rawMaterialSnapshot">
-                <td>
+                <td class="cell-material">
                   <div class="table-primary">{{ item.name }}</div>
                 </td>
                 <td>{{ item.code || "-" }}</td>

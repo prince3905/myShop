@@ -231,6 +231,16 @@
                 </mat-select>
               </mat-form-field>
               <mat-form-field class="example-full-width">
+                <mat-label>Verification</mat-label>
+                <mat-select [(ngModel)]="filters.verificationStatus" name="filterVerification">
+                  <mat-option value="">All</mat-option>
+                  <mat-option value="PENDING">Pending</mat-option>
+                  <mat-option value="APPROVED">Approved</mat-option>
+                  <mat-option value="PARTIAL">Partial</mat-option>
+                  <mat-option value="REJECTED">Rejected</mat-option>
+                </mat-select>
+              </mat-form-field>
+              <mat-form-field class="example-full-width">
                 <mat-label>From Date</mat-label>
                 <input matInput type="date" [(ngModel)]="filters.dateFrom" name="dateFrom">
               </mat-form-field>
@@ -251,7 +261,7 @@
             <div *ngIf="!loadingDailyWorks && dailyWorks.length === 0" class="table-empty">No daily work entries found.</div>
 
             <div class="daily-work-table-wrap" *ngIf="!loadingDailyWorks && dailyWorks.length > 0">
-              <table class="table daily-work-table">
+              <table class="table daily-work-table compact-work-table">
                 <thead>
                   <tr>
                     <th>Date</th>
@@ -265,28 +275,35 @@
                 </thead>
                 <tbody>
                   <tr *ngFor="let item of dailyWorks">
-                    <td>{{ item.entryDate | date: 'dd/MM/yyyy' }}</td>
-                    <td>
+                    <td class="cell-date">{{ item.entryDate | date: 'dd/MM/yyyy' }}</td>
+                    <td class="cell-staff">
                       <div class="table-primary">{{ item.staff?.name || '-' }}</div>
                       <div class="table-note">{{ item.staff?.workType || '-' }}</div>
                     </td>
-                    <td>
+                    <td class="cell-status">
                       <span class="type-chip" [class.half-day]="item.attendanceStatus === 'HALF_DAY'" [class.absent]="item.attendanceStatus === 'ABSENT'">
                         {{ item.attendanceStatus }}
                       </span>
+                      <div class="table-note">{{ item.verificationStatus || 'PENDING' }}</div>
                     </td>
-                    <td>
+                    <td class="cell-work">
                       <div class="table-primary">{{ item.workType || '-' }}</div>
                       <div class="table-note" *ngIf="item.factoryProductName">{{ item.factoryProductName }} · {{ item.unitsCompleted || 0 }} {{ item.unit || 'PCS' }}</div>
                       <div class="table-note" *ngIf="!item.factoryProductName && item.workItemName">{{ item.workItemName }} · {{ item.unitsCompleted || 0 }} {{ item.unit || 'PCS' }}</div>
+                      <div class="table-note" *ngIf="getWorkerRatePreview(item)">Worker Rate {{ getWorkerRatePreview(item) }}</div>
                       <div class="table-note" *ngIf="getMaterialUsagePreview(item)">{{ getMaterialUsagePreview(item) }}</div>
                       <div class="table-note" *ngIf="getWastePreview(item)">{{ getWastePreview(item) }}</div>
                       <div class="table-note" *ngIf="item.workDetails">{{ item.workDetails }}</div>
                       <div class="table-note" *ngIf="item.linkedJob">{{ item.linkedJob }}</div>
                     </td>
-                    <td class="amount-cell">Rs {{ item.earnedAmount | number: '1.2-2' }}</td>
-                    <td>{{ item.createdBy?.pFname || item.createdBy?.email || '-' }}</td>
-                    <td>
+                    <td class="amount-cell cell-earned">
+                      <div>Rs {{ item.earnedAmount | number: '1.2-2' }}</div>
+                      <div class="table-note" *ngIf="getActualBoxCostPreview(item) > 0">
+                        Actual Box Cost Rs {{ getActualBoxCostPreview(item) | number: '1.2-2' }}
+                      </div>
+                    </td>
+                    <td class="cell-by">{{ item.createdBy?.pFname || item.createdBy?.email || '-' }}</td>
+                    <td class="cell-action">
                       <div class="table-actions" *ngIf="canEditRow(item) || canDeleteRow(item)">
                         <button mat-icon-button class="table-edit-btn" [disabled]="deletingId === item._id" (click)="startEdit(item)" aria-label="Edit daily work" title="Edit">
                           <mat-icon>edit</mat-icon>

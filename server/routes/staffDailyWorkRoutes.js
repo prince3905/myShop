@@ -11,6 +11,8 @@ router.get("/summary", authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"
 router.get("/", authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"), staffDailyWorkController.getDailyWorks);
 router.post("/", authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"), staffDailyWorkController.createDailyWork);
 router.put("/:id", authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"), staffDailyWorkController.updateDailyWork);
+router.patch("/:id/verification", authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER"), staffDailyWorkController.verifyDailyWork);
+router.patch("/:id/push-stock", authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER"), staffDailyWorkController.pushDailyWorkToStock);
 router.delete("/:id", authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER"), staffDailyWorkController.deleteDailyWork);
 
 module.exports = router;

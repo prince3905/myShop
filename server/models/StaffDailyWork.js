@@ -82,6 +82,51 @@ const staffDailyWorkSchema = new mongoose.Schema(
       min: 0,
       default: 0,
     },
+    verificationStatus: {
+      type: String,
+      enum: ["PENDING", "APPROVED", "PARTIAL", "REJECTED"],
+      default: "PENDING",
+      index: true,
+    },
+    verifiedQty: {
+      type: Number,
+      min: 0,
+      default: 0,
+    },
+    verificationNote: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    verifiedAt: {
+      type: Date,
+      default: null,
+    },
+    verifiedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+    stockPushStatus: {
+      type: String,
+      enum: ["NOT_PUSHED", "PUSHED"],
+      default: "NOT_PUSHED",
+      index: true,
+    },
+    pushedQty: {
+      type: Number,
+      min: 0,
+      default: 0,
+    },
+    pushedAt: {
+      type: Date,
+      default: null,
+    },
+    pushedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
     note: {
       type: String,
       trim: true,

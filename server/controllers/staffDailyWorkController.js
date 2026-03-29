@@ -4,6 +4,9 @@ const Staff = require("../models/Staff");
 const StaffWorkItem = require("../models/StaffWorkItem");
 const FactoryProduct = require("../models/FactoryProduct");
 const RawMaterialPurchase = require("../models/RawMaterialPurchase");
+const ProductVariation = require("../models/ProductVariation");
+const Stock = require("../models/Stock");
+const { applyStockTransaction } = require("../utils/stock.service");
 
 const STAFF_ONLY_FILTER = (req) => `${req.user?.role || ""}` === "STAFF";
 const MANAGER_AND_ABOVE = ["SUPER_ADMIN", "ADMIN", "MANAGER"];
@@ -32,6 +35,23 @@ const normalizeOptionalDate = (raw) => {
   const d = new Date(raw);
   return Number.isNaN(d.getTime()) ? null : d;
 };
+
+const populateDailyWorkQuery = (query) =>
+  query
+    .populate("staff", "name phone staffType workType rateType rate active")
+    .populate({
+      path: "factoryProduct",
+      select: "name unitLabel workerPieceRate standardWasteQtyPerUnit standardWasteUnitLabel standardWasteValuePerUnit standardMaterialLines shopVariation defaultSellingPrice",
+      populate: {
+        path: "shopVariation",
+        select: "sku sellingPrice costPrice attributes",
+      },
+    })
+    .populate("workItem", "itemName workType pieceRate unit active")
+    .populate("createdBy", "email role pFname pLname")
+    .populate("updatedBy", "email role pFname pLname")
+    .populate("verifiedBy", "email role pFname pLname")
+    .populate("pushedBy", "email role pFname pLname");
 
 const resolveAccessibleStaffIds = async (req) => {
   if (!STAFF_ONLY_FILTER(req)) {
@@ -233,6 +253,24 @@ const validateFactoryProductStock = async ({ req, factoryProduct, unitsCompleted
   return null;
 };
 
+const computeFactoryCosts = ({ factoryProduct, unitsCompleted, earnedAmount }) => {
+  const qty = Number(unitsCompleted || 0);
+  const materialCost = (factoryProduct?.standardMaterialLines || []).reduce((sum, line) => {
+    return sum + (Number(line?.qtyPerUnit || 0) * qty * Number(line?.rate || 0));
+  }, 0);
+  const otherCost = Number(factoryProduct?.standardOtherCost || 0) * qty;
+  const workerCost = Number(earnedAmount || 0);
+  const actualBatchCost = materialCost + workerCost + otherCost;
+  const actualCostPerUnit = qty > 0 ? actualBatchCost / qty : 0;
+  return {
+    materialCost,
+    otherCost,
+    workerCost,
+    actualBatchCost,
+    actualCostPerUnit,
+  };
+};
+
 exports.createDailyWork = async (req, res) => {
   try {
     if (!req.shopId) {
@@ -317,15 +355,20 @@ exports.createDailyWork = async (req, res) => {
         req.body?.earnedAmount,
         factoryProduct?.workerPieceRate ?? workItem?.pieceRate,
       ),
+      verificationStatus: "PENDING",
+      verifiedQty: 0,
+      verificationNote: "",
+      verifiedAt: null,
+      verifiedBy: null,
+      stockPushStatus: "NOT_PUSHED",
+      pushedQty: 0,
+      pushedAt: null,
+      pushedBy: null,
       note: `${req.body?.note || ""}`.trim(),
       createdBy: req.user._id,
     });
 
-    const populated = await StaffDailyWork.findById(dailyWork._id)
-      .populate("staff", "name phone staffType workType rateType rate active")
-      .populate("factoryProduct", "name code unitLabel workerPieceRate standardWasteQtyPerUnit standardWasteUnitLabel standardWasteValuePerUnit standardMaterialLines")
-      .populate("workItem", "itemName workType pieceRate unit active")
-      .populate("createdBy", "email role pFname pLname");
+    const populated = await populateDailyWorkQuery(StaffDailyWork.findById(dailyWork._id));
 
     return res.status(201).json({
       success: true,
@@ -357,13 +400,16 @@ exports.getDailyWorks = async (req, res) => {
       filter.staff = { $in: staffIds };
     }
 
-    const { search, staff, attendanceStatus, dateFrom, dateTo } = req.query || {};
+    const { search, staff, attendanceStatus, verificationStatus, dateFrom, dateTo } = req.query || {};
 
     if (`${staff || ""}`.trim() && mongoose.Types.ObjectId.isValid(`${staff}`.trim())) {
       filter.staff = new mongoose.Types.ObjectId(`${staff}`.trim());
     }
     if (`${attendanceStatus || ""}`.trim()) {
       filter.attendanceStatus = `${attendanceStatus}`.trim().toUpperCase();
+    }
+    if (`${verificationStatus || ""}`.trim()) {
+      filter.verificationStatus = `${verificationStatus}`.trim().toUpperCase();
     }
 
     const from = normalizeOptionalDate(dateFrom);
@@ -395,12 +441,9 @@ exports.getDailyWorks = async (req, res) => {
       }
     }
 
-    const dailyWorks = await StaffDailyWork.find(filter)
-      .sort({ entryDate: -1, createdAt: -1 })
-      .populate("staff", "name phone staffType workType rateType rate active")
-      .populate("factoryProduct", "name code unitLabel workerPieceRate standardWasteQtyPerUnit standardWasteUnitLabel standardWasteValuePerUnit standardMaterialLines")
-      .populate("workItem", "itemName workType pieceRate unit active")
-      .populate("createdBy", "email role pFname pLname");
+    const dailyWorks = await populateDailyWorkQuery(
+      StaffDailyWork.find(filter).sort({ entryDate: -1, createdAt: -1 }),
+    );
 
     return res.json({ success: true, dailyWorks });
   } catch (error) {
@@ -497,6 +540,10 @@ exports.updateDailyWork = async (req, res) => {
       return res.status(404).json({ success: false, message: "Daily work entry not found" });
     }
 
+    if (`${dailyWork.stockPushStatus || ""}` === "PUSHED" || Number(dailyWork.pushedQty || 0) > 0) {
+      return res.status(400).json({ success: false, message: "Stock me push ho chuki entry ko edit nahi kar sakte" });
+    }
+
     if (STAFF_ONLY_FILTER(req) && `${dailyWork.createdBy}` !== `${req.user._id}`) {
       return res.status(403).json({ success: false, message: "You can only update your own daily work entries" });
     }
@@ -578,16 +625,21 @@ exports.updateDailyWork = async (req, res) => {
       req.body?.earnedAmount ?? dailyWork.earnedAmount,
       factoryProduct?.workerPieceRate ?? workItem?.pieceRate ?? dailyWork.pieceRate,
     );
+    dailyWork.verificationStatus = "PENDING";
+    dailyWork.verifiedQty = 0;
+    dailyWork.verificationNote = "";
+    dailyWork.verifiedAt = null;
+    dailyWork.verifiedBy = null;
+    dailyWork.stockPushStatus = "NOT_PUSHED";
+    dailyWork.pushedQty = 0;
+    dailyWork.pushedAt = null;
+    dailyWork.pushedBy = null;
     dailyWork.note = `${req.body?.note ?? dailyWork.note ?? ""}`.trim();
     dailyWork.updatedBy = req.user._id;
 
     await dailyWork.save();
 
-    const populated = await StaffDailyWork.findById(dailyWork._id)
-      .populate("staff", "name phone staffType workType rateType rate active")
-      .populate("factoryProduct", "name code unitLabel workerPieceRate standardWasteQtyPerUnit standardWasteUnitLabel standardWasteValuePerUnit standardMaterialLines")
-      .populate("workItem", "itemName workType pieceRate unit active")
-      .populate("createdBy", "email role pFname pLname");
+    const populated = await populateDailyWorkQuery(StaffDailyWork.findById(dailyWork._id));
 
     return res.json({ success: true, message: "Daily work entry updated", dailyWork: populated });
   } catch (error) {
@@ -606,19 +658,216 @@ exports.deleteDailyWork = async (req, res) => {
       return res.status(403).json({ success: false, message: "You do not have permission to delete daily work entries" });
     }
 
-    const dailyWork = await StaffDailyWork.findOneAndUpdate(
-      { _id: req.params.id, shop: req.shopId, isDeleted: false },
-      { $set: { isDeleted: true, updatedBy: req.user._id } },
-      { new: true },
-    );
+    const dailyWork = await StaffDailyWork.findOne({
+      _id: req.params.id,
+      shop: req.shopId,
+      isDeleted: false,
+    });
 
     if (!dailyWork) {
       return res.status(404).json({ success: false, message: "Daily work entry not found" });
     }
 
+    if (`${dailyWork.stockPushStatus || ""}` === "PUSHED" || Number(dailyWork.pushedQty || 0) > 0) {
+      return res.status(400).json({ success: false, message: "Stock me push ho chuki entry ko delete nahi kar sakte" });
+    }
+
+    dailyWork.isDeleted = true;
+    dailyWork.updatedBy = req.user._id;
+    await dailyWork.save();
+
     return res.json({ success: true, message: "Daily work entry deleted" });
   } catch (error) {
     console.error("Delete Staff Daily Work Error:", error);
     return res.status(500).json({ success: false, message: "Failed to delete daily work entry" });
+  }
+};
+
+exports.pushDailyWorkToStock = async (req, res) => {
+  try {
+    if (!req.shopId) {
+      return res.status(400).json({ success: false, message: "Please select a shop first" });
+    }
+
+    if (!MANAGER_AND_ABOVE.includes(`${req.user?.role || ""}`)) {
+      return res.status(403).json({ success: false, message: "You do not have permission to push stock" });
+    }
+
+    const dailyWork = await StaffDailyWork.findOne({
+      _id: req.params.id,
+      shop: req.shopId,
+      isDeleted: false,
+    });
+
+    if (!dailyWork) {
+      return res.status(404).json({ success: false, message: "Daily work entry not found" });
+    }
+
+    if (!["APPROVED", "PARTIAL"].includes(`${dailyWork.verificationStatus || ""}`)) {
+      return res.status(400).json({ success: false, message: "Approve verification first, then push to shop stock" });
+    }
+
+    if (`${dailyWork.stockPushStatus || ""}` === "PUSHED" || Number(dailyWork.pushedQty || 0) > 0) {
+      return res.status(400).json({ success: false, message: "This entry is already pushed to shop stock" });
+    }
+
+    const pushQty = Number(dailyWork.verifiedQty || 0);
+    if (!Number.isFinite(pushQty) || pushQty <= 0) {
+      return res.status(400).json({ success: false, message: "Verified qty must be greater than 0 before pushing stock" });
+    }
+
+    const factoryProduct = await FactoryProduct.findOne({
+      _id: dailyWork.factoryProduct,
+      shop: req.shopId,
+      isDeleted: false,
+    }).select("name shopProduct shopModel shopVariation defaultSellingPrice standardMaterialLines standardOtherCost");
+
+    if (!factoryProduct) {
+      return res.status(400).json({ success: false, message: "Linked factory product not found" });
+    }
+
+    const variationId = `${factoryProduct.shopVariation || ""}`.trim();
+    if (!mongoose.Types.ObjectId.isValid(variationId)) {
+      return res.status(400).json({ success: false, message: "Factory product me shop variation link missing hai" });
+    }
+
+    const variation = await ProductVariation.findOne({
+      _id: variationId,
+      shop: req.shopId,
+    }).select("_id product model sku quantity costPrice");
+
+    if (!variation) {
+      return res.status(400).json({ success: false, message: "Mapped shop variation not found for current shop" });
+    }
+
+    const costSnapshot = computeFactoryCosts({
+      factoryProduct,
+      unitsCompleted: pushQty,
+      earnedAmount: Number(dailyWork.unitsCompleted || 0) > 0
+        ? (Number(dailyWork.earnedAmount || 0) / Number(dailyWork.unitsCompleted || 1)) * pushQty
+        : 0,
+    });
+
+    const existingQty = Number(variation.quantity || 0);
+    const existingCostPrice = Number(variation.costPrice || 0);
+    const nextQty = existingQty + pushQty;
+    const nextCostPrice = nextQty > 0
+      ? (((existingQty * existingCostPrice) + (pushQty * Number(costSnapshot.actualCostPerUnit || 0))) / nextQty)
+      : Number(costSnapshot.actualCostPerUnit || 0);
+
+    await applyStockTransaction({
+      shop: req.shopId,
+      product: variation.product,
+      model: variation.model,
+      variation: variation._id,
+      sku: variation.sku,
+      type: "IN",
+      quantity: pushQty,
+      referenceType: "MANUAL",
+      referenceId: dailyWork._id,
+      note: `Factory verified output push - ${factoryProduct.name || dailyWork.factoryProductName || "Factory Product"}`,
+      createdBy: req.user._id,
+    });
+
+    await ProductVariation.findByIdAndUpdate(variation._id, {
+      costPrice: Number(nextCostPrice || 0),
+    });
+
+    await Stock.findOneAndUpdate(
+      { shop: req.shopId, variation: variation._id },
+      { $set: { product: variation.product, model: variation.model, sku: variation.sku } },
+    );
+
+    dailyWork.stockPushStatus = "PUSHED";
+    dailyWork.pushedQty = pushQty;
+    dailyWork.pushedAt = new Date();
+    dailyWork.pushedBy = req.user._id;
+    dailyWork.updatedBy = req.user._id;
+    await dailyWork.save();
+
+    const populated = await populateDailyWorkQuery(StaffDailyWork.findById(dailyWork._id));
+
+    return res.json({
+      success: true,
+      message: "Approved factory output pushed to shop stock",
+      dailyWork: populated,
+    });
+  } catch (error) {
+    console.error("Push Staff Daily Work To Stock Error:", error);
+    return res.status(500).json({ success: false, message: error.message || "Failed to push output to shop stock" });
+  }
+};
+
+exports.verifyDailyWork = async (req, res) => {
+  try {
+    if (!req.shopId) {
+      return res.status(400).json({ success: false, message: "Please select a shop first" });
+    }
+
+    if (!MANAGER_AND_ABOVE.includes(`${req.user?.role || ""}`)) {
+      return res.status(403).json({ success: false, message: "You do not have permission to verify daily work entries" });
+    }
+
+    const dailyWork = await StaffDailyWork.findOne({
+      _id: req.params.id,
+      shop: req.shopId,
+      isDeleted: false,
+    });
+
+    if (!dailyWork) {
+      return res.status(404).json({ success: false, message: "Daily work entry not found" });
+    }
+
+    if (`${dailyWork.stockPushStatus || ""}` === "PUSHED" || Number(dailyWork.pushedQty || 0) > 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Shop stock me push ho chuki entry ki verification badal nahi sakte",
+      });
+    }
+
+    const status = `${req.body?.verificationStatus || ""}`.trim().toUpperCase();
+    if (!["APPROVED", "PARTIAL", "REJECTED"].includes(status)) {
+      return res.status(400).json({ success: false, message: "Valid verification status is required" });
+    }
+
+    const totalQty = Number(dailyWork.unitsCompleted || 0);
+    const requestedQty = Number(req.body?.verifiedQty ?? totalQty);
+
+    if (status === "REJECTED") {
+      dailyWork.verificationStatus = "REJECTED";
+      dailyWork.verifiedQty = 0;
+    } else if (status === "APPROVED") {
+      dailyWork.verificationStatus = "APPROVED";
+      dailyWork.verifiedQty = totalQty;
+    } else {
+      if (!Number.isFinite(requestedQty) || requestedQty <= 0 || requestedQty > totalQty) {
+        return res.status(400).json({ success: false, message: "Partial approve qty must be greater than 0 and within completed qty" });
+      }
+      dailyWork.verificationStatus = "PARTIAL";
+      dailyWork.verifiedQty = requestedQty;
+    }
+
+    dailyWork.verificationNote = `${req.body?.verificationNote || ""}`.trim();
+    dailyWork.verifiedAt = new Date();
+    dailyWork.verifiedBy = req.user._id;
+    dailyWork.updatedBy = req.user._id;
+
+    await dailyWork.save();
+
+    const populated = await populateDailyWorkQuery(StaffDailyWork.findById(dailyWork._id));
+
+    return res.json({
+      success: true,
+      message:
+        status === "REJECTED"
+          ? "Daily work rejected"
+          : status === "PARTIAL"
+            ? "Daily work partially approved"
+            : "Daily work approved",
+      dailyWork: populated,
+    });
+  } catch (error) {
+    console.error("Verify Staff Daily Work Error:", error);
+    return res.status(500).json({ success: false, message: "Failed to verify daily work entry" });
   }
 };

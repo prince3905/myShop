@@ -49,6 +49,51 @@ const factoryProductSchema = new mongoose.Schema(
       trim: true,
       default: "",
     },
+    shopCategory: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Category",
+      default: null,
+      index: true,
+    },
+    shopBrand: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Brand",
+      default: null,
+      index: true,
+    },
+    shopProduct: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Product",
+      default: null,
+      index: true,
+    },
+    shopModel: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "ProductModel",
+      default: null,
+      index: true,
+    },
+    shopVariation: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "ProductVariation",
+      default: null,
+      index: true,
+    },
+    variationColor: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    variationSize: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    defaultSellingPrice: {
+      type: Number,
+      min: 0,
+      default: 0,
+    },
     unitLabel: {
       type: String,
       trim: true,
