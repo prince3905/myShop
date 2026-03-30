@@ -139,7 +139,31 @@
                     <mat-form-field class="example-full-width">
                       <mat-label>Karigar Rate / Piece</mat-label>
                       <input matInput type="number" min="0" [(ngModel)]="productForm.workerPieceRate" name="workerPieceRate">
-                      <mat-hint>Worker ko 1 piece banane par kitna dena hai</mat-hint>
+                    </mat-form-field>
+                  </div>
+                </div>
+
+                <div class="field-helper-note">Worker ko 1 piece banane par kitna dena hai</div>
+
+                <div class="row waste-config-row">
+                  <div class="col-md-4">
+                    <mat-form-field class="example-full-width">
+                      <mat-label>Waste Qty / Box</mat-label>
+                      <input matInput type="number" min="0" [(ngModel)]="productForm.standardWasteQtyPerUnit" name="standardWasteQtyPerUnit">
+                    </mat-form-field>
+                  </div>
+                  <div class="col-md-4">
+                    <mat-form-field class="example-full-width">
+                      <mat-label>Waste Unit</mat-label>
+                      <mat-select [(ngModel)]="productForm.standardWasteUnitLabel" name="standardWasteUnitLabel">
+                        <mat-option *ngFor="let unit of wasteUnitOptions" [value]="unit">{{ unit }}</mat-option>
+                      </mat-select>
+                    </mat-form-field>
+                  </div>
+                  <div class="col-md-4">
+                    <mat-form-field class="example-full-width">
+                      <mat-label>Waste Value / Box</mat-label>
+                      <input matInput type="number" min="0" [(ngModel)]="productForm.standardWasteValuePerUnit" name="standardWasteValuePerUnit">
                     </mat-form-field>
                   </div>
                 </div>
@@ -305,14 +329,6 @@
                 <div class="detail-pill">
                   <span>Template Material Cost</span>
                   <strong>Rs {{ selectedProductTemplateCost | number: '1.2-2' }}</strong>
-                </div>
-                <div class="detail-pill">
-                  <span>Std Labour</span>
-                  <strong>Rs {{ selectedProduct.standardLabourCost | number: '1.2-2' }}</strong>
-                </div>
-                <div class="detail-pill">
-                  <span>Std Other</span>
-                  <strong>Rs {{ selectedProduct.standardOtherCost | number: '1.2-2' }}</strong>
                 </div>
                 <div class="detail-pill">
                   <span>Waste Qty</span>

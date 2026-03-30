@@ -86,6 +86,8 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly customerSearch$ = new Subject<string>();
   isSavingSale = false;
   private lastAutoHoldSignature = "";
+  private readonly salesDraftStorageKey = "posSalesDraft";
+  private readonly onlineStatusHandler = () => this.handleOnlineStatusChange();
   @ViewChild("barcodeInputRef") barcodeInputRef?: ElementRef<HTMLInputElement>;
 
   constructor(
@@ -103,6 +105,9 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadHeldBillsFromStorage();
+    this.restoreDraftFromStorage();
+    window.addEventListener("offline", this.onlineStatusHandler);
+    window.addEventListener("online", this.onlineStatusHandler);
     this.setupSuggestionStreams();
   }
 
@@ -119,6 +124,8 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
       clearTimeout(this.primarySearchScanTimer);
       this.primarySearchScanTimer = null;
     }
+    window.removeEventListener("offline", this.onlineStatusHandler);
+    window.removeEventListener("online", this.onlineStatusHandler);
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -271,6 +278,7 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
     this.currentCustomerWalletBalance = 0;
     this.walletUsedAmount = 0;
     this.fetchCusSuggestions();
+    this.saveDraftToStorage();
   }
 
   fetchCusSuggestions(): void {
@@ -298,6 +306,7 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     this.cus_full_suggestions = [];
+    this.saveDraftToStorage();
   }
 
   // Display function for autocomplete - shows name in input
@@ -317,6 +326,7 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
       this.syncWalletUsage();
     }
     this.cus_full_suggestions = [];
+    this.saveDraftToStorage();
   }
 
   openAddCustomerDialog(): void {
@@ -333,6 +343,7 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
         this.selectedCustomerId = result._id || "";
         this.currentCustomerWalletBalance = Number(result.walletBalance || 0);
         this.walletUsedAmount = 0;
+        this.saveDraftToStorage();
         this.snackBar.open(`Customer "${result.name}" added successfully!`, 'Close', { duration: 3000 });
       }
     });
@@ -747,6 +758,7 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
     };
     this.Display_items = this.final_Sales_data.items;
     this.calculateTotals();
+    this.saveDraftToStorage();
 
     // Keep fields visible after scan - don't reset
     return true;
@@ -807,6 +819,7 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
     this.billDiscount = Math.max(0, Number(value ?? this.billDiscount ?? 0));
     this.normalizeBillingInputs();
     this.syncNumericInputValue(inputEl, this.billDiscount);
+    this.saveDraftToStorage();
   }
 
   onWalletAmountChange(value?: number | string, inputEl?: HTMLInputElement | null): void {
@@ -814,6 +827,7 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
     this.syncWalletUsage();
     this.onPaidAmountChange();
     this.syncNumericInputValue(inputEl, this.walletUsedAmount);
+    this.saveDraftToStorage();
   }
 
   onPaidAmountChange(value?: number | string, inputEl?: HTMLInputElement | null): void {
@@ -828,6 +842,7 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
     }
     this.syncWalletUsage();
     this.syncNumericInputValue(inputEl, this.paidAmount);
+    this.saveDraftToStorage();
   }
 
   private normalizeBillingInputs(): void {
@@ -938,6 +953,7 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
         this.snackBar.open(response?.message || "Sale saved", "Close", { duration: 3200, horizontalPosition: "center", verticalPosition: "bottom" });
         this.resetForm();
         this.lastAutoHoldSignature = "";
+        this.clearDraftFromStorage();
         this.isSavingSale = false;
         this.dialogRef?.close(true);
       },
@@ -969,6 +985,7 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
     this.saveHeldBillsToStorage();
     this.snackBar.open(`Bill "${heldBill.name}" held successfully!`, 'Close', { duration: 2000 });
     this.clearCart();
+    this.clearDraftFromStorage();
     this.heldBillName = "";
   }
   
@@ -996,6 +1013,7 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.rebuildSalesStateFromDisplayItems();
     this.onPaidAmountChange();
+    this.saveDraftToStorage();
     this.snackBar.open(`Bill "${bill.name}" loaded!`, 'Close', { duration: 2000 });
   }
   
@@ -1045,6 +1063,11 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
     this.totalPurchasePrice = 0;
     this.useSplitPayment = false;
     this.splitPayments = [];
+    this.clearDraftFromStorage();
+  }
+
+  onDraftFieldChange(): void {
+    this.saveDraftToStorage();
   }
 
   setPaymentMethod(method: "CASH" | "UPI" | "CARD" | "BANK" | "ONLINE" | "CREDIT"): void {
@@ -1053,6 +1076,7 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
       this.paidAmount = Math.max(0, this.getNetTotal() - Number(this.walletUsedAmount || 0));
     }
     this.onPaidAmountChange();
+    this.saveDraftToStorage();
   }
 
   getLineTotal(item: any): number {
@@ -1067,17 +1091,20 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
     } else {
       this.splitPayments = [];
     }
+    this.saveDraftToStorage();
   }
   
   addSplitPaymentRow(): void {
     this.splitPayments.push({ method: "CASH", amount: 0 });
     this.normalizeSplitPayments();
+    this.saveDraftToStorage();
   }
   
   removeSplitPaymentRow(index: number): void {
     if (this.splitPayments.length > 1) {
       this.splitPayments.splice(index, 1);
       this.normalizeSplitPayments();
+      this.saveDraftToStorage();
     }
   }
   
@@ -1089,6 +1116,7 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
     if (!this.splitPayments[index]) return;
     this.splitPayments[index].amount = Math.max(0, Number(this.splitPayments[index].amount || 0));
     this.normalizeSplitPayments();
+    this.saveDraftToStorage();
   }
 
   private normalizeSplitPayments(): void {
@@ -1153,6 +1181,7 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
       this.final_Sales_data = {};
       this.Display_items = [];
       this.calculateTotals();
+      this.clearDraftFromStorage();
       return;
     }
 
@@ -1175,6 +1204,7 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
     };
     this.Display_items = this.Sales_added[customerName].items;
     this.calculateTotals();
+    this.saveDraftToStorage();
   }
 
   private shouldAutoHoldOnSaleError(error: any): boolean {
@@ -1201,28 +1231,51 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.lastAutoHoldSignature = heldBill.autoHoldSignature || "";
     this.saveHeldBillsToStorage();
+    this.clearDraftFromStorage();
     return true;
   }
 
+  private handleOnlineStatusChange(): void {
+    if (navigator.onLine) {
+      this.snackBar.open("Internet back aa gaya. Billing continue kar sakte ho.", "Close", { duration: 2200 });
+      return;
+    }
+
+    const autoHeld = this.autoHoldCurrentBill();
+    if (autoHeld) {
+      this.snackBar.open("Internet chala gaya. Current bill auto Hold Bills me save ho gaya.", "Close", {
+        duration: 3600,
+      });
+    }
+  }
+
   private buildAutoHoldName(): string {
-    return `Auto Hold ${new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
+    const baseName = `${this.customerName || "Walk-in"}`.trim() || "Walk-in";
+    return `Auto Hold - ${baseName} - ${new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
   }
 
   private buildHoldSignature(items: any[]): string {
-    return JSON.stringify({
-      customerName: `${this.customerName || ""}`.trim() || "Walk-in",
-      customerPhone: `${this.customerPhone || ""}`.trim(),
-      items: (items || []).map((item: any) => ({
-        itemName: item?.itemName || "",
-        variationId: item?.variationId || "",
-        quantity: Number(item?.quantity || 0),
-        purchasePrice: Number(item?.purchasePrice || 0),
-      })),
-      billDiscount: Number(this.billDiscount || 0),
-      paidAmount: Number(this.paidAmount || 0),
-      walletUsedAmount: Number(this.walletUsedAmount || 0),
-      paymentMethod: this.paymentMethod || "CASH",
-    });
+    const itemSignature = (items || [])
+      .map((item: any) =>
+        [
+          item?.variationId || item?.variationSku || item?.itemName || "",
+          Number(item?.quantity || 0),
+          Number(item?.purchasePrice || 0),
+        ].join(":"),
+      )
+      .sort()
+      .join("|");
+
+    return [
+      `${this.selectedCustomerId || ""}`,
+      `${this.customerName || ""}`.trim() || "Walk-in",
+      `${this.customerPhone || ""}`.trim(),
+      Number(this.billDiscount || 0),
+      Number(this.paidAmount || 0),
+      Number(this.walletUsedAmount || 0),
+      `${this.paymentMethod || "CASH"}`,
+      itemSignature,
+    ].join("::");
   }
 
   private createHeldBill(name: string, autoHeld = false): any | null {
@@ -1251,6 +1304,91 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
       autoHeld,
       autoHoldSignature,
     };
+  }
+
+  private buildSalesDraft(): any | null {
+    if (!Array.isArray(this.Display_items) || this.Display_items.length === 0) {
+      return null;
+    }
+
+    return {
+      customerName: this.customerName || "",
+      customerPhone: this.customerPhone || "",
+      customerAddress: this.customerAddress || "",
+      selectedCustomerId: this.selectedCustomerId || "",
+      currentCustomerWalletBalance: Number(this.currentCustomerWalletBalance || 0),
+      walletUsedAmount: Number(this.walletUsedAmount || 0),
+      items: JSON.parse(JSON.stringify(this.Display_items || [])),
+      billDiscount: Number(this.billDiscount || 0),
+      paidAmount: Number(this.paidAmount || 0),
+      paymentMethod: this.paymentMethod || "CASH",
+      useSplitPayment: !!this.useSplitPayment,
+      splitPayments: this.useSplitPayment ? JSON.parse(JSON.stringify(this.splitPayments || [])) : [],
+      heldBillName: this.heldBillName || "",
+      savedAt: new Date().toISOString(),
+    };
+  }
+
+  private saveDraftToStorage(): void {
+    try {
+      const draft = this.buildSalesDraft();
+      if (!draft) {
+        this.clearDraftFromStorage();
+        return;
+      }
+      localStorage.setItem(this.salesDraftStorageKey, JSON.stringify(draft));
+    } catch (e) {
+      console.error("Error saving sales draft:", e);
+    }
+  }
+
+  private restoreDraftFromStorage(): void {
+    try {
+      const savedDraft = localStorage.getItem(this.salesDraftStorageKey);
+      if (!savedDraft) {
+        return;
+      }
+
+      const draft = JSON.parse(savedDraft);
+      if (!Array.isArray(draft?.items) || draft.items.length === 0) {
+        this.clearDraftFromStorage();
+        return;
+      }
+
+      const shouldRestore = window.confirm("Unsaved bill draft mila. Restore karein?");
+      if (!shouldRestore) {
+        return;
+      }
+
+      this.customerName = draft.customerName || "";
+      this.customerPhone = draft.customerPhone || "";
+      this.customerAddress = draft.customerAddress || "";
+      this.selectedCustomerId = draft.selectedCustomerId || "";
+      this.currentCustomerWalletBalance = Number(draft.currentCustomerWalletBalance || 0);
+      this.walletUsedAmount = Number(draft.walletUsedAmount || 0);
+      this.Display_items = JSON.parse(JSON.stringify(draft.items || []));
+      this.billDiscount = Number(draft.billDiscount || 0);
+      this.paidAmount = Number(draft.paidAmount || 0);
+      this.paymentMethod = draft.paymentMethod || "CASH";
+      this.useSplitPayment = !!draft.useSplitPayment;
+      this.splitPayments = this.useSplitPayment ? JSON.parse(JSON.stringify(draft.splitPayments || [])) : [];
+      this.heldBillName = draft.heldBillName || "";
+
+      this.rebuildSalesStateFromDisplayItems();
+      this.onPaidAmountChange();
+      this.snackBar.open("Unsaved bill draft restored", "Close", { duration: 2600 });
+    } catch (e) {
+      console.error("Error restoring sales draft:", e);
+      this.clearDraftFromStorage();
+    }
+  }
+
+  private clearDraftFromStorage(): void {
+    try {
+      localStorage.removeItem(this.salesDraftStorageKey);
+    } catch (e) {
+      console.error("Error clearing sales draft:", e);
+    }
   }
 
   private setupSuggestionStreams(): void {

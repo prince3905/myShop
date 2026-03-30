@@ -78,7 +78,7 @@
 
             <mat-form-field appearance="outline" class="customer-phone-field">
               <mat-label>Phone</mat-label>
-              <input matInput name="customerPhone" [(ngModel)]="customerPhone" />
+              <input matInput name="customerPhone" [(ngModel)]="customerPhone" (ngModelChange)="onDraftFieldChange()" />
             </mat-form-field>
 
             <button mat-stroked-button color="primary" type="button" (click)="openAddCustomerDialog()">
