@@ -7,6 +7,8 @@ import { ProductService } from "app/shared/services/product.service";
 import { VariationService } from "app/shared/services/variation.service";
 import { ProductModelService } from "app/shared/services/product-model.service";
 import { AuthService } from "app/shared/services/auth.service";
+import { ShopService } from "app/shared/services/shop.service";
+import { firstValueFrom } from "rxjs";
 import {
   LabelPrintOptionsDialogComponent,
   LabelPrintOptions,
@@ -64,6 +66,7 @@ export class AddDetailsComponent implements OnInit {
     private productService: ProductService,
     private productModelService: ProductModelService,
     public authService: AuthService,
+    private shopService: ShopService,
   ) {}
 
   ngOnInit(): void {
@@ -392,6 +395,17 @@ export class AddDetailsComponent implements OnInit {
     quantity: number,
     labelSize: "50x30" | "38x25",
   ): void {
+    this.resolveShopLabelForPrint().then((shopName) => {
+      this.openVariationLabelPrint(v, quantity, labelSize, shopName);
+    });
+  }
+
+  private openVariationLabelPrint(
+    v: any,
+    quantity: number,
+    labelSize: "50x30" | "38x25",
+    shopName: string,
+  ): void {
     const barcode = `${v?.barcode || ""}`.trim();
     if (!barcode) {
       this.snackBar.open("Barcode not available for this variation", "Close", { duration: 2500 });
@@ -409,7 +423,6 @@ export class AddDetailsComponent implements OnInit {
     const modelName = v?.model?.name || "-";
     const sku = v?.sku || "-";
     const sellingPrice = Number(v?.sellingPrice || 0);
-    const shopName = this.getShopLabelForPrint();
     const attrs = [
       v?.attributes?.color || "-",
       v?.attributes?.size || "-",
@@ -418,11 +431,12 @@ export class AddDetailsComponent implements OnInit {
 
     const barcodeSvg = this.generateEan13Svg(barcode);
     const page = this.getLabelPageSpec(labelSize);
+    const shopClass = this.getShopClassForPrint(shopName);
     const cards = Array.from({ length: quantity })
       .map(
         () => `
         <div class="label">
-          <div class="shop">${this.escapeHtml(shopName)}</div>
+          <div class="${shopClass}">${this.escapeHtml(shopName)}</div>
           ${brandName ? `<div class="brand">${this.escapeHtml(brandName)}</div>` : ""}
           <div class="name">${this.escapeHtml(productName)}</div>
           <div class="meta">${this.escapeHtml(modelName)}</div>
@@ -458,10 +472,28 @@ export class AddDetailsComponent implements OnInit {
             box-sizing: border-box;
             page-break-inside: avoid;
           }
-          .shop { font-size: ${page.shopFont}px; font-weight: 700; line-height: 1.2; }
-          .brand { font-size: ${Math.max(page.shopFont - 1, 7)}px; font-weight: 700; line-height: 1.2; margin-top: 1px; }
-          .name { font-size: ${page.nameFont}px; font-weight: 700; line-height: 1.2; }
-          .meta { font-size: ${page.metaFont}px; margin-top: 1px; line-height: 1.2; }
+          .shop {
+            font-size: ${page.shopFont}px;
+            font-weight: 800;
+            line-height: 1.1;
+            text-align: left;
+            letter-spacing: 0.1px;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+          }
+          .shop.shop-medium { font-size: ${Math.max(page.shopFont - 1, 6)}px; }
+          .shop.shop-long { font-size: ${Math.max(page.shopFont - 2, 6)}px; line-height: 1.05; }
+          .brand { font-size: ${Math.max(page.shopFont - 1, 7)}px; font-weight: 700; line-height: 1.15; margin-top: 1px; text-align: left; overflow-wrap: anywhere; }
+          .name {
+            font-size: ${Math.max(page.nameFont - 1, 7)}px;
+            font-weight: 700;
+            line-height: 1.1;
+            text-align: left;
+            margin-top: 1px;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+          }
+          .meta { font-size: ${page.metaFont}px; margin-top: 1px; line-height: 1.15; text-align: left; overflow-wrap: anywhere; }
           .barcode-wrap { margin-top: 2px; text-align: center; }
           .barcode-wrap svg { width: 100%; height: ${page.barcodeHeightMm}mm; }
           .barcode-text { font-size: ${page.codeFont}px; letter-spacing: 0.6px; margin-top: 1px; text-align: center; }
@@ -757,11 +789,53 @@ export class AddDetailsComponent implements OnInit {
     };
   }
 
-  private getShopLabelForPrint(): string {
-    const user = this.authService.getCurrentUser() || {};
-    if (user?.shopCode) return `Shop: ${user.shopCode}`;
-    if (this.authService.isSuperAdmin() && !user?.shop) return "Shop: GLOBAL";
+  private async resolveShopLabelForPrint(): Promise<string> {
+    const currentUser = this.authService.getCurrentUser() || {};
+    const currentShopName = `${currentUser?.shopName || ""}`.trim();
+    if (currentShopName) {
+      return currentShopName;
+    }
+
+    if (this.authService.isSuperAdmin() && !currentUser?.shop) {
+      return "GLOBAL";
+    }
+
+    try {
+      const selectedShopId = this.shopService.getSelectedShop();
+      if (selectedShopId) {
+        const response: any = await firstValueFrom(this.shopService.getAllShops());
+        const shops = Array.isArray(response?.data) ? response.data : [];
+        const selectedShop = shops.find((shop: any) => shop?._id === selectedShopId);
+        const selectedShopName = `${selectedShop?.name || ""}`.trim();
+        if (selectedShopName) {
+          return selectedShopName;
+        }
+      }
+    } catch (error) {
+      // Fall through to safe non-mutating fallback.
+    }
+
+    const productShopName = `${this.product?.shop?.name || this.product?.shopName || ""}`.trim();
+    if (productShopName) {
+      return productShopName;
+    }
+
+    return this.getShopLabelForPrint(currentUser);
+  }
+
+  private getShopLabelForPrint(user: any = this.authService.getCurrentUser() || {}): string {
+    const shopName = `${user?.shopName || ""}`.trim();
+    if (shopName) return shopName;
+    if (user?.shopCode) return user.shopCode;
+    if (this.authService.isSuperAdmin() && !user?.shop) return "GLOBAL";
     return "Shop";
+  }
+
+  private getShopClassForPrint(shopName: string): string {
+    const label = `${shopName || ""}`.trim();
+    if (label.length > 24) return "shop shop-long";
+    if (label.length > 16) return "shop shop-medium";
+    return "shop";
   }
 
   applyFilters() {
