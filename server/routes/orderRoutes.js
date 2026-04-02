@@ -17,15 +17,15 @@ router.get(
 
 router.post(
   "/",
-  authorizeFeature("sales.orders"),
-  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER"),
+  authorizeFeature("sales.orders.manage"),
+  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"),
   orderController.createOrder,
 );
 
 router.put(
   "/:id",
-  authorizeFeature("sales.orders"),
-  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER"),
+  authorizeFeature("sales.orders.manage"),
+  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"),
   orderController.updateOrder,
 );
 
@@ -38,15 +38,15 @@ router.get(
 
 router.patch(
   "/:id/status",
-  authorizeFeature("sales.orders"),
-  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER"),
+  authorizeFeature("sales.orders.manage"),
+  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"),
   orderController.updateOrderStatus,
 );
 
 router.post(
   "/:id/collect-payment",
-  authorizeFeature("sales.orders"),
-  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER"),
+  authorizeFeature("sales.orders.manage"),
+  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"),
   orderController.collectOrderPayment,
 );
 

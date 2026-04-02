@@ -22,7 +22,7 @@
             </div>
         </div>
         <div class="row">
-            <div class="col-lg-3 col-md-6 col-sm-6" *ngIf="!isStaff">
+            <div class="col-lg-3 col-md-6 col-sm-6" *ngIf="!isStaff && canOpenSales">
                 <div class="card card-stats dashboard-click-card" (click)="openSale()">
                     <div class="card-header card-header-success card-header-icon">
                         <div class="card-icon">
@@ -38,7 +38,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-lg-3 col-md-6 col-sm-6">
+            <div class="col-lg-3 col-md-6 col-sm-6" *ngIf="canOpenOrders">
                 <div class="card card-stats dashboard-click-card" (click)="openOrders()">
                     <div class="card-header card-header-warning card-header-icon">
                         <div class="card-icon">
@@ -55,7 +55,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-lg-3 col-md-6 col-sm-6" *ngIf="canViewFinancialDashboard">
+            <div class="col-lg-3 col-md-6 col-sm-6" *ngIf="canViewFinancialDashboard && canOpenPurchase">
                 <div class="card card-stats dashboard-click-card" (click)="openPurchase()">
                     <div class="card-header card-header-danger card-header-icon">
                         <div class="card-icon">
@@ -71,7 +71,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-lg-3 col-md-6 col-sm-6">
+            <div class="col-lg-3 col-md-6 col-sm-6" *ngIf="canOpenStocks">
                 <div class="card card-stats dashboard-click-card" (click)="openStocks()">
                     <div class="card-header card-header-info card-header-icon">
                         <div class="card-icon">
@@ -93,7 +93,7 @@
                 </div>
             </div>
         </div>
-        <div class="row" *ngIf="canViewFinancialDashboard">
+        <div class="row" *ngIf="canViewFinancialDashboard && canOpenPurchase">
             <div class="col-12">
                 <div class="analytics-strip">
                     <div class="analytics-card dashboard-click-card" (click)="openPurchase()">
@@ -126,7 +126,7 @@
                 </div>
             </div>
         </div>
-        <div class="row">
+        <div class="row" *ngIf="canOpenReturns">
             <div class="col-12">
                 <div class="analytics-strip">
                     <div class="analytics-card return-card dashboard-click-card" (click)="openReturns()">
@@ -183,7 +183,7 @@
                 </div>
             </div>
         </div>
-        <div class="row" *ngIf="canViewFinancialDashboard">
+        <div class="row" *ngIf="canViewFinancialDashboard && canOpenPurchase">
             <div class="col-12">
                 <div class="analytics-strip">
                     <div class="analytics-card purchase-return-card dashboard-click-card" (click)="openPurchase()">
@@ -213,7 +213,7 @@
                 </div>
             </div>
         </div>
-        <div class="row" *ngIf="canViewFinancialDashboard">
+        <div class="row" *ngIf="canViewFinancialDashboard && canOpenPurchase">
             <div class="col-md-12">
                 <div class="card card-chart dashboard-click-card" (click)="openPurchase()">
                     <div class="card-header card-header-info">
@@ -227,7 +227,7 @@
             </div>
         </div>
         <div class="row">
-            <div class="col-md-4">
+            <div class="col-md-4" *ngIf="canOpenSales">
                 <div class="card card-chart dashboard-click-card" (click)="openSale()">
                     <div class="card-header card-header-success">
                         <div class="ct-chart" id="dailySalesChart"></div>
@@ -243,7 +243,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-4" *ngIf="canOpenOrders">
                 <div class="card card-chart dashboard-click-card" (click)="openOrders()">
                     <div class="card-header card-header-warning">
                         <div class="ct-chart" id="websiteViewsChart"></div>
@@ -259,7 +259,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-4" *ngIf="canViewFinancialDashboard">
+            <div class="col-md-4" *ngIf="canViewFinancialDashboard && canOpenPurchase">
                 <div class="card card-chart dashboard-click-card" (click)="openPurchase()">
                     <div class="card-header card-header-danger">
                         <div class="ct-chart" id="completedTasksChart"></div>
@@ -277,7 +277,7 @@
             </div>
         </div>
         <div class="row">
-            <div class="col-lg-6 col-md-12" *ngIf="canViewFinancialDashboard">
+            <div class="col-lg-6 col-md-12" *ngIf="canViewFinancialDashboard && canOpenStocks">
                 <div class="card dashboard-detail-card dashboard-click-card" (click)="openStocks()">
                     <div class="card-header card-header-danger">
                         <h4 class="card-title">{{ isStaff ? 'Stock Watch' : 'Low Stock Alerts' }}</h4>
@@ -303,7 +303,7 @@
                 </div>
             </div>
             <div class="col-lg-6 col-md-12">
-                <div class="card dashboard-detail-card dashboard-click-card" (click)="canViewFinancialDashboard ? openOrders() : null">
+                <div class="card dashboard-detail-card dashboard-click-card" (click)="canViewFinancialDashboard && canOpenOrders ? openOrders() : null">
                     <div class="card-header card-header-info">
                         <h4 class="card-title">Outstanding Summary</h4>
                         <p class="card-category">Live due visibility across billing and orders</p>
@@ -332,7 +332,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-lg-12 col-md-12" *ngIf="canViewFinancialDashboard">
+            <div class="col-lg-12 col-md-12" *ngIf="canViewFinancialDashboard && canOpenCustomers">
                 <div class="card dashboard-detail-card dashboard-click-card" (click)="openCustomers()">
                     <div class="card-header card-header-success customer-credit-header">
                         <div class="customer-credit-header-main">
@@ -369,7 +369,7 @@
             </div>
         </div>
         <div class="row">
-            <div class="col-lg-6 col-md-12">
+            <div class="col-lg-6 col-md-12" *ngIf="canOpenSales">
                 <div class="card dashboard-detail-card dashboard-click-card" (click)="openSale()">
                     <div class="card-header card-header-success">
                         <h4 class="card-title">{{ isStaff ? 'Latest Bills' : 'Recent Sales' }}</h4>
@@ -395,7 +395,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-lg-6 col-md-12">
+            <div class="col-lg-6 col-md-12" *ngIf="canOpenOrders">
                 <div class="card dashboard-detail-card dashboard-click-card" (click)="openOrders()">
                     <div class="card-header card-header-warning">
                         <h4 class="card-title">{{ isStaff ? 'Latest Orders' : 'Recent Orders' }}</h4>
@@ -422,7 +422,7 @@
             </div>
         </div>
         <div class="row">
-            <div class="col-lg-6 col-md-12">
+            <div class="col-lg-6 col-md-12" *ngIf="canOpenReports">
                 <div class="card dashboard-detail-card dashboard-click-card" (click)="openReports()">
                     <div class="card-header card-header-rose">
                         <h4 class="card-title">{{ isStaff ? 'Fast Moving Products' : 'Top Selling Products' }}</h4>
@@ -448,7 +448,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-lg-6 col-md-12" *ngIf="canViewFinancialDashboard">
+            <div class="col-lg-6 col-md-12" *ngIf="canViewFinancialDashboard && canOpenReports">
                 <div class="card dashboard-detail-card dashboard-click-card" (click)="openReports()">
                     <div class="card-header card-header-primary">
                         <h4 class="card-title">Recent Payments</h4>

@@ -12,8 +12,8 @@ router.use(requireShopSelectionForWrite);
 
 router.post(
   "/",
-  authorizeFeature("inventory.products"),
-  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER"),
+  authorizeFeature("inventory.products.manage"),
+  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"),
   createProductModelValidation,
   validate,
   productModelController.createProductModel

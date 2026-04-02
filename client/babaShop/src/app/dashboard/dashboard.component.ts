@@ -341,6 +341,38 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return !this.isStaff;
   }
 
+  get canOpenSales(): boolean {
+    return this.authService.can("sales.list");
+  }
+
+  get canOpenOrders(): boolean {
+    return this.authService.can("sales.orders");
+  }
+
+  get canOpenStocks(): boolean {
+    return this.authService.can("inventory.stocks");
+  }
+
+  get canOpenPurchase(): boolean {
+    return this.authService.can("inventory.purchase");
+  }
+
+  get canOpenProducts(): boolean {
+    return this.authService.can("inventory.products");
+  }
+
+  get canOpenCustomers(): boolean {
+    return this.authService.can("people.customers");
+  }
+
+  get canOpenReports(): boolean {
+    return this.authService.can("sales.profit");
+  }
+
+  get canOpenReturns(): boolean {
+    return this.authService.can("sales.return");
+  }
+
   get dashboardTitle(): string {
     if (this.isStaff) {
       return "Daily Workboard";
@@ -505,6 +537,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
     ordersSeries: number[],
     purchaseSeries: number[],
   ) {
+    if (typeof document === "undefined") {
+      return;
+    }
+
+    const salesContainer = document.querySelector("#dailySalesChart");
+    const ordersContainer = document.querySelector("#websiteViewsChart");
+    const purchaseContainer = document.querySelector("#completedTasksChart");
     const finalLabels = labels.length ? labels : ["-", "-", "-", "-", "-", "-", "-"];
     const finalSales = salesSeries.length ? salesSeries : [0, 0, 0, 0, 0, 0, 0];
     const finalOrders = ordersSeries.length ? ordersSeries : [0, 0, 0, 0, 0, 0, 0];
@@ -514,43 +553,49 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.ordersChart?.detach?.();
     this.purchaseChart?.detach?.();
 
-    this.salesChart = new Chartist.Line(
-      "#dailySalesChart",
-      { labels: finalLabels, series: [finalSales] },
-      {
-        lineSmooth: Chartist.Interpolation.cardinal({ tension: 0 }),
-        showPoint: true,
-        low: 0,
-        chartPadding: { top: 0, right: 0, bottom: 0, left: 0 },
-      },
-    );
-    this.attachPointTooltips(this.salesChart, finalLabels, finalSales, "₹ ");
-    this.startAnimationForLineChart(this.salesChart);
+    if (salesContainer) {
+      this.salesChart = new Chartist.Line(
+        "#dailySalesChart",
+        { labels: finalLabels, series: [finalSales] },
+        {
+          lineSmooth: Chartist.Interpolation.cardinal({ tension: 0 }),
+          showPoint: true,
+          low: 0,
+          chartPadding: { top: 0, right: 0, bottom: 0, left: 0 },
+        },
+      );
+      this.attachPointTooltips(this.salesChart, finalLabels, finalSales, "₹ ");
+      this.startAnimationForLineChart(this.salesChart);
+    }
 
-    this.ordersChart = new Chartist.Bar(
-      "#websiteViewsChart",
-      { labels: finalLabels, series: [finalOrders] },
-      {
-        axisX: { showGrid: false },
-        low: 0,
-        chartPadding: { top: 0, right: 5, bottom: 0, left: 0 },
-      },
-    );
-    this.attachPointTooltips(this.ordersChart, finalLabels, finalOrders);
-    this.startAnimationForBarChart(this.ordersChart);
+    if (ordersContainer) {
+      this.ordersChart = new Chartist.Bar(
+        "#websiteViewsChart",
+        { labels: finalLabels, series: [finalOrders] },
+        {
+          axisX: { showGrid: false },
+          low: 0,
+          chartPadding: { top: 0, right: 5, bottom: 0, left: 0 },
+        },
+      );
+      this.attachPointTooltips(this.ordersChart, finalLabels, finalOrders);
+      this.startAnimationForBarChart(this.ordersChart);
+    }
 
-    this.purchaseChart = new Chartist.Line(
-      "#completedTasksChart",
-      { labels: finalLabels, series: [finalPurchase] },
-      {
-        lineSmooth: Chartist.Interpolation.cardinal({ tension: 0 }),
-        showPoint: true,
-        low: 0,
-        chartPadding: { top: 0, right: 0, bottom: 0, left: 0 },
-      },
-    );
-    this.attachPointTooltips(this.purchaseChart, finalLabels, finalPurchase, "₹ ");
-    this.startAnimationForLineChart(this.purchaseChart);
+    if (purchaseContainer) {
+      this.purchaseChart = new Chartist.Line(
+        "#completedTasksChart",
+        { labels: finalLabels, series: [finalPurchase] },
+        {
+          lineSmooth: Chartist.Interpolation.cardinal({ tension: 0 }),
+          showPoint: true,
+          low: 0,
+          chartPadding: { top: 0, right: 0, bottom: 0, left: 0 },
+        },
+      );
+      this.attachPointTooltips(this.purchaseChart, finalLabels, finalPurchase, "₹ ");
+      this.startAnimationForLineChart(this.purchaseChart);
+    }
   }
 
   onShopChange(event: any) {
@@ -580,38 +625,47 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   openSale(): void {
+    if (!this.canOpenSales) return;
     this.goToRoute("/sale-list");
   }
 
   openProducts(): void {
+    if (!this.canOpenProducts) return;
     this.goToRoute("/item-list");
   }
 
   openStocks(): void {
+    if (!this.canOpenStocks) return;
     this.goToRoute("/stocks");
   }
 
   openPurchase(): void {
+    if (!this.canOpenPurchase) return;
     this.goToRoute("/purchase");
   }
 
   openOrders(): void {
+    if (!this.canOpenOrders) return;
     this.goToRoute("/order");
   }
 
   openReturns(): void {
+    if (!this.canOpenReturns) return;
     this.goToRoute("/returns");
   }
 
   openCustomers(): void {
+    if (!this.canOpenCustomers) return;
     this.goToRoute("/customer");
   }
 
   openReports(): void {
+    if (!this.canOpenReports) return;
     this.goToRoute("/sales-reports");
   }
 
   goToProducts(): void {
+    if (!this.canOpenProducts) return;
     this.router.navigateByUrl("/item-list");
   }
 
@@ -639,6 +693,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   private renderPurchaseAnalyticsChart(): void {
+    if (typeof document === "undefined" || !document.querySelector("#purchaseAnalyticsChart")) {
+      return;
+    }
     const values = [
       Number(this.purchaseAnalytics?.today?.totalAmount || 0),
       Number(this.purchaseAnalytics?.weekly?.totalAmount || 0),

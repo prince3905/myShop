@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const brandController = require("../controllers/brandController");
-const { protect, attachShop, requireShopSelectionForWrite } = require("../middleware/authMiddleware");
+const { protect, attachShop, authorizeRoles, authorizeFeature, requireShopSelectionForWrite } = require("../middleware/authMiddleware");
 
 const { validate } = require("../middleware/validate");
 const {
@@ -19,6 +19,8 @@ router.use(requireShopSelectionForWrite);
 ========================= */
 router.post(
   "/",
+  authorizeFeature("inventory.products.manage"),
+  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"),
   createBrandValidation,
   validate,
   brandController.createBrand
@@ -30,6 +32,8 @@ router.post(
 ========================= */
 router.get(
   "/",
+  authorizeFeature("inventory.products"),
+  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"),
   brandController.getBrands
 );
 
@@ -38,6 +42,8 @@ router.get(
 ========================= */
 router.put(
   "/:id",
+  authorizeFeature("inventory.products.manage"),
+  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"),
   updateBrandValidation,
   validate,
   brandController.updateBrand
@@ -48,6 +54,8 @@ router.put(
 ========================= */
 router.delete(
   "/:id",
+  authorizeFeature("inventory.products.manage"),
+  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"),
   updateBrandValidation,
   validate,
   brandController.deleteBrand

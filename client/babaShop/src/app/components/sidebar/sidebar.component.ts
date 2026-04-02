@@ -34,7 +34,7 @@ export const ROUTES: RouteInfo[] = [
         path: "/item-list",
         title: "Products",
         icon: "content_paste",
-        roles: ["SUPER_ADMIN", "ADMIN", "MANAGER"],
+        roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"],
         feature: "inventory.products",
       },
       {
@@ -77,7 +77,7 @@ export const ROUTES: RouteInfo[] = [
         path: "/pos",
         title: "POS",
         icon: "point_of_sale",
-        roles: ["SUPER_ADMIN", "ADMIN", "MANAGER"],
+        roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"],
         feature: "sales.pos",
       },
       {
@@ -107,6 +107,7 @@ export const ROUTES: RouteInfo[] = [
         title: "Daily Expense",
         icon: "payments",
         roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"],
+        feature: "expenses.daily",
       },
       {
         path: "/expense-report",

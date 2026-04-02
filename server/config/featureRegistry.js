@@ -18,15 +18,19 @@ const FEATURE_REGISTRY = [
       { key: "sales.profit", label: "Sales Profit" },
       { key: "sales.pos", label: "POS" },
       { key: "sales.orders", label: "Orders" },
+      { key: "sales.orders.manage", label: "Manage Orders" },
     ],
   },
   {
     module: "inventory",
     features: [
       { key: "inventory.products", label: "Products" },
+      { key: "inventory.products.manage", label: "Manage Products" },
       { key: "inventory.product_details", label: "Product Details" },
+      { key: "inventory.product_details.manage", label: "Manage Product Details" },
       { key: "inventory.stocks", label: "Stocks" },
       { key: "inventory.purchase", label: "Purchase" },
+      { key: "inventory.purchase.manage", label: "Manage Purchase" },
     ],
   },
   {
@@ -44,8 +48,10 @@ const FEATURE_REGISTRY = [
     module: "staff",
     features: [
       { key: "staff.master", label: "Staff Master" },
+      { key: "staff.master.manage", label: "Manage Staff Master" },
       { key: "staff.daily_work", label: "Staff Daily Work" },
       { key: "staff.payments", label: "Staff Payments" },
+      { key: "staff.payments.manage", label: "Manage Staff Payments" },
       { key: "staff.summary", label: "Staff Summary" },
     ],
   },
@@ -53,6 +59,7 @@ const FEATURE_REGISTRY = [
     module: "expenses",
     features: [
       { key: "expenses.daily", label: "Daily Expense" },
+      { key: "expenses.daily.manage", label: "Manage Daily Expense" },
       { key: "expenses.report", label: "Expense Report" },
     ],
   },
@@ -60,7 +67,9 @@ const FEATURE_REGISTRY = [
     module: "people",
     features: [
       { key: "people.customers", label: "Customers" },
+      { key: "people.customers.manage", label: "Manage Customers" },
       { key: "people.distributors", label: "Distributors" },
+      { key: "people.distributors.manage", label: "Manage Distributors" },
       { key: "people.users", label: "Users" },
     ],
   },

@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const productController = require("../controllers/ProductController");
-const { protect, attachShop, authorizePermission, authorizeFeature, requireShopSelectionForWrite } = require("../middleware/authMiddleware");
+const { protect, attachShop, authorizeRoles, authorizeFeature, requireShopSelectionForWrite } = require("../middleware/authMiddleware");
 
 const { validate } = require("../middleware/validate");
 const {
@@ -19,8 +19,8 @@ router.use(requireShopSelectionForWrite);
 ========================= */
 router.post(
   "/",
-  authorizeFeature("inventory.products"),
-  authorizePermission("MANAGE_PRODUCTS"),
+  authorizeFeature("inventory.products.manage"),
+  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"),
   createProductValidation,
   validate,
   productController.createProduct
@@ -58,8 +58,8 @@ router.get(
 ========================= */
 router.put(
   "/:id",
-  authorizeFeature("inventory.products"),
-  authorizePermission("MANAGE_PRODUCTS"),
+  authorizeFeature("inventory.products.manage"),
+  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"),
   updateProductValidation,
   validate,
   productController.updateProduct
@@ -70,8 +70,8 @@ router.put(
 ========================= */
 router.delete(
   "/:id",
-  authorizeFeature("inventory.products"),
-  authorizePermission("MANAGE_PRODUCTS"),
+  authorizeFeature("inventory.products.manage"),
+  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"),
   updateProductValidation,
   validate,
   productController.deleteProduct
@@ -79,8 +79,8 @@ router.delete(
 
 router.patch(
   "/:id/restore",
-  authorizeFeature("inventory.products"),
-  authorizePermission("MANAGE_PRODUCTS"),
+  authorizeFeature("inventory.products.manage"),
+  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"),
   updateProductValidation,
   validate,
   productController.restoreProduct

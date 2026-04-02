@@ -11,6 +11,7 @@ interface NavbarLink {
   title: string;
   path: string | null;
   icon: string;
+  feature?: string;
 }
 
 interface BreadcrumbItem {
@@ -128,21 +129,22 @@ export class NavbarComponent implements OnInit {
   }
 
   private getRoleBasedLinks(): NavbarLink[] {
-    if (this.isSuperAdmin) {
-      return [
-        { title: "Subscriptions", path: "/settings", icon: "credit_card" },
-        { title: "Sales & Profit", path: "/sales-reports", icon: "analytics" },
-        { title: "Settings", path: "/settings", icon: "settings" },
-      ];
-    }
-
-    return [
-      { title: "Products", path: "/item-list", icon: "inventory_2" },
-      { title: "Sales", path: "/sale-list", icon: "point_of_sale" },
-      { title: "Purchase", path: "/stocks", icon: "shopping_cart" },
-      { title: "Customers", path: "/customer", icon: "people" },
-      { title: "Sales & Profit", path: "/sales-reports", icon: "analytics" },
+    const superAdminLinks: NavbarLink[] = [
+      { title: "Subscriptions", path: "/settings", icon: "credit_card", feature: "settings.system" },
+      { title: "Sales & Profit", path: "/sales-reports", icon: "analytics", feature: "sales.profit" },
+      { title: "Settings", path: "/settings", icon: "settings", feature: "settings.profile" },
     ];
+
+    const standardLinks: NavbarLink[] = [
+      { title: "Products", path: "/item-list", icon: "inventory_2", feature: "inventory.products" },
+      { title: "Sales", path: "/sale-list", icon: "point_of_sale", feature: "sales.list" },
+      { title: "Purchase", path: "/stocks", icon: "shopping_cart", feature: "inventory.stocks" },
+      { title: "Customers", path: "/customer", icon: "people", feature: "people.customers" },
+      { title: "Sales & Profit", path: "/sales-reports", icon: "analytics", feature: "sales.profit" },
+    ];
+
+    const links = this.isSuperAdmin ? superAdminLinks : standardLinks;
+    return links.filter((link) => !link.feature || this.authService.can(link.feature));
   }
 
   sidebarOpen() {

@@ -19,8 +19,8 @@ router.use(requireShopSelectionForWrite);
 ========================= */
 router.post(
   "/",
-  authorizeFeature("inventory.products"),
-  authorizeRoles("SUPER_ADMIN", "ADMIN"),
+  authorizeFeature("inventory.product_details.manage"),
+  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"),
   createVariationValidation,
   validate,
   productVariationController.createVariation
@@ -62,8 +62,8 @@ router.get(
 ========================= */
 router.put(
   "/:id",
-  authorizeFeature("inventory.products"),
-  authorizeRoles("SUPER_ADMIN", "ADMIN"),
+  authorizeFeature("inventory.product_details.manage"),
+  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"),
   updateVariationValidation,
   validate,
   productVariationController.updateVariation
@@ -71,8 +71,8 @@ router.put(
 
 router.post(
   "/:id/print-log",
-  authorizeFeature("inventory.product_details"),
-  authorizeRoles("SUPER_ADMIN", "ADMIN"),
+  authorizeFeature("inventory.product_details.manage"),
+  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"),
   productVariationController.logVariationPrint
 );
 
@@ -81,8 +81,8 @@ router.post(
 ========================= */
 router.delete(
   "/:id",
-  authorizeFeature("inventory.products"),
-  authorizeRoles("SUPER_ADMIN", "ADMIN"),
+  authorizeFeature("inventory.product_details.manage"),
+  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"),
   productVariationController.deleteVariation
 );
 

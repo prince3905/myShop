@@ -23,8 +23,8 @@ router.get(
 );
 router.post(
   "/:id/returns",
-  authorizeFeature("inventory.purchase"),
-  authorizeRoles("SUPER_ADMIN", "ADMIN"),
+  authorizeFeature("inventory.purchase.manage"),
+  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"),
   purchaseReturnController.createPurchaseReturn,
 );
 router.get(
@@ -35,26 +35,26 @@ router.get(
 );
 router.put(
   "/:id",
-  authorizeFeature("inventory.purchase"),
-  authorizeRoles("SUPER_ADMIN", "ADMIN"),
+  authorizeFeature("inventory.purchase.manage"),
+  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"),
   purchaseController.updateDraft,
 );
 router.patch(
   "/:id/cancel",
-  authorizeFeature("inventory.purchase"),
-  authorizeRoles("SUPER_ADMIN", "ADMIN"),
+  authorizeFeature("inventory.purchase.manage"),
+  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"),
   purchaseController.cancelDraft,
 );
 router.post(
   "/",
-  authorizeFeature("inventory.purchase"),
-  authorizeRoles("SUPER_ADMIN", "ADMIN"),
+  authorizeFeature("inventory.purchase.manage"),
+  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"),
   purchaseController.createDraft,
 );
 router.post(
   "/:id/confirm",
-  authorizeFeature("inventory.purchase"),
-  authorizeRoles("SUPER_ADMIN", "ADMIN"),
+  authorizeFeature("inventory.purchase.manage"),
+  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"),
   purchaseController.confirmPurchase,
 );
 

@@ -1,8 +1,37 @@
 const express = require("express");
 const stockController = require("../controllers/stockController");
 const { protect, attachShop, authorizeRoles, authorizeFeature, requireShopSelectionForWrite } = require("../middleware/authMiddleware");
+const { hasFeatureAccess } = require("../utils/featureAccess");
 
 const router = express.Router();
+
+const authorizeStockRead = async (req, res, next) => {
+  const isSingleVariationLookup =
+    !!`${req.query?.variation || ""}`.trim() &&
+    Number(req.query?.page || 1) === 1 &&
+    Number(req.query?.limit || 20) <= 1 &&
+    !`${req.query?.search || ""}`.trim() &&
+    `${req.query?.lowStock || "false"}` !== "true";
+
+  if (await hasFeatureAccess(req.user?.role, "inventory.stocks")) {
+    return next();
+  }
+
+  if (
+    isSingleVariationLookup &&
+    (
+      await hasFeatureAccess(req.user?.role, "sales.pos") ||
+      await hasFeatureAccess(req.user?.role, "inventory.product_details")
+    )
+  ) {
+    return next();
+  }
+
+  return res.status(403).json({
+    success: false,
+    message: "Feature access denied: inventory.stocks",
+  });
+};
 
 router.use(protect);
 router.use(attachShop);
@@ -10,7 +39,7 @@ router.use(requireShopSelectionForWrite);
 
 router.get(
   "/",
-  authorizeFeature("inventory.stocks"),
+  authorizeStockRead,
   authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"),
   stockController.getStockReport,
 );

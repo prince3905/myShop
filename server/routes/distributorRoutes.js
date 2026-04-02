@@ -10,10 +10,10 @@ router.use(requireShopSelectionForWrite);
 
 router.get('/distributor-suggestions', authorizeRoles("SUPER_ADMIN", "ADMIN"), authorizeFeature("people.distributors"), distributorController.distributorSuggestions)
 router.get('/', authorizeRoles("SUPER_ADMIN", "ADMIN"), authorizeFeature("people.distributors"), distributorController.allDistributors);
-router.post('/', authorizeRoles("SUPER_ADMIN", "ADMIN"), authorizeFeature("people.distributors"), distributorController.addDistributor);
+router.post('/', authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"), authorizeFeature("people.distributors.manage"), distributorController.addDistributor);
 router.get('/:id', authorizeRoles("SUPER_ADMIN", "ADMIN"), authorizeFeature("people.distributors"), distributorController.getDistributorDetails);
-router.put('/:id', authorizeRoles("SUPER_ADMIN", "ADMIN"), authorizeFeature("people.distributors"), distributorController.updateDistributor);
-router.delete('/:id', authorizeRoles("SUPER_ADMIN", "ADMIN"), authorizeFeature("people.distributors"), distributorController.deleteDistributor);
-router.patch('/:id/status', authorizeRoles("SUPER_ADMIN", "ADMIN"), authorizeFeature("people.distributors"), distributorController.updateStatus);
+router.put('/:id', authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"), authorizeFeature("people.distributors.manage"), distributorController.updateDistributor);
+router.delete('/:id', authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"), authorizeFeature("people.distributors.manage"), distributorController.deleteDistributor);
+router.patch('/:id/status', authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"), authorizeFeature("people.distributors.manage"), distributorController.updateStatus);
 
 module.exports = router;

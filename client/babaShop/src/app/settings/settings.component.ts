@@ -586,6 +586,12 @@ export class SettingsComponent implements OnInit {
         this.roleFeaturePolicy = res?.roleFeaturePolicy || this.roleFeaturePolicy;
         this.editableRoles = res?.editableRoles || this.editableRoles;
         this.editableRoleFeaturePolicy = this.cloneRoleFeaturePolicy(this.roleFeaturePolicy);
+        this.authService.authenticated().subscribe({
+          next: () => {
+            this.showMessage("Current session access refreshed");
+          },
+          error: () => {},
+        });
       },
     });
   }
