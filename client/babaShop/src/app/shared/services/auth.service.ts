@@ -200,6 +200,10 @@ export class AuthService {
     return this.http.get<any>(`${this.baseURL}/api/auth/settings-overview`);
   }
 
+  updateRoleFeaturePolicy(payload: any) {
+    return this.http.put<any>(`${this.baseURL}/api/auth/settings/role-feature-policy`, payload);
+  }
+
   updateNotificationSettings(payload: any) {
     return this.http.put<any>(`${this.baseURL}/api/auth/settings/notifications`, payload);
   }
@@ -255,17 +259,19 @@ export class AuthService {
   }
 
   canViewSensitivePricing(): boolean {
-    const role = this.getUserRole() || "";
-    return ["SUPER_ADMIN", "ADMIN"].includes(role);
+    return this.can("dashboard.financial");
   }
 
   can(featureKey: string): boolean {
-    const role = this.getUserRole() || "";
+    const user = this.getCurrentUser() || {};
+    const role = user?.role || "";
     if (!role || !featureKey) {
       return false;
     }
 
-    const allowed = ROLE_FEATURE_POLICY[role] || [];
+    const allowed = Array.isArray(user?.allowedFeatures) && user.allowedFeatures.length
+      ? user.allowedFeatures
+      : (ROLE_FEATURE_POLICY[role] || []);
     return allowed.includes("*") || allowed.includes(featureKey);
   }
 

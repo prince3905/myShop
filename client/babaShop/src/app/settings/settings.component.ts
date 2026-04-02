@@ -42,6 +42,8 @@ export class SettingsComponent implements OnInit {
   rolePermissions: string[] = [];
   featureRegistry: Array<{ module: string; features: Array<{ key: string; label: string }> }> = [];
   roleFeaturePolicy: Record<string, string[]> = {};
+  editableRoles: string[] = [];
+  editableRoleFeaturePolicy: Record<string, string[]> = {};
   auditLogs: any[] = [];
   billing: any = null;
   shopContext: any = null;
@@ -60,6 +62,7 @@ export class SettingsComponent implements OnInit {
   savingShop = false;
   savingIntegrations = false;
   savingBackup = false;
+  savingRoleAccess = false;
   runningBackup = false;
   deactivatingAccount = false;
   deactivatingShop = false;
@@ -251,6 +254,13 @@ export class SettingsComponent implements OnInit {
     this.connectivityService.checkNow();
   }
 
+  private cloneRoleFeaturePolicy(policy: Record<string, string[]> = {}): Record<string, string[]> {
+    return Object.keys(policy || {}).reduce((acc, role) => {
+      acc[role] = [...(policy[role] || [])];
+      return acc;
+    }, {} as Record<string, string[]>);
+  }
+
   loadOverview() {
     this.loadingOverview = true;
     this.authService.getSettingsOverview().subscribe({
@@ -261,6 +271,8 @@ export class SettingsComponent implements OnInit {
         this.rolePermissions = data.rolePermissions || [];
         this.featureRegistry = data.featureRegistry || [];
         this.roleFeaturePolicy = data.roleFeaturePolicy || {};
+        this.editableRoles = data.editableRoles || [];
+        this.editableRoleFeaturePolicy = this.cloneRoleFeaturePolicy(this.roleFeaturePolicy);
         this.billing = data.shop || null;
 
         this.twoFactorEnabled = !!this.profile?.twoFactorEnabled;
@@ -523,5 +535,58 @@ export class SettingsComponent implements OnInit {
   hasFeature(role: string, featureKey: string): boolean {
     const allowed = this.roleFeaturePolicy?.[role] || [];
     return allowed.includes("*") || allowed.includes(featureKey);
+  }
+
+  isEditableRole(role: string): boolean {
+    return this.editableRoles.includes(role);
+  }
+
+  hasEditableFeature(role: string, featureKey: string): boolean {
+    const allowed = this.editableRoleFeaturePolicy?.[role] || [];
+    return allowed.includes("*") || allowed.includes(featureKey);
+  }
+
+  toggleFeature(role: string, featureKey: string, enabled: boolean): void {
+    if (!this.isEditableRole(role)) {
+      return;
+    }
+
+    const current = new Set(this.editableRoleFeaturePolicy?.[role] || []);
+    if (enabled) {
+      current.add(featureKey);
+    } else {
+      current.delete(featureKey);
+    }
+
+    this.editableRoleFeaturePolicy = {
+      ...this.editableRoleFeaturePolicy,
+      [role]: Array.from(current),
+    };
+  }
+
+  resetRoleFeaturePolicy(): void {
+    this.editableRoleFeaturePolicy = this.cloneRoleFeaturePolicy(this.roleFeaturePolicy);
+    this.showMessage("Role access changes reset");
+  }
+
+  saveRoleFeaturePolicy(): void {
+    const payload = {
+      roleFeaturePolicy: this.editableRoles.reduce((acc, role) => {
+        acc[role] = [...(this.editableRoleFeaturePolicy?.[role] || [])];
+        return acc;
+      }, {} as Record<string, string[]>),
+    };
+
+    this.handleRequest({
+      stateKey: "savingRoleAccess",
+      request$: this.authService.updateRoleFeaturePolicy(payload),
+      successMessage: "Role access policy updated",
+      errorMessage: "Failed to update role access policy",
+      onSuccess: (res: any) => {
+        this.roleFeaturePolicy = res?.roleFeaturePolicy || this.roleFeaturePolicy;
+        this.editableRoles = res?.editableRoles || this.editableRoles;
+        this.editableRoleFeaturePolicy = this.cloneRoleFeaturePolicy(this.roleFeaturePolicy);
+      },
+    });
   }
 }

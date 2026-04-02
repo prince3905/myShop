@@ -105,8 +105,8 @@ exports.authorizePermission = (permission) => {
 };
 
 exports.authorizeFeature = (featureKey) => {
-  return (req, res, next) => {
-    if (hasFeatureAccess(req.user?.role, featureKey)) {
+  return async (req, res, next) => {
+    if (await hasFeatureAccess(req.user?.role, featureKey)) {
       return next();
     }
 

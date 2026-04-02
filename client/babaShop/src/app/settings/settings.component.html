@@ -121,9 +121,30 @@
                 </ul>
 
                 <div class="mt-4">
-                  <h5>Default Feature Access Plan</h5>
+                  <div class="d-flex justify-content-between align-items-start flex-wrap">
+                    <div>
+                      <h5>Role Feature Access Plan</h5>
+                      <p class="text-muted mb-2">
+                        Default policy code me safe rahegi. Yahan se editable overrides save honge.
+                      </p>
+                    </div>
+                    <div class="d-flex align-items-center mb-2" *ngIf="profile?.role === 'SUPER_ADMIN'">
+                      <button mat-stroked-button type="button" class="btn btn-outline-danger mr-2" (click)="resetRoleFeaturePolicy()" [disabled]="savingRoleAccess">
+                        Reset Changes
+                      </button>
+                      <button mat-raised-button type="button" class="btn btn-danger" (click)="saveRoleFeaturePolicy()" [disabled]="savingRoleAccess">
+                        {{ savingRoleAccess ? "Saving..." : "Save Role Access" }}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="alert alert-info" *ngIf="profile?.role !== 'SUPER_ADMIN'">
+                    Sirf Super Admin role access policy change kar sakta hai.
+                  </div>
+
+                  <h6 class="mt-3">Effective Access Matrix</h6>
                   <p class="text-muted">
-                    Ye base role policy hai. Isse future access control centralize hoga, without touching accounting logic.
+                    Ye current effective access hai jo app me abhi chal raha hai.
                   </p>
 
                   <div class="table-responsive" *ngIf="featureRegistry.length > 0">
@@ -149,6 +170,54 @@
                               <span [class.text-success]="hasFeature(role, feature.key)" [class.text-muted]="!hasFeature(role, feature.key)">
                                 {{ hasFeature(role, feature.key) ? "Yes" : "No" }}
                               </span>
+                            </td>
+                          </tr>
+                        </ng-container>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <h6 class="mt-4">Editable Override Matrix</h6>
+                  <p class="text-muted">
+                    STAFF, MANAGER aur ADMIN ko yahan se control karo. SUPER_ADMIN fixed full access rahega.
+                  </p>
+                  <p class="text-muted">
+                    Save ke baad naye access rules affected users ke next profile refresh ya re-login par reflect honge.
+                  </p>
+
+                  <div class="table-responsive" *ngIf="featureRegistry.length > 0">
+                    <table class="table table-sm table-bordered">
+                      <thead>
+                        <tr>
+                          <th>Module</th>
+                          <th>Feature</th>
+                          <th *ngFor="let role of policyRoles">{{ role }}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <ng-container *ngFor="let group of featureRegistry">
+                          <tr *ngFor="let feature of group.features; let first = first">
+                            <td *ngIf="first" [attr.rowspan]="group.features.length">
+                              {{ group.module | titlecase }}
+                            </td>
+                            <td>
+                              <div><strong>{{ feature.label }}</strong></div>
+                              <small class="text-muted">{{ feature.key }}</small>
+                            </td>
+                            <td *ngFor="let role of policyRoles" class="text-center">
+                              <ng-container *ngIf="isEditableRole(role); else fixedRoleCell">
+                                <mat-checkbox
+                                  [checked]="hasEditableFeature(role, feature.key)"
+                                  (change)="toggleFeature(role, feature.key, $event.checked)"
+                                  [disabled]="savingRoleAccess || profile?.role !== 'SUPER_ADMIN'"
+                                >
+                                </mat-checkbox>
+                              </ng-container>
+                              <ng-template #fixedRoleCell>
+                                <span [class.text-success]="hasFeature(role, feature.key)" [class.text-muted]="!hasFeature(role, feature.key)">
+                                  {{ hasFeature(role, feature.key) ? "Fixed Yes" : "Fixed No" }}
+                                </span>
+                              </ng-template>
                             </td>
                           </tr>
                         </ng-container>

@@ -11,6 +11,7 @@ const {
   changePassword,
   toggleTwoFactor,
   getSettingsOverview,
+  updateRoleFeaturePolicy,
   updateNotificationSettings,
   updatePreferences,
   updateShopSettings,
@@ -33,6 +34,7 @@ router.post("/logout-all", protect, logoutAllDevices);
 router.put("/change-password", protect, changePassword);
 router.put("/2fa", protect, toggleTwoFactor);
 router.get("/settings-overview", protect, getSettingsOverview);
+router.put("/settings/role-feature-policy", protect, authorizeRoles("SUPER_ADMIN"), updateRoleFeaturePolicy);
 router.put("/settings/notifications", protect, updateNotificationSettings);
 router.put("/settings/preferences", protect, updatePreferences);
 router.put("/settings/shop", protect, updateShopSettings);

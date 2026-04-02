@@ -4,7 +4,12 @@ const User = require("../models/User");
 const Shop = require("../models/Shop");
 const rolePermissions = require("../config/permissions");
 const featureRegistry = require("../config/featureRegistry");
-const roleFeaturePolicy = require("../config/roleFeaturePolicy");
+const {
+  getEffectiveRoleFeaturePolicy,
+  getAllowedFeaturesForRole,
+  saveRoleFeaturePolicy,
+  EDITABLE_ROLES,
+} = require("../utils/featureAccess");
 
 const SESSION_TTL = process.env.JWT_EXPIRES_IN || "12h";
 
@@ -22,6 +27,41 @@ const pushAuditLog = async (userId, action, details = "") => {
 const resolveShopForUser = async (user) => {
   if (!user?.shop) return null;
   return Shop.findById(user.shop);
+};
+
+const buildUserAccessPayload = async (userLike) => {
+  let shopCode = null;
+  let shopName = null;
+
+  if (userLike?.shop) {
+    const shop = await Shop.findById(userLike.shop).select("shopCode name");
+    shopCode = shop?.shopCode || null;
+    shopName = shop?.name || null;
+  }
+
+  return {
+    id: userLike._id,
+    email: userLike.email,
+    role: userLike.role,
+    shop: userLike.shop || null,
+    shopCode,
+    shopName,
+    mode:
+      userLike.role === "SUPER_ADMIN"
+        ? (userLike.shop ? "SHOP_WISE" : "GLOBAL")
+        : "SHOP_WISE",
+    permissions: rolePermissions[userLike.role] || [],
+    allowedFeatures: await getAllowedFeaturesForRole(userLike.role),
+    phoneNo: userLike.phoneNo || null,
+    pFname: userLike.pFname || "",
+    pLname: userLike.pLname || "",
+    pEmail: userLike.pEmail || "",
+    pPhoneNo: userLike.pPhoneNo || "",
+    twoFactorEnabled: userLike.twoFactorEnabled || false,
+    lastLogin: userLike.lastLogin || null,
+    createdAt: userLike.createdAt || null,
+    isActive: userLike.isActive,
+  };
 };
 
 exports.login = async (req, res) => {
@@ -138,10 +178,10 @@ exports.login = async (req, res) => {
       success: true,
       token,
       user: {
-        id: user._id,
-        email: user.email,
-        role: user.role,
-        shop: sessionShop,
+        ...(await buildUserAccessPayload({
+          ...user.toObject(),
+          shop: sessionShop,
+        })),
         shopCode: sessionShopCode,
       },
     });
@@ -153,39 +193,9 @@ exports.login = async (req, res) => {
 
 exports.authenticated = async (req, res) => {
   try {
-    let shopCode = null;
-    let shopName = null;
-
-    if (req.user?.shop) {
-      const shop = await Shop.findById(req.user.shop).select("shopCode name");
-      shopCode = shop?.shopCode || null;
-      shopName = shop?.name || null;
-    }
-
     return res.status(200).json({
       success: true,
-      user: {
-        id: req.user._id,
-        email: req.user.email,
-        role: req.user.role,
-        shop: req.user.shop || null,
-        shopCode,
-        shopName,
-        mode:
-          req.user.role === "SUPER_ADMIN"
-            ? (req.user.shop ? "SHOP_WISE" : "GLOBAL")
-            : "SHOP_WISE",
-        permissions: rolePermissions[req.user.role] || [],
-        phoneNo: req.user.phoneNo || null,
-        pFname: req.user.pFname || "",
-        pLname: req.user.pLname || "",
-        pEmail: req.user.pEmail || "",
-        pPhoneNo: req.user.pPhoneNo || "",
-        twoFactorEnabled: req.user.twoFactorEnabled || false,
-        lastLogin: req.user.lastLogin || null,
-        createdAt: req.user.createdAt || null,
-        isActive: req.user.isActive,
-      },
+      user: await buildUserAccessPayload(req.user),
     });
   } catch (error) {
     return res.status(500).json({
@@ -213,39 +223,10 @@ exports.updateProfile = async (req, res) => {
     );
     await pushAuditLog(req.user._id, "PROFILE_UPDATED", "Updated profile settings");
 
-    let shopCode = null;
-    let shopName = null;
-    if (updatedUser?.shop) {
-      const shop = await Shop.findById(updatedUser.shop).select("shopCode name");
-      shopCode = shop?.shopCode || null;
-      shopName = shop?.name || null;
-    }
-
     return res.status(200).json({
       success: true,
       message: "Profile updated successfully",
-      user: {
-        id: updatedUser._id,
-        email: updatedUser.email,
-        role: updatedUser.role,
-        shop: updatedUser.shop || null,
-        shopCode,
-        shopName,
-        mode:
-          updatedUser.role === "SUPER_ADMIN"
-            ? (updatedUser.shop ? "SHOP_WISE" : "GLOBAL")
-            : "SHOP_WISE",
-        permissions: rolePermissions[updatedUser.role] || [],
-        phoneNo: updatedUser.phoneNo || null,
-        pFname: updatedUser.pFname || "",
-        pLname: updatedUser.pLname || "",
-        pEmail: updatedUser.pEmail || "",
-        pPhoneNo: updatedUser.pPhoneNo || "",
-        twoFactorEnabled: updatedUser.twoFactorEnabled || false,
-        lastLogin: updatedUser.lastLogin || null,
-        createdAt: updatedUser.createdAt || null,
-        isActive: updatedUser.isActive,
-      },
+      user: await buildUserAccessPayload(updatedUser),
     });
   } catch (error) {
     return res.status(500).json({
@@ -469,6 +450,7 @@ exports.getSettingsOverview = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
     const shop = await resolveShopForUser(user);
+    const effectiveRoleFeaturePolicy = await getEffectiveRoleFeaturePolicy();
 
     return res.status(200).json({
       success: true,
@@ -482,7 +464,8 @@ exports.getSettingsOverview = async (req, res) => {
         },
         rolePermissions: rolePermissions[user.role] || [],
         featureRegistry,
-        roleFeaturePolicy,
+        roleFeaturePolicy: effectiveRoleFeaturePolicy,
+        editableRoles: EDITABLE_ROLES,
         notifications: user.notificationSettings || {},
         preferences: user.preferences || {},
         shop: shop
@@ -506,6 +489,33 @@ exports.getSettingsOverview = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to load settings overview",
+    });
+  }
+};
+
+exports.updateRoleFeaturePolicy = async (req, res) => {
+  try {
+    if (req.user?.role !== "SUPER_ADMIN") {
+      return res.status(403).json({
+        success: false,
+        message: "Only Super Admin can update role access policy",
+      });
+    }
+
+    const policy = req.body?.roleFeaturePolicy || {};
+    const savedPolicy = await saveRoleFeaturePolicy(policy, req.user._id);
+    await pushAuditLog(req.user._id, "ROLE_FEATURE_POLICY_UPDATED", "Updated role and feature access policy");
+
+    return res.status(200).json({
+      success: true,
+      message: "Role access policy updated",
+      roleFeaturePolicy: savedPolicy,
+      editableRoles: EDITABLE_ROLES,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update role access policy",
     });
   }
 };
