@@ -29,6 +29,10 @@ export class CustomersComponent implements OnInit {
     public authService: AuthService,
   ) { }
 
+  get canManageCustomers(): boolean {
+    return !this.authService.isGlobalReadOnlyMode() && this.authService.can("people.customers.manage");
+  }
+
   ngOnInit(): void {
     this.route.queryParams.subscribe((params) => {
       const page = Math.max(1, Number(params.page || 1));
@@ -59,7 +63,7 @@ export class CustomersComponent implements OnInit {
   }
 
   openAddCustomerDialog(): void {
-    if (this.authService.isGlobalReadOnlyMode()) {
+    if (!this.canManageCustomers) {
       return;
     }
     const dialogRef = this.dialog.open(AddCustomerDialogComponent, {
@@ -78,7 +82,7 @@ export class CustomersComponent implements OnInit {
   }
 
   openEditCustomerDialog(customer: any): void {
-    if (this.authService.isGlobalReadOnlyMode() || !customer?._id) {
+    if (!this.canManageCustomers || !customer?._id) {
       return;
     }
 

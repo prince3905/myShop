@@ -1,7 +1,5 @@
 const Staff = require("../models/Staff");
 const StaffWorkType = require("../models/StaffWorkType");
-
-const STAFF_ONLY_FILTER = (req) => `${req.user?.role || ""}` === "STAFF";
 const MANAGER_AND_ABOVE = ["SUPER_ADMIN", "ADMIN", "MANAGER"];
 const escapeRegex = (value = "") => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
@@ -115,10 +113,6 @@ exports.getStaffs = async (req, res) => {
       isDeleted: false,
     };
 
-    if (STAFF_ONLY_FILTER(req)) {
-      filter.createdBy = req.user._id;
-    }
-
     const { search, workType, rateType, active, staffType } = req.query || {};
     if (`${workType || ""}`.trim()) {
       filter.workType = `${workType}`.trim();
@@ -165,10 +159,6 @@ exports.getStaffSummary = async (req, res) => {
       shop: req.shopId,
       isDeleted: false,
     };
-
-    if (STAFF_ONLY_FILTER(req)) {
-      baseMatch.createdBy = req.user._id;
-    }
 
     const [totals, byWorkType, activeCount, byStaffType, byRateType] = await Promise.all([
       Staff.aggregate([

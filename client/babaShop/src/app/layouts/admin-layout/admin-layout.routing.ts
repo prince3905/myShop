@@ -73,7 +73,7 @@ export const AdminLayoutRoutes: Routes = [
   { path: "customer/:id", component: CustomerDetailsComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ALL_ROLES, requireShop: true, allowGlobalRead: true, feature: "people.customers" } },
   { path: "daily-expense", component: DailyExpenseComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ALL_ROLES, requireShop: true, feature: "expenses.daily" } },
   { path: "expense-report", component: ExpenseReportComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: MANAGER_AND_ABOVE, requireShop: true, feature: "expenses.report" } },
-  { path: "staff-master", component: StaffMasterComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ALL_ROLES, requireShop: true, feature: "staff.master.manage" } },
+  { path: "staff-master", component: StaffMasterComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ALL_ROLES, requireShop: true, feature: "staff.master" } },
   { path: "staff-work-items", component: StaffWorkItemsComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ALL_ROLES, requireShop: true, feature: "staff.daily_work" } },
   { path: "staff-daily-work", component: StaffDailyWorkComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ALL_ROLES, requireShop: true, feature: "staff.daily_work" } },
   { path: "staff-payments", component: StaffPaymentsComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ALL_ROLES, requireShop: true, feature: "staff.payments" } },

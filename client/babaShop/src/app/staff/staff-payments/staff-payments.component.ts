@@ -102,7 +102,7 @@ export class StaffPaymentsComponent implements OnInit {
 
   loadStaffOptions(): void {
     this.loadingStaffs = true;
-    this.staffService.getStaffs({ active: "true" }).subscribe({
+    this.staffService.getStaffOptions({ active: "true" }).subscribe({
       next: (response) => {
         this.staffOptions = response?.staffs || [];
         this.loadingStaffs = false;

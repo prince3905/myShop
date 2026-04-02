@@ -588,7 +588,10 @@ export class SettingsComponent implements OnInit {
         this.editableRoleFeaturePolicy = this.cloneRoleFeaturePolicy(this.roleFeaturePolicy);
         this.authService.authenticated().subscribe({
           next: () => {
-            this.showMessage("Current session access refreshed");
+            this.showMessage("Access updated. Page reload ho raha hai.");
+            setTimeout(() => {
+              window.location.reload();
+            }, 600);
           },
           error: () => {},
         });

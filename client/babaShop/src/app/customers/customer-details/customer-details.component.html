@@ -11,7 +11,7 @@
         mat-stroked-button
         color="primary"
         class="ml-2"
-        *ngIf="!authService.isGlobalReadOnlyMode()"
+        *ngIf="canManageCustomers"
         (click)="editCustomer()"
       >
         <mat-icon>edit</mat-icon>

@@ -42,7 +42,7 @@ export class StaffPayableSummaryComponent implements OnInit {
   loadReport(): void {
     this.loading = true;
     forkJoin({
-      staffResponse: this.staffService.getStaffs({ search: this.filters.search }),
+      staffResponse: this.staffService.getStaffOptions({ search: this.filters.search }),
       dailyWorkResponse: this.staffDailyWorkService.getDailyWorks(this.filters),
       paymentResponse: this.staffPaymentService.getPayments(this.filters),
     }).subscribe({

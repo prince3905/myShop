@@ -289,7 +289,9 @@ export class SidebarComponent implements OnInit, OnDestroy {
     return items.reduce((filtered: RouteInfo[], item) => {
       if (item.children?.length) {
         const visibleChildren = item.children.filter((child) =>
-          child.roles.includes(this.userRole!) && (!child.feature || this.auth.can(child.feature)),
+          child.feature
+            ? this.auth.can(child.feature)
+            : child.roles.includes(this.userRole!),
         );
 
         if (visibleChildren.length > 0) {
@@ -302,7 +304,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
         return filtered;
       }
 
-      if (item.roles.includes(this.userRole!) && (!item.feature || this.auth.can(item.feature))) {
+      if (item.feature ? this.auth.can(item.feature) : item.roles.includes(this.userRole!)) {
         filtered.push({ ...item });
       }
 

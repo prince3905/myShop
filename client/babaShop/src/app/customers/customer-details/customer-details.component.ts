@@ -42,6 +42,10 @@ export class CustomerDetailsComponent implements OnInit {
     public authService: AuthService,
   ) { }
 
+  get canManageCustomers(): boolean {
+    return !this.authService.isGlobalReadOnlyMode() && this.authService.can("people.customers.manage");
+  }
+
   ngOnInit(): void {
     const customerId = this.route.snapshot.paramMap.get('id');
     if (customerId) {
@@ -178,7 +182,7 @@ export class CustomerDetailsComponent implements OnInit {
   }
 
   editCustomer(): void {
-    if (this.authService.isGlobalReadOnlyMode() || !this.customer?._id) {
+    if (!this.canManageCustomers || !this.customer?._id) {
       return;
     }
 

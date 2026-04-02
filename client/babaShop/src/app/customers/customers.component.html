@@ -28,7 +28,7 @@
             Clear
           </button>
 
-          <button mat-raised-button color="primary" type="button" (click)="openAddCustomerDialog()" *ngIf="!authService.isGlobalReadOnlyMode()">
+          <button mat-raised-button color="primary" type="button" (click)="openAddCustomerDialog()" *ngIf="canManageCustomers">
             <mat-icon>person_add</mat-icon>
             Add Customer
           </button>
@@ -75,7 +75,7 @@
                   mat-stroked-button
                   color="primary"
                   type="button"
-                  *ngIf="!authService.isGlobalReadOnlyMode()"
+                  *ngIf="canManageCustomers"
                   (click)="openEditCustomerDialog(item); $event.stopPropagation()"
                 >
                   Edit

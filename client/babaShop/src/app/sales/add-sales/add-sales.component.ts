@@ -10,6 +10,7 @@ import { ItemService } from "app/shared/services/item.service";
 import { SalesService } from "app/shared/services/sales.service";
 import { StocksService } from "app/shared/services/stocks.service";
 import { VariationService } from "app/shared/services/variation.service";
+import { AuthService } from "app/shared/services/auth.service";
 import { AddCustomerDialogComponent } from "../add-customer-dialog/add-customer-dialog.component";
 
 @Component({
@@ -101,6 +102,7 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
     private stock: StocksService,
     private variationService: VariationService,
     private customerService: CustomerService,
+    public authService: AuthService,
   ) {}
 
   ngOnInit(): void {
@@ -330,6 +332,11 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   openAddCustomerDialog(): void {
+    if (!this.authService.can("people.customers.manage")) {
+      this.snackBar.open("Customer add/edit access is not enabled for this role.", "Close", { duration: 3000 });
+      return;
+    }
+
     const dialogRef = this.dialog.open(AddCustomerDialogComponent, {
       width: '400px',
       disableClose: true
