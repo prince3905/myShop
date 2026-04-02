@@ -16,12 +16,31 @@ export class RoleGuard implements CanActivate {
 
   canActivate(route: ActivatedRouteSnapshot): boolean {
     const expectedRoles: string[] = route.data['roles'] || [];
+    const featureKey: string | undefined = route.data['feature'];
     if (expectedRoles.length === 0) {
-      return true;
+      if (!featureKey) {
+        return true;
+      }
+      if (this.authService.can(featureKey)) {
+        return true;
+      }
+      this.snackBar.open(`Aapke role se ${featureKey} access allowed nahi hai.`, 'Close', {
+        duration: 3200,
+      });
+      this.router.navigate(['/dashboard']);
+      return false;
     }
 
     const userRole = this.authService.getUserRole();
     if (userRole && expectedRoles.includes(userRole)) {
+      if (featureKey && !this.authService.can(featureKey)) {
+        this.snackBar.open(`Aapke role se ${featureKey} access allowed nahi hai.`, 'Close', {
+          duration: 3200,
+        });
+        this.router.navigate(['/dashboard']);
+        return false;
+      }
+
       const requireShop = Boolean(route.data['requireShop']);
       const allowGlobalRead = Boolean(route.data['allowGlobalRead']);
       const isSuperAdminGlobal = userRole === 'SUPER_ADMIN' && !this.authService.getShopId();

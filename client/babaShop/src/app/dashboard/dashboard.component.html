@@ -55,7 +55,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-lg-3 col-md-6 col-sm-6" *ngIf="canViewSensitivePricing">
+            <div class="col-lg-3 col-md-6 col-sm-6" *ngIf="canViewFinancialDashboard">
                 <div class="card card-stats dashboard-click-card" (click)="openPurchase()">
                     <div class="card-header card-header-danger card-header-icon">
                         <div class="card-icon">
@@ -82,7 +82,7 @@
                     </div>
                     <div class="card-footer">
                         <div class="stats">
-                            <ng-container *ngIf="canViewSensitivePricing; else stockFooterBasic">
+                            <ng-container *ngIf="canViewFinancialDashboard; else stockFooterBasic">
                                 <i class="material-icons">currency_rupee</i> Customer credit today: ₹ {{ kpis?.todaySaleCreditAmount | number:'1.2-2' }}
                             </ng-container>
                             <ng-template #stockFooterBasic>
@@ -93,7 +93,7 @@
                 </div>
             </div>
         </div>
-        <div class="row" *ngIf="canViewSensitivePricing">
+        <div class="row" *ngIf="canViewFinancialDashboard">
             <div class="col-12">
                 <div class="analytics-strip">
                     <div class="analytics-card dashboard-click-card" (click)="openPurchase()">
@@ -183,7 +183,7 @@
                 </div>
             </div>
         </div>
-        <div class="row" *ngIf="canViewSensitivePricing">
+        <div class="row" *ngIf="canViewFinancialDashboard">
             <div class="col-12">
                 <div class="analytics-strip">
                     <div class="analytics-card purchase-return-card dashboard-click-card" (click)="openPurchase()">
@@ -213,7 +213,7 @@
                 </div>
             </div>
         </div>
-        <div class="row" *ngIf="canViewSensitivePricing">
+        <div class="row" *ngIf="canViewFinancialDashboard">
             <div class="col-md-12">
                 <div class="card card-chart dashboard-click-card" (click)="openPurchase()">
                     <div class="card-header card-header-info">
@@ -259,7 +259,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-4" *ngIf="canViewSensitivePricing">
+            <div class="col-md-4" *ngIf="canViewFinancialDashboard">
                 <div class="card card-chart dashboard-click-card" (click)="openPurchase()">
                     <div class="card-header card-header-danger">
                         <div class="ct-chart" id="completedTasksChart"></div>
@@ -277,7 +277,7 @@
             </div>
         </div>
         <div class="row">
-            <div class="col-lg-6 col-md-12" *ngIf="canViewSensitivePricing">
+            <div class="col-lg-6 col-md-12" *ngIf="canViewFinancialDashboard">
                 <div class="card dashboard-detail-card dashboard-click-card" (click)="openStocks()">
                     <div class="card-header card-header-danger">
                         <h4 class="card-title">{{ isStaff ? 'Stock Watch' : 'Low Stock Alerts' }}</h4>
@@ -303,13 +303,13 @@
                 </div>
             </div>
             <div class="col-lg-6 col-md-12">
-                <div class="card dashboard-detail-card dashboard-click-card" (click)="canViewSensitivePricing ? openOrders() : null">
+                <div class="card dashboard-detail-card dashboard-click-card" (click)="canViewFinancialDashboard ? openOrders() : null">
                     <div class="card-header card-header-info">
                         <h4 class="card-title">Outstanding Summary</h4>
                         <p class="card-category">Live due visibility across billing and orders</p>
                     </div>
                     <div class="card-body">
-                        <div class="due-summary-grid" *ngIf="canViewSensitivePricing && overview.dueSummary; else dueRestricted">
+                        <div class="due-summary-grid" *ngIf="canViewFinancialDashboard && overview.dueSummary; else dueRestricted">
                             <div class="due-summary-card">
                                 <div class="due-summary-label">Sales Due</div>
                                 <div class="due-summary-value">₹ {{ overview.dueSummary.salesDue | number:'1.2-2' }}</div>
@@ -332,7 +332,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-lg-12 col-md-12" *ngIf="canViewSensitivePricing">
+            <div class="col-lg-12 col-md-12" *ngIf="canViewFinancialDashboard">
                 <div class="card dashboard-detail-card dashboard-click-card" (click)="openCustomers()">
                     <div class="card-header card-header-success customer-credit-header">
                         <div class="customer-credit-header-main">
@@ -448,7 +448,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-lg-6 col-md-12" *ngIf="canViewSensitivePricing">
+            <div class="col-lg-6 col-md-12" *ngIf="canViewFinancialDashboard">
                 <div class="card dashboard-detail-card dashboard-click-card" (click)="openReports()">
                     <div class="card-header card-header-primary">
                         <h4 class="card-title">Recent Payments</h4>

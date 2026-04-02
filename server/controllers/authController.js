@@ -3,6 +3,8 @@ const crypto = require("crypto");
 const User = require("../models/User");
 const Shop = require("../models/Shop");
 const rolePermissions = require("../config/permissions");
+const featureRegistry = require("../config/featureRegistry");
+const roleFeaturePolicy = require("../config/roleFeaturePolicy");
 
 const SESSION_TTL = process.env.JWT_EXPIRES_IN || "12h";
 
@@ -479,6 +481,8 @@ exports.getSettingsOverview = async (req, res) => {
           twoFactorEnabled: !!user.twoFactorEnabled,
         },
         rolePermissions: rolePermissions[user.role] || [],
+        featureRegistry,
+        roleFeaturePolicy,
         notifications: user.notificationSettings || {},
         preferences: user.preferences || {},
         shop: shop

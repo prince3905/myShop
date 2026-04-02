@@ -11,6 +11,7 @@ declare interface RouteInfo {
   icon: string;
   class?: string;
   roles: string[];
+  feature?: string;
   children?: RouteInfo[];
   expanded?: boolean;
 }
@@ -21,6 +22,7 @@ export const ROUTES: RouteInfo[] = [
     title: "Dashboard",
     icon: "dashboard",
     roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"],
+    feature: "dashboard.basic",
   },
 
   {
@@ -33,18 +35,21 @@ export const ROUTES: RouteInfo[] = [
         title: "Products",
         icon: "content_paste",
         roles: ["SUPER_ADMIN", "ADMIN", "MANAGER"],
+        feature: "inventory.products",
       },
       {
         path: "/stocks",
         title: "Stocks",
         icon: "poll",
         roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"],
+        feature: "inventory.stocks",
       },
       {
         path: "/purchase",
         title: "Purchase",
         icon: "shopping_cart",
         roles: ["SUPER_ADMIN", "ADMIN"],
+        feature: "inventory.purchase",
       },
     ],
   },
@@ -59,30 +64,35 @@ export const ROUTES: RouteInfo[] = [
         title: "Sales",
         icon: "store",
         roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"],
+        feature: "sales.list",
       },
       {
         path: "/order",
         title: "Orders",
         icon: "rate_review",
         roles: ["SUPER_ADMIN", "ADMIN", "MANAGER"],
+        feature: "sales.orders",
       },
       {
         path: "/pos",
         title: "POS",
         icon: "point_of_sale",
         roles: ["SUPER_ADMIN", "ADMIN", "MANAGER"],
+        feature: "sales.pos",
       },
       {
         path: "/returns",
         title: "Returns",
         icon: "undo",
         roles: ["SUPER_ADMIN", "ADMIN", "MANAGER"],
+        feature: "sales.return",
       },
       {
         path: "/sales-reports",
         title: "Sales & Profit",
         icon: "bar_chart",
-        roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"],
+        roles: ["SUPER_ADMIN", "ADMIN"],
+        feature: "sales.profit",
       },
     ],
   },
@@ -102,7 +112,8 @@ export const ROUTES: RouteInfo[] = [
         path: "/expense-report",
         title: "Expense Report",
         icon: "receipt_long",
-        roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"],
+        roles: ["SUPER_ADMIN", "ADMIN", "MANAGER"],
+        feature: "expenses.report",
       },
     ],
   },
@@ -116,25 +127,29 @@ export const ROUTES: RouteInfo[] = [
         path: "/staff-master",
         title: "Staff List",
         icon: "badge",
-        roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"],
+        roles: ["SUPER_ADMIN", "ADMIN", "MANAGER"],
+        feature: "staff.master",
       },
       {
         path: "/staff-daily-work",
         title: "Daily Work",
         icon: "event_note",
         roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"],
+        feature: "staff.daily_work",
       },
       {
         path: "/staff-payments",
         title: "Payment & Advance",
         icon: "account_balance_wallet",
         roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"],
+        feature: "staff.payments",
       },
       {
         path: "/staff-payable-summary",
         title: "Payable / Summary",
         icon: "summarize",
-        roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"],
+        roles: ["SUPER_ADMIN", "ADMIN", "MANAGER"],
+        feature: "staff.summary",
       },
     ],
   },
@@ -148,31 +163,36 @@ export const ROUTES: RouteInfo[] = [
         path: "/factory-product-master",
         title: "Factory Production",
         icon: "category",
-        roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"],
+        roles: ["SUPER_ADMIN", "ADMIN", "MANAGER"],
+        feature: "factory.product_master",
       },
       {
         path: "/factory-verification",
         title: "Factory Verification",
         icon: "fact_check",
         roles: ["SUPER_ADMIN", "ADMIN", "MANAGER"],
+        feature: "factory.verification",
       },
       {
         path: "/raw-material-purchase",
         title: "Raw Material Purchase",
         icon: "shopping_cart",
-        roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"],
+        roles: ["SUPER_ADMIN", "ADMIN", "MANAGER"],
+        feature: "factory.raw_material_purchase",
       },
       {
         path: "/raw-material-register",
         title: "Raw Material Master",
         icon: "inventory",
-        roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"],
+        roles: ["SUPER_ADMIN", "ADMIN", "MANAGER"],
+        feature: "factory.raw_material_master",
       },
       {
         path: "/factory-report",
         title: "Factory Report",
         icon: "assessment",
-        roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"],
+        roles: ["SUPER_ADMIN", "ADMIN", "MANAGER"],
+        feature: "factory.report",
       },
     ],
   },
@@ -187,18 +207,21 @@ export const ROUTES: RouteInfo[] = [
         title: "Users",
         icon: "manage_accounts",
         roles: ["SUPER_ADMIN", "ADMIN"],
+        feature: "people.users",
       },
       {
         path: "/customer",
         title: "Customers",
         icon: "supervised_user_circle",
         roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"],
+        feature: "people.customers",
       },
       {
         path: "/distributor",
         title: "Distributors",
         icon: "supervisor_account",
         roles: ["SUPER_ADMIN", "ADMIN"],
+        feature: "people.distributors",
       },
     ],
   },
@@ -213,12 +236,14 @@ export const ROUTES: RouteInfo[] = [
         title: "Profile",
         icon: "manage_accounts",
         roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"],
+        feature: "settings.profile",
       },
       {
         path: "/settings",
         title: "Settings",
         icon: "settings",
         roles: ["SUPER_ADMIN", "ADMIN"],
+        feature: "settings.permissions",
       },
     ],
   },
@@ -263,7 +288,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
     return items.reduce((filtered: RouteInfo[], item) => {
       if (item.children?.length) {
         const visibleChildren = item.children.filter((child) =>
-          child.roles.includes(this.userRole!),
+          child.roles.includes(this.userRole!) && (!child.feature || this.auth.can(child.feature)),
         );
 
         if (visibleChildren.length > 0) {
@@ -276,7 +301,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
         return filtered;
       }
 
-      if (item.roles.includes(this.userRole!)) {
+      if (item.roles.includes(this.userRole!) && (!item.feature || this.auth.can(item.feature))) {
         filtered.push({ ...item });
       }
 

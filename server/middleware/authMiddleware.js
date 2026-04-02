@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const User = require("../models/User");
 const Shop = require("../models/Shop");
 const rolePermissions = require("../config/permissions");
+const { hasFeatureAccess } = require("../utils/featureAccess");
 
 
 
@@ -100,6 +101,19 @@ exports.authorizePermission = (permission) => {
     }
 
     next();
+  };
+};
+
+exports.authorizeFeature = (featureKey) => {
+  return (req, res, next) => {
+    if (hasFeatureAccess(req.user?.role, featureKey)) {
+      return next();
+    }
+
+    return res.status(403).json({
+      success: false,
+      message: `Feature access denied: ${featureKey}`,
+    });
   };
 };
 

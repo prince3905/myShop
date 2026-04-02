@@ -5,6 +5,7 @@ import { environment } from "../../../environments/environment";
 import { throwError, BehaviorSubject } from "rxjs";
 import { Router } from "@angular/router";
 import { MatSnackBar } from "@angular/material/snack-bar";
+import { ROLE_FEATURE_POLICY } from "../config/role-feature-policy";
 
 interface LoginResponse {
   success: boolean;
@@ -256,6 +257,16 @@ export class AuthService {
   canViewSensitivePricing(): boolean {
     const role = this.getUserRole() || "";
     return ["SUPER_ADMIN", "ADMIN"].includes(role);
+  }
+
+  can(featureKey: string): boolean {
+    const role = this.getUserRole() || "";
+    if (!role || !featureKey) {
+      return false;
+    }
+
+    const allowed = ROLE_FEATURE_POLICY[role] || [];
+    return allowed.includes("*") || allowed.includes(featureKey);
   }
 
   getRoleAccessMessage(expectedRoles: string[] = []): string {

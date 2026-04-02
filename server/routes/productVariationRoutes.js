@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const productVariationController = require("../controllers/productVariationController");
-const { protect, attachShop, authorizeRoles, requireShopSelectionForWrite } = require("../middleware/authMiddleware");
+const { protect, attachShop, authorizeRoles, authorizeFeature, requireShopSelectionForWrite } = require("../middleware/authMiddleware");
 
 const { validate } = require("../middleware/validate");
 const {
@@ -19,6 +19,7 @@ router.use(requireShopSelectionForWrite);
 ========================= */
 router.post(
   "/",
+  authorizeFeature("inventory.products"),
   authorizeRoles("SUPER_ADMIN", "ADMIN"),
   createVariationValidation,
   validate,
@@ -34,6 +35,7 @@ router.post(
 ========================= */
 router.get(
   "/",
+  authorizeFeature("inventory.products"),
   authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"),
   productVariationController.getVariations
 );
@@ -43,12 +45,14 @@ router.get(
 ========================= */
 router.get(
   "/:id",
+  authorizeFeature("inventory.product_details"),
   authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"),
   productVariationController.getSingleVariation
 );
 
 router.get(
   "/:id/usage",
+  authorizeFeature("inventory.product_details"),
   authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"),
   productVariationController.getVariationUsage
 );
@@ -58,6 +62,7 @@ router.get(
 ========================= */
 router.put(
   "/:id",
+  authorizeFeature("inventory.products"),
   authorizeRoles("SUPER_ADMIN", "ADMIN"),
   updateVariationValidation,
   validate,
@@ -66,6 +71,7 @@ router.put(
 
 router.post(
   "/:id/print-log",
+  authorizeFeature("inventory.product_details"),
   authorizeRoles("SUPER_ADMIN", "ADMIN"),
   productVariationController.logVariationPrint
 );
@@ -75,6 +81,7 @@ router.post(
 ========================= */
 router.delete(
   "/:id",
+  authorizeFeature("inventory.products"),
   authorizeRoles("SUPER_ADMIN", "ADMIN"),
   productVariationController.deleteVariation
 );

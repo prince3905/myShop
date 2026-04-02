@@ -30,12 +30,10 @@ const rolePermissions = {
     "MANAGE_PRODUCTS",
     "MANAGE_STOCK",
     "MANAGE_CUSTOMERS",
-    "VIEW_REPORTS",
   ],
 
   [ROLES.STAFF]: [
     "CREATE_SALE",
-    "VIEW_REPORTS",
   ],
 };
 

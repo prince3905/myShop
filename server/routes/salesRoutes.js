@@ -1,6 +1,6 @@
 const express = require("express");
 const salesController = require("../controllers/salesController");
-const { protect, attachShop, authorizeRoles, requireShopSelectionForWrite } = require("../middleware/authMiddleware");
+const { protect, attachShop, authorizeRoles, authorizeFeature, requireShopSelectionForWrite } = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
@@ -22,7 +22,8 @@ router.get(
 
 router.get(
   "/reports/overview",
-  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"),
+  authorizeRoles("SUPER_ADMIN", "ADMIN"),
+  authorizeFeature("sales.profit"),
   salesController.getSalesReportOverview,
 );
 

@@ -278,7 +278,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.loadOverview();
     this.loadTrends();
     this.loadInventorySummary();
-    if (this.canViewSensitivePricing) {
+    if (this.canViewFinancialDashboard) {
       this.loadPurchaseAnalytics();
     }
     this.loadReturnAnalytics();
@@ -315,6 +315,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   get canViewSensitivePricing(): boolean {
     return this.authService.canViewSensitivePricing();
+  }
+
+  get canViewFinancialDashboard(): boolean {
+    return this.authService.can("dashboard.financial") || this.canViewSensitivePricing;
   }
 
   get userRole(): string {

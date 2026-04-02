@@ -3,7 +3,7 @@ const router = express.Router();
 
 const authController = require("../controllers/authController");
 const userController = require("../controllers/userController");
-const { protect, authorizeRoles } = require("../middleware/authMiddleware");
+const { protect, authorizeRoles, authorizeFeature } = require("../middleware/authMiddleware");
 
 // LOGIN ROUTE
 router.post("/login", authController.login);
@@ -12,6 +12,7 @@ router.post("/login", authController.login);
 router.get(
   "/",
   protect,
+  authorizeFeature("people.users"),
   authorizeRoles("SUPER_ADMIN", "ADMIN"),
   userController.getAllUsers
 );
@@ -20,6 +21,7 @@ router.get(
 router.post(
   "/",
   protect,
+  authorizeFeature("people.users"),
   authorizeRoles("SUPER_ADMIN", "ADMIN"),
   userController.createUser
 );
@@ -28,6 +30,7 @@ router.post(
 router.put(
   "/:id",
   protect,
+  authorizeFeature("people.users"),
   authorizeRoles("SUPER_ADMIN", "ADMIN"),
   userController.updateUser
 );

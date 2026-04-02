@@ -40,6 +40,8 @@ export class SettingsComponent implements OnInit {
   twoFactorEnabled = false;
   sessions: any[] = [];
   rolePermissions: string[] = [];
+  featureRegistry: Array<{ module: string; features: Array<{ key: string; label: string }> }> = [];
+  roleFeaturePolicy: Record<string, string[]> = {};
   auditLogs: any[] = [];
   billing: any = null;
   shopContext: any = null;
@@ -257,6 +259,8 @@ export class SettingsComponent implements OnInit {
         this.profile = data.profile || {};
         this.shopContext = data.shop || null;
         this.rolePermissions = data.rolePermissions || [];
+        this.featureRegistry = data.featureRegistry || [];
+        this.roleFeaturePolicy = data.roleFeaturePolicy || {};
         this.billing = data.shop || null;
 
         this.twoFactorEnabled = !!this.profile?.twoFactorEnabled;
@@ -510,5 +514,14 @@ export class SettingsComponent implements OnInit {
         this.showMessage(err?.error?.message || "Failed to deactivate shop");
       },
     });
+  }
+
+  get policyRoles(): string[] {
+    return ["STAFF", "MANAGER", "ADMIN", "SUPER_ADMIN"];
+  }
+
+  hasFeature(role: string, featureKey: string): boolean {
+    const allowed = this.roleFeaturePolicy?.[role] || [];
+    return allowed.includes("*") || allowed.includes(featureKey);
   }
 }

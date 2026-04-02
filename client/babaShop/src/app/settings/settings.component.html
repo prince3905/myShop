@@ -119,6 +119,43 @@
                 <ul>
                   <li *ngFor="let permission of rolePermissions">{{ permission }}</li>
                 </ul>
+
+                <div class="mt-4">
+                  <h5>Default Feature Access Plan</h5>
+                  <p class="text-muted">
+                    Ye base role policy hai. Isse future access control centralize hoga, without touching accounting logic.
+                  </p>
+
+                  <div class="table-responsive" *ngIf="featureRegistry.length > 0">
+                    <table class="table table-sm table-bordered">
+                      <thead>
+                        <tr>
+                          <th>Module</th>
+                          <th>Feature</th>
+                          <th *ngFor="let role of policyRoles">{{ role }}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <ng-container *ngFor="let group of featureRegistry">
+                          <tr *ngFor="let feature of group.features; let first = first">
+                            <td *ngIf="first" [attr.rowspan]="group.features.length">
+                              {{ group.module | titlecase }}
+                            </td>
+                            <td>
+                              <div><strong>{{ feature.label }}</strong></div>
+                              <small class="text-muted">{{ feature.key }}</small>
+                            </td>
+                            <td *ngFor="let role of policyRoles" class="text-center">
+                              <span [class.text-success]="hasFeature(role, feature.key)" [class.text-muted]="!hasFeature(role, feature.key)">
+                                {{ hasFeature(role, feature.key) ? "Yes" : "No" }}
+                              </span>
+                            </td>
+                          </tr>
+                        </ng-container>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               </div>
 
               <div *ngIf="activeSection === 'Notification Settings'">
