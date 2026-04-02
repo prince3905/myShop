@@ -332,7 +332,10 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   openAddCustomerDialog(): void {
-    if (!this.authService.can("people.customers.manage")) {
+    const canManageCustomers = this.authService.can("people.customers.manage") ||
+      (this.authService.getUserRole() === "STAFF" && this.authService.can("people.customers"));
+
+    if (!canManageCustomers) {
       this.snackBar.open("Customer add/edit access is not enabled for this role.", "Close", { duration: 3000 });
       return;
     }

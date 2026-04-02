@@ -13,6 +13,7 @@ import { CustomerService } from 'app/shared/services/customer.service';
 export class CustomerDetailsComponent implements OnInit {
   customer: any = null;
   sales: any[] = [];
+  auditLogs: any[] = [];
   loading: boolean = true;
   salesLoading: boolean = true;
   
@@ -43,7 +44,10 @@ export class CustomerDetailsComponent implements OnInit {
   ) { }
 
   get canManageCustomers(): boolean {
-    return !this.authService.isGlobalReadOnlyMode() && this.authService.can("people.customers.manage");
+    return !this.authService.isGlobalReadOnlyMode() && (
+      this.authService.can("people.customers.manage") ||
+      (this.authService.getUserRole() === "STAFF" && this.authService.can("people.customers"))
+    );
   }
 
   ngOnInit(): void {
@@ -60,6 +64,7 @@ export class CustomerDetailsComponent implements OnInit {
       (response: any) => {
         if (response.success) {
           this.customer = response.customer;
+          this.auditLogs = Array.isArray(response.auditLogs) ? response.auditLogs : [];
         }
         this.loading = false;
       },
@@ -213,5 +218,41 @@ export class CustomerDetailsComponent implements OnInit {
 
   getTotalDue(): number {
     return (this.customer?.totalDue || 0);
+  }
+
+  getActorName(log: any): string {
+    const actor = log?.actor || {};
+    const fullName = `${actor?.name || ""}`.trim() || `${actor?.pFname || ""} ${actor?.pLname || ""}`.trim();
+    return fullName || actor?.email || "Unknown User";
+  }
+
+  getActionLabel(log: any): string {
+    switch (`${log?.action || ""}`) {
+      case "CREATE":
+        return "Created";
+      case "UPDATE":
+        return "Updated";
+      case "ARCHIVE":
+        return "Archived";
+      case "RESTORE":
+        return "Restored";
+      default:
+        return log?.action || "Updated";
+    }
+  }
+
+  getFieldLabel(field: string): string {
+    switch (`${field || ""}`) {
+      case "name":
+        return "Name";
+      case "phone":
+        return "Phone";
+      case "email":
+        return "Email";
+      case "address":
+        return "Address";
+      default:
+        return field || "Field";
+    }
   }
 }

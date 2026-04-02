@@ -30,7 +30,10 @@ export class CustomersComponent implements OnInit {
   ) { }
 
   get canManageCustomers(): boolean {
-    return !this.authService.isGlobalReadOnlyMode() && this.authService.can("people.customers.manage");
+    return !this.authService.isGlobalReadOnlyMode() && (
+      this.authService.can("people.customers.manage") ||
+      (this.authService.getUserRole() === "STAFF" && this.authService.can("people.customers"))
+    );
   }
 
   ngOnInit(): void {

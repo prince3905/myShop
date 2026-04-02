@@ -81,7 +81,7 @@
               <input matInput name="customerPhone" [(ngModel)]="customerPhone" (ngModelChange)="onDraftFieldChange()" />
             </mat-form-field>
 
-            <button mat-stroked-button color="primary" type="button" (click)="openAddCustomerDialog()" *ngIf="authService.can('people.customers.manage')">
+            <button mat-stroked-button color="primary" type="button" (click)="openAddCustomerDialog()" *ngIf="authService.can('people.customers.manage') || (authService.getUserRole() === 'STAFF' && authService.can('people.customers'))">
               <mat-icon>person_add</mat-icon>
               New Customer
             </button>

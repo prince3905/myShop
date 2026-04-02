@@ -272,6 +272,50 @@
         </div>
       </div>
 
+      <div class="card mt-3">
+        <div class="card-header card-header-warning">
+          <h4 class="card-title">Change History</h4>
+          <p class="card-category">Kisne kab kya update kiya</p>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive" *ngIf="auditLogs.length > 0; else noAuditLogs">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Action</th>
+                  <th>By</th>
+                  <th>Changes</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let log of auditLogs">
+                  <td>{{ log.createdAt | date:'medium' }}</td>
+                  <td>{{ getActionLabel(log) }}</td>
+                  <td>{{ getActorName(log) }}</td>
+                  <td>
+                    <ng-container *ngIf="log?.meta?.changes?.length; else noFieldChanges">
+                      <div *ngFor="let change of log.meta.changes" class="mb-1">
+                        <strong>{{ getFieldLabel(change.field) }}:</strong>
+                        {{ change.before || 'Blank' }} → {{ change.after || 'Blank' }}
+                      </div>
+                    </ng-container>
+                    <ng-template #noFieldChanges>
+                      <span class="text-muted">
+                        {{ log?.meta?.updatedFields?.length ? (log.meta.updatedFields.join(', ')) : 'No field-level changes captured' }}
+                      </span>
+                    </ng-template>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <ng-template #noAuditLogs>
+            <div class="text-center text-muted">No customer change history found</div>
+          </ng-template>
+        </div>
+      </div>
+
     </div>
 
   </div>

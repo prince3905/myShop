@@ -1,4 +1,5 @@
 const Customer = require("../models/Customer");
+const EntityAuditLog = require("../models/EntityAuditLog");
 const { logEntityAudit } = require("../utils/entityAudit.service");
 const {
   buildCustomerLedger,
@@ -8,6 +9,29 @@ const {
 
 const isSuperAdminGlobal = (req) =>
   req.user?.role === "SUPER_ADMIN" && !req.shopId;
+
+const TRACKED_CUSTOMER_FIELDS = ["name", "phone", "email", "address"];
+
+const getCustomerFieldChanges = (beforeDoc = {}, afterDoc = {}) => {
+  const changes = [];
+
+  TRACKED_CUSTOMER_FIELDS.forEach((field) => {
+    const beforeValue = `${beforeDoc?.[field] ?? ""}`.trim();
+    const afterValue = `${afterDoc?.[field] ?? ""}`.trim();
+
+    if (beforeValue === afterValue) {
+      return;
+    }
+
+    changes.push({
+      field,
+      before: beforeValue || null,
+      after: afterValue || null,
+    });
+  });
+
+  return changes;
+};
 
 exports.getAllCustomers = async (req, res) => {
   try {
@@ -125,7 +149,17 @@ exports.getCustomerById = async (req, res) => {
     if (!customer) {
       return res.status(404).json({ success: false, error: "Customer not found" });
     }
-    return res.status(200).json({ success: true, customer });
+
+    const auditLogs = await EntityAuditLog.find({
+      entityType: "CUSTOMER",
+      entityId: customer._id,
+    })
+      .sort({ createdAt: -1 })
+      .limit(25)
+      .populate("actor", "name pFname pLname email")
+      .lean();
+
+    return res.status(200).json({ success: true, customer, auditLogs });
   } catch (err) {
     return res.status(500).json({ success: false, error: "Error retrieving customer details" });
   }
@@ -179,21 +213,33 @@ exports.updateCustomer = async (req, res) => {
       excludeCustomerId: req.params.id,
     });
 
+    const existingCustomer = await Customer.findOne({
+      _id: req.params.id,
+      shop: req.shopId,
+      isDeleted: { $ne: true },
+    }).lean();
+
+    if (!existingCustomer) {
+      return res.status(404).json({ success: false, error: "Customer not found" });
+    }
+
     const updatedCustomer = await Customer.findOneAndUpdate(
       { _id: req.params.id, shop: req.shopId, isDeleted: { $ne: true } },
       payload,
       { new: true, runValidators: true },
     );
-    if (!updatedCustomer) {
-      return res.status(404).json({ success: false, error: "Customer not found" });
-    }
+    const fieldChanges = getCustomerFieldChanges(existingCustomer, updatedCustomer);
+
     await logEntityAudit({
       shop: req.shopId,
       entityType: "CUSTOMER",
       entityId: updatedCustomer._id,
       action: "UPDATE",
       actor: req.user?._id,
-      meta: { updatedFields: Object.keys(payload || {}) },
+      meta: {
+        updatedFields: Object.keys(payload || {}),
+        changes: fieldChanges,
+      },
     });
     return res.status(200).json({
       success: true,
