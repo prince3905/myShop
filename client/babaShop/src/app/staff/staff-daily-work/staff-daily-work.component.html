@@ -298,7 +298,7 @@
                     </td>
                     <td class="amount-cell cell-earned">
                       <div>Rs {{ item.earnedAmount | number: '1.2-2' }}</div>
-                      <div class="table-note" *ngIf="getActualBoxCostPreview(item) > 0">
+                      <div class="table-note" *ngIf="canViewSensitivePricing && getActualBoxCostPreview(item) > 0">
                         Actual Box Cost Rs {{ getActualBoxCostPreview(item) | number: '1.2-2' }}
                       </div>
                     </td>

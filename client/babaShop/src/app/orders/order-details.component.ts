@@ -84,7 +84,13 @@ export class OrderDetailsComponent implements OnInit {
   }
 
   canEditOrder(): boolean {
-    return !this.authService.isGlobalReadOnlyMode() && `${this.order?.orderStatus || ""}`.toUpperCase() === "PENDING";
+    return this.authService.can("sales.orders.manage")
+      && !this.authService.isGlobalReadOnlyMode()
+      && `${this.order?.orderStatus || ""}`.toUpperCase() === "PENDING";
+  }
+
+  canCollectPayment(): boolean {
+    return this.authService.can("sales.orders.manage") && !this.authService.isGlobalReadOnlyMode();
   }
 
   getEditOrderHint(): string {
@@ -105,7 +111,7 @@ export class OrderDetailsComponent implements OnInit {
 
   collectPayment(): void {
     if (!this.order?._id) return;
-    if (this.authService.isGlobalReadOnlyMode()) {
+    if (!this.canCollectPayment()) {
       this.snackBar.open("Select a shop first to collect payment", "Close", { duration: 2600 });
       return;
     }

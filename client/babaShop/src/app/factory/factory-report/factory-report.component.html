@@ -198,11 +198,11 @@
                   <span>Worker Rate / Box</span>
                   <strong>Rs {{ selectedProduction.workerRatePerUnit | number: "1.2-2" }}</strong>
                 </div>
-                <div class="detail-pill">
+                <div class="detail-pill" *ngIf="canViewSensitivePricing">
                   <span>Cost / Box</span>
                   <strong>Rs {{ selectedProduction.costPerUnit | number: "1.2-2" }}</strong>
                 </div>
-                <div class="detail-pill">
+                <div class="detail-pill" *ngIf="canViewSensitivePricing">
                   <span>Actual Box Cost</span>
                   <strong>Rs {{ selectedProduction.actualCostPerUnit | number: "1.2-2" }}</strong>
                 </div>

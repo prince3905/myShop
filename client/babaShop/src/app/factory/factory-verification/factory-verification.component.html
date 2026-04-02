@@ -111,17 +111,22 @@
                   <div class="table-note" *ngIf="row.verifiedQty">Verified {{ row.verifiedQty }} {{ row.unit || 'PCS' }}</div>
                 </td>
                 <td class="amount-cell cell-cost">
-                  <div>Rs {{ getActualBoxCost(row) | number: "1.2-2" }}</div>
-                  <div class="table-note">
-                    M {{ getMaterialCost(row) | number: "1.2-2" }} · W {{ row.earnedAmount | number: "1.2-2" }}
-                  </div>
+                  <ng-container *ngIf="canViewSensitivePricing; else hiddenCostBlock">
+                    <div>Rs {{ getActualBoxCost(row) | number: "1.2-2" }}</div>
+                    <div class="table-note">
+                      M {{ getMaterialCost(row) | number: "1.2-2" }} · W {{ row.earnedAmount | number: "1.2-2" }}
+                    </div>
+                  </ng-container>
+                  <ng-template #hiddenCostBlock>
+                    <div class="table-note">Cost hidden</div>
+                  </ng-template>
                 </td>
                 <td class="amount-cell cell-pricing">
                   <div>Sell Rs {{ getShopSellingPrice(row) | number: "1.2-2" }}</div>
-                  <div class="table-note" *ngIf="row.stockPushStatus === 'PUSHED'">
+                  <div class="table-note" *ngIf="canViewSensitivePricing && row.stockPushStatus === 'PUSHED'">
                     Shop Cost Rs {{ getDisplayedCostPrice(row) | number: "1.2-2" }}
                   </div>
-                  <div class="table-note" *ngIf="row.stockPushStatus !== 'PUSHED'">
+                  <div class="table-note" *ngIf="canViewSensitivePricing && row.stockPushStatus !== 'PUSHED'">
                     Will Push Cost Rs {{ getActualBoxCost(row) | number: "1.2-2" }}
                   </div>
                 </td>

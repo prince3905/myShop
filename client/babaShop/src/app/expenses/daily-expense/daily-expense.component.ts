@@ -120,7 +120,7 @@ export class DailyExpenseComponent implements OnInit {
   }
 
   get canManage(): boolean {
-    return ["SUPER_ADMIN", "ADMIN", "MANAGER"].includes(`${this.userRole || ""}`);
+    return this.authService.can("expenses.daily.manage") && !this.authService.isGlobalReadOnlyMode();
   }
 
   get departmentOptions(): string[] {

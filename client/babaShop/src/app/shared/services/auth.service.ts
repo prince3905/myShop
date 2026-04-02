@@ -259,6 +259,10 @@ export class AuthService {
   }
 
   canViewSensitivePricing(): boolean {
+    const role = this.getUserRole() || "";
+    if (!["SUPER_ADMIN", "ADMIN"].includes(role)) {
+      return false;
+    }
     return this.can("dashboard.financial");
   }
 

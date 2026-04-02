@@ -6,7 +6,7 @@
           <h4 class="card-title">Orders</h4>
           <p class="card-category">Track online and POS-origin orders with live status control</p>
         </div>
-        <button mat-raised-button color="primary" routerLink="/order/create" *ngIf="!authService.isGlobalReadOnlyMode()">Create Order</button>
+        <button mat-raised-button color="primary" routerLink="/order/create" *ngIf="canManageOrders()">Create Order</button>
       </div>
 
       <div class="card-body">
@@ -169,7 +169,7 @@
                   <mat-form-field appearance="outline" class="status-field">
                     <mat-select
                       [(ngModel)]="order.orderStatus"
-                      [disabled]="updatingOrderId === order._id || authService.isGlobalReadOnlyMode()"
+                      [disabled]="updatingOrderId === order._id || !canManageOrders()"
                       (selectionChange)="updateOrderStatus(order, 'orderStatus', $event.value)"
                     >
                       <mat-option *ngFor="let status of orderStatuses" [value]="status">
@@ -182,7 +182,7 @@
                   <mat-form-field appearance="outline" class="status-field">
                     <mat-select
                       [(ngModel)]="order.paymentStatus"
-                      [disabled]="updatingOrderId === order._id || authService.isGlobalReadOnlyMode()"
+                      [disabled]="updatingOrderId === order._id || !canManageOrders()"
                       (selectionChange)="updateOrderStatus(order, 'paymentStatus', $event.value)"
                     >
                       <mat-option *ngFor="let status of paymentStatuses" [value]="status">

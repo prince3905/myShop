@@ -60,7 +60,7 @@ export class StaffWorkItemsComponent implements OnInit {
   }
 
   get canManage(): boolean {
-    return ["SUPER_ADMIN", "ADMIN", "MANAGER"].includes(`${this.userRole || ""}`);
+    return this.authService.can("staff.daily_work") && ["SUPER_ADMIN", "ADMIN", "MANAGER"].includes(`${this.userRole || ""}`) && !this.authService.isGlobalReadOnlyMode();
   }
 
   loadAll(): void {

@@ -1,5 +1,6 @@
 import { Component, OnInit } from "@angular/core";
 import { MatSnackBar } from "@angular/material/snack-bar";
+import { AuthService } from "app/shared/services/auth.service";
 import { RawMaterialService } from "app/shared/services/raw-material.service";
 import { StaffDailyWorkService } from "app/shared/services/staff-daily-work.service";
 import { forkJoin } from "rxjs";
@@ -42,8 +43,13 @@ export class FactoryReportComponent implements OnInit {
   constructor(
     private staffDailyWorkService: StaffDailyWorkService,
     private rawMaterialService: RawMaterialService,
+    public authService: AuthService,
     private snackBar: MatSnackBar,
   ) {}
+
+  get canViewSensitivePricing(): boolean {
+    return this.authService.canViewSensitivePricing();
+  }
 
   ngOnInit(): void {
     this.loadReport();

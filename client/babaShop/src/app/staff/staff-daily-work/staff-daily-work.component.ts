@@ -91,6 +91,10 @@ export class StaffDailyWorkComponent implements OnInit {
     return ["SUPER_ADMIN", "ADMIN", "MANAGER"].includes(`${this.userRole || ""}`);
   }
 
+  get canViewSensitivePricing(): boolean {
+    return this.authService.canViewSensitivePricing();
+  }
+
   canEditRow(dailyWork: any): boolean {
     if (!dailyWork?._id) {
       return false;

@@ -191,7 +191,13 @@ export class OrdersComponent implements OnInit {
   }
 
   canEditOrder(order: any): boolean {
-    return !this.authService.isGlobalReadOnlyMode() && `${order?.orderStatus || ""}`.toUpperCase() === 'PENDING';
+    return this.authService.can("sales.orders.manage")
+      && !this.authService.isGlobalReadOnlyMode()
+      && `${order?.orderStatus || ""}`.toUpperCase() === 'PENDING';
+  }
+
+  canManageOrders(): boolean {
+    return this.authService.can("sales.orders.manage") && !this.authService.isGlobalReadOnlyMode();
   }
 
   getEditOrderHint(order: any): string {

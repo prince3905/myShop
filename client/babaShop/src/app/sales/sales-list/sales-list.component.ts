@@ -62,6 +62,10 @@ export class SalesListComponent implements OnInit {
     this.loadSales();
   }
 
+  get canCreateSale(): boolean {
+    return this.authService.can("sales.pos") && !this.authService.isGlobalReadOnlyMode();
+  }
+
   loadSales(): void {
     this.loading = true;
 
@@ -132,6 +136,9 @@ export class SalesListComponent implements OnInit {
   }
 
   openAddSaleModal(): void {
+    if (!this.canCreateSale) {
+      return;
+    }
     this.router.navigate(["/pos"]);
   }
 

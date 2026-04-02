@@ -1,5 +1,6 @@
 import { Component, OnInit } from "@angular/core";
 import { MatSnackBar } from "@angular/material/snack-bar";
+import { AuthService } from "app/shared/services/auth.service";
 import { StaffDailyWorkService } from "app/shared/services/staff-daily-work.service";
 
 @Component({
@@ -27,8 +28,13 @@ export class FactoryVerificationComponent implements OnInit {
 
   constructor(
     private staffDailyWorkService: StaffDailyWorkService,
+    public authService: AuthService,
     private snackBar: MatSnackBar,
   ) {}
+
+  get canViewSensitivePricing(): boolean {
+    return this.authService.canViewSensitivePricing();
+  }
 
   ngOnInit(): void {
     this.loadRows();

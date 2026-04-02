@@ -115,7 +115,7 @@
         <div class="form-section">
           <div class="section-title">Price Setup</div>
           <div class="row">
-            <div class="col-md-4">
+            <div class="col-md-4" *ngIf="authService.canViewSensitivePricing()">
               <mat-form-field appearance="outline" class="w-100">
                 <mat-label>Cost Price</mat-label>
                 <input matInput type="number" [(ngModel)]="variation.costPrice" [ngModelOptions]="{standalone: true}" />
@@ -215,7 +215,7 @@
                 <th>Barcode</th>
                 <th>Attributes</th>
                 <th>Qty</th>
-                <th>Cost</th>
+                <th *ngIf="authService.canViewSensitivePricing()">Cost</th>
                 <th>Selling</th>
                 <th>Created At</th>
                 <th>Status</th>
@@ -233,7 +233,7 @@
                   {{ v.attributes?.storage || "-" }}
                 </td>
                 <td>{{ v.quantity || 0 }}</td>
-                <td>{{ v.costPrice || 0 }}</td>
+                <td *ngIf="authService.canViewSensitivePricing()">{{ v.costPrice || 0 }}</td>
                 <td>{{ v.sellingPrice || 0 }}</td>
                 <td>{{ v.createdAt ? (v.createdAt | date: "medium") : "-" }}</td>
                 <td>
