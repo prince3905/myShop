@@ -79,15 +79,19 @@ const calculateEarnedAmount = (staff, attendanceStatus, unitsCompleted, incoming
     return explicitAmount;
   }
 
+  const units = Number(unitsCompleted || 0);
+  const resolvedPieceRate = Number(pieceRate);
+  if (Number.isFinite(resolvedPieceRate) && resolvedPieceRate > 0 && units > 0) {
+    return resolvedPieceRate * units;
+  }
+
   const rate = Number(staff?.rate || 0);
   if (!Number.isFinite(rate) || rate <= 0) {
     return 0;
   }
 
   if (`${staff?.rateType || ""}` === "PIECE") {
-    const resolvedPieceRate = Number(pieceRate ?? staff?.rate ?? 0);
-    const units = Number(unitsCompleted || 0);
-    return Number.isFinite(units) && units > 0 ? resolvedPieceRate * units : 0;
+    return units > 0 ? rate * units : 0;
   }
 
   if (`${staff?.rateType || ""}` === "MONTHLY") {
