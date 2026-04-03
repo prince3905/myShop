@@ -31,15 +31,7 @@ const normalizeOptionalDate = (raw) => {
 };
 
 const resolveAccessibleStaffIds = async (req) => {
-  if (!STAFF_ONLY_FILTER(req)) {
-    return null;
-  }
-  const staffRows = await Staff.find({
-    shop: req.shopId,
-    isDeleted: false,
-    createdBy: req.user._id,
-  }).select("_id");
-  return staffRows.map((row) => row._id);
+  return null;
 };
 
 exports.createStaffPayment = async (req, res) => {
@@ -66,10 +58,6 @@ exports.createStaffPayment = async (req, res) => {
 
     if (!staff) {
       return res.status(404).json({ success: false, message: "Staff not found" });
-    }
-
-    if (STAFF_ONLY_FILTER(req) && `${staff.createdBy}` !== `${req.user._id}`) {
-      return res.status(403).json({ success: false, message: "You can only create entries for your own staff records" });
     }
 
     const payload = {

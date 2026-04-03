@@ -8,6 +8,13 @@ const auth = require("../middleware/authMiddleware");
    SUPER ADMIN ROUTE (NO attachShop)
 ================================ */
 router.get("/admin/all", auth.protect, shop.getAllShops);
+router.get(
+  "/push-targets",
+  auth.protect,
+  auth.authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER"),
+  auth.authorizeFeature("factory.push_to_shop"),
+  shop.getPushTargetShops,
+);
 
 /* ================================
    BELOW ROUTES REQUIRE SHOP CONTEXT

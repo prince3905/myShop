@@ -4,14 +4,14 @@
 
 .page-header-card h2 {
   margin: 0;
-  font-size: 22px;
+  font-size: 19px;
   font-weight: 800;
   line-height: 1.2;
 }
 
 .page-header-card p {
   margin: 6px 0 0;
-  font-size: 12px;
+  font-size: 11px;
   line-height: 1.45;
   color: #6b7280;
 }
@@ -27,8 +27,8 @@
   border: 1px solid #e6ecf4;
   border-radius: 14px;
   background: #fff;
-  padding: 12px 14px;
-  min-height: 78px;
+  padding: 10px 12px;
+  min-height: 70px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -36,17 +36,17 @@
 }
 
 .summary-card strong {
-  font-size: 22px;
+  font-size: 18px;
   line-height: 1.1;
   color: #111827;
 }
 
 .summary-label {
-  font-size: 11px;
+  font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: #6b7280;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .filter-card {
@@ -70,7 +70,7 @@
 
 .verification-table th {
   border-top: 0;
-  font-size: 11px;
+  font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: #6b7280;
@@ -79,19 +79,21 @@
 
 .verification-table td {
   vertical-align: top;
-  padding-top: 10px;
-  padding-bottom: 10px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  font-size: 12px;
 }
 
 .table-primary {
+  font-size: 12px;
   font-weight: 700;
   color: #1f2937;
 }
 
 .table-note {
-  font-size: 11px;
+  font-size: 10px;
   color: #6b7280;
-  line-height: 1.45;
+  line-height: 1.4;
 }
 
 .material-preview {
@@ -112,14 +114,20 @@
   white-space: nowrap;
 }
 
+.compact-push-select {
+  min-width: 190px;
+  margin-bottom: 6px;
+  display: block;
+}
+
 .status-chip {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 88px;
-  padding: 4px 10px;
+  min-width: 78px;
+  padding: 3px 9px;
   border-radius: 999px;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.03em;
   background: #f5f5f5;
@@ -140,9 +148,10 @@
 
 .btn-sm {
   min-width: 72px;
-  height: 34px;
-  line-height: 32px;
-  padding: 0 10px;
+  height: 32px;
+  line-height: 30px;
+  padding: 0 8px;
+  font-size: 11px;
 }
 
 .status-shortcuts {

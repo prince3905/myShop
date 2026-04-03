@@ -239,3 +239,20 @@ exports.getAllShops = async (req, res) => {
     });
   }
 };
+
+exports.getPushTargetShops = async (req, res) => {
+  try {
+    const shops = await Shop.find({ isActive: true }).select("name shopCode isActive").sort({ name: 1 });
+
+    return res.status(200).json({
+      success: true,
+      count: shops.length,
+      data: shops,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};

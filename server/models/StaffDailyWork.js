@@ -118,6 +118,16 @@ const staffDailyWorkSchema = new mongoose.Schema(
       min: 0,
       default: 0,
     },
+    pushedToShop: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Shop",
+      default: null,
+    },
+    pushedToVariation: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "ProductVariation",
+      default: null,
+    },
     pushedAt: {
       type: Date,
       default: null,

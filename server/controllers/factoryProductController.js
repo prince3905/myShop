@@ -313,6 +313,39 @@ exports.getFactoryProducts = async (req, res) => {
   }
 };
 
+exports.getFactoryProductOptions = async (req, res) => {
+  try {
+    if (!req.shopId) {
+      return res.status(400).json({ success: false, message: "Please select a shop first" });
+    }
+
+    const filter = {
+      shop: req.shopId,
+      isDeleted: false,
+    };
+
+    const { search, active } = req.query || {};
+
+    if (`${search || ""}`.trim()) {
+      const regex = new RegExp(`${search}`.trim(), "i");
+      filter.$or = [{ name: regex }, { code: regex }, { note: regex }];
+    }
+
+    if (`${active || ""}` !== "") {
+      filter.active = `${active}` === "true";
+    }
+
+    const products = await populateFactoryProduct(
+      FactoryProduct.find(filter).sort({ active: -1, name: 1, createdAt: -1 }),
+    );
+
+    return res.json({ success: true, products });
+  } catch (error) {
+    console.error("Get Factory Product Options Error:", error);
+    return res.status(500).json({ success: false, message: "Failed to fetch factory product options" });
+  }
+};
+
 exports.getFactoryProductSummary = async (req, res) => {
   try {
     if (!req.shopId) {

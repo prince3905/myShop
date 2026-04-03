@@ -8,6 +8,7 @@ router.use(attachShop);
 router.use(requireShopSelectionForWrite);
 
 router.get("/summary", authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"), authorizeFeature("staff.daily_work"), staffDailyWorkController.getDailyWorkSummary);
+router.get("/push-history", authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER"), authorizeFeature("factory.push_to_shop"), staffDailyWorkController.getFactoryPushHistory);
 router.get("/", authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"), authorizeFeature("staff.daily_work"), staffDailyWorkController.getDailyWorks);
 router.post("/", authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"), authorizeFeature("staff.daily_work"), staffDailyWorkController.createDailyWork);
 router.put("/:id", authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"), authorizeFeature("staff.daily_work"), staffDailyWorkController.updateDailyWork);

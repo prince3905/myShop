@@ -28,6 +28,17 @@ export class FactoryProductService {
     return this.http.get(`${this.baseURL}/api/factory-products`, { params });
   }
 
+  getProductOptions(filters: any = {}): Observable<any> {
+    let params = new HttpParams();
+    Object.keys(filters || {}).forEach((key) => {
+      const value = filters[key];
+      if (value !== null && value !== undefined && `${value}`.trim?.() !== "" && value !== "") {
+        params = params.set(key, String(value));
+      }
+    });
+    return this.http.get(`${this.baseURL}/api/factory-products/options`, { params });
+  }
+
   createProduct(payload: any): Observable<any> {
     return this.http.post(`${this.baseURL}/api/factory-products`, payload);
   }

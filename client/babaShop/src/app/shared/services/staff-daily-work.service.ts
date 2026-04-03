@@ -40,8 +40,19 @@ export class StaffDailyWorkService {
     return this.http.patch(`${this.baseURL}/api/staff-daily-work/${id}/verification`, payload);
   }
 
-  pushDailyWorkToStock(id: string): Observable<any> {
-    return this.http.patch(`${this.baseURL}/api/staff-daily-work/${id}/push-stock`, {});
+  pushDailyWorkToStock(id: string, payload: any = {}): Observable<any> {
+    return this.http.patch(`${this.baseURL}/api/staff-daily-work/${id}/push-stock`, payload);
+  }
+
+  getPushHistory(filters: any = {}): Observable<any> {
+    let params = new HttpParams();
+    Object.keys(filters || {}).forEach((key) => {
+      const value = filters[key];
+      if (value !== null && value !== undefined && `${value}`.trim?.() !== "" && value !== "") {
+        params = params.set(key, String(value));
+      }
+    });
+    return this.http.get(`${this.baseURL}/api/staff-daily-work/push-history`, { params });
   }
 
   deleteDailyWork(id: string): Observable<any> {

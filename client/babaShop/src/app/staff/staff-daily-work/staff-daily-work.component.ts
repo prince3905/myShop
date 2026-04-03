@@ -213,7 +213,7 @@ export class StaffDailyWorkComponent implements OnInit {
   }
 
   loadFactoryProducts(): void {
-    this.factoryProductService.getProducts({ active: true }).subscribe({
+    this.factoryProductService.getProductOptions({ active: true }).subscribe({
       next: (response) => {
         this.factoryProductOptions = response?.products || [];
       },
@@ -224,7 +224,7 @@ export class StaffDailyWorkComponent implements OnInit {
   }
 
   loadRawMaterials(): void {
-    this.rawMaterialService.getMaterials({ active: true }).subscribe({
+    this.rawMaterialService.getMaterialOptions({ active: true }).subscribe({
       next: (response) => {
         this.rawMaterialOptions = response?.materials || [];
       },

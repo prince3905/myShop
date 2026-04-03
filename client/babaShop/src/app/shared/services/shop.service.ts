@@ -29,6 +29,10 @@ export class ShopService {
     return this.http.get<any>(`${this.baseURL}/api/shops/admin/all`);
   }
 
+  getPushTargetShops() {
+    return this.http.get<any>(`${this.baseURL}/api/shops/push-targets`);
+  }
+
   createShop(payload: any) {
     return this.http.post<any>(`${this.baseURL}/api/shops`, payload);
   }

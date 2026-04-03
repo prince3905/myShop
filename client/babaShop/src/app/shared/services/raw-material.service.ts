@@ -28,6 +28,17 @@ export class RawMaterialService {
     return this.http.get(`${this.baseURL}/api/raw-materials`, { params });
   }
 
+  getMaterialOptions(filters: any = {}): Observable<any> {
+    let params = new HttpParams();
+    Object.keys(filters || {}).forEach((key) => {
+      const value = filters[key];
+      if (value !== null && value !== undefined && `${value}`.trim?.() !== "" && value !== "") {
+        params = params.set(key, String(value));
+      }
+    });
+    return this.http.get(`${this.baseURL}/api/raw-materials/options`, { params });
+  }
+
   getMaterialHistory(id: string): Observable<any> {
     return this.http.get(`${this.baseURL}/api/raw-materials/${id}/history`);
   }

@@ -117,6 +117,21 @@ exports.authorizeFeature = (featureKey) => {
   };
 };
 
+exports.authorizeAnyFeature = (...featureKeys) => {
+  return async (req, res, next) => {
+    for (const featureKey of featureKeys) {
+      if (await hasFeatureAccess(req.user?.role, featureKey)) {
+        return next();
+      }
+    }
+
+    return res.status(403).json({
+      success: false,
+      message: `Feature access denied: ${featureKeys.join(" | ")}`,
+    });
+  };
+};
+
 
 /* =========================================
    ATTACH SHOP (MULTI-TENANT SECURITY)

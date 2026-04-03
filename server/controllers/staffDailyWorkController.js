@@ -6,6 +6,8 @@ const FactoryProduct = require("../models/FactoryProduct");
 const RawMaterialPurchase = require("../models/RawMaterialPurchase");
 const ProductVariation = require("../models/ProductVariation");
 const Stock = require("../models/Stock");
+const Shop = require("../models/Shop");
+const FactoryPushHistory = require("../models/FactoryPushHistory");
 const { applyStockTransaction } = require("../utils/stock.service");
 
 const STAFF_ONLY_FILTER = (req) => `${req.user?.role || ""}` === "STAFF";
@@ -51,6 +53,20 @@ const populateDailyWorkQuery = (query) =>
     .populate("createdBy", "email role pFname pLname")
     .populate("updatedBy", "email role pFname pLname")
     .populate("verifiedBy", "email role pFname pLname")
+    .populate("pushedBy", "email role pFname pLname")
+    .populate("pushedToShop", "name shopCode")
+    .populate("pushedToVariation", "sku attributes");
+
+const populatePushHistoryQuery = (query) =>
+  query
+    .populate("sourceShop", "name shopCode")
+    .populate("targetShop", "name shopCode")
+    .populate("staff", "name workType")
+    .populate("factoryProduct", "name")
+    .populate("sourceVariation", "sku")
+    .populate("targetVariation", "sku")
+    .populate("product", "name")
+    .populate("model", "name")
     .populate("pushedBy", "email role pFname pLname");
 
 const resolveAccessibleStaffIds = async (req) => {
@@ -440,6 +456,49 @@ exports.getDailyWorks = async (req, res) => {
   }
 };
 
+exports.getFactoryPushHistory = async (req, res) => {
+  try {
+    if (!req.shopId) {
+      return res.status(400).json({ success: false, message: "Please select a shop first" });
+    }
+
+    const filter = {
+      sourceShop: req.shopId,
+    };
+
+    const { search, targetShop, dateFrom, dateTo } = req.query || {};
+
+    if (`${targetShop || ""}`.trim() && mongoose.Types.ObjectId.isValid(`${targetShop}`.trim())) {
+      filter.targetShop = new mongoose.Types.ObjectId(`${targetShop}`.trim());
+    }
+
+    const from = normalizeOptionalDate(dateFrom);
+    const to = normalizeOptionalDate(dateTo);
+    if (from || to) {
+      filter.pushedAt = {};
+      if (from) filter.pushedAt.$gte = startOfDay(from);
+      if (to) filter.pushedAt.$lte = endOfDay(to);
+    }
+
+    if (`${search || ""}`.trim()) {
+      const regex = new RegExp(`${search}`.trim(), "i");
+      filter.$or = [
+        { sku: regex },
+        { note: regex },
+      ];
+    }
+
+    const rows = await populatePushHistoryQuery(
+      FactoryPushHistory.find(filter).sort({ pushedAt: -1, createdAt: -1 }),
+    );
+
+    return res.json({ success: true, rows });
+  } catch (error) {
+    console.error("Get Factory Push History Error:", error);
+    return res.status(500).json({ success: false, message: "Failed to fetch factory push history" });
+  }
+};
+
 exports.getDailyWorkSummary = async (req, res) => {
   try {
     if (!req.shopId) {
@@ -710,18 +769,50 @@ exports.pushDailyWorkToStock = async (req, res) => {
       return res.status(400).json({ success: false, message: "Linked factory product not found" });
     }
 
-    const variationId = `${factoryProduct.shopVariation || ""}`.trim();
-    if (!mongoose.Types.ObjectId.isValid(variationId)) {
+    const sourceVariationId = `${factoryProduct.shopVariation || ""}`.trim();
+    if (!mongoose.Types.ObjectId.isValid(sourceVariationId)) {
       return res.status(400).json({ success: false, message: "Factory product me shop variation link missing hai" });
     }
 
-    const variation = await ProductVariation.findOne({
-      _id: variationId,
+    const sourceVariation = await ProductVariation.findOne({
+      _id: sourceVariationId,
       shop: req.shopId,
-    }).select("_id product model sku quantity costPrice");
+    }).select("_id product model sku quantity costPrice sellingPrice");
 
-    if (!variation) {
+    if (!sourceVariation) {
       return res.status(400).json({ success: false, message: "Mapped shop variation not found for current shop" });
+    }
+
+    const requestedTargetShopId = `${req.body?.targetShop || req.shopId || ""}`.trim();
+    if (!mongoose.Types.ObjectId.isValid(requestedTargetShopId)) {
+      return res.status(400).json({ success: false, message: "Valid target shop is required" });
+    }
+
+    const targetShop = await Shop.findOne({
+      _id: requestedTargetShopId,
+      isActive: true,
+    }).select("_id name shopCode");
+
+    if (!targetShop) {
+      return res.status(404).json({ success: false, message: "Target shop not found or inactive" });
+    }
+
+    let targetVariation = null;
+
+    if (`${targetShop._id}` === `${req.shopId}`) {
+      targetVariation = sourceVariation;
+    } else {
+      targetVariation = await ProductVariation.findOne({
+        shop: targetShop._id,
+        sku: sourceVariation.sku,
+      }).select("_id product model sku quantity costPrice sellingPrice");
+    }
+
+    if (!targetVariation) {
+      return res.status(400).json({
+        success: false,
+        message: `SKU ${sourceVariation.sku} target shop ${targetShop.shopCode || targetShop.name} me mapped nahi mila`,
+      });
     }
 
     const costSnapshot = computeFactoryCosts({
@@ -732,38 +823,64 @@ exports.pushDailyWorkToStock = async (req, res) => {
         : 0,
     });
 
-    const existingQty = Number(variation.quantity || 0);
-    const existingCostPrice = Number(variation.costPrice || 0);
+    const existingQty = Number(targetVariation.quantity || 0);
+    const existingCostPrice = Number(targetVariation.costPrice || 0);
     const nextQty = existingQty + pushQty;
     const nextCostPrice = nextQty > 0
       ? (((existingQty * existingCostPrice) + (pushQty * Number(costSnapshot.actualCostPerUnit || 0))) / nextQty)
       : Number(costSnapshot.actualCostPerUnit || 0);
 
     await applyStockTransaction({
-      shop: req.shopId,
-      product: variation.product,
-      model: variation.model,
-      variation: variation._id,
-      sku: variation.sku,
+      shop: targetShop._id,
+      product: targetVariation.product,
+      model: targetVariation.model,
+      variation: targetVariation._id,
+      sku: targetVariation.sku,
       type: "IN",
       quantity: pushQty,
       referenceType: "MANUAL",
       referenceId: dailyWork._id,
-      note: `Factory verified output push - ${factoryProduct.name || dailyWork.factoryProductName || "Factory Product"}`,
+      note: `Factory verified output push to ${targetShop.shopCode || targetShop.name} - ${factoryProduct.name || dailyWork.factoryProductName || "Factory Product"}`,
       createdBy: req.user._id,
     });
 
-    await ProductVariation.findByIdAndUpdate(variation._id, {
+    await ProductVariation.findByIdAndUpdate(targetVariation._id, {
       costPrice: Number(nextCostPrice || 0),
     });
 
     await Stock.findOneAndUpdate(
-      { shop: req.shopId, variation: variation._id },
-      { $set: { product: variation.product, model: variation.model, sku: variation.sku } },
+      { shop: targetShop._id, variation: targetVariation._id },
+      { $set: { product: targetVariation.product, model: targetVariation.model, sku: targetVariation.sku } },
     );
+
+    await FactoryPushHistory.create({
+      sourceShop: req.shopId,
+      targetShop: targetShop._id,
+      dailyWork: dailyWork._id,
+      staff: dailyWork.staff || null,
+      factoryProduct: factoryProduct._id || null,
+      sourceVariation: sourceVariation._id,
+      targetVariation: targetVariation._id,
+      product: targetVariation.product,
+      model: targetVariation.model,
+      sku: targetVariation.sku || sourceVariation.sku || "",
+      quantity: pushQty,
+      unit: `${dailyWork.unit || "PCS"}`.trim(),
+      productionDate: dailyWork.entryDate || null,
+      verifiedAt: dailyWork.verifiedAt || null,
+      verificationStatus: `${dailyWork.verificationStatus || ""}`.trim().toUpperCase(),
+      costPerUnit: Number(costSnapshot.actualCostPerUnit || 0),
+      totalCost: Number(costSnapshot.actualBatchCost || 0),
+      sellingPriceSnapshot: Number(targetVariation.sellingPrice || sourceVariation.sellingPrice || factoryProduct.defaultSellingPrice || 0),
+      note: `Factory push from ${req.shopId} to ${targetShop.shopCode || targetShop.name}`,
+      pushedAt: new Date(),
+      pushedBy: req.user._id,
+    });
 
     dailyWork.stockPushStatus = "PUSHED";
     dailyWork.pushedQty = pushQty;
+    dailyWork.pushedToShop = targetShop._id;
+    dailyWork.pushedToVariation = targetVariation._id;
     dailyWork.pushedAt = new Date();
     dailyWork.pushedBy = req.user._id;
     dailyWork.updatedBy = req.user._id;
@@ -773,7 +890,7 @@ exports.pushDailyWorkToStock = async (req, res) => {
 
     return res.json({
       success: true,
-      message: "Approved factory output pushed to shop stock",
+      message: `Approved factory output pushed to ${targetShop.shopCode || targetShop.name}`,
       dailyWork: populated,
     });
   } catch (error) {

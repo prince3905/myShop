@@ -26,6 +26,26 @@
       </div>
     </div>
 
+    <div class="summary-grid">
+      <div class="summary-card">
+        <span class="summary-label">Factory Pending Qty</span>
+        <strong>{{ factoryPendingQty || 0 }}</strong>
+      </div>
+      <div class="summary-card">
+        <span class="summary-label">Ready To Push</span>
+        <strong>{{ readyToPushCount || 0 }}</strong>
+      </div>
+      <div class="summary-card">
+        <span class="summary-label">Pending Products</span>
+        <strong>{{ productWiseFactoryPending.length || 0 }}</strong>
+      </div>
+      <div class="summary-card">
+        <span class="summary-label">Meaning</span>
+        <strong>Factory Me Hai</strong>
+        <div class="table-note">Verified hai, abhi kisi shop me push nahi hua.</div>
+      </div>
+    </div>
+
     <div class="filter-actions status-shortcuts">
       <button mat-stroked-button class="btn btn-outline-danger" [class.active-status]="!filters.verificationStatus" (click)="showAll()">All</button>
       <button mat-stroked-button class="btn btn-outline-danger" [class.active-status]="filters.verificationStatus === 'PENDING'" (click)="showStatus('PENDING')">Pending</button>
@@ -139,6 +159,23 @@
                   <div class="table-note" *ngIf="row.stockPushStatus === 'PUSHED'">
                     Pushed {{ row.pushedQty || 0 }} {{ row.unit || 'PCS' }}
                   </div>
+                  <div class="table-note" *ngIf="row.stockPushStatus === 'PUSHED' && row.pushedToShop?.name">
+                    To {{ getShopLabel(row.pushedToShop) }}
+                  </div>
+                  <div class="table-note" *ngIf="row.stockPushStatus === 'PUSHED' && row.pushedAt">
+                    {{ row.pushedAt | date: "dd/MM/yyyy hh:mm a" }}
+                  </div>
+                  <mat-form-field
+                    class="example-full-width compact-push-select"
+                    *ngIf="row.stockPushStatus !== 'PUSHED' && (row.verificationStatus === 'APPROVED' || row.verificationStatus === 'PARTIAL')"
+                  >
+                    <mat-label>Target Shop</mat-label>
+                    <mat-select [(ngModel)]="selectedTargetShopByRow[row._id]" name="targetShop_{{ row._id }}">
+                      <mat-option *ngFor="let shop of filteredTargetShopOptions" [value]="shop._id">
+                        {{ getShopLabel(shop) }}
+                      </mat-option>
+                    </mat-select>
+                  </mat-form-field>
                   <button
                     *ngIf="row.stockPushStatus !== 'PUSHED' && (row.verificationStatus === 'APPROVED' || row.verificationStatus === 'PARTIAL')"
                     mat-stroked-button
@@ -159,6 +196,90 @@
                     <button mat-stroked-button class="btn btn-outline-danger btn-sm" [disabled]="actingId === row._id || row.stockPushStatus === 'PUSHED'" (click)="reject(row)">Reject</button>
                   </div>
                 </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" *ngIf="!loading">
+      <div class="card-header card-header-danger">
+        <h4 class="card-title">Factory Push History</h4>
+      </div>
+      <div class="card-body">
+        <div *ngIf="pushHistoryRows.length === 0" class="table-empty">No factory push history yet.</div>
+        <div class="table-wrap" *ngIf="pushHistoryRows.length > 0">
+          <table class="table report-table verification-table">
+            <thead>
+              <tr>
+                <th>Pushed At</th>
+                <th>Production Date</th>
+                <th>Worker</th>
+                <th>Product</th>
+                <th>Qty</th>
+                <th>From Factory</th>
+                <th>To Shop</th>
+                <th>SKU</th>
+                <th *ngIf="canViewSensitivePricing">Cost</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let row of pushHistoryRows">
+                <td>{{ row.pushedAt | date: "dd/MM/yyyy hh:mm a" }}</td>
+                <td>{{ row.productionDate | date: "dd/MM/yyyy" }}</td>
+                <td>
+                  <div class="table-primary">{{ row.staff?.name || "-" }}</div>
+                  <div class="table-note">{{ row.staff?.workType || "-" }}</div>
+                </td>
+                <td>{{ row.factoryProduct?.name || "-" }}</td>
+                <td>{{ row.quantity || 0 }} {{ row.unit || "PCS" }}</td>
+                <td>
+                  <div class="table-primary">{{ getShopLabel(row.sourceShop) }}</div>
+                </td>
+                <td>
+                  <div class="table-primary">{{ getShopLabel(row.targetShop) }}</div>
+                  <div class="table-note" *ngIf="isSameShopPush(row)">Same Shop Push</div>
+                </td>
+                <td>{{ row.sku || row.targetVariation?.sku || "-" }}</td>
+                <td *ngIf="canViewSensitivePricing">
+                  <div>Rs {{ row.costPerUnit | number: "1.2-2" }}/{{ row.unit || "PCS" }}</div>
+                  <div class="table-note">Total Rs {{ row.totalCost | number: "1.2-2" }}</div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" *ngIf="!loading">
+      <div class="card-header card-header-danger">
+        <h4 class="card-title">Factory Pending Stock</h4>
+      </div>
+      <div class="card-body">
+        <div *ngIf="productWiseFactoryPending.length === 0" class="table-empty">
+          Abhi koi verified-but-not-pushed maal factory me pending nahi hai.
+        </div>
+        <div class="table-wrap" *ngIf="productWiseFactoryPending.length > 0">
+          <table class="table report-table verification-table">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Pending Qty</th>
+                <th>Open Entries</th>
+                <th>Last Production</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let row of productWiseFactoryPending">
+                <td>
+                  <div class="table-primary">{{ row.productName }}</div>
+                  <div class="table-note">Abhi factory me pada hai, shop push pending hai.</div>
+                </td>
+                <td>{{ row.qty || 0 }} {{ row.unit || "PCS" }}</td>
+                <td>{{ row.entries || 0 }}</td>
+                <td>{{ row.lastProductionDate | date: "dd/MM/yyyy" }}</td>
               </tr>
             </tbody>
           </table>

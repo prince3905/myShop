@@ -8,21 +8,21 @@ const escapeRegex = (value = "") => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
 
 const objectIds = (materials) => materials.map((item) => item._id);
 
-const buildMovementMatch = (req, extra = {}) => {
+const buildMovementMatch = (req, extra = {}, options = {}) => {
   const match = {
     shop: req.shopId,
     isDeleted: false,
     ...extra,
   };
 
-  if (STAFF_ONLY_FILTER(req)) {
+  if (!options.ignoreCreatorScope && STAFF_ONLY_FILTER(req)) {
     match.createdBy = req.user._id;
   }
 
   return match;
 };
 
-const attachStockMetrics = async (req, materials) => {
+const attachStockMetrics = async (req, materials, options = {}) => {
   if (!materials.length) {
     return [];
   }
@@ -33,7 +33,7 @@ const attachStockMetrics = async (req, materials) => {
     RawMaterialPurchase.find(
       buildMovementMatch(req, {
         status: "APPROVED",
-      }),
+      }, options),
     )
       .select("items")
       .lean(),
@@ -42,7 +42,7 @@ const attachStockMetrics = async (req, materials) => {
         factoryProduct: { $ne: null },
         attendanceStatus: { $ne: "ABSENT" },
         unitsCompleted: { $gt: 0 },
-      }),
+      }, options),
     )
       .select("factoryProduct unitsCompleted")
       .populate("factoryProduct", "standardMaterialLines")
@@ -203,6 +203,46 @@ exports.getRawMaterials = async (req, res) => {
   } catch (error) {
     console.error("Get Raw Materials Error:", error);
     return res.status(500).json({ success: false, message: "Failed to fetch raw materials" });
+  }
+};
+
+exports.getRawMaterialOptions = async (req, res) => {
+  try {
+    if (!req.shopId) {
+      return res.status(400).json({ success: false, message: "Please select a shop first" });
+    }
+
+    const filter = {
+      shop: req.shopId,
+      isDeleted: false,
+    };
+
+    const { search, active } = req.query || {};
+    if (`${active || ""}`.trim()) {
+      filter.active = `${active}`.trim() === "true";
+    }
+    if (`${search || ""}`.trim()) {
+      const regex = new RegExp(`${search}`.trim(), "i");
+      filter.$or = [
+        { name: regex },
+        { code: regex },
+        { sizeLabel: regex },
+        { colorLabel: regex },
+        { note: regex },
+      ];
+    }
+
+    const materials = await RawMaterial.find(filter)
+      .sort({ active: -1, createdAt: -1 })
+      .populate("createdBy", "email role pFname pLname")
+      .lean();
+
+    const materialsWithMetrics = await attachStockMetrics(req, materials, { ignoreCreatorScope: true });
+
+    return res.json({ success: true, materials: materialsWithMetrics });
+  } catch (error) {
+    console.error("Get Raw Material Options Error:", error);
+    return res.status(500).json({ success: false, message: "Failed to fetch raw material options" });
   }
 };
 
