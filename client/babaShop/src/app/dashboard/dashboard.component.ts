@@ -15,6 +15,7 @@ import { Router } from "@angular/router";
   styleUrls: ["./dashboard.component.css"],
 })
 export class DashboardComponent implements OnInit, OnDestroy {
+  selectedRange: "daily" | "weekly" | "monthly" | "yearly" | "all" = "daily";
   shops: any[] = [];
   selectedShop: string | null = null;
   isSuperAdmin = false;
@@ -287,7 +288,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   loadKpis() {
     this.loadingKpis = true;
-    this.dashboardService.getKpis().subscribe({
+    this.dashboardService.getKpisByRange(this.selectedRange).subscribe({
       next: (res: any) => {
         this.kpis = {
           ...this.kpis,
@@ -373,7 +374,115 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return this.authService.can("sales.return");
   }
 
+  get showTopAnalyticsFirst(): boolean {
+    return !this.showOperationalWorkboard;
+  }
+
+  get hasOperationalPeriodAnalytics(): boolean {
+    return this.showOperationalWorkboard && (this.canOpenReturns || (this.canViewFinancialDashboard && this.canOpenPurchase));
+  }
+
+  get priorityFlowSteps(): Array<{ key: "daily" | "weekly" | "monthly" | "yearly" | "all"; label: string; copy: string; muted?: boolean }> {
+    if (this.isSuperAdmin) {
+      return [
+        { key: "daily", label: "1. Daily", copy: "Sabse pehle aaj ka global movement, shop alerts aur fresh activity" },
+        { key: "weekly", label: "2. Weekly", copy: "Phir last 7 days ka pattern aur shop momentum compare" },
+        { key: "monthly", label: "3. Monthly", copy: "Monthly performance aur volume trend next layer par" },
+        { key: "yearly", label: "4. Yearly", copy: "Yearly business review reports side me better rahega", muted: true },
+        { key: "all", label: "5. Unlimited", copy: "All-time history deep audit aur long-range report view ke liye", muted: true },
+      ];
+    }
+
+    if (this.isManager || this.isStaff) {
+      return [
+        { key: "daily", label: "1. Daily", copy: "Sabse pehle aaj ka billing, orders, stock watch aur daily activity" },
+        { key: "weekly", label: "2. Weekly", copy: "Phir recent movement aur short trend check" },
+        { key: "monthly", label: "3. Monthly", copy: "Uske baad monthly pattern aur volume compare" },
+        { key: "yearly", label: "4. Yearly", copy: "Yearly review reports side me better rahega", muted: true },
+        { key: "all", label: "5. Unlimited", copy: "All-time history deep report view ke liye rakha gaya hai", muted: true },
+      ];
+    }
+
+    return [
+      { key: "daily", label: "1. Daily", copy: "Today snapshot sabse pehle, taaki immediate decisions fast ho" },
+      { key: "weekly", label: "2. Weekly", copy: "Weekly trend se recent movement compare hota hai" },
+      { key: "monthly", label: "3. Monthly", copy: "Monthly blocks se bigger pattern clear hota hai" },
+      { key: "yearly", label: "4. Yearly", copy: "Yearly review reports aur strategic checks ke liye" , muted: true},
+      { key: "all", label: "5. Unlimited", copy: "All-time history deep financial and operational analysis ke liye", muted: true },
+    ];
+  }
+
+  get selectedRangeLabel(): string {
+    const labels: Record<string, string> = {
+      daily: "Daily",
+      weekly: "Weekly",
+      monthly: "Monthly",
+      yearly: "Yearly",
+      all: "Unlimited",
+    };
+    return labels[this.selectedRange] || "Daily";
+  }
+
+  get reviewSectionTitle(): string {
+    if (this.selectedRange === "daily") return "Weekly / Monthly Review";
+    if (this.selectedRange === "weekly") return "Monthly / Yearly Review";
+    if (this.selectedRange === "monthly") return "Yearly / Unlimited Review";
+    if (this.selectedRange === "yearly") return "Yearly Review";
+    return "Unlimited Review";
+  }
+
+  get showOperationalWorkboard(): boolean {
+    return this.isStaff || this.isManager;
+  }
+
+  get operationalQuickCards(): Array<{
+    title: string;
+    value: string | number;
+    meta: string;
+    icon: string;
+    enabled: boolean;
+    action: () => void;
+  }> {
+    return [
+      {
+        title: "Customer Base",
+        value: this.kpis?.totalCustomers || 0,
+        meta: "Active customers in current scope",
+        icon: "groups",
+        enabled: this.canOpenCustomers,
+        action: () => this.openCustomers(),
+      },
+      {
+        title: "Product Catalog",
+        value: this.inventorySummary.products,
+        meta: "Products available for billing and lookup",
+        icon: "inventory_2",
+        enabled: this.canOpenProducts,
+        action: () => this.openProducts(),
+      },
+      {
+        title: "Return Activity",
+        value: this.returnAnalytics?.today?.count || 0,
+        meta: "Customer returns logged today",
+        icon: "assignment_return",
+        enabled: this.canOpenReturns,
+        action: () => this.openReturns(),
+      },
+      {
+        title: "Stock Alerts",
+        value: this.kpis?.lowStockCount || 0,
+        meta: "Items needing reorder attention",
+        icon: "warning_amber",
+        enabled: this.canOpenStocks,
+        action: () => this.openStocks(),
+      },
+    ].filter((card) => card.enabled);
+  }
+
   get dashboardTitle(): string {
+    if (this.isSuperAdmin) {
+      return "Global Command Dashboard";
+    }
     if (this.isStaff) {
       return "Daily Workboard";
     }
@@ -384,6 +493,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   get dashboardSubtitle(): string {
+    if (this.isSuperAdmin) {
+      return "Daily-first global view for shops, trends, stock watch and strategic review";
+    }
     if (this.isStaff) {
       return "Daily activity, orders and stock alerts for current scope";
     }
@@ -395,7 +507,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   getScopeNote(): string {
     if (this.kpis?.mode === "GLOBAL") {
-      return "Auditing all shop data";
+      return this.isSuperAdmin ? "Daily-first global audit across all shops" : "Auditing all shop data";
     }
     if (this.isStaff) {
       return "Focused on current shop daily work";
@@ -406,8 +518,20 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return "Focused on selected shop performance";
   }
 
+  setDashboardRange(range: "daily" | "weekly" | "monthly" | "yearly" | "all"): void {
+    if (this.selectedRange === range) {
+      return;
+    }
+    this.selectedRange = range;
+    this.loadDashboardData();
+  }
+
+  openOperationalCard(card: { action: () => void }): void {
+    card.action();
+  }
+
   loadOverview() {
-    this.dashboardService.getOverview().subscribe({
+    this.dashboardService.getOverviewByRange(this.selectedRange).subscribe({
       next: (res: any) => {
         this.overview = {
           lowStockItems: res?.data?.lowStockItems || [],
@@ -434,7 +558,16 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   loadTrends() {
-    this.dashboardService.getTrends(this.trendDays).subscribe({
+    this.trendDays = this.selectedRange === "daily"
+      ? 1
+      : this.selectedRange === "weekly"
+        ? 7
+        : this.selectedRange === "monthly"
+          ? 30
+          : this.selectedRange === "yearly"
+            ? 365
+            : 730;
+    this.dashboardService.getTrendsByRange(this.selectedRange, this.trendDays).subscribe({
       next: (res: any) => {
         const data = res?.data || {};
         this.scheduleTrendChartsRender(

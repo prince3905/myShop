@@ -17,14 +17,34 @@ export class DashboardService {
     return this.http.get(`${this.baseURL}/api/dashboard/kpis`);
   }
 
+  getKpisByRange(range: string): Observable<any> {
+    return this.http.get(`${this.baseURL}/api/dashboard/kpis`, {
+      params: { range },
+    });
+  }
+
   getOverview(): Observable<any> {
     return this.http.get(`${this.baseURL}/api/dashboard/overview`);
+  }
+
+  getOverviewByRange(range: string): Observable<any> {
+    return this.http.get(`${this.baseURL}/api/dashboard/overview`, {
+      params: { range },
+    });
   }
 
   getTrends(days = 7): Observable<any> {
     return this.http.get(`${this.baseURL}/api/dashboard/trends`, {
       params: { days },
     });
+  }
+
+  getTrendsByRange(range: string, days?: number): Observable<any> {
+    const params: any = { range };
+    if (days) {
+      params.days = days;
+    }
+    return this.http.get(`${this.baseURL}/api/dashboard/trends`, { params });
   }
 
   getPurchaseAnalytics(): Observable<any> {

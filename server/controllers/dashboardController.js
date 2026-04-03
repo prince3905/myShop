@@ -17,11 +17,64 @@ const canViewSensitiveFinancials = (req) =>
 const canViewOperationalAmounts = (req) =>
   ["SUPER_ADMIN", "ADMIN", "MANAGER"].includes(`${req.user?.role || ""}`);
 
+const normalizeDashboardRange = (raw) => {
+  const range = `${raw || "daily"}`.trim().toLowerCase();
+  return ["daily", "weekly", "monthly", "yearly", "all"].includes(range) ? range : "daily";
+};
+
+const getRangeStartDate = (range, now = new Date()) => {
+  const start = new Date(now);
+  start.setHours(0, 0, 0, 0);
+
+  if (range === "daily") {
+    return start;
+  }
+
+  if (range === "weekly") {
+    start.setDate(start.getDate() - 6);
+    return start;
+  }
+
+  if (range === "monthly") {
+    return new Date(now.getFullYear(), now.getMonth(), 1);
+  }
+
+  if (range === "yearly") {
+    return new Date(now.getFullYear(), 0, 1);
+  }
+
+  return null;
+};
+
+const getTrendDaysForRange = (range) => {
+  if (range === "daily") return 1;
+  if (range === "weekly") return 7;
+  if (range === "monthly") return 30;
+  if (range === "yearly") return 365;
+  return 730;
+};
+
 exports.getOverview = async (req, res) => {
   try {
     const query = isSuperAdminGlobal(req) ? {} : { shop: req.shopId };
     const allowFinancials = canViewSensitiveFinancials(req);
     const allowOperationalAmounts = canViewOperationalAmounts(req);
+    const range = normalizeDashboardRange(req.query?.range);
+    const now = new Date();
+    const rangeStart = getRangeStartDate(range, now);
+    const createdAtMatch = rangeStart ? { createdAt: { $gte: rangeStart, $lte: now } } : {};
+    const salePaidAtMatch = rangeStart ? { createdAt: { $gte: rangeStart, $lte: now } } : {};
+    const orderPaidAtMatch = rangeStart
+      ? {
+          $or: [
+            { paymentCollectedAt: { $gte: rangeStart, $lte: now } },
+            {
+              paymentCollectedAt: { $exists: false },
+              createdAt: { $gte: rangeStart, $lte: now },
+            },
+          ],
+        }
+      : {};
 
     const [
       lowStockItems,
@@ -42,19 +95,19 @@ exports.getOverview = async (req, res) => {
         .sort({ quantity: 1, updatedAt: -1 })
         .limit(5)
         .lean(),
-      Order.find(query)
+      Order.find({ ...query, ...createdAtMatch })
         .select("orderNo totalAmount dueAmount orderStatus orderSource createdAt paymentStatus customer")
         .populate("customer", "name")
         .sort({ createdAt: -1 })
         .limit(5)
         .lean(),
-      Sale.find(query)
+      Sale.find({ ...query, ...createdAtMatch })
         .select("invoiceNo customerName totalAmount dueAmount paymentMethod status createdAt")
         .sort({ createdAt: -1 })
         .limit(5)
         .lean(),
       Sale.aggregate([
-        { $match: { ...query, status: { $ne: "CANCELLED" } } },
+        { $match: { ...query, ...createdAtMatch, status: { $ne: "CANCELLED" } } },
         { $unwind: "$items" },
         {
           $group: {
@@ -71,12 +124,12 @@ exports.getOverview = async (req, res) => {
         { $sort: { totalQty: -1, totalRevenue: -1 } },
         { $limit: 5 },
       ]),
-      Sale.find({ ...query, paidAmount: { $gt: 0 }, status: { $ne: "CANCELLED" } })
+      Sale.find({ ...query, ...salePaidAtMatch, paidAmount: { $gt: 0 }, status: { $ne: "CANCELLED" } })
         .select("invoiceNo customerName paidAmount paymentMethod createdAt")
         .sort({ createdAt: -1 })
         .limit(5)
         .lean(),
-      Order.find({ ...query, paidAmount: { $gt: 0 } })
+      Order.find({ ...query, ...orderPaidAtMatch, paidAmount: { $gt: 0 } })
         .select("orderNo paidAmount paymentMethod paymentCollectedAt createdAt customer")
         .populate("customer", "name")
         .sort({ paymentCollectedAt: -1, createdAt: -1 })
@@ -272,6 +325,7 @@ exports.getOverview = async (req, res) => {
               walletUseCount: Number(walletUsedAgg[0]?.count || 0),
             }
           : null,
+        range,
       },
     });
   } catch (error) {
@@ -287,19 +341,19 @@ exports.getKpis = async (req, res) => {
   try {
     const query = isSuperAdminGlobal(req) ? {} : { shop: req.shopId };
     const allowFinancials = canViewSensitiveFinancials(req);
+    const range = normalizeDashboardRange(req.query?.range);
 
-    const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date();
-    endOfDay.setHours(23, 59, 59, 999);
+    const now = new Date();
+    const start = getRangeStartDate(range, now) || new Date(0);
+    const end = now;
 
     const [salesAgg, todayOrders, activeShops, totalCustomers, lowStockCount, distributorDueAgg, todayPurchaseAgg, todaySaleReturnAgg, todayPurchaseReturnAgg] =
       await Promise.all([
         Sale.aggregate([
-          { $match: { ...query, createdAt: { $gte: startOfDay, $lte: endOfDay } } },
+          { $match: { ...query, createdAt: { $gte: start, $lte: end } } },
           { $group: { _id: null, totalRevenue: { $sum: "$totalAmount" }, salesCount: { $sum: 1 } } },
         ]),
-        Order.countDocuments({ ...query, createdAt: { $gte: startOfDay, $lte: endOfDay } }),
+        Order.countDocuments({ ...query, createdAt: { $gte: start, $lte: end } }),
         isSuperAdminGlobal(req)
           ? Shop.countDocuments({ isActive: true })
           : Promise.resolve(req.shopId ? 1 : 0),
@@ -317,13 +371,13 @@ exports.getKpis = async (req, res) => {
             $match: {
               ...query,
               status: "CONFIRMED",
-              confirmedAt: { $gte: startOfDay, $lte: endOfDay },
+              confirmedAt: { $gte: start, $lte: end },
             },
           },
           { $group: { _id: null, totalPurchase: { $sum: "$grandTotal" }, count: { $sum: 1 } } },
         ]),
         SaleReturn.aggregate([
-          { $match: { ...query, createdAt: { $gte: startOfDay, $lte: endOfDay } } },
+          { $match: { ...query, createdAt: { $gte: start, $lte: end } } },
           {
             $group: {
               _id: null,
@@ -336,7 +390,7 @@ exports.getKpis = async (req, res) => {
           },
         ]),
         PurchaseReturn.aggregate([
-          { $match: { ...query, createdAt: { $gte: startOfDay, $lte: endOfDay }, status: "APPROVED" } },
+          { $match: { ...query, createdAt: { $gte: start, $lte: end }, status: "APPROVED" } },
           {
             $group: {
               _id: null,
@@ -372,6 +426,7 @@ exports.getKpis = async (req, res) => {
         distributorDue: allowFinancials
           ? Number(distributorDueAgg[0]?.totalDue || 0)
           : 0,
+        range,
         mode: isSuperAdminGlobal(req) ? "GLOBAL" : "SHOP_WISE",
       },
     });
@@ -554,7 +609,11 @@ exports.getPurchaseReturnAnalytics = async (req, res) => {
 exports.getTrends = async (req, res) => {
   try {
     const query = isSuperAdminGlobal(req) ? {} : { shop: req.shopId };
-    const days = Math.min(30, Math.max(7, Number(req.query.days || 7)));
+    const range = normalizeDashboardRange(req.query?.range);
+    const requestedDays = Number(req.query.days || 0);
+    const days = requestedDays > 0
+      ? Math.min(730, Math.max(1, requestedDays))
+      : getTrendDaysForRange(range);
     const start = new Date();
     start.setHours(0, 0, 0, 0);
     start.setDate(start.getDate() - (days - 1));
@@ -626,6 +685,8 @@ exports.getTrends = async (req, res) => {
     return res.status(200).json({
       success: true,
       data: {
+        range,
+        days,
         labels,
         sales: dateKeys.map((k) => salesMap.get(k) || 0),
         purchase: canViewSensitiveFinancials(req)
