@@ -5,6 +5,7 @@
                 <div class="dashboard-header-card">
                     <div class="dashboard-header-main">
                         <div class="dashboard-scope-badge">{{ getScopeLabel() }}</div>
+                        <div class="dashboard-range-badge">{{ selectedRangeLabel }} View</div>
                         <h3 class="dashboard-header-title">{{ dashboardTitle }}</h3>
                         <p class="dashboard-header-subtitle">{{ dashboardSubtitle }}</p>
                     </div>
@@ -54,18 +55,37 @@
             <div class="col-12">
                 <div class="dashboard-flow-card">
                     <div class="dashboard-flow-title">Dashboard Priority Flow</div>
+                    <div class="dashboard-flow-status">
+                        Showing calculated dashboard data for <strong>{{ selectedRangeLabel }}</strong> range
+                    </div>
                     <div class="dashboard-flow-grid">
                         <div
                             class="dashboard-flow-step"
                             *ngFor="let step of priorityFlowSteps"
                             [class.active]="selectedRange === step.key"
                             [class.muted]="step.muted"
-                            (click)="setDashboardRange(step.key)"
+                            role="button"
+                            tabindex="0"
+                            (pointerdown)="onRangeInteract($event, step.key)"
+                            (click)="onRangeInteract($event, step.key)"
+                            (keydown.enter)="onRangeInteract($event, step.key)"
+                            (keydown.space)="onRangeInteract($event, step.key)"
                         >
+                            <span class="step-state">{{ selectedRange === step.key ? 'Current View' : 'Tap to View' }}</span>
                             <span class="step-label">{{ step.label }}</span>
                             <span class="step-copy">{{ step.copy }}</span>
+                            <span class="step-hint">{{ selectedRange === step.key ? 'Selected' : 'Click to load' }}</span>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <div class="dashboard-range-summary-card">
+                    <div class="range-summary-label">Current Dashboard Filter</div>
+                    <div class="range-summary-title">{{ selectedRangeLabel }} View</div>
+                    <div class="range-summary-copy">{{ rangeSummaryLine }}</div>
                 </div>
             </div>
         </div>
@@ -76,12 +96,12 @@
                         <div class="card-icon">
                             <i class="material-icons">store</i>
                         </div>
-                        <p class="card-category">{{ isManager ? 'Sales Today' : 'Today Sales' }}</p>
+                        <p class="card-category">{{ salesKpiLabel }}</p>
                         <h3 class="card-title">₹ {{ kpis?.todaySales | number:'1.2-2' }}</h3>
                     </div>
                     <div class="card-footer">
                         <div class="stats">
-                            <i class="material-icons">date_range</i> {{ loadingKpis ? 'Loading...' : 'Last 24 Hours' }}
+                            <i class="material-icons">date_range</i> {{ loadingKpis ? 'Loading...' : rangeFooterCopy }}
                         </div>
                     </div>
                 </div>
@@ -92,7 +112,7 @@
                         <div class="card-icon">
                             <i class="material-icons">content_copy</i>
                         </div>
-                        <p class="card-category">{{ isStaff ? 'Orders Today' : 'Today Orders' }}</p>
+                        <p class="card-category">{{ ordersKpiLabel }}</p>
                         <h3 class="card-title">{{ kpis?.todayOrders || 0 }}</h3>
                     </div>
                     <div class="card-footer">
@@ -109,12 +129,12 @@
                         <div class="card-icon">
                             <i class="material-icons">info_outline</i>
                         </div>
-                        <p class="card-category">Today Purchase</p>
+                        <p class="card-category">{{ purchaseKpiLabel }}</p>
                         <h3 class="card-title">₹ {{ kpis?.todayPurchase | number:'1.2-2' }}</h3>
                     </div>
                     <div class="card-footer">
                         <div class="stats">
-                            <i class="material-icons">assignment_return</i> Returned to distributor today: ₹ {{ kpis?.todayPurchaseReturnAmount | number:'1.2-2' }}
+                            <i class="material-icons">assignment_return</i> Returned in {{ selectedRangeLabel.toLowerCase() }} range: ₹ {{ kpis?.todayPurchaseReturnAmount | number:'1.2-2' }}
                         </div>
                     </div>
                 </div>
@@ -131,7 +151,7 @@
                     <div class="card-footer">
                         <div class="stats">
                             <ng-container *ngIf="canViewFinancialDashboard; else stockFooterBasic">
-                                <i class="material-icons">currency_rupee</i> Customer credit today: ₹ {{ kpis?.todaySaleCreditAmount | number:'1.2-2' }}
+                                <i class="material-icons">currency_rupee</i> Customer credit in {{ selectedRangeLabel.toLowerCase() }} range: ₹ {{ kpis?.todaySaleCreditAmount | number:'1.2-2' }}
                             </ng-container>
                             <ng-template #stockFooterBasic>
                                 <i class="material-icons">inventory_2</i> Reorder watch active
@@ -173,121 +193,41 @@
                 </div>
             </div>
         </div>
-        <div class="row" *ngIf="showTopAnalyticsFirst && canViewFinancialDashboard && canOpenPurchase">
+        <div class="row" *ngIf="showTopAnalyticsFirst && canShowRangeSnapshotCards && (canOpenReturns || (canViewFinancialDashboard && canOpenPurchase))">
             <div class="col-12">
                 <div class="analytics-strip">
-                    <div class="analytics-card dashboard-click-card" (click)="openPurchase()">
-                        <div class="title">Purchase Today</div>
-                        <div class="amount">₹ {{ purchaseAnalytics?.today?.totalAmount | number:'1.2-2' }}</div>
+                    <div class="analytics-card dashboard-click-card" *ngIf="canViewFinancialDashboard && canOpenPurchase" (click)="openPurchase()">
+                        <div class="title">{{ selectedRangeSnapshotTitle }} Purchase</div>
+                        <div class="amount">₹ {{ selectedPurchaseAnalytics?.totalAmount | number:'1.2-2' }}</div>
                         <div class="meta">
-                            Paid: ₹ {{ purchaseAnalytics?.today?.totalPaid | number:'1.2-2' }} |
-                            Due: ₹ {{ purchaseAnalytics?.today?.totalDue | number:'1.2-2' }} |
-                            Count: {{ purchaseAnalytics?.today?.count || 0 }}
+                            Paid: ₹ {{ selectedPurchaseAnalytics?.totalPaid | number:'1.2-2' }} |
+                            Due: ₹ {{ selectedPurchaseAnalytics?.totalDue | number:'1.2-2' }} |
+                            Count: {{ selectedPurchaseAnalytics?.count || 0 }}
                         </div>
                     </div>
-                    <div class="analytics-card dashboard-click-card" (click)="openPurchase()">
-                        <div class="title">Purchase Weekly</div>
-                        <div class="amount">₹ {{ purchaseAnalytics?.weekly?.totalAmount | number:'1.2-2' }}</div>
-                        <div class="meta">
-                            Paid: ₹ {{ purchaseAnalytics?.weekly?.totalPaid | number:'1.2-2' }} |
-                            Due: ₹ {{ purchaseAnalytics?.weekly?.totalDue | number:'1.2-2' }} |
-                            Count: {{ purchaseAnalytics?.weekly?.count || 0 }}
-                        </div>
-                    </div>
-                    <div class="analytics-card dashboard-click-card" (click)="openPurchase()">
-                        <div class="title">Purchase Monthly</div>
-                        <div class="amount">₹ {{ purchaseAnalytics?.monthly?.totalAmount | number:'1.2-2' }}</div>
-                        <div class="meta">
-                            Paid: ₹ {{ purchaseAnalytics?.monthly?.totalPaid | number:'1.2-2' }} |
-                            Due: ₹ {{ purchaseAnalytics?.monthly?.totalDue | number:'1.2-2' }} |
-                            Count: {{ purchaseAnalytics?.monthly?.count || 0 }}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="row" *ngIf="showTopAnalyticsFirst && canOpenReturns">
-            <div class="col-12">
-                <div class="analytics-strip">
-                    <div class="analytics-card return-card dashboard-click-card" (click)="openReturns()">
-                        <div class="title">Customer Returns Today</div>
-                        <div class="amount" *ngIf="canViewReturnAmounts; else todayReturnOpsOnly">₹ {{ returnAnalytics?.today?.totalAmount | number:'1.2-2' }}</div>
-                        <ng-template #todayReturnOpsOnly>
-                            <div class="amount">{{ returnAnalytics?.today?.count || 0 }}</div>
+                    <div class="analytics-card return-card dashboard-click-card" *ngIf="canOpenReturns" (click)="openReturns()">
+                        <div class="title">{{ selectedRangeSnapshotTitle }} Customer Returns</div>
+                        <div class="amount" *ngIf="canViewReturnAmounts; else selectedReturnOpsOnly">₹ {{ selectedReturnAnalytics?.totalAmount | number:'1.2-2' }}</div>
+                        <ng-template #selectedReturnOpsOnly>
+                            <div class="amount">{{ selectedReturnAnalytics?.count || 0 }}</div>
                         </ng-template>
-                        <div class="meta" *ngIf="canViewReturnAmounts; else todayReturnOpsMeta">
-                            Refund to Customer: ₹ {{ returnAnalytics?.today?.totalRefund | number:'1.2-2' }} |
-                            Customer Credit: ₹ {{ returnAnalytics?.today?.totalCredit | number:'1.2-2' }} |
-                            Qty: {{ returnAnalytics?.today?.totalQty || 0 }} |
-                            Count: {{ returnAnalytics?.today?.count || 0 }}
+                        <div class="meta" *ngIf="canViewReturnAmounts; else selectedReturnOpsMeta">
+                            Refund to Customer: ₹ {{ selectedReturnAnalytics?.totalRefund | number:'1.2-2' }} |
+                            Customer Credit: ₹ {{ selectedReturnAnalytics?.totalCredit | number:'1.2-2' }} |
+                            Qty: {{ selectedReturnAnalytics?.totalQty || 0 }} |
+                            Count: {{ selectedReturnAnalytics?.count || 0 }}
                         </div>
-                        <ng-template #todayReturnOpsMeta>
-                            Qty: {{ returnAnalytics?.today?.totalQty || 0 }} |
-                            Count: {{ returnAnalytics?.today?.count || 0 }}
+                        <ng-template #selectedReturnOpsMeta>
+                            Qty: {{ selectedReturnAnalytics?.totalQty || 0 }} |
+                            Count: {{ selectedReturnAnalytics?.count || 0 }}
                         </ng-template>
                     </div>
-                    <div class="analytics-card return-card dashboard-click-card" (click)="openReturns()">
-                        <div class="title">Customer Returns Weekly</div>
-                        <div class="amount" *ngIf="canViewReturnAmounts; else weeklyReturnOpsOnly">₹ {{ returnAnalytics?.weekly?.totalAmount | number:'1.2-2' }}</div>
-                        <ng-template #weeklyReturnOpsOnly>
-                            <div class="amount">{{ returnAnalytics?.weekly?.count || 0 }}</div>
-                        </ng-template>
-                        <div class="meta" *ngIf="canViewReturnAmounts; else weeklyReturnOpsMeta">
-                            Refund to Customer: ₹ {{ returnAnalytics?.weekly?.totalRefund | number:'1.2-2' }} |
-                            Customer Credit: ₹ {{ returnAnalytics?.weekly?.totalCredit | number:'1.2-2' }} |
-                            Qty: {{ returnAnalytics?.weekly?.totalQty || 0 }} |
-                            Count: {{ returnAnalytics?.weekly?.count || 0 }}
-                        </div>
-                        <ng-template #weeklyReturnOpsMeta>
-                            Qty: {{ returnAnalytics?.weekly?.totalQty || 0 }} |
-                            Count: {{ returnAnalytics?.weekly?.count || 0 }}
-                        </ng-template>
-                    </div>
-                    <div class="analytics-card return-card dashboard-click-card" (click)="openReturns()">
-                        <div class="title">Customer Returns Monthly</div>
-                        <div class="amount" *ngIf="canViewReturnAmounts; else monthlyReturnOpsOnly">₹ {{ returnAnalytics?.monthly?.totalAmount | number:'1.2-2' }}</div>
-                        <ng-template #monthlyReturnOpsOnly>
-                            <div class="amount">{{ returnAnalytics?.monthly?.count || 0 }}</div>
-                        </ng-template>
-                        <div class="meta" *ngIf="canViewReturnAmounts; else monthlyReturnOpsMeta">
-                            Refund to Customer: ₹ {{ returnAnalytics?.monthly?.totalRefund | number:'1.2-2' }} |
-                            Customer Credit: ₹ {{ returnAnalytics?.monthly?.totalCredit | number:'1.2-2' }} |
-                            Qty: {{ returnAnalytics?.monthly?.totalQty || 0 }} |
-                            Count: {{ returnAnalytics?.monthly?.count || 0 }}
-                        </div>
-                        <ng-template #monthlyReturnOpsMeta>
-                            Qty: {{ returnAnalytics?.monthly?.totalQty || 0 }} |
-                            Count: {{ returnAnalytics?.monthly?.count || 0 }}
-                        </ng-template>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="row" *ngIf="showTopAnalyticsFirst && canViewFinancialDashboard && canOpenPurchase">
-            <div class="col-12">
-                <div class="analytics-strip">
-                    <div class="analytics-card purchase-return-card dashboard-click-card" (click)="openPurchase()">
-                        <div class="title">Returned to Distributor Today</div>
-                        <div class="amount">₹ {{ purchaseReturnAnalytics?.today?.totalAmount | number:'1.2-2' }}</div>
+                    <div class="analytics-card purchase-return-card dashboard-click-card" *ngIf="canViewFinancialDashboard && canOpenPurchase" (click)="openPurchase()">
+                        <div class="title">{{ selectedRangeSnapshotTitle }} Returned to Distributor</div>
+                        <div class="amount">₹ {{ selectedPurchaseReturnAnalytics?.totalAmount | number:'1.2-2' }}</div>
                         <div class="meta">
-                            Qty: {{ purchaseReturnAnalytics?.today?.totalQty || 0 }} |
-                            Count: {{ purchaseReturnAnalytics?.today?.count || 0 }}
-                        </div>
-                    </div>
-                    <div class="analytics-card purchase-return-card dashboard-click-card" (click)="openPurchase()">
-                        <div class="title">Returned to Distributor Weekly</div>
-                        <div class="amount">₹ {{ purchaseReturnAnalytics?.weekly?.totalAmount | number:'1.2-2' }}</div>
-                        <div class="meta">
-                            Qty: {{ purchaseReturnAnalytics?.weekly?.totalQty || 0 }} |
-                            Count: {{ purchaseReturnAnalytics?.weekly?.count || 0 }}
-                        </div>
-                    </div>
-                    <div class="analytics-card purchase-return-card dashboard-click-card" (click)="openPurchase()">
-                        <div class="title">Returned to Distributor Monthly</div>
-                        <div class="amount">₹ {{ purchaseReturnAnalytics?.monthly?.totalAmount | number:'1.2-2' }}</div>
-                        <div class="meta">
-                            Qty: {{ purchaseReturnAnalytics?.monthly?.totalQty || 0 }} |
-                            Count: {{ purchaseReturnAnalytics?.monthly?.count || 0 }}
+                            Qty: {{ selectedPurchaseReturnAnalytics?.totalQty || 0 }} |
+                            Count: {{ selectedPurchaseReturnAnalytics?.count || 0 }}
                         </div>
                     </div>
                 </div>
@@ -313,7 +253,7 @@
                         <div class="ct-chart" id="dailySalesChart"></div>
                     </div>
                     <div class="card-body">
-                        <h4 class="card-title">Sales Trend ({{ trendDays }} days)</h4>
+                        <h4 class="card-title">{{ selectedRangeLabel }} Sales Trend ({{ trendDays }} days)</h4>
                         <p class="card-category">{{ isStaff ? 'Daily sales activity' : isManager ? 'Operational sales movement' : 'Shop scoped line trend' }}</p>
                     </div>
                     <div class="card-footer">
@@ -329,7 +269,7 @@
                         <div class="ct-chart" id="websiteViewsChart"></div>
                     </div>
                     <div class="card-body">
-                        <h4 class="card-title">Orders Trend ({{ trendDays }} days)</h4>
+                        <h4 class="card-title">{{ selectedRangeLabel }} Orders Trend ({{ trendDays }} days)</h4>
                         <p class="card-category">{{ isStaff ? 'Daily order activity' : 'Daily order count' }}</p>
                     </div>
                     <div class="card-footer">
@@ -345,7 +285,7 @@
                         <div class="ct-chart" id="completedTasksChart"></div>
                     </div>
                     <div class="card-body">
-                        <h4 class="card-title">Purchase Trend ({{ trendDays }} days)</h4>
+                        <h4 class="card-title">{{ selectedRangeLabel }} Purchase Trend ({{ trendDays }} days)</h4>
                         <p class="card-category">Confirmed purchases value</p>
                     </div>
                     <div class="card-footer">
@@ -468,7 +408,7 @@
             <div class="col-lg-6 col-md-12" *ngIf="canOpenSales">
                 <div class="card dashboard-detail-card dashboard-click-card" (click)="openSale()">
                     <div class="card-header card-header-success">
-                        <h4 class="card-title">{{ isStaff ? 'Latest Bills' : 'Recent Sales' }}</h4>
+                        <h4 class="card-title">{{ selectedRangeLabel }} {{ isStaff ? 'Bills' : 'Sales Activity' }}</h4>
                         <p class="card-category">{{ isStaff ? 'Latest billing activity from current scope' : 'Latest completed bills from current scope' }}</p>
                     </div>
                     <div class="card-body">
@@ -494,7 +434,7 @@
             <div class="col-lg-6 col-md-12" *ngIf="canOpenOrders">
                 <div class="card dashboard-detail-card dashboard-click-card" (click)="openOrders()">
                     <div class="card-header card-header-warning">
-                        <h4 class="card-title">{{ isStaff ? 'Latest Orders' : 'Recent Orders' }}</h4>
+                        <h4 class="card-title">{{ selectedRangeLabel }} {{ isStaff ? 'Orders' : 'Orders Activity' }}</h4>
                         <p class="card-category">{{ isStaff ? 'Latest order activity and status' : 'Latest orders with delivery/payment status' }}</p>
                     </div>
                     <div class="card-body">
@@ -522,44 +462,23 @@
                 <div class="section-kicker">{{ reviewSectionTitle }}</div>
             </div>
         </div>
-        <div class="row" *ngIf="showOperationalWorkboard && canOpenReturns">
+        <div class="row" *ngIf="showOperationalWorkboard && canShowRangeSnapshotCards && (canOpenReturns || (canViewFinancialDashboard && canOpenPurchase))">
             <div class="col-12">
                 <div class="analytics-strip">
-                    <div class="analytics-card return-card dashboard-click-card" (click)="openReturns()">
-                        <div class="title">Customer Returns Today</div>
-                        <div class="amount">{{ canViewReturnAmounts ? (returnAnalytics?.today?.totalAmount | number:'1.2-2') : (returnAnalytics?.today?.count || 0) }}</div>
-                        <div class="meta">Qty: {{ returnAnalytics?.today?.totalQty || 0 }} | Count: {{ returnAnalytics?.today?.count || 0 }}</div>
+                    <div class="analytics-card dashboard-click-card" *ngIf="canViewFinancialDashboard && canOpenPurchase" (click)="openPurchase()">
+                        <div class="title">{{ selectedRangeSnapshotTitle }} Purchase</div>
+                        <div class="amount">₹ {{ selectedPurchaseAnalytics?.totalAmount | number:'1.2-2' }}</div>
+                        <div class="meta">Paid: ₹ {{ selectedPurchaseAnalytics?.totalPaid | number:'1.2-2' }} | Due: ₹ {{ selectedPurchaseAnalytics?.totalDue | number:'1.2-2' }}</div>
                     </div>
-                    <div class="analytics-card return-card dashboard-click-card" (click)="openReturns()">
-                        <div class="title">Customer Returns Weekly</div>
-                        <div class="amount">{{ canViewReturnAmounts ? (returnAnalytics?.weekly?.totalAmount | number:'1.2-2') : (returnAnalytics?.weekly?.count || 0) }}</div>
-                        <div class="meta">Qty: {{ returnAnalytics?.weekly?.totalQty || 0 }} | Count: {{ returnAnalytics?.weekly?.count || 0 }}</div>
+                    <div class="analytics-card return-card dashboard-click-card" *ngIf="canOpenReturns" (click)="openReturns()">
+                        <div class="title">{{ selectedRangeSnapshotTitle }} Customer Returns</div>
+                        <div class="amount">{{ canViewReturnAmounts ? (selectedReturnAnalytics?.totalAmount | number:'1.2-2') : (selectedReturnAnalytics?.count || 0) }}</div>
+                        <div class="meta">Qty: {{ selectedReturnAnalytics?.totalQty || 0 }} | Count: {{ selectedReturnAnalytics?.count || 0 }}</div>
                     </div>
-                    <div class="analytics-card return-card dashboard-click-card" (click)="openReturns()">
-                        <div class="title">Customer Returns Monthly</div>
-                        <div class="amount">{{ canViewReturnAmounts ? (returnAnalytics?.monthly?.totalAmount | number:'1.2-2') : (returnAnalytics?.monthly?.count || 0) }}</div>
-                        <div class="meta">Qty: {{ returnAnalytics?.monthly?.totalQty || 0 }} | Count: {{ returnAnalytics?.monthly?.count || 0 }}</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="row" *ngIf="showOperationalWorkboard && canViewFinancialDashboard && canOpenPurchase">
-            <div class="col-12">
-                <div class="analytics-strip">
-                    <div class="analytics-card dashboard-click-card" (click)="openPurchase()">
-                        <div class="title">Purchase Today</div>
-                        <div class="amount">₹ {{ purchaseAnalytics?.today?.totalAmount | number:'1.2-2' }}</div>
-                        <div class="meta">Paid: ₹ {{ purchaseAnalytics?.today?.totalPaid | number:'1.2-2' }} | Due: ₹ {{ purchaseAnalytics?.today?.totalDue | number:'1.2-2' }}</div>
-                    </div>
-                    <div class="analytics-card dashboard-click-card" (click)="openPurchase()">
-                        <div class="title">Purchase Weekly</div>
-                        <div class="amount">₹ {{ purchaseAnalytics?.weekly?.totalAmount | number:'1.2-2' }}</div>
-                        <div class="meta">Paid: ₹ {{ purchaseAnalytics?.weekly?.totalPaid | number:'1.2-2' }} | Due: ₹ {{ purchaseAnalytics?.weekly?.totalDue | number:'1.2-2' }}</div>
-                    </div>
-                    <div class="analytics-card dashboard-click-card" (click)="openPurchase()">
-                        <div class="title">Purchase Monthly</div>
-                        <div class="amount">₹ {{ purchaseAnalytics?.monthly?.totalAmount | number:'1.2-2' }}</div>
-                        <div class="meta">Paid: ₹ {{ purchaseAnalytics?.monthly?.totalPaid | number:'1.2-2' }} | Due: ₹ {{ purchaseAnalytics?.monthly?.totalDue | number:'1.2-2' }}</div>
+                    <div class="analytics-card purchase-return-card dashboard-click-card" *ngIf="canViewFinancialDashboard && canOpenPurchase" (click)="openPurchase()">
+                        <div class="title">{{ selectedRangeSnapshotTitle }} Returned to Distributor</div>
+                        <div class="amount">₹ {{ selectedPurchaseReturnAnalytics?.totalAmount | number:'1.2-2' }}</div>
+                        <div class="meta">Qty: {{ selectedPurchaseReturnAnalytics?.totalQty || 0 }} | Count: {{ selectedPurchaseReturnAnalytics?.count || 0 }}</div>
                     </div>
                 </div>
             </div>
@@ -568,7 +487,7 @@
             <div class="col-lg-6 col-md-12" *ngIf="canOpenSales">
                 <div class="card dashboard-detail-card dashboard-click-card" (click)="canOpenReports ? openReports() : openSale()">
                     <div class="card-header card-header-rose">
-                        <h4 class="card-title">{{ canOpenReports ? (isStaff ? 'Fast Moving Products' : 'Top Selling Products') : 'Popular Products' }}</h4>
+                        <h4 class="card-title">{{ selectedRangeLabel }} {{ canOpenReports ? (isStaff ? 'Fast Moving Products' : 'Top Selling Products') : 'Popular Products' }}</h4>
                         <p class="card-category">{{ canOpenReports ? (isStaff ? 'Best moving items from recent billing' : 'Best moving items from current billing data') : 'Best moving items by quantity from current scope' }}</p>
                     </div>
                     <div class="card-body">
@@ -594,7 +513,7 @@
             <div class="col-lg-6 col-md-12" *ngIf="canViewFinancialDashboard && canOpenReports; else dashboardRoleNote">
                 <div class="card dashboard-detail-card dashboard-click-card" (click)="openReports()">
                     <div class="card-header card-header-primary">
-                        <h4 class="card-title">Recent Payments</h4>
+                        <h4 class="card-title">{{ selectedRangeLabel }} Recent Payments</h4>
                         <p class="card-category">Latest collected amounts from sales and orders</p>
                     </div>
                     <div class="card-body">

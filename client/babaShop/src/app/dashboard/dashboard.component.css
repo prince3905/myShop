@@ -39,6 +39,20 @@
   text-transform: uppercase;
 }
 
+.dashboard-range-badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .dashboard-header-title {
   margin: 0;
   font-size: 22px;
@@ -272,6 +286,36 @@
   box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
 }
 
+.dashboard-range-summary-card {
+  margin-bottom: 14px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid #dbe7f5;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
+}
+
+.range-summary-label {
+  font-size: 11px;
+  font-weight: 800;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.range-summary-title {
+  margin-top: 4px;
+  font-size: 20px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.range-summary-copy {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #64748b;
+}
+
 .dashboard-flow-title {
   font-size: 12px;
   font-weight: 800;
@@ -280,23 +324,44 @@
   letter-spacing: 0.06em;
 }
 
+.dashboard-flow-status {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.dashboard-flow-status strong {
+  color: #0f172a;
+}
+
 .dashboard-flow-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 10px;
   margin-top: 10px;
+  position: relative;
+  z-index: 2;
 }
 
 .dashboard-flow-step {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  width: 100%;
   padding: 12px;
   border-radius: 14px;
   border: 1px solid #dbe7f5;
   background: #fff;
   cursor: pointer;
   transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  text-align: left;
+  user-select: none;
+  appearance: none;
+  outline: none;
+  text-decoration: none;
+  position: relative;
+  z-index: 3;
+  pointer-events: auto;
 }
 
 .dashboard-flow-step:hover {
@@ -306,12 +371,25 @@
 }
 
 .dashboard-flow-step.active {
-  border-color: #93c5fd;
-  background: linear-gradient(180deg, #eff6ff 0%, #ffffff 100%);
+  border-color: #2563eb;
+  background: linear-gradient(180deg, #dbeafe 0%, #eff6ff 100%);
+  box-shadow: 0 12px 24px rgba(37, 99, 235, 0.16);
 }
 
 .dashboard-flow-step.muted {
   opacity: 0.76;
+}
+
+.step-state {
+  font-size: 10px;
+  font-weight: 900;
+  color: #2563eb;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.dashboard-flow-step.active .step-state {
+  color: #1d4ed8;
 }
 
 .step-label {
@@ -324,6 +402,19 @@
   font-size: 11px;
   color: #64748b;
   line-height: 1.45;
+}
+
+.step-hint {
+  margin-top: 4px;
+  font-size: 10px;
+  font-weight: 800;
+  color: #2563eb;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.dashboard-flow-step.active .step-hint {
+  color: #1d4ed8;
 }
 
 .section-kicker {
@@ -600,7 +691,10 @@
   }
 
   .operational-workboard-grid,
-  .operational-summary-fallback,
+  .operational-summary-fallback {
+    grid-template-columns: 1fr;
+  }
+
   .dashboard-flow-grid {
     grid-template-columns: 1fr;
   }

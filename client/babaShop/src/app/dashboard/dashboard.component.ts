@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from "@angular/core";
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from "@angular/core";
 import * as Chartist from "chartist";
 import { ShopService } from "./../shared/services/shop.service";
 import { AuthService } from "../shared/services/auth.service";
@@ -7,7 +7,7 @@ import { forkJoin } from "rxjs";
 import { ProductService } from "app/shared/services/product.service";
 import { CategoryService } from "app/shared/services/category.service";
 import { BrandService } from "app/shared/services/brand.service";
-import { Router } from "@angular/router";
+import { ActivatedRoute, Router } from "@angular/router";
 
 @Component({
   selector: "app-dashboard",
@@ -74,7 +74,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private productService: ProductService,
     private categoryService: CategoryService,
     private brandService: BrandService,
+    private route: ActivatedRoute,
     private router: Router,
+    private cdr: ChangeDetectorRef,
   ) {}
 
   startAnimationForLineChart(chart) {
@@ -227,6 +229,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
+    const range = `${this.route.snapshot.queryParamMap.get("range") || "daily"}`.trim().toLowerCase();
+    this.selectedRange = ["daily", "weekly", "monthly", "yearly", "all"].includes(range)
+      ? (range as "daily" | "weekly" | "monthly" | "yearly" | "all")
+      : "daily";
+
     this.selectedShop = this.shopService.getSelectedShop();
     this.isSuperAdmin = this.authService.isSuperAdmin();
 
@@ -389,7 +396,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         { key: "weekly", label: "2. Weekly", copy: "Phir last 7 days ka pattern aur shop momentum compare" },
         { key: "monthly", label: "3. Monthly", copy: "Monthly performance aur volume trend next layer par" },
         { key: "yearly", label: "4. Yearly", copy: "Yearly business review reports side me better rahega", muted: true },
-        { key: "all", label: "5. Unlimited", copy: "All-time history deep audit aur long-range report view ke liye", muted: true },
+        { key: "all", label: "5. All Time", copy: "All-time history deep audit aur long-range report view ke liye", muted: true },
       ];
     }
 
@@ -399,7 +406,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         { key: "weekly", label: "2. Weekly", copy: "Phir recent movement aur short trend check" },
         { key: "monthly", label: "3. Monthly", copy: "Uske baad monthly pattern aur volume compare" },
         { key: "yearly", label: "4. Yearly", copy: "Yearly review reports side me better rahega", muted: true },
-        { key: "all", label: "5. Unlimited", copy: "All-time history deep report view ke liye rakha gaya hai", muted: true },
+        { key: "all", label: "5. All Time", copy: "All-time history deep report view ke liye rakha gaya hai", muted: true },
       ];
     }
 
@@ -408,7 +415,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       { key: "weekly", label: "2. Weekly", copy: "Weekly trend se recent movement compare hota hai" },
       { key: "monthly", label: "3. Monthly", copy: "Monthly blocks se bigger pattern clear hota hai" },
       { key: "yearly", label: "4. Yearly", copy: "Yearly review reports aur strategic checks ke liye" , muted: true},
-      { key: "all", label: "5. Unlimited", copy: "All-time history deep financial and operational analysis ke liye", muted: true },
+      { key: "all", label: "5. All Time", copy: "All-time history deep financial and operational analysis ke liye", muted: true },
     ];
   }
 
@@ -418,17 +425,72 @@ export class DashboardComponent implements OnInit, OnDestroy {
       weekly: "Weekly",
       monthly: "Monthly",
       yearly: "Yearly",
-      all: "Unlimited",
+      all: "All Time",
     };
     return labels[this.selectedRange] || "Daily";
+  }
+
+  get salesKpiLabel(): string {
+    return this.isManager ? `${this.selectedRangeLabel} Sales` : `${this.selectedRangeLabel} Sales`;
+  }
+
+  get ordersKpiLabel(): string {
+    return `${this.selectedRangeLabel} Orders`;
+  }
+
+  get purchaseKpiLabel(): string {
+    return `${this.selectedRangeLabel} Purchase`;
+  }
+
+  get rangeFooterCopy(): string {
+    if (this.selectedRange === "daily") return "Last 24 Hours";
+    if (this.selectedRange === "weekly") return "Last 7 Days";
+    if (this.selectedRange === "monthly") return "Current Month";
+    if (this.selectedRange === "yearly") return "Current Year";
+    return "All Available History";
+  }
+
+  get rangeSummaryLine(): string {
+    if (this.selectedRange === "daily") return "Only today's dashboard activity is shown below.";
+    if (this.selectedRange === "weekly") return "Only last 7 days of dashboard activity is shown below.";
+    if (this.selectedRange === "monthly") return "Only current month dashboard activity is shown below.";
+    if (this.selectedRange === "yearly") return "Only current year dashboard activity is shown below.";
+    return "All available dashboard history is shown below.";
   }
 
   get reviewSectionTitle(): string {
     if (this.selectedRange === "daily") return "Weekly / Monthly Review";
     if (this.selectedRange === "weekly") return "Monthly / Yearly Review";
-    if (this.selectedRange === "monthly") return "Yearly / Unlimited Review";
+    if (this.selectedRange === "monthly") return "Yearly / All Time Review";
     if (this.selectedRange === "yearly") return "Yearly Review";
-    return "Unlimited Review";
+    return "All Time Review";
+  }
+
+  get selectedAnalyticsBucket(): "today" | "weekly" | "monthly" | null {
+    if (this.selectedRange === "daily") return "today";
+    if (this.selectedRange === "weekly") return "weekly";
+    if (this.selectedRange === "monthly") return "monthly";
+    return null;
+  }
+
+  get canShowRangeSnapshotCards(): boolean {
+    return !!this.selectedAnalyticsBucket;
+  }
+
+  get selectedPurchaseAnalytics(): any {
+    return this.selectedAnalyticsBucket ? this.purchaseAnalytics?.[this.selectedAnalyticsBucket] || null : null;
+  }
+
+  get selectedReturnAnalytics(): any {
+    return this.selectedAnalyticsBucket ? this.returnAnalytics?.[this.selectedAnalyticsBucket] || null : null;
+  }
+
+  get selectedPurchaseReturnAnalytics(): any {
+    return this.selectedAnalyticsBucket ? this.purchaseReturnAnalytics?.[this.selectedAnalyticsBucket] || null : null;
+  }
+
+  get selectedRangeSnapshotTitle(): string {
+    return this.selectedRangeLabel;
   }
 
   get showOperationalWorkboard(): boolean {
@@ -523,7 +585,16 @@ export class DashboardComponent implements OnInit, OnDestroy {
       return;
     }
     this.selectedRange = range;
-    this.loadDashboardData();
+    this.cdr.detectChanges();
+    setTimeout(() => {
+      this.loadDashboardData();
+    }, 0);
+  }
+
+  onRangeInteract(event: Event, range: "daily" | "weekly" | "monthly" | "yearly" | "all"): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.setDashboardRange(range);
   }
 
   openOperationalCard(card: { action: () => void }): void {
