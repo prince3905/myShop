@@ -60,7 +60,7 @@ export class StaffWorkItemsComponent implements OnInit {
   }
 
   get canManage(): boolean {
-    return this.authService.can("staff.daily_work") && ["SUPER_ADMIN", "ADMIN", "MANAGER"].includes(`${this.userRole || ""}`) && !this.authService.isGlobalReadOnlyMode();
+    return this.authService.can("staff.daily_work") && !this.authService.isGlobalReadOnlyMode();
   }
 
   loadAll(): void {
@@ -101,7 +101,7 @@ export class StaffWorkItemsComponent implements OnInit {
   }
 
   submitItem(form: NgForm): void {
-    if (form.invalid || this.savingItem) {
+    if (!this.canManage || form.invalid || this.savingItem) {
       return;
     }
 

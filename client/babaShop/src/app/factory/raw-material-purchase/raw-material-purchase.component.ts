@@ -87,7 +87,7 @@ export class RawMaterialPurchaseComponent implements OnInit {
   }
 
   get canManage(): boolean {
-    return this.authService.can("factory.raw_material_purchase") && ["SUPER_ADMIN", "ADMIN", "MANAGER"].includes(`${this.userRole || ""}`) && !this.authService.isGlobalReadOnlyMode();
+    return this.authService.can("factory.raw_material_purchase") && !this.authService.isGlobalReadOnlyMode();
   }
 
   createItem(): any {

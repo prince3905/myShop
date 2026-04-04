@@ -93,7 +93,7 @@ export class FactoryProductMasterComponent implements OnInit {
   }
 
   get canManage(): boolean {
-    return ["SUPER_ADMIN", "ADMIN", "MANAGER"].includes(`${this.userRole || ""}`);
+    return this.authService.can("factory.product_master") && !this.authService.isGlobalReadOnlyMode();
   }
 
   loadAll(): void {
@@ -193,7 +193,7 @@ export class FactoryProductMasterComponent implements OnInit {
   }
 
   submitProduct(form: NgForm): void {
-    if (form.invalid || this.savingProduct) {
+    if (!this.canManage || form.invalid || this.savingProduct) {
       return;
     }
 

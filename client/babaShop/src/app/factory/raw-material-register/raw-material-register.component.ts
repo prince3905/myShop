@@ -66,7 +66,7 @@ export class RawMaterialRegisterComponent implements OnInit {
   }
 
   get canManage(): boolean {
-    return ["SUPER_ADMIN", "ADMIN", "MANAGER"].includes(`${this.userRole || ""}`);
+    return this.authService.can("factory.raw_material_master") && !this.authService.isGlobalReadOnlyMode();
   }
 
   loadAll(): void {
@@ -92,7 +92,7 @@ export class RawMaterialRegisterComponent implements OnInit {
   }
 
   submitMaterial(form: NgForm): void {
-    if (form.invalid || this.savingMaterial) {
+    if (!this.canManage || form.invalid || this.savingMaterial) {
       return;
     }
 

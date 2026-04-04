@@ -84,7 +84,7 @@ export class AddDetailsComponent implements OnInit {
   }
 
   get canMutate(): boolean {
-    return ["SUPER_ADMIN", "ADMIN", "MANAGER"].includes(this.authService.getUserRole() || "");
+    return this.authService.can("inventory.product_details.manage") && !this.authService.isGlobalReadOnlyMode();
   }
 
   loadProduct() {
