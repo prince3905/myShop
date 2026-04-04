@@ -59,13 +59,12 @@
                         Showing calculated dashboard data for <strong>{{ selectedRangeLabel }}</strong> range
                     </div>
                     <div class="dashboard-flow-grid">
-                        <div
+                        <button
+                            type="button"
                             class="dashboard-flow-step"
                             *ngFor="let step of priorityFlowSteps"
                             [class.active]="selectedRange === step.key"
                             [class.muted]="step.muted"
-                            role="button"
-                            tabindex="0"
                             (pointerdown)="onRangeInteract($event, step.key)"
                             (click)="onRangeInteract($event, step.key)"
                             (keydown.enter)="onRangeInteract($event, step.key)"
@@ -74,8 +73,8 @@
                             <span class="step-state">{{ selectedRange === step.key ? 'Current View' : 'Tap to View' }}</span>
                             <span class="step-label">{{ step.label }}</span>
                             <span class="step-copy">{{ step.copy }}</span>
-                            <span class="step-hint">{{ selectedRange === step.key ? 'Selected' : 'Click to load' }}</span>
-                        </div>
+                        </button>
+                        
                     </div>
                 </div>
             </div>
