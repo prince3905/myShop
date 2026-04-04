@@ -5,7 +5,7 @@
                 <div class="dashboard-header-card">
                     <div class="dashboard-header-main">
                         <div class="dashboard-scope-badge">{{ getScopeLabel() }}</div>
-                        <div class="dashboard-range-badge">{{ selectedRangeLabel }} View</div>
+                        <div class="dashboard-range-badge" *ngIf="canUseDashboardRangeControls">{{ selectedRangeLabel }} View</div>
                         <h3 class="dashboard-header-title">{{ dashboardTitle }}</h3>
                         <p class="dashboard-header-subtitle">{{ dashboardSubtitle }}</p>
                     </div>
@@ -51,7 +51,7 @@
                 </div>
             </div>
         </div>
-        <div class="row" *ngIf="priorityFlowSteps.length">
+        <div class="row" *ngIf="canUseDashboardRangeControls && priorityFlowSteps.length">
             <div class="col-12">
                 <div class="dashboard-flow-card">
                     <div class="dashboard-flow-title">Dashboard Priority Flow</div>
@@ -80,7 +80,7 @@
                 </div>
             </div>
         </div>
-        <div class="row">
+        <div class="row" *ngIf="canUseDashboardRangeControls">
             <div class="col-12">
                 <div class="dashboard-range-summary-card">
                     <div class="range-summary-label">Current Dashboard Filter</div>
@@ -253,7 +253,7 @@
                         <div class="ct-chart" id="dailySalesChart"></div>
                     </div>
                     <div class="card-body">
-                        <h4 class="card-title">{{ selectedRangeLabel }} Sales Trend ({{ trendDays }} days)</h4>
+                        <h4 class="card-title">{{ canUseDashboardRangeControls ? (selectedRangeLabel + ' Sales Trend (' + trendDays + ' days)') : 'Sales Trend' }}</h4>
                         <p class="card-category">{{ isStaff ? 'Daily sales activity' : isManager ? 'Operational sales movement' : 'Shop scoped line trend' }}</p>
                     </div>
                     <div class="card-footer">
@@ -269,7 +269,7 @@
                         <div class="ct-chart" id="websiteViewsChart"></div>
                     </div>
                     <div class="card-body">
-                        <h4 class="card-title">{{ selectedRangeLabel }} Orders Trend ({{ trendDays }} days)</h4>
+                        <h4 class="card-title">{{ canUseDashboardRangeControls ? (selectedRangeLabel + ' Orders Trend (' + trendDays + ' days)') : 'Orders Trend' }}</h4>
                         <p class="card-category">{{ isStaff ? 'Daily order activity' : 'Daily order count' }}</p>
                     </div>
                     <div class="card-footer">
@@ -285,7 +285,7 @@
                         <div class="ct-chart" id="completedTasksChart"></div>
                     </div>
                     <div class="card-body">
-                        <h4 class="card-title">{{ selectedRangeLabel }} Purchase Trend ({{ trendDays }} days)</h4>
+                        <h4 class="card-title">{{ canUseDashboardRangeControls ? (selectedRangeLabel + ' Purchase Trend (' + trendDays + ' days)') : 'Purchase Trend' }}</h4>
                         <p class="card-category">Confirmed purchases value</p>
                     </div>
                     <div class="card-footer">
@@ -408,7 +408,7 @@
             <div class="col-lg-6 col-md-12" *ngIf="canOpenSales">
                 <div class="card dashboard-detail-card dashboard-click-card" (click)="openSale()">
                     <div class="card-header card-header-success">
-                        <h4 class="card-title">{{ selectedRangeLabel }} {{ isStaff ? 'Bills' : 'Sales Activity' }}</h4>
+                        <h4 class="card-title">{{ canUseDashboardRangeControls ? (selectedRangeLabel + ' ' + (isStaff ? 'Bills' : 'Sales Activity')) : (isStaff ? 'Bills' : 'Sales Activity') }}</h4>
                         <p class="card-category">{{ isStaff ? 'Latest billing activity from current scope' : 'Latest completed bills from current scope' }}</p>
                     </div>
                     <div class="card-body">
@@ -434,7 +434,7 @@
             <div class="col-lg-6 col-md-12" *ngIf="canOpenOrders">
                 <div class="card dashboard-detail-card dashboard-click-card" (click)="openOrders()">
                     <div class="card-header card-header-warning">
-                        <h4 class="card-title">{{ selectedRangeLabel }} {{ isStaff ? 'Orders' : 'Orders Activity' }}</h4>
+                        <h4 class="card-title">{{ canUseDashboardRangeControls ? (selectedRangeLabel + ' ' + (isStaff ? 'Orders' : 'Orders Activity')) : (isStaff ? 'Orders' : 'Orders Activity') }}</h4>
                         <p class="card-category">{{ isStaff ? 'Latest order activity and status' : 'Latest orders with delivery/payment status' }}</p>
                     </div>
                     <div class="card-body">
@@ -487,7 +487,7 @@
             <div class="col-lg-6 col-md-12" *ngIf="canOpenSales">
                 <div class="card dashboard-detail-card dashboard-click-card" (click)="canOpenReports ? openReports() : openSale()">
                     <div class="card-header card-header-rose">
-                        <h4 class="card-title">{{ selectedRangeLabel }} {{ canOpenReports ? (isStaff ? 'Fast Moving Products' : 'Top Selling Products') : 'Popular Products' }}</h4>
+                        <h4 class="card-title">{{ canUseDashboardRangeControls ? (selectedRangeLabel + ' ' + (canOpenReports ? (isStaff ? 'Fast Moving Products' : 'Top Selling Products') : 'Popular Products')) : (canOpenReports ? (isStaff ? 'Fast Moving Products' : 'Top Selling Products') : 'Popular Products') }}</h4>
                         <p class="card-category">{{ canOpenReports ? (isStaff ? 'Best moving items from recent billing' : 'Best moving items from current billing data') : 'Best moving items by quantity from current scope' }}</p>
                     </div>
                     <div class="card-body">
@@ -513,7 +513,7 @@
             <div class="col-lg-6 col-md-12" *ngIf="canViewFinancialDashboard && canOpenReports; else dashboardRoleNote">
                 <div class="card dashboard-detail-card dashboard-click-card" (click)="openReports()">
                     <div class="card-header card-header-primary">
-                        <h4 class="card-title">{{ selectedRangeLabel }} Recent Payments</h4>
+                        <h4 class="card-title">{{ canUseDashboardRangeControls ? (selectedRangeLabel + ' Recent Payments') : 'Recent Payments' }}</h4>
                         <p class="card-category">Latest collected amounts from sales and orders</p>
                     </div>
                     <div class="card-body">

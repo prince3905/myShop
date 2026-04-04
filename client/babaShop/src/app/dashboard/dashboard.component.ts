@@ -381,6 +381,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return this.authService.can("sales.return");
   }
 
+  get canUseDashboardRangeControls(): boolean {
+    return this.isSuperAdmin || this.userRole === "ADMIN";
+  }
+
   get showTopAnalyticsFirst(): boolean {
     return !this.showOperationalWorkboard;
   }
@@ -390,6 +394,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   get priorityFlowSteps(): Array<{ key: "daily" | "weekly" | "monthly" | "yearly" | "all"; label: string; copy: string; muted?: boolean }> {
+    if (!this.canUseDashboardRangeControls) {
+      return [];
+    }
+
     if (this.isSuperAdmin) {
       return [
         { key: "daily", label: "1. Daily", copy: "Sabse pehle aaj ka global movement, shop alerts aur fresh activity" },
@@ -431,18 +439,19 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   get salesKpiLabel(): string {
-    return this.isManager ? `${this.selectedRangeLabel} Sales` : `${this.selectedRangeLabel} Sales`;
+    return this.canUseDashboardRangeControls ? `${this.selectedRangeLabel} Sales` : "Sales";
   }
 
   get ordersKpiLabel(): string {
-    return `${this.selectedRangeLabel} Orders`;
+    return this.canUseDashboardRangeControls ? `${this.selectedRangeLabel} Orders` : "Orders";
   }
 
   get purchaseKpiLabel(): string {
-    return `${this.selectedRangeLabel} Purchase`;
+    return this.canUseDashboardRangeControls ? `${this.selectedRangeLabel} Purchase` : "Purchase";
   }
 
   get rangeFooterCopy(): string {
+    if (!this.canUseDashboardRangeControls) return "Today";
     if (this.selectedRange === "daily") return "Last 24 Hours";
     if (this.selectedRange === "weekly") return "Last 7 Days";
     if (this.selectedRange === "monthly") return "Current Month";
