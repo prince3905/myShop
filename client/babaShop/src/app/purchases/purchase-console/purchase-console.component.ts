@@ -87,8 +87,7 @@ export class PurchaseConsoleComponent implements OnInit {
   }
 
   get canMutatePurchase(): boolean {
-    const role = this.authService.getUserRole();
-    return ["SUPER_ADMIN", "ADMIN"].includes(role || "") && !this.authService.isGlobalReadOnlyMode();
+    return this.authService.can("inventory.purchase.manage") && !this.authService.isGlobalReadOnlyMode();
   }
 
   get draftCount(): number {
