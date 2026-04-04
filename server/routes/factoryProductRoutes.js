@@ -22,8 +22,8 @@ router.get(
   factoryProductController.getFactoryProductOptions,
 );
 router.get("/", authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"), authorizeFeature("factory.product_master"), factoryProductController.getFactoryProducts);
-router.post("/", authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER"), authorizeFeature("factory.product_master"), factoryProductController.createFactoryProduct);
-router.put("/:id", authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER"), authorizeFeature("factory.product_master"), factoryProductController.updateFactoryProduct);
-router.delete("/:id", authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER"), authorizeFeature("factory.product_master"), factoryProductController.deleteFactoryProduct);
+router.post("/", authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"), authorizeFeature("factory.product_master"), factoryProductController.createFactoryProduct);
+router.put("/:id", authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"), authorizeFeature("factory.product_master"), factoryProductController.updateFactoryProduct);
+router.delete("/:id", authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"), authorizeFeature("factory.product_master"), factoryProductController.deleteFactoryProduct);
 
 module.exports = router;

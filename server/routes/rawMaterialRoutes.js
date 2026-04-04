@@ -23,8 +23,8 @@ router.get(
   rawMaterialController.getRawMaterialOptions,
 );
 router.get("/", authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"), authorizeFeature("factory.raw_material_master"), rawMaterialController.getRawMaterials);
-router.post("/", authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER"), authorizeFeature("factory.raw_material_master"), rawMaterialController.createRawMaterial);
-router.put("/:id", authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER"), authorizeFeature("factory.raw_material_master"), rawMaterialController.updateRawMaterial);
-router.delete("/:id", authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER"), authorizeFeature("factory.raw_material_master"), rawMaterialController.deleteRawMaterial);
+router.post("/", authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"), authorizeFeature("factory.raw_material_master"), rawMaterialController.createRawMaterial);
+router.put("/:id", authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"), authorizeFeature("factory.raw_material_master"), rawMaterialController.updateRawMaterial);
+router.delete("/:id", authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"), authorizeFeature("factory.raw_material_master"), rawMaterialController.deleteRawMaterial);
 
 module.exports = router;
