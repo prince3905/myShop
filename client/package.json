@@ -1,0 +1,7 @@
+{
+  "name": "myshop-client-shell",
+  "private": true,
+  "scripts": {
+    "build": "npm --prefix babaShop install && npm --prefix babaShop run build:mobile -- --output-path=../server/public"
+  }
+}
