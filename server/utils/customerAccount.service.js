@@ -3,7 +3,7 @@ const Customer = require("../models/Customer");
 const Sale = require("../models/CustomerSale");
 const SaleLedger = require("../models/SaleLedger");
 const SaleReturn = require("../models/SaleReturn");
-const Order = require("../models/Order");
+const Order = require("../models/order");
 const OrderLedger = require("../models/OrderLedger");
 
 const roundAmount = (value) => Number(Number(value || 0).toFixed(2));

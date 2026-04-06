@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const Order = require("../models/Order");
+const Order = require("../models/order");
 const Customer = require("../models/Customer");
 const ProductVariation = require("../models/ProductVariation");
 const { generateInvoiceNo } = require("../utils/invoice.service");

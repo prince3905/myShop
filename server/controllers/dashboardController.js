@@ -1,5 +1,5 @@
 const Sale = require("../models/CustomerSale");
-const Order = require("../models/Order");
+const Order = require("../models/order");
 const Customer = require("../models/Customer");
 const Shop = require("../models/Shop");
 const Stock = require("../models/Stock");
