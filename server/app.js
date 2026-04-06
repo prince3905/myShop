@@ -152,7 +152,7 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-const clientDistPath = path.join(__dirname, "..", "client", "babaShop", "dist");
+const clientDistPath = path.join(__dirname, "public");
 app.use(express.static(clientDistPath));
 
 app.get("*", (req, res, next) => {
