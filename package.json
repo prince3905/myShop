@@ -2,9 +2,15 @@
   "name": "myshop-workspace",
   "private": true,
   "scripts": {
+    "install:client": "npm --prefix client/babaShop install",
+    "install:server": "npm --prefix server install",
+    "install:all": "npm run install:client && npm run install:server",
     "build:client": "npm --prefix client/babaShop run build:mobile",
+    "build:server:public": "rm -rf server/public && mkdir -p server/public && cp -R client/babaShop/dist/. server/public/",
+    "build": "npm run install:all && npm run build:client && npm run build:server:public",
     "start:server": "npm --prefix server run dev",
-    "start": "npm run build:client && npm run start:server",
+    "start:prod": "npm --prefix server run start:prod",
+    "start": "npm run start:prod",
     "dev:client": "npm --prefix client/babaShop start",
     "dev:server": "npm --prefix server run dev"
   }
