@@ -1,4 +1,5 @@
 const express = require("express");
+const fs = require("fs");
 const path = require("path");
 const app = express();
 const cors = require("cors");
@@ -152,7 +153,23 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-const clientDistPath = path.join(__dirname, "public");
+const resolveClientDistPath = () => {
+  const candidates = [
+    path.join(__dirname, "public"),
+    path.join(__dirname, "..", "client", "server", "public"),
+    path.join(__dirname, "..", "client", "babaShop", "dist"),
+  ];
+
+  for (const candidate of candidates) {
+    if (fs.existsSync(path.join(candidate, "index.html"))) {
+      return candidate;
+    }
+  }
+
+  return candidates[0];
+};
+
+const clientDistPath = resolveClientDistPath();
 app.use(express.static(clientDistPath));
 
 app.get("*", (req, res, next) => {
