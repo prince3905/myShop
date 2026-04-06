@@ -18,6 +18,7 @@ const dynamicOriginPatterns = [
   /^https:\/\/[a-z0-9.-]+\.ngrok-free\.app$/i,
   /^https:\/\/[a-z0-9.-]+\.ngrok\.app$/i,
   /^https:\/\/[a-z0-9.-]+\.ngrok-dev\.app$/i,
+  /^https:\/\/[a-z0-9.-]+\.onrender\.com$/i,
   /^capacitor:\/\/localhost$/i,
   /^ionic:\/\/localhost$/i,
 ];
@@ -104,6 +105,7 @@ app.use(
       ) {
         return callback(null, true);
       }
+      console.error(`CORS blocked for origin: ${origin}`);
       return callback(new Error("CORS blocked"));
     },
     credentials: false,
