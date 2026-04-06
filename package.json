@@ -2,7 +2,7 @@
   "name": "myshop-workspace",
   "private": true,
   "scripts": {
-    "install:client": "npm --prefix client/babaShop install",
+    "install:client": "npm --prefix client/babaShop install --include=dev",
     "install:server": "npm --prefix server install",
     "install:all": "npm run install:client && npm run install:server",
     "build:client": "npm --prefix client/babaShop run build:mobile",
