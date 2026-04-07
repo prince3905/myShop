@@ -324,10 +324,11 @@ const buildCustomerLedger = async ({
   const orderIds = [...new Set(orderLedgerEntries.map((entry) => `${entry.order || ""}`).filter(Boolean))];
   const orderRows = orderIds.length
     ? await Order.find({ _id: { $in: orderIds } })
-        .select("_id orderNo items createdAt")
+        .select("_id orderNo items createdAt updatedAt refundedAmount paymentStatus")
         .lean()
     : [];
   const orderMap = new Map(orderRows.map((order) => [`${order._id}`, order]));
+  const orderLedgerTypes = new Map();
 
   const ledgerRows = [];
 
@@ -443,6 +444,12 @@ const buildCustomerLedger = async ({
 
   for (const entry of orderLedgerEntries) {
     const order = orderMap.get(`${entry.order}`);
+    const orderKey = `${entry.order || ""}`;
+    if (orderKey) {
+      const existingTypes = orderLedgerTypes.get(orderKey) || new Set();
+      existingTypes.add(`${entry.type || ""}`);
+      orderLedgerTypes.set(orderKey, existingTypes);
+    }
     const type = `${entry.type || ""}`;
     const configMap = {
       order: { transactionType: "order", label: "Order", debit: roundAmount(entry.amount), credit: 0, sortOrder: 15 },
@@ -479,6 +486,35 @@ const buildCustomerLedger = async ({
       dueAdjustedAmount: 0,
       createdAt: entry.createdAt,
       sortOrder: config.sortOrder,
+    });
+  }
+
+  for (const order of orderRows) {
+    const orderKey = `${order._id}`;
+    const existingTypes = orderLedgerTypes.get(orderKey) || new Set();
+    const refundedAmount = roundAmount(order.refundedAmount || 0);
+    if (refundedAmount <= 0 || existingTypes.has("refund")) {
+      continue;
+    }
+
+    ledgerRows.push({
+      _id: `order-refund:synthetic:${order._id}`,
+      transactionId: order._id,
+      transactionType: "refund",
+      label: "Order Refund",
+      saleId: null,
+      orderId: order._id,
+      invoiceNo: order.orderNo || `${order._id}`,
+      paymentMethod: null,
+      note: `Refund settled for ${order.orderNo || order._id}`,
+      items: [],
+      debit: 0,
+      credit: 0,
+      refundAmount: refundedAmount,
+      creditAmount: 0,
+      dueAdjustedAmount: 0,
+      createdAt: order.updatedAt || order.createdAt,
+      sortOrder: 45,
     });
   }
 
