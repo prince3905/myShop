@@ -7,6 +7,7 @@ const Distributor = require("../models/Distributor");
 const Purchase = require("../models/Purchase");
 const SaleReturn = require("../models/SaleReturn");
 const PurchaseReturn = require("../models/PurchaseReturn");
+const SaleLedger = require("../models/SaleLedger");
 
 const isSuperAdminGlobal = (req) =>
   req.user?.role === "SUPER_ADMIN" && !req.shopId;
@@ -87,6 +88,26 @@ const getTrendDaysForRange = (range) => {
   if (range === "monthly") return 30;
   if (range === "yearly") return 365;
   return 730;
+};
+
+const getPaymentModeGroup = (method) => {
+  const normalized = `${method || ""}`.trim().toUpperCase();
+  if (normalized === "CASH") return "CASH";
+  if (["UPI", "CARD", "BANK", "ONLINE", "BANK_TRANSFER"].includes(normalized)) {
+    return "ONLINE";
+  }
+  return "OTHER";
+};
+
+const buildRangeMatch = (range, fieldName = "createdAt", now = new Date()) => {
+  const start = getRangeStartDate(range, now);
+  if (!start) {
+    return {};
+  }
+
+  return {
+    [fieldName]: { $gte: start, $lte: now },
+  };
 };
 
 exports.getOverview = async (req, res) => {
@@ -647,6 +668,217 @@ exports.getPurchaseReturnAnalytics = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to load purchase return analytics",
+      error: error.message,
+    });
+  }
+};
+
+exports.getPaymentCollectionAnalytics = async (req, res) => {
+  try {
+    const query = isSuperAdminGlobal(req) ? {} : { shop: req.shopId };
+    const range = normalizeDashboardRange(req.query?.range);
+    const now = new Date();
+    const rangeStart = getRangeStartDate(range, now);
+    const orderPaymentFilterCondition = range === "all"
+      ? { $literal: true }
+      : {
+          $and: [
+            { $gte: ["$$payment.collectedAt", rangeStart] },
+            { $lte: ["$$payment.collectedAt", now] },
+          ],
+        };
+
+    const salePaymentMatch = {
+      ...query,
+      type: "payment",
+      ...buildRangeMatch(range, "createdAt", now),
+    };
+
+    const orderBaseMatch = { ...query };
+
+    const [saleGroupRows, saleSummaryRows, orderGroupRows, orderSummaryRows, walletUseRows] = await Promise.all([
+      SaleLedger.aggregate([
+        { $match: salePaymentMatch },
+        {
+          $project: {
+            sale: 1,
+            amount: { $ifNull: ["$amount", 0] },
+            paymentGroup: {
+              $switch: {
+                branches: [
+                  { case: { $eq: ["$paymentMethod", "CASH"] }, then: "CASH" },
+                  { case: { $in: ["$paymentMethod", ["UPI", "CARD", "BANK", "ONLINE", "BANK_TRANSFER"]] }, then: "ONLINE" },
+                ],
+                default: "OTHER",
+              },
+            },
+          },
+        },
+        {
+          $group: {
+            _id: "$paymentGroup",
+            totalAmount: { $sum: "$amount" },
+            entryCount: { $sum: 1 },
+          },
+        },
+      ]),
+      SaleLedger.aggregate([
+        { $match: salePaymentMatch },
+        {
+          $group: {
+            _id: null,
+            totalAmount: { $sum: { $ifNull: ["$amount", 0] } },
+            entryCount: { $sum: 1 },
+            saleIds: { $addToSet: "$sale" },
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            totalAmount: 1,
+            entryCount: 1,
+            billCount: { $size: "$saleIds" },
+          },
+        },
+      ]),
+      Order.aggregate([
+        { $match: orderBaseMatch },
+        {
+          $project: {
+            paymentHistory: {
+              $filter: {
+                input: { $ifNull: ["$paymentHistory", []] },
+                as: "payment",
+                cond: orderPaymentFilterCondition,
+              },
+            },
+          },
+        },
+        { $unwind: "$paymentHistory" },
+        {
+          $project: {
+            amount: { $ifNull: ["$paymentHistory.amount", 0] },
+            paymentGroup: {
+              $switch: {
+                branches: [
+                  { case: { $eq: ["$paymentHistory.paymentMethod", "CASH"] }, then: "CASH" },
+                  { case: { $in: ["$paymentHistory.paymentMethod", ["UPI", "CARD", "ONLINE", "BANK_TRANSFER"]] }, then: "ONLINE" },
+                ],
+                default: "OTHER",
+              },
+            },
+          },
+        },
+        {
+          $group: {
+            _id: "$paymentGroup",
+            totalAmount: { $sum: "$amount" },
+            entryCount: { $sum: 1 },
+          },
+        },
+      ]),
+      Order.aggregate([
+        { $match: orderBaseMatch },
+        {
+          $project: {
+            orderId: "$_id",
+            paymentHistory: {
+              $filter: {
+                input: { $ifNull: ["$paymentHistory", []] },
+                as: "payment",
+                cond: orderPaymentFilterCondition,
+              },
+            },
+          },
+        },
+        { $unwind: "$paymentHistory" },
+        {
+          $group: {
+            _id: null,
+            totalAmount: { $sum: { $ifNull: ["$paymentHistory.amount", 0] } },
+            entryCount: { $sum: 1 },
+            orderIds: { $addToSet: "$orderId" },
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            totalAmount: 1,
+            entryCount: 1,
+            billCount: { $size: "$orderIds" },
+          },
+        },
+      ]),
+      SaleLedger.aggregate([
+        {
+          $match: {
+            ...query,
+            type: "wallet_use",
+            ...buildRangeMatch(range, "createdAt", now),
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            totalAmount: { $sum: { $ifNull: ["$amount", 0] } },
+            entryCount: { $sum: 1 },
+          },
+        },
+      ]),
+    ]);
+
+    const toModeMap = (rows = []) =>
+      rows.reduce(
+        (acc, row) => {
+          const key = `${row?._id || ""}`.toUpperCase();
+          if (key === "CASH" || key === "ONLINE") {
+            acc[key] = {
+              totalAmount: Number(row?.totalAmount || 0),
+              entryCount: Number(row?.entryCount || 0),
+            };
+          }
+          return acc;
+        },
+        {
+          CASH: { totalAmount: 0, entryCount: 0 },
+          ONLINE: { totalAmount: 0, entryCount: 0 },
+        },
+      );
+
+    const saleModeMap = toModeMap(saleGroupRows);
+    const orderModeMap = toModeMap(orderGroupRows);
+    const saleSummary = saleSummaryRows[0] || {};
+    const orderSummary = orderSummaryRows[0] || {};
+    const walletSummary = walletUseRows[0] || {};
+
+    const cashCollected = Number(saleModeMap.CASH.totalAmount || 0) + Number(orderModeMap.CASH.totalAmount || 0);
+    const onlineCollected =
+      Number(saleModeMap.ONLINE.totalAmount || 0) + Number(orderModeMap.ONLINE.totalAmount || 0);
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        range,
+        totalCollected: roundAmount(cashCollected + onlineCollected),
+        cashCollected: roundAmount(cashCollected),
+        onlineCollected: roundAmount(onlineCollected),
+        walletUsed: roundAmount(walletSummary.totalAmount || 0),
+        cashEntryCount: Number(saleModeMap.CASH.entryCount || 0) + Number(orderModeMap.CASH.entryCount || 0),
+        onlineEntryCount:
+          Number(saleModeMap.ONLINE.entryCount || 0) + Number(orderModeMap.ONLINE.entryCount || 0),
+        saleCollected: roundAmount(saleSummary.totalAmount || 0),
+        saleEntryCount: Number(saleSummary.entryCount || 0),
+        saleBillCount: Number(saleSummary.billCount || 0),
+        orderCollected: roundAmount(orderSummary.totalAmount || 0),
+        orderEntryCount: Number(orderSummary.entryCount || 0),
+        orderBillCount: Number(orderSummary.billCount || 0),
+        walletUseCount: Number(walletSummary.entryCount || 0),
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to load payment collection analytics",
       error: error.message,
     });
   }

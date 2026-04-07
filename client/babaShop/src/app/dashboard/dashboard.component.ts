@@ -81,6 +81,21 @@ export class DashboardComponent implements OnInit, OnDestroy {
     weekly: { totalAmount: 0, totalQty: 0, count: 0 },
     monthly: { totalAmount: 0, totalQty: 0, count: 0 },
   };
+  paymentCollectionSummary: any = {
+    totalCollected: 0,
+    cashCollected: 0,
+    onlineCollected: 0,
+    walletUsed: 0,
+    cashEntryCount: 0,
+    onlineEntryCount: 0,
+    saleCollected: 0,
+    saleEntryCount: 0,
+    saleBillCount: 0,
+    orderCollected: 0,
+    orderEntryCount: 0,
+    orderBillCount: 0,
+    walletUseCount: 0,
+  };
   overview: any = {
     lowStockItems: [],
     recentOrders: [],
@@ -318,6 +333,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.loadInventorySummary();
     if (this.canViewFinancialDashboard) {
       this.loadPurchaseAnalytics();
+      this.loadPaymentCollectionAnalytics();
     }
     this.loadReturnAnalytics();
     this.loadPurchaseReturnAnalytics();
@@ -532,6 +548,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return this.selectedRangeLabel;
   }
 
+  get paymentCollectionTitle(): string {
+    return this.canUseDashboardRangeControls ? `${this.selectedRangeLabel} Payment Collection` : "Payment Collection";
+  }
+
   get showOperationalWorkboard(): boolean {
     return this.isStaff || this.isManager;
   }
@@ -736,6 +756,34 @@ export class DashboardComponent implements OnInit, OnDestroy {
           monthly: { totalAmount: 0, totalPaid: 0, totalDue: 0, count: 0 },
         };
         this.schedulePurchaseAnalyticsChartRender();
+      },
+    });
+  }
+
+  loadPaymentCollectionAnalytics() {
+    this.dashboardService.getPaymentCollectionAnalyticsByRange(this.selectedRange).subscribe({
+      next: (res: any) => {
+        this.paymentCollectionSummary = {
+          ...this.paymentCollectionSummary,
+          ...(res?.data || {}),
+        };
+      },
+      error: () => {
+        this.paymentCollectionSummary = {
+          totalCollected: 0,
+          cashCollected: 0,
+          onlineCollected: 0,
+          walletUsed: 0,
+          cashEntryCount: 0,
+          onlineEntryCount: 0,
+          saleCollected: 0,
+          saleEntryCount: 0,
+          saleBillCount: 0,
+          orderCollected: 0,
+          orderEntryCount: 0,
+          orderBillCount: 0,
+          walletUseCount: 0,
+        };
       },
     });
   }

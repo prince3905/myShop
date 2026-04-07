@@ -40,5 +40,11 @@ router.get(
   authorizeFeature("dashboard.financial"),
   dashboardController.getPurchaseReturnAnalytics,
 );
+router.get(
+  "/payment-collection-analytics",
+  authorizeRoles("SUPER_ADMIN", "ADMIN"),
+  authorizeFeature("dashboard.financial"),
+  dashboardController.getPaymentCollectionAnalytics,
+);
 
 module.exports = router;

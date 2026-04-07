@@ -613,6 +613,11 @@
   gap: 10px;
 }
 
+:host ::ng-deep .payment-collection-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
 :host ::ng-deep .due-summary-card {
   border: 1px solid #e2e8f0;
   border-radius: 16px;
@@ -625,6 +630,31 @@
   background: linear-gradient(180deg, #f7fff8 0%, #ffffff 100%);
   border-color: #cce9d1;
   box-shadow: 0 10px 26px rgba(21, 128, 61, 0.06);
+}
+
+:host ::ng-deep .payment-collection-panel {
+  min-height: 108px;
+}
+
+:host ::ng-deep .payment-total-panel {
+  background: linear-gradient(180deg, #eff6ff 0%, #ffffff 100%);
+  border-color: #bfdbfe;
+  box-shadow: 0 10px 26px rgba(37, 99, 235, 0.08);
+}
+
+:host ::ng-deep .payment-cash-panel {
+  background: linear-gradient(180deg, #f7fee7 0%, #ffffff 100%);
+  border-color: #c8e6a0;
+}
+
+:host ::ng-deep .payment-online-panel {
+  background: linear-gradient(180deg, #fff7ed 0%, #ffffff 100%);
+  border-color: #fed7aa;
+}
+
+:host ::ng-deep .payment-wallet-panel {
+  background: linear-gradient(180deg, #faf5ff 0%, #ffffff 100%);
+  border-color: #ddd6fe;
 }
 
 :host ::ng-deep .customer-credit-grid .due-summary-card {
@@ -749,7 +779,8 @@
   }
 
   :host ::ng-deep .customer-credit-grid,
-  :host ::ng-deep .due-summary-grid {
+  :host ::ng-deep .due-summary-grid,
+  :host ::ng-deep .payment-collection-grid {
     grid-template-columns: 1fr;
   }
 

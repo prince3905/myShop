@@ -603,6 +603,13 @@ exports.updateShopSettings = async (req, res) => {
       }
     }
     if (req.body?.paymentSettings !== undefined) {
+      if (req.user?.role !== "SUPER_ADMIN") {
+        return res.status(403).json({
+          success: false,
+          message: "Only Super Admin can update UPI settings",
+        });
+      }
+
       shop.paymentSettings = {
         upiId: `${req.body?.paymentSettings?.upiId || ""}`.trim().toLowerCase(),
         upiDisplayName: `${req.body?.paymentSettings?.upiDisplayName || ""}`.trim(),

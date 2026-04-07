@@ -58,4 +58,10 @@ export class DashboardService {
   getPurchaseReturnAnalytics(): Observable<any> {
     return this.http.get(`${this.baseURL}/api/dashboard/purchase-return-analytics`);
   }
+
+  getPaymentCollectionAnalyticsByRange(range: string): Observable<any> {
+    return this.http.get(`${this.baseURL}/api/dashboard/payment-collection-analytics`, {
+      params: { range },
+    });
+  }
 }

@@ -352,10 +352,6 @@ export class SettingsComponent implements OnInit {
       name: this.shopForm.value.name,
       contactNumber: this.shopForm.value.contactNumber,
       email: this.shopForm.value.email,
-      paymentSettings: {
-        upiId: this.shopForm.value.upiId,
-        upiDisplayName: this.shopForm.value.upiDisplayName,
-      },
       address: {
         addressLine1: this.shopForm.value.addressLine1,
         addressLine2: this.shopForm.value.addressLine2,
@@ -364,7 +360,15 @@ export class SettingsComponent implements OnInit {
         state: this.shopForm.value.state,
         pincode: this.shopForm.value.pincode,
       },
-    };
+    } as any;
+
+    if (this.canEditUpiSettings) {
+      payload.paymentSettings = {
+        upiId: this.shopForm.value.upiId,
+        upiDisplayName: this.shopForm.value.upiDisplayName,
+      };
+    }
+
     this.handleRequest({
       stateKey: "savingShop",
       request$: this.authService.updateShopSettings(payload),
@@ -372,6 +376,10 @@ export class SettingsComponent implements OnInit {
       errorMessage: "Failed to update shop settings",
       onSuccess: () => this.loadOverview(),
     });
+  }
+
+  get canEditUpiSettings(): boolean {
+    return this.profile?.role === "SUPER_ADMIN";
   }
 
   saveIntegrations() {
