@@ -40,9 +40,10 @@
       <mat-spinner color="primary" mode="indeterminate"></mat-spinner>
     </div>
 
-    <div class="card-body" *ngIf="!loading">
-      <div class="table-responsive">
-        <table class="table">
+    <div class="card customer-table-card" *ngIf="!loading">
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table customer-table">
           <thead>
             <tr>
               <th>Customer ID</th>
@@ -60,20 +61,21 @@
           </thead>
           <tbody>
             <tr *ngFor="let item of paginatedItems" (click)="viewItemDetails(item._id)">
-              <td>{{ item._id }}</td>
-              <td>{{ item.name }}</td>
-              <td>{{ item.phone || '-' }}</td>
-              <td>{{ item.shop?.shopName || item.shop?.shopCode || '-' }}</td>
-              <td>{{ item.createdAt | date:'mediumDate' }}</td>
-              <td>Rs {{ item.totalPurchase || 0 }}</td>
-              <td>Rs {{ item.totalPaid || 0 }}</td>
-              <td>Rs {{ item.totalDue || 0 }}</td>
-              <td>Rs {{ item.walletBalance || 0 }}</td>
-              <td>{{ item.purchaseCount || 0 }}</td>
-              <td>
+              <td class="id-cell">{{ item._id }}</td>
+              <td class="name-cell">{{ item.name }}</td>
+              <td class="phone-cell">{{ item.phone || '-' }}</td>
+              <td class="shop-cell">{{ item.shop?.shopName || item.shop?.shopCode || '-' }}</td>
+              <td class="date-cell">{{ item.createdAt | date:'mediumDate' }}</td>
+              <td class="amount-cell">Rs {{ (item.totalPurchase || 0) | number:'1.0-2' }}</td>
+              <td class="amount-cell">Rs {{ (item.totalPaid || 0) | number:'1.0-2' }}</td>
+              <td class="amount-cell due-cell">Rs {{ (item.totalDue || 0) | number:'1.0-2' }}</td>
+              <td class="amount-cell wallet-cell">Rs {{ (item.walletBalance || 0) | number:'1.0-2' }}</td>
+              <td class="count-cell">{{ item.purchaseCount || 0 }}</td>
+              <td class="action-cell">
                 <button
                   mat-stroked-button
                   color="primary"
+                  class="compact-action-btn"
                   type="button"
                   *ngIf="canManageCustomers"
                   (click)="openEditCustomerDialog(item); $event.stopPropagation()"
@@ -87,7 +89,8 @@
               <td colspan="11" class="text-center empty-state">No customers found</td>
             </tr>
           </tbody>
-        </table>
+          </table>
+        </div>
       </div>
     </div>
 
