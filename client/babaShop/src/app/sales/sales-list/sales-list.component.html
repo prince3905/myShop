@@ -144,9 +144,10 @@
                   </span>
                 </td>
                 <td class="action-col">
-                  <button mat-stroked-button color="accent" (click)="showDetails(row)">Details</button>
+                  <button mat-stroked-button class="action-btn" color="accent" (click)="showDetails(row)">Details</button>
                   <button
                     mat-stroked-button
+                    class="action-btn"
                     color="primary"
                     [disabled]="(row?.dueAmount || 0) <= 0"
                     [matTooltip]="(row?.dueAmount || 0) > 0 ? 'Collect pending payment' : 'No due'"
@@ -155,13 +156,14 @@
                   </button>
                   <button
                     mat-stroked-button
+                    class="action-btn"
                     color="warn"
                     [disabled]="isReturnClosed(row)"
                     [matTooltip]="isReturnClosed(row) ? 'Customer se full return ho chuka hai' : 'Return from customer open karo'"
                     (click)="openReturn(row)">
                     Return from Customer
                   </button>
-                  <button mat-stroked-button color="primary" (click)="printInvoice(row)">Print</button>
+                  <button mat-stroked-button class="action-btn" color="primary" (click)="printInvoice(row)">Print</button>
                 </td>
               </tr>
               <tr *ngIf="salesRows.length === 0">

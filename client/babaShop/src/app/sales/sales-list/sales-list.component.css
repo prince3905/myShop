@@ -136,7 +136,7 @@
 
 .sales-table th:nth-child(14),
 .sales-table td:nth-child(14) {
-  width: 260px;
+  width: 244px;
 }
 
 .sales-table td:nth-child(2) {
@@ -214,13 +214,24 @@
 .action-col {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 6px;
+  gap: 5px;
   align-items: center;
 }
 
-.action-col button {
+.action-col .action-btn {
   min-width: 0;
-  padding: 0 8px;
+  min-height: 30px;
+  padding: 0 6px;
+  font-size: 11px;
+  line-height: 1.1;
+  letter-spacing: 0;
+  white-space: normal;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.action-col .action-btn .mdc-button__label {
+  white-space: normal;
 }
 
 .empty {
@@ -262,5 +273,10 @@
 
   .action-col {
     grid-template-columns: 1fr;
+  }
+
+  .sales-table th:nth-child(14),
+  .sales-table td:nth-child(14) {
+    width: 170px;
   }
 }
