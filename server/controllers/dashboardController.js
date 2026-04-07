@@ -17,6 +17,41 @@ const canViewSensitiveFinancials = (req) =>
 const canViewOperationalAmounts = (req) =>
   ["SUPER_ADMIN", "ADMIN", "MANAGER"].includes(`${req.user?.role || ""}`);
 
+const roundAmount = (value) => Number(Number(value || 0).toFixed(2));
+
+const getSaleCollectibleDue = (sale = {}) =>
+  Math.max(
+    0,
+    roundAmount(
+      Number(sale?.totalAmount || 0) -
+        Number(sale?.returnedAmount || 0) -
+        Number(sale?.paidAmount || 0) -
+        Number(sale?.walletUsedAmount || 0),
+    ),
+  );
+
+const saleCollectibleDueExpr = () => ({
+  $max: [
+    0,
+    {
+      $subtract: [
+        {
+          $subtract: [
+            {
+              $subtract: [
+                { $ifNull: ["$totalAmount", 0] },
+                { $ifNull: ["$returnedAmount", 0] },
+              ],
+            },
+            { $ifNull: ["$paidAmount", 0] },
+          ],
+        },
+        { $ifNull: ["$walletUsedAmount", 0] },
+      ],
+    },
+  ],
+});
+
 const normalizeDashboardRange = (raw) => {
   const range = `${raw || "daily"}`.trim().toLowerCase();
   return ["daily", "weekly", "monthly", "yearly", "all"].includes(range) ? range : "daily";
@@ -102,7 +137,7 @@ exports.getOverview = async (req, res) => {
         .limit(5)
         .lean(),
       Sale.find({ ...query, ...createdAtMatch })
-        .select("invoiceNo customerName totalAmount dueAmount paymentMethod status createdAt")
+        .select("invoiceNo customerName totalAmount paidAmount walletUsedAmount returnedAmount paymentMethod status createdAt")
         .sort({ createdAt: -1 })
         .limit(5)
         .lean(),
@@ -137,11 +172,13 @@ exports.getOverview = async (req, res) => {
         .lean(),
       allowFinancials
         ? Sale.aggregate([
-            { $match: { ...query, dueAmount: { $gt: 0 }, status: { $ne: "CANCELLED" } } },
+            { $match: { ...query, status: { $ne: "CANCELLED" } } },
+            { $addFields: { collectibleDue: saleCollectibleDueExpr() } },
+            { $match: { collectibleDue: { $gt: 0 } } },
             {
               $group: {
                 _id: null,
-                totalDue: { $sum: "$dueAmount" },
+                totalDue: { $sum: "$collectibleDue" },
                 count: { $sum: 1 },
               },
             },
@@ -273,7 +310,7 @@ exports.getOverview = async (req, res) => {
           invoiceNo: sale.invoiceNo || "-",
           customerName: sale.customerName || "Walk-in",
           totalAmount: allowOperationalAmounts ? Number(sale.totalAmount || 0) : 0,
-          dueAmount: allowOperationalAmounts ? Number(sale.dueAmount || 0) : 0,
+          dueAmount: allowOperationalAmounts ? getSaleCollectibleDue(sale) : 0,
           paymentMethod: sale.paymentMethod || "CASH",
           status: sale.status || "COMPLETED",
           createdAt: sale.createdAt,

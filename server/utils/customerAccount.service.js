@@ -223,7 +223,7 @@ const syncCustomerAccountSnapshot = async ({ shopId, customerId }) => {
     ),
   );
   const totalWalletUsed = Math.max(0, roundAmount(Number(saleTotals.totalWalletUsed || 0)));
-  const totalDue = Math.max(0, roundAmount(totalPurchase - totalPaid - totalWalletUsed));
+  const totalDue = Math.max(0, roundAmount(totalPurchase - totalPaid));
   const walletBalance = Math.max(
     0,
     roundAmount(Number(returnTotals.creditedAmount || 0) - totalWalletUsed),

@@ -24,6 +24,46 @@ const ALLOWED_PAYMENT_METHODS = new Set(["CASH", "BANK", "ONLINE", "UPI", "CARD"
 const canViewSensitiveFinancials = (req) =>
   ["SUPER_ADMIN", "ADMIN"].includes(`${req.user?.role || ""}`);
 
+const roundAmount = (value) => Number(Number(value || 0).toFixed(2));
+
+const getSaleNetPayableAmount = (sale = {}) =>
+  Math.max(
+    0,
+    roundAmount(Number(sale?.totalAmount || 0) - Number(sale?.returnedAmount || 0)),
+  );
+
+const getSaleCollectibleDue = (sale = {}) =>
+  Math.max(
+    0,
+    roundAmount(
+      getSaleNetPayableAmount(sale) -
+        Number(sale?.paidAmount || 0) -
+        Number(sale?.walletUsedAmount || 0),
+    ),
+  );
+
+const saleCollectibleDueExpr = () => ({
+  $max: [
+    0,
+    {
+      $subtract: [
+        {
+          $subtract: [
+            {
+              $subtract: [
+                { $ifNull: ["$totalAmount", 0] },
+                { $ifNull: ["$returnedAmount", 0] },
+              ],
+            },
+            { $ifNull: ["$paidAmount", 0] },
+          ],
+        },
+        { $ifNull: ["$walletUsedAmount", 0] },
+      ],
+    },
+  ],
+});
+
 const getNetSaleItemQuantity = (item = {}) =>
   Math.max(0, Number(item?.quantity || 0) - Number(item?.returnedQuantity || 0));
 
@@ -400,7 +440,12 @@ exports.createSale = async (req, res) => {
       paymentMethod: normalizedPaymentMethod,
       paidAmount: safePaidAmount,
       walletUsedAmount: safeWalletUsedAmount,
-      dueAmount: Math.max(0, Number((totalAmount - safePaidAmount - safeWalletUsedAmount).toFixed(2))),
+      dueAmount: getSaleCollectibleDue({
+        totalAmount,
+        paidAmount: safePaidAmount,
+        walletUsedAmount: safeWalletUsedAmount,
+        returnedAmount: 0,
+      }),
       orderSource: "POS",
       status: "COMPLETED",
     });
@@ -549,7 +594,7 @@ exports.getSales = async (req, res) => {
 
     const dueOnlyFlag = `${dueOnly || ""}`.trim().toLowerCase();
     if (dueOnlyFlag === "true" || dueOnlyFlag === "1" || dueOnlyFlag === "yes") {
-      exprConditions.push({ $gt: ["$dueAmount", 0] });
+      exprConditions.push({ $gt: [saleCollectibleDueExpr(), 0] });
     }
 
     if (exprConditions.length === 1) {
@@ -595,7 +640,7 @@ exports.getSales = async (req, res) => {
         billDiscount: Number(s.billDiscount || 0),
         paidAmount: Number(s.paidAmount || 0),
         walletUsedAmount: Number(s.walletUsedAmount || 0),
-        dueAmount: Number(s.dueAmount || 0),
+        dueAmount: getSaleCollectibleDue(s),
         totalQuantity: Number(s.totalQuantity || 0),
         returnedQuantity: Number(s.returnedQuantity || 0),
         returnedAmount: Number(s.returnedAmount || 0),
@@ -687,7 +732,9 @@ exports.getSaleById = async (req, res) => {
       return res.status(404).json({ success: false, message: "Sale not found" });
     }
 
-    return res.status(200).json({ success: true, data: sale });
+    const responseSale = sale.toObject();
+    responseSale.dueAmount = getSaleCollectibleDue(responseSale);
+    return res.status(200).json({ success: true, data: responseSale });
   } catch (error) {
     return res.status(500).json({
       success: false,
@@ -735,7 +782,7 @@ exports.collectSalePayment = async (req, res) => {
       return res.status(404).json({ success: false, message: "Sale not found for selected shop" });
     }
 
-    const currentDue = Math.max(0, Number(sale.dueAmount || 0));
+    const currentDue = getSaleCollectibleDue(sale);
     if (currentDue <= 0) {
       return res.status(409).json({ success: false, message: "No outstanding due for this sale" });
     }
@@ -756,8 +803,8 @@ exports.collectSalePayment = async (req, res) => {
       return res.status(400).json({ success: false, message: "Invalid payment method" });
     }
 
-    sale.paidAmount = Number((Number(sale.paidAmount || 0) + amount).toFixed(2));
-    sale.dueAmount = Math.max(0, Number((currentDue - amount).toFixed(2)));
+    sale.paidAmount = roundAmount(Number(sale.paidAmount || 0) + amount);
+    sale.dueAmount = getSaleCollectibleDue(sale);
     await sale.save();
 
     await createSaleLedgerEntry({
@@ -1037,7 +1084,7 @@ exports.getSalesReportOverview = async (req, res) => {
             },
             totalCostAmount: { $sum: "$totalReturnedCostAmount" },
             totalPaid: { $sum: "$paidAmount" },
-            totalDue: { $sum: "$dueAmount" },
+            totalDue: { $sum: saleCollectibleDueExpr() },
             totalReturnedQty: { $sum: "$returnedQuantity" },
             totalReturnedAmount: { $sum: "$returnedAmount" },
             totalRefundedAmount: { $sum: "$refundedAmount" },
@@ -1548,7 +1595,7 @@ exports.createSaleReturn = async (req, res) => {
       returnItems.reduce((acc, it) => acc + Number(it.totalAmount || 0), 0).toFixed(2),
     );
 
-    const currentDue = Math.max(0, Number(sale?.dueAmount || 0));
+    const currentDue = getSaleCollectibleDue(sale);
     const dueAdjustedAmount = Math.min(currentDue, totalAmount);
     const refundableMax = Math.max(0, Number((totalAmount - dueAdjustedAmount).toFixed(2)));
 
@@ -1668,10 +1715,7 @@ exports.createSaleReturn = async (req, res) => {
     sale.refundedAmount = Number(returnTotals.refund || 0);
     sale.dueAdjustedAmount = Number(returnTotals.dueAdjusted || 0);
     sale.creditedAmount = Number(returnTotals.credit || 0);
-    sale.dueAmount = Math.max(
-      0,
-      Number((Number(sale.totalAmount || 0) - Number(sale.paidAmount || 0) - Number(sale.dueAdjustedAmount || 0)).toFixed(2)),
-    );
+    sale.dueAmount = getSaleCollectibleDue(sale);
     const fullyReturned = Number(sale.returnedQuantity || 0) >= Number(sale.totalQuantity || 0);
     sale.status = fullyReturned ? "RETURNED" : "COMPLETED";
     await sale.save();
