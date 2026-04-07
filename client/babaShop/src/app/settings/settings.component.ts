@@ -149,6 +149,8 @@ export class SettingsComponent implements OnInit {
       name: [""],
       contactNumber: [""],
       email: [""],
+      upiId: [""],
+      upiDisplayName: [""],
       addressLine1: [""],
       addressLine2: [""],
       city: [""],
@@ -290,6 +292,8 @@ export class SettingsComponent implements OnInit {
           name: data.shop?.name || "",
           contactNumber: data.shop?.contactNumber || "",
           email: data.shop?.email || "",
+          upiId: data.shop?.paymentSettings?.upiId || "",
+          upiDisplayName: data.shop?.paymentSettings?.upiDisplayName || data.shop?.name || "",
           addressLine1: data.shop?.address?.addressLine1 || "",
           addressLine2: data.shop?.address?.addressLine2 || "",
           city: data.shop?.address?.city || "",
@@ -348,6 +352,10 @@ export class SettingsComponent implements OnInit {
       name: this.shopForm.value.name,
       contactNumber: this.shopForm.value.contactNumber,
       email: this.shopForm.value.email,
+      paymentSettings: {
+        upiId: this.shopForm.value.upiId,
+        upiDisplayName: this.shopForm.value.upiDisplayName,
+      },
       address: {
         addressLine1: this.shopForm.value.addressLine1,
         addressLine2: this.shopForm.value.addressLine2,

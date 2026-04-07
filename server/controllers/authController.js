@@ -24,9 +24,17 @@ const pushAuditLog = async (userId, action, details = "") => {
   });
 };
 
-const resolveShopForUser = async (user) => {
-  if (!user?.shop) return null;
-  return Shop.findById(user.shop);
+const resolveShopForRequest = async (req) => {
+  const selectedShopId =
+    req.headers["x-shop-id"] ||
+    req.query?.shopId ||
+    req.body?.shop ||
+    req.user?.shop ||
+    null;
+
+  if (!selectedShopId) return null;
+
+  return Shop.findOne({ _id: selectedShopId, isActive: true });
 };
 
 const buildUserAccessPayload = async (userLike) => {
@@ -449,7 +457,7 @@ exports.toggleTwoFactor = async (req, res) => {
 exports.getSettingsOverview = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
-    const shop = await resolveShopForUser(user);
+    const shop = await resolveShopForRequest(req);
     const effectiveRoleFeaturePolicy = await getEffectiveRoleFeaturePolicy();
 
     return res.status(200).json({
@@ -580,7 +588,7 @@ exports.updatePreferences = async (req, res) => {
 
 exports.updateShopSettings = async (req, res) => {
   try {
-    const shop = await resolveShopForUser(req.user);
+    const shop = await resolveShopForRequest(req);
     if (!shop) {
       return res.status(400).json({
         success: false,
@@ -593,6 +601,12 @@ exports.updateShopSettings = async (req, res) => {
       if (req.body[key] !== undefined) {
         shop[key] = req.body[key];
       }
+    }
+    if (req.body?.paymentSettings !== undefined) {
+      shop.paymentSettings = {
+        upiId: `${req.body?.paymentSettings?.upiId || ""}`.trim().toLowerCase(),
+        upiDisplayName: `${req.body?.paymentSettings?.upiDisplayName || ""}`.trim(),
+      };
     }
     await shop.save();
     await pushAuditLog(req.user._id, "SHOP_SETTINGS_UPDATED", "Updated shop settings");
@@ -612,7 +626,7 @@ exports.updateShopSettings = async (req, res) => {
 
 exports.updateIntegrations = async (req, res) => {
   try {
-    const shop = await resolveShopForUser(req.user);
+    const shop = await resolveShopForRequest(req);
     if (!shop) {
       return res.status(400).json({
         success: false,
@@ -645,7 +659,7 @@ exports.updateIntegrations = async (req, res) => {
 
 exports.updateBackupSettings = async (req, res) => {
   try {
-    const shop = await resolveShopForUser(req.user);
+    const shop = await resolveShopForRequest(req);
     if (!shop) {
       return res.status(400).json({
         success: false,
@@ -676,7 +690,7 @@ exports.updateBackupSettings = async (req, res) => {
 
 exports.runBackupNow = async (req, res) => {
   try {
-    const shop = await resolveShopForUser(req.user);
+    const shop = await resolveShopForRequest(req);
     if (!shop) {
       return res.status(400).json({
         success: false,
@@ -744,7 +758,7 @@ exports.deactivateAccount = async (req, res) => {
 
 exports.deactivateCurrentShop = async (req, res) => {
   try {
-    const shop = await resolveShopForUser(req.user);
+    const shop = await resolveShopForRequest(req);
     if (!shop) {
       return res.status(400).json({
         success: false,

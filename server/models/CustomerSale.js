@@ -99,6 +99,22 @@ const saleItemSchema = new mongoose.Schema(
   { _id: true }
 );
 
+const paymentBreakdownItemSchema = new mongoose.Schema(
+  {
+    method: {
+      type: String,
+      enum: ["CASH", "UPI", "CARD", "BANK", "ONLINE", "CREDIT"],
+      required: true,
+    },
+    amount: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+  },
+  { _id: false }
+);
+
 /* =========================
    SALE MAIN SCHEMA
 ========================= */
@@ -154,8 +170,13 @@ const saleSchema = new mongoose.Schema(
 
     paymentMethod: {
       type: String,
-      enum: ["CASH", "UPI", "CARD", "BANK", "ONLINE", "CREDIT"],
+      enum: ["CASH", "UPI", "CARD", "BANK", "ONLINE", "CREDIT", "SPLIT"],
       default: "CASH",
+    },
+
+    paymentBreakdown: {
+      type: [paymentBreakdownItemSchema],
+      default: [],
     },
 
     paidAmount: {

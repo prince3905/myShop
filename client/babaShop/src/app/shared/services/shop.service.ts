@@ -33,6 +33,10 @@ export class ShopService {
     return this.http.get<any>(`${this.baseURL}/api/shops/push-targets`);
   }
 
+  getShopById(id: string) {
+    return this.http.get<any>(`${this.baseURL}/api/shops/${id}`);
+  }
+
   createShop(payload: any) {
     return this.http.post<any>(`${this.baseURL}/api/shops`, payload);
   }

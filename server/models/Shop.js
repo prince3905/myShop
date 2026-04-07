@@ -82,6 +82,20 @@ const shopSchema = new mongoose.Schema({
     lastBackupAt: { type: Date, default: null }
   },
 
+  paymentSettings: {
+    upiId: {
+      type: String,
+      trim: true,
+      lowercase: true,
+      default: "",
+    },
+    upiDisplayName: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+  },
+
 }, { timestamps: true });
 
 /* Compound index for safety */

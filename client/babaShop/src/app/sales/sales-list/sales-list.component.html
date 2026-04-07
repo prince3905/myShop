@@ -65,6 +65,7 @@
               <mat-option value="UPI">UPI</mat-option>
               <mat-option value="CARD">CARD</mat-option>
               <mat-option value="CREDIT">CREDIT</mat-option>
+              <mat-option value="SPLIT">SPLIT</mat-option>
             </mat-select>
           </mat-form-field>
 
@@ -122,7 +123,15 @@
                 <td>Rs {{ row?.refundedAmount | number:'1.2-2' }}</td>
                 <td>{{ row?.totalQuantity || 0 }}</td>
                 <td>{{ row?.purchaseDate | date:'dd MMM yyyy' }}</td>
-                <td>{{ row?.paymentMethod || '-' }}</td>
+                <td>
+                  <div>{{ row?.paymentMethod || '-' }}</div>
+                  <small *ngIf="row?.paymentBreakdown?.length > 1">
+                    {{ row.paymentBreakdown[0]?.method }} {{ row.paymentBreakdown[0]?.amount | number:'1.2-2' }}
+                    <ng-container *ngFor="let part of row.paymentBreakdown.slice(1)">
+                      + {{ part?.method }} {{ part?.amount | number:'1.2-2' }}
+                    </ng-container>
+                  </small>
+                </td>
                 <td>{{ row?.status || '-' }}</td>
                 <td class="money-cell">
                   <span class="return-pill" [ngClass]="'return-pill-' + getReturnBadge(row)">
@@ -185,6 +194,12 @@
           <div><strong>Total:</strong> Rs {{ selectedSale?.totalPurchasePrice | number:'1.2-2' }}</div>
           <div><strong>Discount:</strong> Rs {{ selectedSale?.billDiscount | number:'1.2-2' }}</div>
           <div><strong>Paid:</strong> Rs {{ selectedSale?.paidAmount | number:'1.2-2' }}</div>
+          <div *ngIf="selectedSale?.paymentBreakdown?.length">
+            <strong>Payment Split:</strong>
+            <span *ngFor="let part of selectedSale.paymentBreakdown; let last = last">
+              {{ part?.method }} Rs {{ part?.amount | number:'1.2-2' }}<span *ngIf="!last">, </span>
+            </span>
+          </div>
           <div><strong>Wallet Used:</strong> Rs {{ selectedSale?.walletUsedAmount | number:'1.2-2' }}</div>
           <div><strong>Due:</strong> Rs {{ selectedSale?.dueAmount | number:'1.2-2' }}</div>
           <div><strong>Customer Return Status:</strong> {{ getReturnBadge(selectedSale) | uppercase }}</div>

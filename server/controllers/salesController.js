@@ -21,6 +21,7 @@ const isSuperAdminGlobal = (req) =>
   req.user?.role === "SUPER_ADMIN" && !req.shopId;
 const ALLOWED_REFUND_METHODS = new Set(["CASH", "BANK", "ONLINE", "UPI", "CARD", "STORE_CREDIT"]);
 const ALLOWED_PAYMENT_METHODS = new Set(["CASH", "BANK", "ONLINE", "UPI", "CARD", "CHEQUE"]);
+const ALLOWED_SALE_PAYMENT_METHODS = new Set(["CASH", "UPI", "CARD", "BANK", "ONLINE", "CREDIT"]);
 const canViewSensitiveFinancials = (req) =>
   ["SUPER_ADMIN", "ADMIN"].includes(`${req.user?.role || ""}`);
 
@@ -66,6 +67,19 @@ const saleCollectibleDueExpr = () => ({
 
 const getNetSaleItemQuantity = (item = {}) =>
   Math.max(0, Number(item?.quantity || 0) - Number(item?.returnedQuantity || 0));
+
+const normalizeSalePaymentMethod = (value = "CASH") => {
+  const normalized = `${value || "CASH"}`.trim().toUpperCase();
+  return ALLOWED_SALE_PAYMENT_METHODS.has(normalized) ? normalized : null;
+};
+
+const normalizeSplitPayments = (rows = []) =>
+  (Array.isArray(rows) ? rows : [])
+    .map((row) => ({
+      method: normalizeSalePaymentMethod(row?.method),
+      amount: roundAmount(Math.max(0, Number(row?.amount || 0))),
+    }))
+    .filter((row) => row.method && row.amount > 0);
 
 const sumSaleReturnedByVariation = async ({ shopId, saleId }) => {
   const rows = await SaleReturn.aggregate([
@@ -239,6 +253,7 @@ exports.createSale = async (req, res) => {
       billDiscount = 0,
       paidAmount = 0,
       walletUsedAmount = 0,
+      splitPayments = null,
     } = req.body || {};
 
     if (!Array.isArray(items) || items.length === 0) {
@@ -385,7 +400,22 @@ exports.createSale = async (req, res) => {
     const subTotal = normalizedItems.reduce((acc, it) => acc + Number(it.total || 0), 0);
     const safeBillDiscount = Math.max(0, Number(billDiscount || 0));
     const totalAmount = Math.max(0, Number((subTotal - safeBillDiscount).toFixed(2)));
-    const safePaidAmount = Math.max(0, Number(paidAmount || 0));
+    const normalizedPaymentMethod = normalizeSalePaymentMethod(paymentMethod);
+    if (!normalizedPaymentMethod) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid payment method",
+      });
+    }
+
+    const normalizedSplitPayments = normalizeSplitPayments(splitPayments);
+    const hasSplitPayments = normalizedSplitPayments.length > 0;
+    const computedSplitPaidAmount = roundAmount(
+      normalizedSplitPayments.reduce((sum, row) => sum + Number(row.amount || 0), 0),
+    );
+    const safePaidAmount = hasSplitPayments
+      ? computedSplitPaidAmount
+      : Math.max(0, roundAmount(Number(paidAmount || 0)));
     const safeWalletUsedAmount = Math.max(0, Number(walletUsedAmount || 0));
     if (safePaidAmount > totalAmount) {
       return res.status(400).json({
@@ -411,14 +441,21 @@ exports.createSale = async (req, res) => {
         message: "Paid amount plus wallet amount cannot be greater than net bill amount",
       });
     }
-    const allowedPaymentMethods = new Set(["CASH", "UPI", "CARD", "BANK", "ONLINE", "CREDIT"]);
-    const normalizedPaymentMethod = `${paymentMethod || "CASH"}`.trim().toUpperCase();
-    if (!allowedPaymentMethods.has(normalizedPaymentMethod)) {
+    if (
+      hasSplitPayments &&
+      Math.abs(roundAmount(safePaidAmount + safeWalletUsedAmount) - roundAmount(totalAmount)) > 0.01
+    ) {
       return res.status(400).json({
         success: false,
-        message: "Invalid payment method",
+        message: "Split payment plus wallet must settle the full bill amount",
       });
     }
+
+    const resolvedPaymentMethod = hasSplitPayments
+      ? (new Set(normalizedSplitPayments.map((row) => row.method)).size === 1
+          ? normalizedSplitPayments[0].method
+          : "SPLIT")
+      : normalizedPaymentMethod;
 
     const saleDocItems = normalizedItems.map((it) => {
       const output = { ...it };
@@ -437,7 +474,8 @@ exports.createSale = async (req, res) => {
       subTotal,
       billDiscount: safeBillDiscount,
       totalAmount,
-      paymentMethod: normalizedPaymentMethod,
+      paymentMethod: resolvedPaymentMethod,
+      paymentBreakdown: hasSplitPayments ? normalizedSplitPayments : [],
       paidAmount: safePaidAmount,
       walletUsedAmount: safeWalletUsedAmount,
       dueAmount: getSaleCollectibleDue({
@@ -462,18 +500,24 @@ exports.createSale = async (req, res) => {
       createdBy: req.user?._id,
     });
     if (safePaidAmount > 0) {
-      await createSaleLedgerEntry({
-        shop: req.shopId,
-        sale: sale._id,
-        customer: sale.customer,
-        customerName: sale.customerName,
-        type: "payment",
-        amount: safePaidAmount,
-        paymentMethod: normalizedPaymentMethod,
-        referenceId: sale._id,
-        note: `Sale payment (${normalizedPaymentMethod}) ${sale.invoiceNo || sale._id}`,
-        createdBy: req.user?._id,
-      });
+      const paymentRows = hasSplitPayments
+        ? normalizedSplitPayments
+        : [{ method: normalizedPaymentMethod, amount: safePaidAmount }];
+
+      for (const paymentRow of paymentRows) {
+        await createSaleLedgerEntry({
+          shop: req.shopId,
+          sale: sale._id,
+          customer: sale.customer,
+          customerName: sale.customerName,
+          type: "payment",
+          amount: Number(paymentRow.amount || 0),
+          paymentMethod: paymentRow.method,
+          referenceId: sale._id,
+          note: `Sale payment (${paymentRow.method}) ${sale.invoiceNo || sale._id}`,
+          createdBy: req.user?._id,
+        });
+      }
     }
     if (safeWalletUsedAmount > 0) {
       await createSaleLedgerEntry({
@@ -567,7 +611,11 @@ exports.getSales = async (req, res) => {
       query["items.itemName"] = { $regex: itemName, $options: "i" };
     }
     if (paymentMethod && paymentMethod !== "null") {
-      query.paymentMethod = `${paymentMethod}`.trim().toUpperCase();
+      const normalizedFilterPaymentMethod = `${paymentMethod}`.trim().toUpperCase();
+      query.$or = [
+        { paymentMethod: normalizedFilterPaymentMethod },
+        { "paymentBreakdown.method": normalizedFilterPaymentMethod },
+      ];
     }
 
     if (startDate || endDate) {
@@ -641,6 +689,12 @@ exports.getSales = async (req, res) => {
         paidAmount: Number(s.paidAmount || 0),
         walletUsedAmount: Number(s.walletUsedAmount || 0),
         dueAmount: getSaleCollectibleDue(s),
+        paymentBreakdown: Array.isArray(s.paymentBreakdown)
+          ? s.paymentBreakdown.map((row) => ({
+              method: row?.method || "CASH",
+              amount: Number(row?.amount || 0),
+            }))
+          : [],
         totalQuantity: Number(s.totalQuantity || 0),
         returnedQuantity: Number(s.returnedQuantity || 0),
         returnedAmount: Number(s.returnedAmount || 0),
@@ -982,7 +1036,11 @@ exports.getSalesReportOverview = async (req, res) => {
     const returnQuery = isSuperAdminGlobal(req) ? {} : { shop: req.shopId };
 
     if (paymentMethod && paymentMethod !== "null") {
-      saleQuery.paymentMethod = `${paymentMethod}`.trim().toUpperCase();
+      const normalizedFilterPaymentMethod = `${paymentMethod}`.trim().toUpperCase();
+      saleQuery.$or = [
+        { paymentMethod: normalizedFilterPaymentMethod },
+        { "paymentBreakdown.method": normalizedFilterPaymentMethod },
+      ];
     }
 
     if (dateFrom || dateTo) {

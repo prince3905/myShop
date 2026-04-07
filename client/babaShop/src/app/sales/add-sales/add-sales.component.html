@@ -259,7 +259,7 @@
               </mat-form-field>
             </div>
 
-            <div class="summary-row compact">
+            <div class="summary-row compact" *ngIf="!useSplitPayment; else splitPaidSummary">
               <span>Paid:</span>
               <mat-form-field appearance="outline" class="summary-input">
                 <input
@@ -274,6 +274,13 @@
                 />
               </mat-form-field>
             </div>
+
+            <ng-template #splitPaidSummary>
+              <div class="summary-row">
+                <span>Split Paid:</span>
+                <strong>{{ getSplitPaymentTotal() | currency:'INR':'symbol':'1.2-2' }}</strong>
+              </div>
+            </ng-template>
 
             <div class="summary-row compact" *ngIf="selectedCustomerId && currentCustomerWalletBalance > 0">
               <span>Wallet Use:</span>
@@ -318,18 +325,99 @@
           </div>
 
           <div class="payment-buttons">
-            <button type="button" class="pay-button cash" [class.active]="paymentMethod === 'CASH'" (click)="setPaymentMethod('CASH')">
+            <button type="button" class="pay-button split" [class.active]="useSplitPayment" (click)="toggleSplitPayment()">
+              <mat-icon>call_split</mat-icon>
+              <span class="pay-label">{{ useSplitPayment ? 'Split On' : 'Split Bill' }}</span>
+            </button>
+            <button *ngIf="!useSplitPayment" type="button" class="pay-button cash" [class.active]="paymentMethod === 'CASH'" (click)="setPaymentMethod('CASH')">
               <mat-icon>payments</mat-icon>
               <span class="pay-label">Cash</span>
             </button>
-            <button type="button" class="pay-button card" [class.active]="paymentMethod === 'CARD'" (click)="setPaymentMethod('CARD')">
+            <button *ngIf="!useSplitPayment" type="button" class="pay-button card" [class.active]="paymentMethod === 'CARD'" (click)="setPaymentMethod('CARD')">
               <mat-icon>credit_card</mat-icon>
               <span class="pay-label">Card</span>
             </button>
-            <button type="button" class="pay-button upi" [class.active]="paymentMethod === 'UPI'" (click)="setPaymentMethod('UPI')">
+            <button *ngIf="!useSplitPayment" type="button" class="pay-button upi" [class.active]="paymentMethod === 'UPI'" (click)="setPaymentMethod('UPI')">
               <mat-icon>qr_code_2</mat-icon>
               <span class="pay-label">UPI</span>
             </button>
+          </div>
+
+          <div class="split-payment-panel" *ngIf="useSplitPayment">
+            <div class="split-payment-header">
+              <div>
+                <div class="split-payment-title">Split Payment</div>
+                <div class="split-payment-subtitle">Cash alag, online alag. Ledger me exact method-wise save hoga.</div>
+              </div>
+              <button type="button" mat-stroked-button class="split-add-button" (click)="addSplitPaymentRow()">
+                <mat-icon>add</mat-icon>
+                Add Row
+              </button>
+            </div>
+
+            <div class="split-payment-row" *ngFor="let row of splitPayments; let i = index; trackBy: trackBySplitPaymentIndex">
+              <mat-form-field appearance="outline" class="split-method-field">
+                <mat-label>Method</mat-label>
+                <mat-select [ngModel]="row.method" [name]="'splitMethod' + i" (ngModelChange)="onSplitPaymentMethodChange(i, $event)">
+                  <mat-option *ngFor="let method of splitPaymentMethods" [value]="method">{{ method }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="split-amount-field">
+                <mat-label>Amount</mat-label>
+                <input
+                  type="number"
+                  min="0"
+                  matInput
+                  [(ngModel)]="row.amount"
+                  [name]="'splitAmount' + i"
+                  (ngModelChange)="onSplitPaymentAmountChange(i)"
+                />
+              </mat-form-field>
+
+              <button
+                type="button"
+                mat-icon-button
+                class="split-remove-button"
+                (click)="removeSplitPaymentRow(i)"
+                [disabled]="splitPayments.length <= 1"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+
+            <div class="split-payment-summary">
+              <span>Total Split</span>
+              <strong>{{ getSplitPaymentTotal() | currency:'INR':'symbol':'1.2-2' }}</strong>
+            </div>
+
+            <div class="qr-payment-card" *ngIf="getQrPayableAmount() > 0">
+              <div class="qr-payment-copy">
+                <div class="qr-payment-title">UPI QR Payment</div>
+                <div class="qr-payment-subtitle">
+                  Remaining online collect amount:
+                  <strong>{{ getQrPayableAmount() | currency:'INR':'symbol':'1.2-2' }}</strong>
+                </div>
+                <div class="qr-payment-merchant" *ngIf="getQrMerchantUpiId()">
+                  {{ getQrMerchantName() }} • {{ getQrMerchantUpiId() }}
+                </div>
+                <div class="qr-payment-warning" *ngIf="getQrBlockedReason()">
+                  {{ getQrBlockedReason() }}
+                </div>
+              </div>
+
+              <div class="qr-payment-visual" *ngIf="canShowQrPayment(); else qrFallback">
+                <img [src]="getQrImageUrl()" alt="UPI payment QR" />
+                <a [href]="getUpiPaymentLink()" target="_blank" rel="noopener">Open UPI Link</a>
+              </div>
+
+              <ng-template #qrFallback>
+                <div class="qr-payment-placeholder">
+                  <mat-icon>qr_code_2</mat-icon>
+                  <span>QR tab generate hoga jab shop UPI ID save hogi.</span>
+                </div>
+              </ng-template>
+            </div>
           </div>
 
           <div class="cart-actions">

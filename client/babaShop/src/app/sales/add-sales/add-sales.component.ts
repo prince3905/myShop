@@ -8,6 +8,7 @@ import { CategoryService } from "app/shared/services/category.service";
 import { CustomerService } from "app/shared/services/customer.service";
 import { ItemService } from "app/shared/services/item.service";
 import { SalesService } from "app/shared/services/sales.service";
+import { ShopService } from "app/shared/services/shop.service";
 import { StocksService } from "app/shared/services/stocks.service";
 import { VariationService } from "app/shared/services/variation.service";
 import { AuthService } from "app/shared/services/auth.service";
@@ -45,6 +46,7 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
   paidAmount: number = 0;
   paymentMethod: "CASH" | "UPI" | "CARD" | "BANK" | "ONLINE" | "CREDIT" = "CASH";
   readonly paymentMethods = ["CASH", "UPI", "CARD", "BANK", "ONLINE", "CREDIT"];
+  readonly splitPaymentMethods = ["CASH", "UPI", "CARD", "BANK", "ONLINE"];
   
   // Split Payment
   splitPayments: { method: string; amount: number }[] = [];
@@ -82,6 +84,7 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
   private primarySearchScanTimer: any = null;
   barcodeLookupLoading = false;
   itemSearchLoading = false;
+  activeShopDetails: any = null;
   private readonly destroy$ = new Subject<void>();
   private readonly itemSearch$ = new Subject<string>();
   private readonly customerSearch$ = new Subject<string>();
@@ -99,6 +102,7 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
     @Optional() public dialogRef: MatDialogRef<any>,
     public dialog: MatDialog,
     private Sales: SalesService,
+    private shopService: ShopService,
     private stock: StocksService,
     private variationService: VariationService,
     private customerService: CustomerService,
@@ -108,6 +112,10 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
   ngOnInit(): void {
     this.loadHeldBillsFromStorage();
     this.restoreDraftFromStorage();
+    this.loadSelectedShopDetails();
+    this.shopService.selectedShop$.pipe(takeUntil(this.destroy$)).subscribe(() => {
+      this.loadSelectedShopDetails();
+    });
     window.addEventListener("offline", this.onlineStatusHandler);
     window.addEventListener("online", this.onlineStatusHandler);
     this.setupSuggestionStreams();
@@ -130,6 +138,23 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
     window.removeEventListener("online", this.onlineStatusHandler);
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  private loadSelectedShopDetails(): void {
+    const selectedShopId = this.authService.getShopId();
+    if (!selectedShopId) {
+      this.activeShopDetails = null;
+      return;
+    }
+
+    this.shopService.getShopById(selectedShopId).subscribe({
+      next: (res: any) => {
+        this.activeShopDetails = res?.data || null;
+      },
+      error: () => {
+        this.activeShopDetails = null;
+      },
+    });
   }
 
   fetchSuggestions(): void {
@@ -808,15 +833,29 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
     }
     this.normalizeBillingInputs();
     this.syncWalletUsage();
+    if (this.useSplitPayment) {
+      this.normalizeSplitPayments();
+    }
   }
 
   getNetTotal(): number {
     return Math.max(0, Number(this.totalPurchasePrice || 0) - Number(this.billDiscount || 0));
   }
 
+  getCollectedNonWalletTotal(): number {
+    if (this.useSplitPayment) {
+      return this.getSplitPaymentTotal();
+    }
+    return Math.max(0, Number(this.paidAmount || 0));
+  }
+
+  getRemainingForSplitRows(): number {
+    return Math.max(0, this.getNetTotal() - Number(this.walletUsedAmount || 0));
+  }
+
   getMaxWalletUsable(): number {
     const wallet = Math.max(0, Number(this.currentCustomerWalletBalance || 0));
-    const remainingAfterCash = Math.max(0, this.getNetTotal() - Number(this.paidAmount || 0));
+    const remainingAfterCash = Math.max(0, this.getNetTotal() - this.getCollectedNonWalletTotal());
     return Math.max(0, Math.min(wallet, remainingAfterCash));
   }
 
@@ -828,6 +867,9 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
   onBillDiscountChange(value?: number | string, inputEl?: HTMLInputElement | null): void {
     this.billDiscount = Math.max(0, Number(value ?? this.billDiscount ?? 0));
     this.normalizeBillingInputs();
+    if (this.useSplitPayment) {
+      this.normalizeSplitPayments();
+    }
     this.syncNumericInputValue(inputEl, this.billDiscount);
     this.saveDraftToStorage();
   }
@@ -835,12 +877,21 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
   onWalletAmountChange(value?: number | string, inputEl?: HTMLInputElement | null): void {
     this.walletUsedAmount = Math.max(0, Number(value ?? this.walletUsedAmount ?? 0));
     this.syncWalletUsage();
+    if (this.useSplitPayment) {
+      this.normalizeSplitPayments();
+    }
     this.onPaidAmountChange();
     this.syncNumericInputValue(inputEl, this.walletUsedAmount);
     this.saveDraftToStorage();
   }
 
   onPaidAmountChange(value?: number | string, inputEl?: HTMLInputElement | null): void {
+    if (this.useSplitPayment) {
+      this.normalizeSplitPayments();
+      this.syncWalletUsage();
+      this.saveDraftToStorage();
+      return;
+    }
     this.paidAmount = Math.max(0, Number(value ?? this.paidAmount ?? 0));
     this.normalizeBillingInputs();
     const netTotal = this.getNetTotal();
@@ -866,7 +917,7 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   getDueAmount(): number {
-    return Math.max(0, this.getNetTotal() - Number(this.paidAmount || 0) - Number(this.walletUsedAmount || 0));
+    return Math.max(0, this.getNetTotal() - this.getCollectedNonWalletTotal() - Number(this.walletUsedAmount || 0));
   }
 
   canSaveSale(): boolean {
@@ -895,7 +946,7 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
-    if (paidAmount > net) {
+    if (!this.useSplitPayment && paidAmount > net) {
       this.snackBar.open("Paid amount cannot be greater than net total", "Close", { duration: 2600 });
       return;
     }
@@ -909,21 +960,22 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
       this.snackBar.open("Wallet amount exceeds customer wallet balance", "Close", { duration: 2600 });
       return;
     }
-    if (paidAmount + walletUsedAmount > net) {
+    if (!this.useSplitPayment && paidAmount + walletUsedAmount > net) {
       this.snackBar.open("Paid amount plus wallet cannot be greater than net total", "Close", { duration: 2600 });
       return;
     }
 
     let finalPaidAmount = this.paidAmount;
-    let finalPaymentMethod = this.paymentMethod;
+    let finalPaymentMethod: "CASH" | "UPI" | "CARD" | "BANK" | "ONLINE" | "CREDIT" | "SPLIT" = this.paymentMethod;
     
     if (this.useSplitPayment && this.splitPayments.length > 0) {
-      const totalSplitAmount = this.splitPayments.reduce((sum, sp) => sum + (sp.amount || 0), 0);
-      if (totalSplitAmount !== net) {
-        this.snackBar.open("Split payment total must equal bill amount", "Close", { duration: 2500 });
+      const totalSplitAmount = Number(this.getSplitPaymentTotal().toFixed(2));
+      const expectedSplitAmount = Number(Math.max(0, net - walletUsedAmount).toFixed(2));
+      if (Math.abs(totalSplitAmount - expectedSplitAmount) > 0.01) {
+        this.snackBar.open("Split payment total must match remaining bill after wallet use", "Close", { duration: 2500 });
         return;
       }
-      finalPaymentMethod = this.splitPayments[0].method as "CASH" | "UPI" | "CARD" | "BANK" | "ONLINE" | "CREDIT";
+      finalPaymentMethod = this.getResolvedSalePaymentMethod();
       finalPaidAmount = totalSplitAmount;
     }
 
@@ -1097,10 +1149,17 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
   toggleSplitPayment(): void {
     this.useSplitPayment = !this.useSplitPayment;
     if (this.useSplitPayment) {
-      this.splitPayments = [{ method: "CASH", amount: this.getNetTotal() }];
+      const remaining = this.getRemainingForSplitRows();
+      this.splitPayments = [
+        { method: "CASH", amount: 0 },
+        { method: "UPI", amount: remaining },
+      ];
+      this.paidAmount = remaining;
     } else {
       this.splitPayments = [];
+      this.paidAmount = Math.max(0, this.getNetTotal() - Number(this.walletUsedAmount || 0));
     }
+    this.normalizeSplitPayments();
     this.saveDraftToStorage();
   }
   
@@ -1119,7 +1178,20 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
   }
   
   getSplitPaymentTotal(): number {
-    return this.splitPayments.reduce((sum, sp) => sum + (sp.amount || 0), 0);
+    return Number(
+      this.splitPayments.reduce((sum, sp) => sum + Number(sp.amount || 0), 0).toFixed(2),
+    );
+  }
+
+  trackBySplitPaymentIndex(index: number): number {
+    return index;
+  }
+
+  onSplitPaymentMethodChange(index: number, method: string): void {
+    if (!this.splitPayments[index]) return;
+    this.splitPayments[index].method = `${method || "CASH"}`.trim().toUpperCase();
+    this.normalizeSplitPayments();
+    this.saveDraftToStorage();
   }
 
   onSplitPaymentAmountChange(index: number): void {
@@ -1130,20 +1202,90 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private normalizeSplitPayments(): void {
-    const net = this.getNetTotal();
+    const net = this.getRemainingForSplitRows();
     const normalized = this.splitPayments.map((sp: any) => ({
       method: sp?.method || "CASH",
       amount: Math.max(0, Number(sp?.amount || 0)),
     }));
     let remaining = net;
-    this.splitPayments = normalized.map((sp: any, index: number) => {
+    normalized.forEach((sp: any, index: number) => {
       if (index === normalized.length - 1) {
-        return { ...sp, amount: Math.max(0, remaining) };
+        this.splitPayments[index] = {
+          ...this.splitPayments[index],
+          method: sp.method,
+          amount: Math.max(0, remaining),
+        };
+        return;
       }
       const safeAmount = Math.min(sp.amount, Math.max(0, remaining));
       remaining -= safeAmount;
-      return { ...sp, amount: safeAmount };
+      this.splitPayments[index] = {
+        ...this.splitPayments[index],
+        method: sp.method,
+        amount: safeAmount,
+      };
     });
+    this.paidAmount = this.getSplitPaymentTotal();
+  }
+
+  getResolvedSalePaymentMethod(): "CASH" | "UPI" | "CARD" | "BANK" | "ONLINE" | "CREDIT" | "SPLIT" {
+    if (!this.useSplitPayment) {
+      return this.paymentMethod;
+    }
+    const uniqueMethods = Array.from(
+      new Set(
+        (this.splitPayments || [])
+          .map((sp) => `${sp?.method || ""}`.trim().toUpperCase())
+          .filter(Boolean),
+      ),
+    );
+    if (uniqueMethods.length === 1) {
+      return uniqueMethods[0] as any;
+    }
+    return "SPLIT";
+  }
+
+  getQrPayableAmount(): number {
+    return Number(
+      (this.splitPayments || [])
+        .filter((sp) => ["UPI", "ONLINE"].includes(`${sp?.method || ""}`.trim().toUpperCase()))
+        .reduce((sum, sp) => sum + Number(sp?.amount || 0), 0)
+        .toFixed(2),
+    );
+  }
+
+  getQrMerchantUpiId(): string {
+    return `${this.activeShopDetails?.paymentSettings?.upiId || ""}`.trim().toLowerCase();
+  }
+
+  getQrMerchantName(): string {
+    return `${this.activeShopDetails?.paymentSettings?.upiDisplayName || this.activeShopDetails?.name || "Shop Billing"}`.trim();
+  }
+
+  canShowQrPayment(): boolean {
+    return this.useSplitPayment && this.getQrPayableAmount() > 0 && !!this.getQrMerchantUpiId();
+  }
+
+  getQrBlockedReason(): string {
+    if (!this.useSplitPayment || this.getQrPayableAmount() <= 0) {
+      return "";
+    }
+    if (!this.getQrMerchantUpiId()) {
+      return "UPI QR ke liye Shop Settings me UPI ID save karni hogi.";
+    }
+    return "";
+  }
+
+  getUpiPaymentLink(): string {
+    const upiId = encodeURIComponent(this.getQrMerchantUpiId());
+    const merchantName = encodeURIComponent(this.getQrMerchantName());
+    const amount = this.getQrPayableAmount().toFixed(2);
+    const note = encodeURIComponent(`POS Bill ${this.customerName || "Walk-in"}`);
+    return `upi://pay?pa=${upiId}&pn=${merchantName}&am=${amount}&cu=INR&tn=${note}`;
+  }
+
+  getQrImageUrl(): string {
+    return `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(this.getUpiPaymentLink())}`;
   }
   
   getBillTotal(bill: any): number {
@@ -1275,6 +1417,11 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
       )
       .sort()
       .join("|");
+    const splitSignature = this.useSplitPayment
+      ? (this.splitPayments || [])
+          .map((row: any) => [`${row?.method || "CASH"}`, Number(row?.amount || 0)].join(":"))
+          .join("|")
+      : "";
 
     return [
       `${this.selectedCustomerId || ""}`,
@@ -1284,6 +1431,8 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
       Number(this.paidAmount || 0),
       Number(this.walletUsedAmount || 0),
       `${this.paymentMethod || "CASH"}`,
+      `${this.useSplitPayment ? "split" : "single"}`,
+      splitSignature,
       itemSignature,
     ].join("::");
   }

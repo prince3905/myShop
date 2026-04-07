@@ -107,6 +107,13 @@
                     <div class="col-md-6"><mat-form-field class="example-full-width"><mat-label>Shop Email</mat-label><input matInput formControlName="email"></mat-form-field></div>
                     <div class="col-md-6"><mat-form-field class="example-full-width"><mat-label>Address Line 1</mat-label><input matInput formControlName="addressLine1" appCapitalizeFirst></mat-form-field></div>
                   </div>
+                  <div class="row">
+                    <div class="col-md-6"><mat-form-field class="example-full-width"><mat-label>UPI ID</mat-label><input matInput formControlName="upiId" placeholder="shop@upi"></mat-form-field></div>
+                    <div class="col-md-6"><mat-form-field class="example-full-width"><mat-label>UPI Display Name</mat-label><input matInput formControlName="upiDisplayName" placeholder="Shop Billing"></mat-form-field></div>
+                  </div>
+                  <p class="text-muted" style="margin-top:-4px; font-size:12px;">
+                    POS split payment me QR isi UPI ID par generate hoga.
+                  </p>
                   <button mat-raised-button class="btn btn-danger" [disabled]="savingShop">
                     {{ savingShop ? "Saving..." : "Save Shop Settings" }}
                   </button>
