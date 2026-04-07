@@ -213,12 +213,14 @@
                         <div class="meta" *ngIf="canViewReturnAmounts; else selectedReturnOpsMeta">
                             Refund to Customer: ₹ {{ selectedReturnAnalytics?.totalRefund | number:'1.2-2' }} |
                             Customer Credit: ₹ {{ selectedReturnAnalytics?.totalCredit | number:'1.2-2' }} |
-                            Qty: {{ selectedReturnAnalytics?.totalQty || 0 }} |
-                            Count: {{ selectedReturnAnalytics?.count || 0 }}
+                            Sales: {{ selectedReturnAnalytics?.saleReturnCount || 0 }} |
+                            Orders: {{ selectedReturnAnalytics?.orderReturnCount || 0 }} |
+                            Qty: {{ selectedReturnAnalytics?.totalQty || 0 }}
                         </div>
                         <ng-template #selectedReturnOpsMeta>
-                            Qty: {{ selectedReturnAnalytics?.totalQty || 0 }} |
-                            Count: {{ selectedReturnAnalytics?.count || 0 }}
+                            Sales: {{ selectedReturnAnalytics?.saleReturnCount || 0 }} |
+                            Orders: {{ selectedReturnAnalytics?.orderReturnCount || 0 }} |
+                            Qty: {{ selectedReturnAnalytics?.totalQty || 0 }}
                         </ng-template>
                     </div>
                     <div class="analytics-card purchase-return-card dashboard-click-card" *ngIf="canViewFinancialDashboard && canOpenPurchase" (click)="openPurchase()">
@@ -472,7 +474,7 @@
                     <div class="analytics-card return-card dashboard-click-card" *ngIf="canOpenReturns" (click)="openReturns()">
                         <div class="title">{{ selectedRangeSnapshotTitle }} Customer Returns</div>
                         <div class="amount">{{ canViewReturnAmounts ? (selectedReturnAnalytics?.totalAmount | number:'1.2-2') : (selectedReturnAnalytics?.count || 0) }}</div>
-                        <div class="meta">Qty: {{ selectedReturnAnalytics?.totalQty || 0 }} | Count: {{ selectedReturnAnalytics?.count || 0 }}</div>
+                        <div class="meta">Sales: {{ selectedReturnAnalytics?.saleReturnCount || 0 }} | Orders: {{ selectedReturnAnalytics?.orderReturnCount || 0 }} | Qty: {{ selectedReturnAnalytics?.totalQty || 0 }}</div>
                     </div>
                     <div class="analytics-card purchase-return-card dashboard-click-card" *ngIf="canViewFinancialDashboard && canOpenPurchase" (click)="openPurchase()">
                         <div class="title">{{ selectedRangeSnapshotTitle }} Returned to Distributor</div>

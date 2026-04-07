@@ -42,9 +42,39 @@ export class DashboardComponent implements OnInit, OnDestroy {
     monthly: { totalAmount: 0, totalPaid: 0, totalDue: 0, count: 0 },
   };
   returnAnalytics: any = {
-    today: { totalAmount: 0, totalRefund: 0, totalCredit: 0, totalQty: 0, count: 0 },
-    weekly: { totalAmount: 0, totalRefund: 0, totalCredit: 0, totalQty: 0, count: 0 },
-    monthly: { totalAmount: 0, totalRefund: 0, totalCredit: 0, totalQty: 0, count: 0 },
+    today: {
+      totalAmount: 0,
+      totalRefund: 0,
+      totalCredit: 0,
+      totalQty: 0,
+      count: 0,
+      saleReturnCount: 0,
+      orderReturnCount: 0,
+      saleReturnAmount: 0,
+      orderReturnAmount: 0,
+    },
+    weekly: {
+      totalAmount: 0,
+      totalRefund: 0,
+      totalCredit: 0,
+      totalQty: 0,
+      count: 0,
+      saleReturnCount: 0,
+      orderReturnCount: 0,
+      saleReturnAmount: 0,
+      orderReturnAmount: 0,
+    },
+    monthly: {
+      totalAmount: 0,
+      totalRefund: 0,
+      totalCredit: 0,
+      totalQty: 0,
+      count: 0,
+      saleReturnCount: 0,
+      orderReturnCount: 0,
+      saleReturnAmount: 0,
+      orderReturnAmount: 0,
+    },
   };
   purchaseReturnAnalytics: any = {
     today: { totalAmount: 0, totalQty: 0, count: 0 },
@@ -736,9 +766,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.returnAnalytics = {
-          today: { totalAmount: 0, totalRefund: 0, totalCredit: 0, totalQty: 0, count: 0 },
-          weekly: { totalAmount: 0, totalRefund: 0, totalCredit: 0, totalQty: 0, count: 0 },
-          monthly: { totalAmount: 0, totalRefund: 0, totalCredit: 0, totalQty: 0, count: 0 },
+          today: { totalAmount: 0, totalRefund: 0, totalCredit: 0, totalQty: 0, count: 0, saleReturnCount: 0, orderReturnCount: 0, saleReturnAmount: 0, orderReturnAmount: 0 },
+          weekly: { totalAmount: 0, totalRefund: 0, totalCredit: 0, totalQty: 0, count: 0, saleReturnCount: 0, orderReturnCount: 0, saleReturnAmount: 0, orderReturnAmount: 0 },
+          monthly: { totalAmount: 0, totalRefund: 0, totalCredit: 0, totalQty: 0, count: 0, saleReturnCount: 0, orderReturnCount: 0, saleReturnAmount: 0, orderReturnAmount: 0 },
         };
       },
     });

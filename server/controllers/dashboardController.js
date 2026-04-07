@@ -496,62 +496,71 @@ exports.getReturnAnalytics = async (req, res) => {
       createdAt: { $gte: start, $lte: now },
     });
 
-    const [todayAgg, weekAgg, monthAgg] = await Promise.all([
-      SaleReturn.aggregate([
-        { $match: buildMatch(startOfDay) },
-        {
-          $group: {
-            _id: null,
-            amount: { $sum: "$totalAmount" },
-            refund: { $sum: "$refundAmount" },
-            credit: { $sum: "$creditAmount" },
-            qty: { $sum: "$totalQuantity" },
-            count: { $sum: 1 },
-          },
+    const buildOrderReturnMatch = (start) => ({
+      ...query,
+      orderStatus: "RETURNED",
+      updatedAt: { $gte: start, $lte: now },
+    });
+
+    const saleReturnAggPipeline = (start) => [
+      { $match: buildMatch(start) },
+      {
+        $group: {
+          _id: null,
+          amount: { $sum: "$totalAmount" },
+          refund: { $sum: "$refundAmount" },
+          credit: { $sum: "$creditAmount" },
+          qty: { $sum: "$totalQuantity" },
+          count: { $sum: 1 },
         },
-      ]),
-      SaleReturn.aggregate([
-        { $match: buildMatch(startOfWeek) },
-        {
-          $group: {
-            _id: null,
-            amount: { $sum: "$totalAmount" },
-            refund: { $sum: "$refundAmount" },
-            credit: { $sum: "$creditAmount" },
-            qty: { $sum: "$totalQuantity" },
-            count: { $sum: 1 },
-          },
+      },
+    ];
+
+    const orderReturnAggPipeline = (start) => [
+      { $match: buildOrderReturnMatch(start) },
+      {
+        $group: {
+          _id: null,
+          amount: { $sum: { $ifNull: ["$totalAmount", 0] } },
+          refund: { $sum: { $ifNull: ["$refundedAmount", 0] } },
+          qty: { $sum: { $ifNull: ["$totalQuantity", 0] } },
+          count: { $sum: 1 },
         },
-      ]),
-      SaleReturn.aggregate([
-        { $match: buildMatch(startOfMonth) },
-        {
-          $group: {
-            _id: null,
-            amount: { $sum: "$totalAmount" },
-            refund: { $sum: "$refundAmount" },
-            credit: { $sum: "$creditAmount" },
-            qty: { $sum: "$totalQuantity" },
-            count: { $sum: 1 },
-          },
-        },
-      ]),
+      },
+    ];
+
+    const [todaySaleAgg, weekSaleAgg, monthSaleAgg, todayOrderAgg, weekOrderAgg, monthOrderAgg] = await Promise.all([
+      SaleReturn.aggregate(saleReturnAggPipeline(startOfDay)),
+      SaleReturn.aggregate(saleReturnAggPipeline(startOfWeek)),
+      SaleReturn.aggregate(saleReturnAggPipeline(startOfMonth)),
+      Order.aggregate(orderReturnAggPipeline(startOfDay)),
+      Order.aggregate(orderReturnAggPipeline(startOfWeek)),
+      Order.aggregate(orderReturnAggPipeline(startOfMonth)),
     ]);
 
-    const normalize = (row) => ({
-      totalAmount: Number(row?.amount || 0),
-      totalRefund: Number(row?.refund || 0),
-      totalCredit: Number(row?.credit || 0),
-      totalQty: Number(row?.qty || 0),
-      count: Number(row?.count || 0),
+    const normalize = (saleRow, orderRow) => ({
+      totalAmount: Number(saleRow?.amount || 0) + Number(orderRow?.amount || 0),
+      totalRefund: Number(saleRow?.refund || 0) + Number(orderRow?.refund || 0),
+      totalCredit: Number(saleRow?.credit || 0),
+      totalQty: Number(saleRow?.qty || 0) + Number(orderRow?.qty || 0),
+      count: Number(saleRow?.count || 0) + Number(orderRow?.count || 0),
+      saleReturnAmount: Number(saleRow?.amount || 0),
+      saleReturnRefund: Number(saleRow?.refund || 0),
+      saleReturnCredit: Number(saleRow?.credit || 0),
+      saleReturnQty: Number(saleRow?.qty || 0),
+      saleReturnCount: Number(saleRow?.count || 0),
+      orderReturnAmount: Number(orderRow?.amount || 0),
+      orderReturnRefund: Number(orderRow?.refund || 0),
+      orderReturnQty: Number(orderRow?.qty || 0),
+      orderReturnCount: Number(orderRow?.count || 0),
     });
 
     return res.status(200).json({
       success: true,
       data: {
-        today: normalize(todayAgg[0]),
-        weekly: normalize(weekAgg[0]),
-        monthly: normalize(monthAgg[0]),
+        today: normalize(todaySaleAgg[0], todayOrderAgg[0]),
+        weekly: normalize(weekSaleAgg[0], weekOrderAgg[0]),
+        monthly: normalize(monthSaleAgg[0], monthOrderAgg[0]),
       },
     });
   } catch (error) {
