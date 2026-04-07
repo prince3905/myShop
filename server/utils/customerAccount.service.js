@@ -335,6 +335,8 @@ const buildCustomerLedger = async ({
   for (const sale of sales) {
     ledgerRows.push({
       _id: `sale:${sale._id}`,
+      groupKey: `sale:${sale._id}`,
+      groupCreatedAt: sale.createdAt,
       transactionId: sale._id,
       transactionType: "sale",
       label: "Sale",
@@ -354,6 +356,8 @@ const buildCustomerLedger = async ({
     const sale = saleMap.get(`${payment.sale}`);
     ledgerRows.push({
       _id: `payment:${payment._id}`,
+      groupKey: `sale:${payment.sale}`,
+      groupCreatedAt: sale?.createdAt || payment.createdAt,
       transactionId: payment._id,
       transactionType: "payment",
       label: "Payment",
@@ -373,6 +377,8 @@ const buildCustomerLedger = async ({
     const sale = saleMap.get(`${walletUse.sale}`);
     ledgerRows.push({
       _id: `wallet:${walletUse._id}`,
+      groupKey: `sale:${walletUse.sale}`,
+      groupCreatedAt: sale?.createdAt || walletUse.createdAt,
       transactionId: walletUse._id,
       transactionType: "payment",
       label: "Wallet Used",
@@ -403,6 +409,8 @@ const buildCustomerLedger = async ({
 
     ledgerRows.push({
       _id: `return:${saleReturn._id}`,
+      groupKey: `sale:${saleReturn.sale}`,
+      groupCreatedAt: sale?.createdAt || saleReturn.createdAt,
       transactionId: saleReturn._id,
       transactionType: "return",
       label: "Sale Return",
@@ -423,6 +431,8 @@ const buildCustomerLedger = async ({
     if (Number(saleReturn.refundAmount || 0) > 0) {
       ledgerRows.push({
         _id: `refund:${saleReturn._id}`,
+        groupKey: `sale:${saleReturn.sale}`,
+        groupCreatedAt: sale?.createdAt || saleReturn.createdAt,
         transactionId: saleReturn._id,
         transactionType: "refund",
         label: "Refund",
@@ -470,6 +480,8 @@ const buildCustomerLedger = async ({
 
     ledgerRows.push({
       _id: `order-ledger:${entry._id}`,
+      groupKey: `order:${entry.order}`,
+      groupCreatedAt: order?.createdAt || entry.createdAt,
       transactionId: entry._id,
       transactionType: config.transactionType,
       label: config.label,
@@ -499,6 +511,8 @@ const buildCustomerLedger = async ({
 
     ledgerRows.push({
       _id: `order-refund:synthetic:${order._id}`,
+      groupKey: `order:${order._id}`,
+      groupCreatedAt: order.createdAt,
       transactionId: order._id,
       transactionType: "refund",
       label: "Order Refund",
@@ -549,7 +563,22 @@ const buildCustomerLedger = async ({
     return true;
   });
 
-  const orderedRows = [...filteredRows].sort((a, b) => sortByTimeline(b, a));
+  const groupedRows = new Map();
+  for (const row of filteredRows) {
+    const groupKey = row.groupKey || row._id;
+    const bucket = groupedRows.get(groupKey) || [];
+    bucket.push(row);
+    groupedRows.set(groupKey, bucket);
+  }
+
+  const orderedRows = [...groupedRows.entries()]
+    .sort(([, aRows], [, bRows]) => {
+      const aGroupTime = new Date(aRows[0]?.groupCreatedAt || aRows[0]?.createdAt || 0).getTime();
+      const bGroupTime = new Date(bRows[0]?.groupCreatedAt || bRows[0]?.createdAt || 0).getTime();
+      if (aGroupTime !== bGroupTime) return bGroupTime - aGroupTime;
+      return `${bRows[0]?.invoiceNo || ""}`.localeCompare(`${aRows[0]?.invoiceNo || ""}`);
+    })
+    .flatMap(([, rows]) => [...rows].sort(sortByTimeline));
   const safePerPage = Math.max(1, Number(perPage || 10));
   const safePage = Math.max(1, Number(page || 1));
   const startIndex = (safePage - 1) * safePerPage;
