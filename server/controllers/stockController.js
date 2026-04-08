@@ -143,7 +143,7 @@ exports.getStockReport = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Error retrieving stock report",
-      error: error.message,
+      error: "Internal server error",
     });
   }
 };
@@ -185,7 +185,7 @@ exports.getTransactions = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Error retrieving stock transactions",
-      error: error.message,
+      error: "Internal server error",
     });
   }
 };
@@ -318,7 +318,7 @@ exports.manualAdjust = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Error adjusting stock",
-      error: error.message,
+      error: "Internal server error",
     });
   }
 };
@@ -392,7 +392,7 @@ exports.startReconciliation = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Error creating stock reconciliation",
-      error: error.message,
+      error: "Internal server error",
     });
   }
 };
@@ -420,7 +420,7 @@ exports.getCurrentReconciliation = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Error fetching stock reconciliation",
-      error: error.message,
+      error: "Internal server error",
     });
   }
 };
@@ -482,7 +482,7 @@ exports.saveReconciliationLines = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Error saving reconciliation draft",
-      error: error.message,
+      error: "Internal server error",
     });
   }
 };
@@ -520,7 +520,7 @@ exports.submitReconciliation = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Error submitting reconciliation",
-      error: error.message,
+      error: "Internal server error",
     });
   }
 };
@@ -590,7 +590,7 @@ exports.approveReconciliation = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Error approving reconciliation",
-      error: error.message,
+      error: "Internal server error",
     });
   }
 };

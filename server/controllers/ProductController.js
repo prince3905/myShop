@@ -220,7 +220,7 @@ exports.createProduct = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Error creating product",
-      error: error.message,
+      error: "Internal server error",
     });
   }
 };
@@ -365,7 +365,7 @@ exports.searchProductsForPos = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Error searching products for POS",
-      error: error.message,
+      error: "Internal server error",
     });
   }
 };
@@ -638,7 +638,7 @@ exports.restoreProduct = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Error restoring product",
-      error: error.message,
+      error: "Internal server error",
     });
   }
 };

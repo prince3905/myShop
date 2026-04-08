@@ -132,7 +132,7 @@ exports.createVariation = async (req, res) => {
     }
     res.status(500).json({
       success: false,
-      message: error.message
+      message: "Internal server error"
     });
   }
 };
@@ -170,7 +170,7 @@ exports.getVariations = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message
+      message: "Internal server error"
     });
   }
 };
@@ -201,7 +201,7 @@ exports.getSingleVariation = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message
+      message: "Internal server error"
     });
   }
 };
@@ -292,7 +292,7 @@ exports.updateVariation = async (req, res) => {
     }
     res.status(500).json({
       success: false,
-      message: error.message
+      message: "Internal server error"
     });
   }
 };
@@ -374,7 +374,7 @@ exports.deleteVariation = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message
+      message: "Internal server error"
     });
   }
 };
@@ -419,7 +419,7 @@ exports.logVariationPrint = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Internal server error",
     });
   }
 };
@@ -467,7 +467,7 @@ exports.getVariationUsage = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Internal server error",
     });
   }
 };

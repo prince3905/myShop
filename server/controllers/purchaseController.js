@@ -201,7 +201,7 @@ exports.createDraft = async (req, res) => {
     if (error?.code === 11000 && error?.keyPattern?.invoiceNo) {
       return res.status(409).json({ success: false, message: "Invoice number already exists for this shop" });
     }
-    return res.status(500).json({ success: false, message: "Error creating purchase draft", error: error.message });
+    return res.status(500).json({ success: false, message: "Error creating purchase draft", error: "Internal server error" });
   }
 };
 
@@ -329,7 +329,7 @@ exports.confirmPurchase = async (req, res) => {
       data: await Purchase.findById(purchase._id),
     });
   } catch (error) {
-    return res.status(500).json({ success: false, message: "Error confirming purchase", error: error.message });
+    return res.status(500).json({ success: false, message: "Error confirming purchase", error: "Internal server error" });
   }
 };
 
@@ -510,7 +510,7 @@ exports.listPurchases = async (req, res) => {
       data: enrichedData,
     });
   } catch (error) {
-    return res.status(500).json({ success: false, message: "Error listing purchases", error: error.message });
+    return res.status(500).json({ success: false, message: "Error listing purchases", error: "Internal server error" });
   }
 };
 
@@ -613,7 +613,7 @@ exports.getPurchaseById = async (req, res) => {
       },
     });
   } catch (error) {
-    return res.status(500).json({ success: false, message: "Error fetching purchase", error: error.message });
+    return res.status(500).json({ success: false, message: "Error fetching purchase", error: "Internal server error" });
   }
 };
 
@@ -708,7 +708,7 @@ exports.updateDraft = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Error updating purchase draft",
-      error: error.message,
+      error: "Internal server error",
     });
   }
 };
@@ -740,7 +740,7 @@ exports.cancelDraft = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Error cancelling purchase draft",
-      error: error.message,
+      error: "Internal server error",
     });
   }
 };

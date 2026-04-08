@@ -115,7 +115,7 @@ exports.createLedger = async (req, res) => {
     console.error("Create Ledger Error:", err);
     res.status(err.statusCode || 500).json({
       success: false,
-      message: err.message || "Error creating ledger",
+      message: "Error creating ledger",
     });
   }
 };

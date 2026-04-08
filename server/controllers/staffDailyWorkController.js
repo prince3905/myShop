@@ -899,7 +899,7 @@ exports.pushDailyWorkToStock = async (req, res) => {
     });
   } catch (error) {
     console.error("Push Staff Daily Work To Stock Error:", error);
-    return res.status(500).json({ success: false, message: error.message || "Failed to push output to shop stock" });
+    return res.status(500).json({ success: false, message: "Failed to push output to shop stock" });
   }
 };
 

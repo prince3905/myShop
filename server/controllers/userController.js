@@ -118,7 +118,7 @@ exports.createUser = async (req, res) => {
         message: "User with this email or phone already exists",
       });
     }
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
 

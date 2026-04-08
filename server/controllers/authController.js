@@ -269,7 +269,7 @@ exports.register = async (req, res) => {
       message: "User created successfully",
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Internal server error" });
   }
 };
 

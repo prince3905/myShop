@@ -209,7 +209,7 @@ exports.createPurchaseReturn = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Error creating purchase return",
-      error: error.message,
+      error: "Internal server error",
     });
   }
 };
@@ -242,7 +242,7 @@ exports.listPurchaseReturns = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Error listing purchase returns",
-      error: error.message,
+      error: "Internal server error",
     });
   }
 };

@@ -795,7 +795,7 @@ exports.getSales = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Error fetching sales",
-      error: error.message,
+      error: "Internal server error",
     });
   }
 };
@@ -822,7 +822,7 @@ exports.getCustomerSuggestions = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Error fetching customer suggestions",
-      error: error.message,
+      error: "Internal server error",
     });
   }
 };
@@ -850,7 +850,7 @@ exports.getSaleById = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Error fetching sale",
-      error: error.message,
+      error: "Internal server error",
     });
   }
 };
@@ -872,7 +872,7 @@ exports.getSaleLedger = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Error fetching sale ledger",
-      error: error.message,
+      error: "Internal server error",
     });
   }
 };
@@ -1023,7 +1023,7 @@ exports.listSaleReturns = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Error fetching sale returns",
-      error: error.message,
+      error: "Internal server error",
     });
   }
 };
@@ -1105,7 +1105,7 @@ exports.listAllSaleReturns = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Error fetching all sale returns",
-      error: error.message,
+      error: "Internal server error",
     });
   }
 };
@@ -1615,7 +1615,7 @@ exports.getSalesReportOverview = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Error loading sales report overview",
-      error: error.message,
+      error: "Internal server error",
     });
   }
 };
@@ -1917,7 +1917,7 @@ exports.createSaleReturn = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Error creating sale return",
-      error: error.message,
+      error: "Internal server error",
     });
   }
 };

@@ -390,7 +390,7 @@ exports.getOverview = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to load dashboard overview",
-      error: error.message,
+      error: "Internal server error",
     });
   }
 };
@@ -492,7 +492,7 @@ exports.getKpis = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to load dashboard KPIs",
-      error: error.message,
+      error: "Internal server error",
     });
   }
 };
@@ -588,7 +588,7 @@ exports.getReturnAnalytics = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to load return analytics",
-      error: error.message,
+      error: "Internal server error",
     });
   }
 };
@@ -668,7 +668,7 @@ exports.getPurchaseReturnAnalytics = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to load purchase return analytics",
-      error: error.message,
+      error: "Internal server error",
     });
   }
 };
@@ -879,7 +879,7 @@ exports.getPaymentCollectionAnalytics = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to load payment collection analytics",
-      error: error.message,
+      error: "Internal server error",
     });
   }
 };
@@ -977,7 +977,7 @@ exports.getTrends = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to load dashboard trends",
-      error: error.message,
+      error: "Internal server error",
     });
   }
 };
@@ -1063,7 +1063,7 @@ exports.getPurchaseAnalytics = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to load purchase analytics",
-      error: error.message,
+      error: "Internal server error",
     });
   }
 };
