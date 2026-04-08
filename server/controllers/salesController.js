@@ -119,11 +119,24 @@ const getSaleReturnTotals = async ({ shopId, saleId }) => {
   };
 };
 
-const buildVariationSnapshot = (variation, rawItem = {}) => {
+const buildVariationSnapshot = (variation, rawItem = {}, userRole = "STAFF") => {
   const qty = Math.max(0, Number(rawItem?.quantity || 0));
-  const sellingPrice = Number(
-    rawItem?.sellingPrice ?? rawItem?.price ?? variation?.sellingPrice ?? 0,
-  );
+  
+  // PRICE VALIDATION: Prevent unauthorized price overrides
+  // Only SUPER_ADMIN and ADMIN can set custom prices
+  const catalogPrice = Number(variation?.sellingPrice ?? 0);
+  const requestedPrice = Number(rawItem?.sellingPrice ?? rawItem?.price ?? catalogPrice);
+  
+  // Maximum discount allowed for non-privileged roles (10% by default)
+  const MAX_DISCOUNT_PERCENT = 10;
+  const minAllowedPrice = catalogPrice * (1 - MAX_DISCOUNT_PERCENT / 100);
+  
+  // STAFF and MANAGER cannot override price below catalog with >10% discount
+  const isPrivilegedRole = ["SUPER_ADMIN", "ADMIN"].includes(userRole);
+  const sellingPrice = isPrivilegedRole
+    ? requestedPrice  // Privileged roles can set any price
+    : Math.max(requestedPrice, minAllowedPrice);  // Enforce minimum price
+  
   const costPrice = Number(variation?.costPrice || 0);
   const lineTotal = Number((qty * sellingPrice).toFixed(2));
   const categoryName =
@@ -150,6 +163,12 @@ const buildVariationSnapshot = (variation, rawItem = {}) => {
     quantity: qty,
     purchasePrice: costPrice,
     sellingPrice,
+    catalogPrice,
+    priceOverride: sellingPrice !== catalogPrice ? {
+      requested: requestedPrice,
+      applied: sellingPrice,
+      reason: isPrivilegedRole ? "privileged_role" : "max_discount_enforced",
+    } : null,
     discount: 0,
     discountType: "FLAT",
     total: lineTotal,
@@ -393,7 +412,8 @@ exports.createSale = async (req, res) => {
         });
       }
 
-      normalizedItems.push(buildVariationSnapshot(variation, raw));
+      // Pass user role to enforce price validation
+      normalizedItems.push(buildVariationSnapshot(variation, raw, req.user?.role || "STAFF"));
     }
 
     const totalQuantity = normalizedItems.reduce((acc, it) => acc + Number(it.quantity || 0), 0);
