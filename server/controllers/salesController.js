@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const Sale = require("../models/CustomerSale");
+const logger = require("../utils/logger");
 const Product = require("../models/Product");
 const ProductModel = require("../models/ProductModel");
 const ProductVariation = require("../models/ProductVariation");
@@ -628,7 +629,8 @@ exports.createSale = async (req, res) => {
         message: "Invoice number conflict, please retry sale",
       });
     }
-    console.error("Error creating sale:", error.message);
+    const logger = require("../utils/logger");
+    logger.error("Error creating sale", { message: error.message });
     return res.status(500).json({
       success: false,
       message: "Error creating sale. Please try again.",
@@ -970,7 +972,7 @@ exports.collectSalePayment = async (req, res) => {
       data: sale,
     });
   } catch (error) {
-    console.error("Error collecting sale payment:", error.message);
+    logger.error("Error collecting sale payment", { message: error.message });
     return res.status(500).json({
       success: false,
       message: "Error collecting payment. Please try again.",

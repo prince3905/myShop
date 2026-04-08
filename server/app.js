@@ -4,6 +4,7 @@ const path = require("path");
 const helmet = require("helmet");
 const app = express();
 const cors = require("cors");
+const logger = require("./utils/logger");
 
 const allowedOrigins = (
   process.env.ALLOWED_ORIGINS
@@ -68,12 +69,15 @@ app.use(
       ) {
         return callback(null, true);
       }
-      console.error(`CORS blocked for origin: ${origin}`);
+      logger.warn(`CORS blocked for origin: ${origin}`);
       return callback(new Error("CORS blocked"));
     },
     credentials: false,
   }),
 );
+
+// Request logging middleware (logs all HTTP requests)
+app.use(logger.requestLogger);
 app.use(
   helmet({
     contentSecurityPolicy: {
@@ -142,12 +146,11 @@ app.get("/api/health", (req, res) => {
 // ========================================
 app.use((err, req, res, next) => {
   // Log error for debugging (never expose to client)
-  console.error("Unhandled Error:", {
+  logger.error("Unhandled Error", {
     message: err.message,
     stack: err.stack,
     path: req.path,
     method: req.method,
-    timestamp: new Date().toISOString(),
   });
 
   // MongoDB duplicate key error
@@ -194,7 +197,7 @@ app.use((err, req, res, next) => {
 
 // Handle unhandled promise rejections (prevent server crash)
 process.on("unhandledRejection", (reason, promise) => {
-  console.error("Unhandled Rejection at:", {
+  logger.error("Unhandled Rejection", {
     promise: promise,
     reason: reason?.message || reason,
     stack: reason?.stack,
@@ -204,7 +207,7 @@ process.on("unhandledRejection", (reason, promise) => {
 
 // Handle uncaught exceptions (last resort)
 process.on("uncaughtException", (error) => {
-  console.error("Uncaught Exception:", {
+  logger.error("Uncaught Exception", {
     message: error.message,
     stack: error.stack,
   });
