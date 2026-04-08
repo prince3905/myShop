@@ -96,7 +96,9 @@ app.use(
     crossOriginEmbedderPolicy: false, // Needed for some frontend assets
   }),
 );
-app.use(securityHeaders);
+
+// Request logging middleware (logs all HTTP requests)
+app.use(logger.requestLogger);
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: false, limit: "1mb" }));
 app.use("/api/auth/login", authRateLimit);

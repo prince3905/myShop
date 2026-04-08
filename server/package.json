@@ -1,29 +1,31 @@
 {
   "name": "myshop",
   "version": "1.0.0",
-  "description": "Baba Vishvanatha trunk house Admin panel",
+  "description": "MyShop - E-commerce & Business Management Platform",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest --forceExit --detectOpenHandles",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
     "start": "nodemon server.js",
     "dev": "nodemon server.js",
     "start:prod": "node server.js"
   },
-  "author": "Prince Raj",
-  "license": "ISC",
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
-    "dotenv": "^16.3.1",
+    "dotenv": "^17.4.1",
     "express": "^4.18.2",
-    "express-paginate": "^1.0.2",
     "express-validator": "^7.3.1",
     "helmet": "^8.1.0",
-    "jsonwebtoken": "^9.0.1",
+    "jsonwebtoken": "^9.0.0",
     "mongoose": "^7.3.4",
-    "nodemon": "^3.1.11",
-    "redis": "^4.6.7",
-    "slugify": "^1.6.6",
-    "winston": "^3.19.0"
+    "slugify": "^1.6.9",
+    "winston": "^3.17.0"
+  },
+  "devDependencies": {
+    "jest": "^30.3.0",
+    "nodemon": "^2.0.22",
+    "supertest": "^7.2.2"
   }
 }

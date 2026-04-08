@@ -13,8 +13,6 @@ const {
   EDITABLE_ROLES,
 } = require("../utils/featureAccess");
 
-const SESSION_TTL = process.env.JWT_EXPIRES_IN || "12h";
-
 const pushAuditLog = async (userId, action, details = "") => {
   await User.findByIdAndUpdate(userId, {
     $push: {

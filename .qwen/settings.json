@@ -10,7 +10,9 @@
       "Bash(then)",
       "Bash(fi)",
       "Bash(done)",
-      "Bash(grep *)"
+      "Bash(grep *)",
+      "Bash(npm test)",
+      "Bash(node *)"
     ]
   },
   "$version": 3

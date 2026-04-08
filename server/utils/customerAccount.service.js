@@ -256,7 +256,7 @@ const syncCustomerAccountSnapshot = async ({ shopId, customerId }) => {
 const snapshotDebounceTimers = new Map();
 const SNAPSHOT_DEBOUNCE_MS = 1000; // 1 second window
 
-exports.syncCustomerAccountSnapshotDebounced = ({ shopId, customerId }) => {
+const syncCustomerAccountSnapshotDebounced = ({ shopId, customerId }) => {
   if (!shopId || !customerId) return;
 
   const key = `${shopId}:${customerId}`;
