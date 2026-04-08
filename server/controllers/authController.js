@@ -246,11 +246,21 @@ exports.updateProfile = async (req, res) => {
 
 exports.register = async (req, res) => {
   try {
-    const { email, password, phoneNo } = req.body;
+    const { email, password, phoneNo, role, name, shop } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({ message: "Email and password required" });
     }
+
+    // Validate role - prevent SUPER_ADMIN assignment via this endpoint
+    // SUPER_ADMIN can only be assigned directly in database
+    const allowedRoles = ["ADMIN", "MANAGER", "STAFF"];
+    if (role && !allowedRoles.includes(role)) {
+      return res.status(400).json({
+        message: `Invalid role. Allowed: ${allowedRoles.join(", ")}`,
+      });
+    }
+    const userRole = role || "STAFF";
 
     const existingUser = await User.findOne({ email });
 
@@ -262,13 +272,22 @@ exports.register = async (req, res) => {
       email,
       password,
       phoneNo,
-      role: "STAFF",
+      name,
+      role: userRole,
+      shop: shop || null,
     });
 
     res.status(201).json({
       message: "User created successfully",
+      user: {
+        id: user._id,
+        email: user.email,
+        role: user.role,
+        name: user.name,
+      },
     });
   } catch (error) {
+    console.error("Registration Error:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
