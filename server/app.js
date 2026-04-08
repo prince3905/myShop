@@ -26,44 +26,9 @@ const dynamicOriginPatterns = [
 
 const authWindowMs = 15 * 60 * 1000;
 const authMaxRequests = 20;
-const authRequestStore = new Map();
 
-const securityHeaders = (req, res, next) => {
-  // Additional custom headers (helmet already covers standard security headers)
-  res.setHeader("Cross-Origin-Resource-Policy", "same-site");
-  next();
-};
-
-const authRateLimit = (req, res, next) => {
-  const key = `${req.ip || "unknown"}:${req.path}`;
-  const now = Date.now();
-  const current = authRequestStore.get(key);
-
-  if (!current || now > current.resetAt) {
-    authRequestStore.set(key, { count: 1, resetAt: now + authWindowMs });
-    return next();
-  }
-
-  if (current.count >= authMaxRequests) {
-    return res.status(429).json({
-      success: false,
-      message: "Too many auth attempts. Please try again later.",
-    });
-  }
-
-  current.count += 1;
-  authRequestStore.set(key, current);
-  return next();
-};
-
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, value] of authRequestStore.entries()) {
-    if (now > value.resetAt) {
-      authRequestStore.delete(key);
-    }
-  }
-}, authWindowMs).unref();
+// Import rate limiters
+const { authRateLimit, salesRateLimit, userRateLimit, customerRateLimit, generalRateLimit } = require("./middleware/rateLimiter");
 
 const shopRouter = require("./routes/shopRoutes");
 const userRoutes = require("./routes/allUsersRoutes");

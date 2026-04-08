@@ -4,6 +4,7 @@ const router = express.Router();
 const authController = require("../controllers/authController");
 const userController = require("../controllers/userController");
 const { protect, authorizeRoles, authorizeFeature } = require("../middleware/authMiddleware");
+const { userRateLimit } = require("../middleware/rateLimiter");
 
 // LOGIN ROUTE
 router.post("/login", authController.login);
@@ -17,9 +18,10 @@ router.get(
   userController.getAllUsers
 );
 
-// CREATE USER (Protected + Role Based)
+// CREATE USER (Protected + Role Based + Rate Limited)
 router.post(
   "/",
+  userRateLimit,
   protect,
   authorizeFeature("people.users"),
   authorizeRoles("SUPER_ADMIN", "ADMIN"),

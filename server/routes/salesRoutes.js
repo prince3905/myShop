@@ -1,12 +1,38 @@
 const express = require("express");
 const salesController = require("../controllers/salesController");
 const { protect, attachShop, authorizeRoles, authorizeFeature, requireShopSelectionForWrite } = require("../middleware/authMiddleware");
+const { salesRateLimit } = require("../middleware/rateLimiter");
 
 const router = express.Router();
 
 router.use(protect);
 router.use(attachShop);
 router.use(requireShopSelectionForWrite);
+
+// Apply rate limiting to write endpoints
+router.post(
+  "/",
+  salesRateLimit,
+  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"),
+  authorizeFeature("sales.create"),
+  salesController.createSale,
+);
+
+router.post(
+  "/:id/returns",
+  salesRateLimit,
+  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER"),
+  authorizeFeature("sales.return"),
+  salesController.createSaleReturn,
+);
+
+router.post(
+  "/:id/payments",
+  salesRateLimit,
+  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"),
+  authorizeFeature("sales.payment"),
+  salesController.collectSalePayment,
+);
 
 router.get(
   "/customer-suggestions",
@@ -50,32 +76,11 @@ router.get(
   salesController.getSaleLedger,
 );
 
-router.post(
-  "/:id/returns",
-  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER"),
-  authorizeFeature("sales.return"),
-  salesController.createSaleReturn,
-);
-
-router.post(
-  "/:id/payments",
-  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"),
-  authorizeFeature("sales.payment"),
-  salesController.collectSalePayment,
-);
-
 router.get(
   "/:id",
   authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"),
   authorizeFeature("sales.list"),
   salesController.getSaleById,
-);
-
-router.post(
-  "/",
-  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"),
-  authorizeFeature("sales.create"),
-  salesController.createSale,
 );
 
 module.exports = router;

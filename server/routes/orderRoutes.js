@@ -1,6 +1,7 @@
 const express = require("express");
 const orderController = require("../controllers/orderController");
 const { protect, attachShop, authorizeRoles, authorizeFeature, requireShopSelectionForWrite } = require("../middleware/authMiddleware");
+const { salesRateLimit } = require("../middleware/rateLimiter");
 
 const router = express.Router();
 
@@ -17,6 +18,7 @@ router.get(
 
 router.post(
   "/",
+  salesRateLimit,
   authorizeFeature("sales.orders.manage"),
   authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"),
   orderController.createOrder,
