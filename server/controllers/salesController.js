@@ -914,6 +914,30 @@ exports.collectSalePayment = async (req, res) => {
       return res.status(400).json({ success: false, message: "Invalid payment method" });
     }
 
+    // IDEMPOTENCY CHECK: Prevent duplicate payments with same amount & method
+    // Check if a similar payment was already made recently (within last 5 minutes)
+    const idempotencyWindow = new Date(Date.now() - 5 * 60 * 1000); // 5 minutes
+    const recentPayment = await SaleLedger.findOne({
+      shop: req.shopId,
+      sale: sale._id,
+      type: "payment",
+      amount,
+      paymentMethod,
+      createdAt: { $gte: idempotencyWindow },
+    });
+
+    if (recentPayment) {
+      return res.status(409).json({
+        success: false,
+        message: `Duplicate payment detected. A payment of ${amount.toFixed(2)} via ${paymentMethod} was already recorded recently.`,
+        existingPayment: {
+          id: recentPayment._id,
+          timestamp: recentPayment.createdAt,
+          note: recentPayment.note,
+        },
+      });
+    }
+
     sale.paidAmount = roundAmount(Number(sale.paidAmount || 0) + amount);
     sale.dueAmount = getSaleCollectibleDue(sale);
     await sale.save();
@@ -946,10 +970,10 @@ exports.collectSalePayment = async (req, res) => {
       data: sale,
     });
   } catch (error) {
+    console.error("Error collecting sale payment:", error.message);
     return res.status(500).json({
       success: false,
-      message: "Error collecting sale payment",
-      error: error.message,
+      message: "Error collecting payment. Please try again.",
     });
   }
 };
