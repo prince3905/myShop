@@ -342,52 +342,72 @@ const syncOrderStockForStatus = async ({ order, targetStatus, userId }) => {
   const items = Array.isArray(order.items) ? order.items : [];
   if (!items.length) return order;
 
-  if (STOCK_APPLY_STATUSES.has(nextStatus) && !order.stockApplied) {
-    for (const item of items) {
-      await applyStockTransaction({
-        shop: order.shop,
-        product: item.item,
-        model: item.modelId,
-        variation: item.variationId,
-        sku: item.sku,
-        type: "OUT",
-        quantity: Number(item.quantity || 0),
-        referenceType: "ORDER",
-        referenceId: order._id,
-        note: `Order ${order.orderNo || order._id} stock deducted on ${nextStatus}`,
-        createdBy: userId || null,
-      });
+  // ATOMIC STOCK OPERATIONS: Wrap in transaction to prevent partial deductions
+  const mongooseSession = await mongoose.startSession();
+  mongooseSession.startTransaction();
+
+  try {
+    if (STOCK_APPLY_STATUSES.has(nextStatus) && !order.stockApplied) {
+      for (const item of items) {
+        await applyStockTransaction({
+          shop: order.shop,
+          product: item.item,
+          model: item.modelId,
+          variation: item.variationId,
+          sku: item.sku,
+          type: "OUT",
+          quantity: Number(item.quantity || 0),
+          referenceType: "ORDER",
+          referenceId: order._id,
+          note: `Order ${order.orderNo || order._id} stock deducted on ${nextStatus}`,
+          createdBy: userId || null,
+          session: mongooseSession,
+        });
+      }
+
+      order.stockApplied = true;
+      order.stockAppliedAt = new Date();
+      order.stockReleasedAt = null;
+      
+      await mongooseSession.commitTransaction();
+      mongooseSession.endSession();
+      return order;
     }
 
-    order.stockApplied = true;
-    order.stockAppliedAt = new Date();
-    order.stockReleasedAt = null;
-    return order;
-  }
+    if (STOCK_REVERSE_STATUSES.has(nextStatus) && order.stockApplied) {
+      for (const item of items) {
+        await applyStockTransaction({
+          shop: order.shop,
+          product: item.item,
+          model: item.modelId,
+          variation: item.variationId,
+          sku: item.sku,
+          type: "IN",
+          quantity: Number(item.quantity || 0),
+          referenceType: "ORDER",
+          referenceId: order._id,
+          note: `Order ${order.orderNo || order._id} stock restored on ${nextStatus}`,
+          createdBy: userId || null,
+          session: mongooseSession,
+        });
+      }
 
-  if (STOCK_REVERSE_STATUSES.has(nextStatus) && order.stockApplied) {
-    for (const item of items) {
-      await applyStockTransaction({
-        shop: order.shop,
-        product: item.item,
-        model: item.modelId,
-        variation: item.variationId,
-        sku: item.sku,
-        type: "IN",
-        quantity: Number(item.quantity || 0),
-        referenceType: "ORDER",
-        referenceId: order._id,
-        note: `Order ${order.orderNo || order._id} stock restored on ${nextStatus}`,
-        createdBy: userId || null,
-      });
+      order.stockApplied = false;
+      order.stockReleasedAt = new Date();
+      
+      await mongooseSession.commitTransaction();
+      mongooseSession.endSession();
+      return order;
     }
 
-    order.stockApplied = false;
-    order.stockReleasedAt = new Date();
+    await mongooseSession.abortTransaction();
+    mongooseSession.endSession();
     return order;
+  } catch (transactionError) {
+    await mongooseSession.abortTransaction();
+    mongooseSession.endSession();
+    throw transactionError;
   }
-
-  return order;
 };
 
 const releaseOrderStock = async ({ order, reason, userId }) => {
@@ -400,25 +420,39 @@ const releaseOrderStock = async ({ order, reason, userId }) => {
     return order;
   }
 
-  for (const item of items) {
-    await applyStockTransaction({
-      shop: order.shop,
-      product: item.item,
-      model: item.modelId,
-      variation: item.variationId,
-      sku: item.sku,
-      type: "IN",
-      quantity: Number(item.quantity || 0),
-      referenceType: "ORDER",
-      referenceId: order._id,
-      note: `Order ${order.orderNo || order._id} stock restored on ${reason}`,
-      createdBy: userId || null,
-    });
-  }
+  // ATOMIC STOCK RELEASE: Wrap in transaction to prevent partial releases
+  const mongooseSession = await mongoose.startSession();
+  mongooseSession.startTransaction();
 
-  order.stockApplied = false;
-  order.stockReleasedAt = new Date();
-  return order;
+  try {
+    for (const item of items) {
+      await applyStockTransaction({
+        shop: order.shop,
+        product: item.item,
+        model: item.modelId,
+        variation: item.variationId,
+        sku: item.sku,
+        type: "IN",
+        quantity: Number(item.quantity || 0),
+        referenceType: "ORDER",
+        referenceId: order._id,
+        note: `Order ${order.orderNo || order._id} stock restored on ${reason}`,
+        createdBy: userId || null,
+        session: mongooseSession,
+      });
+    }
+
+    order.stockApplied = false;
+    order.stockReleasedAt = new Date();
+    
+    await mongooseSession.commitTransaction();
+    mongooseSession.endSession();
+    return order;
+  } catch (transactionError) {
+    await mongooseSession.abortTransaction();
+    mongooseSession.endSession();
+    throw transactionError;
+  }
 };
 
 exports.getAllOrders = async (req, res) => {
@@ -751,7 +785,7 @@ exports.createOrder = async (req, res) => {
     console.error("Error creating order:", err);
     return res.status(err.statusCode || 500).json({
       success: false,
-      message: err.message || "Error creating order",
+      message: "Error creating order. Please try again.",
     });
   }
 };
@@ -848,7 +882,7 @@ exports.updateOrder = async (req, res) => {
     console.error("Error updating order:", err);
     return res.status(err.statusCode || 500).json({
       success: false,
-      message: err.message || "Error updating order",
+      message: "Error updating order. Please try again.",
     });
   }
 };
@@ -974,7 +1008,7 @@ exports.updateOrderStatus = async (req, res) => {
     console.error("Error updating order:", err);
     return res.status(err.statusCode || 500).json({
       success: false,
-      message: err.message || "Error updating order",
+      message: "Error updating order. Please try again.",
     });
   }
 };
@@ -1049,7 +1083,7 @@ exports.collectOrderPayment = async (req, res) => {
     console.error("Error collecting order payment:", err);
     return res.status(500).json({
       success: false,
-      message: err.message || "Error collecting order payment",
+      message: "Error collecting order payment. Please try again.",
     });
   }
 };
