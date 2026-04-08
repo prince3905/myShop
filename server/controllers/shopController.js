@@ -66,17 +66,29 @@ exports.createShop = async (req, res) => {
 };
 
 /* =========================================
-   GET MY SHOPS
+   GET MY SHOPS (PAGINATED)
 ========================================= */
 exports.getMyShops = async (req, res) => {
   try {
     const filter = getShopFilter(req);
 
-    const shops = await Shop.find(filter).sort({ createdAt: -1 });
+    // Pagination params
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 20));
+    const skip = (page - 1) * limit;
+
+    const [shops, totalShops] = await Promise.all([
+      Shop.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
+      Shop.countDocuments(filter),
+    ]);
 
     return res.status(200).json({
       success: true,
       count: shops.length,
+      totalShops,
+      page,
+      limit,
+      totalPages: Math.ceil(totalShops / limit),
       data: shops,
     });
   } catch (error) {
@@ -212,7 +224,7 @@ exports.deleteShop = async (req, res) => {
 
 
 /* =========================================
-   GET ALL SHOPS
+   GET ALL SHOPS (PAGINATED - SUPER ADMIN)
 ========================================= */
 exports.getAllShops = async (req, res) => {
   try {
@@ -224,12 +236,46 @@ exports.getAllShops = async (req, res) => {
       });
     }
 
-    const shops = await Shop.find().select("name shopCode isActive isVerified");
+    // Pagination params
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 20));
+    const skip = (page - 1) * limit;
+
+    // Optional filters
+    const filter = {};
+    if (req.query.isActive !== undefined) {
+      filter.isActive = req.query.isActive === "true" || req.query.isActive === "1";
+    }
+    if (req.query.isVerified !== undefined) {
+      filter.isVerified = req.query.isVerified === "true" || req.query.isVerified === "1";
+    }
+    if (req.query.shopType) {
+      filter.shopType = req.query.shopType;
+    }
+    if (req.query.search) {
+      filter.$or = [
+        { name: { $regex: req.query.search, $options: "i" } },
+        { shopCode: { $regex: req.query.search, $options: "i" } },
+      ];
+    }
+
+    const [shops, totalShops] = await Promise.all([
+      Shop.find(filter)
+        .select("name shopCode isActive isVerified shopType contactNumber email createdAt")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      Shop.countDocuments(filter),
+    ]);
 
     res.status(200).json({
       success: true,
       count: shops.length,
-      data: shops
+      totalShops,
+      page,
+      limit,
+      totalPages: Math.ceil(totalShops / limit),
+      data: shops,
     });
 
   } catch (error) {
