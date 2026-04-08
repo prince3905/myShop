@@ -52,6 +52,50 @@ exports.applyStockTransaction = async ({
     throw new Error("Insufficient stock for this transaction");
   }
 
+  // ATOMIC UPDATE: Prevent race condition for OUT/RESERVE operations
+  // Uses findOneAndUpdate with $inc to ensure concurrent sales don't corrupt stock
+  const isDeductOperation = type === "OUT" || type === "RESERVE";
+  
+  if (isDeductOperation) {
+    // Atomic deduct: only succeed if sufficient stock exists
+    const updatedStock = await Stock.findOneAndUpdate(
+      { shop, variation, quantity: { $gte: absQty } },
+      { 
+        $inc: { quantity: delta },
+        $set: { product, model, sku }
+      },
+      { new: true }
+    );
+
+    if (!updatedStock) {
+      throw new Error("Insufficient stock for this transaction");
+    }
+
+    await ProductVariation.findByIdAndUpdate(variation, { 
+      quantity: updatedStock.quantity 
+    });
+
+    const tx = await StockTransaction.create({
+      shop,
+      product,
+      model,
+      variation,
+      sku,
+      type,
+      quantity: absQty,
+      deltaQuantity: delta,
+      previousQuantity,
+      newQuantity: updatedStock.quantity,
+      referenceType,
+      referenceId,
+      note,
+      createdBy,
+    });
+
+    return { stock: updatedStock, tx };
+  }
+
+  // For IN/RELEASE/ADJUSTMENT: Safe to use regular save (stock is increasing)
   stock.product = product;
   stock.model = model;
   stock.sku = sku;
