@@ -3,6 +3,7 @@ const customerController = require("../controllers/customerController");
 const { protect, attachShop, authorizeRoles, authorizeFeature, requireShopSelectionForWrite } = require("../middleware/authMiddleware");
 const { hasFeatureAccess } = require("../utils/featureAccess");
 const { customerRateLimit } = require("../middleware/rateLimiter");
+const { validateCustomerCreation, validate } = require("../middleware/authValidation");
 
 const router = express.Router();
 
@@ -29,7 +30,7 @@ router.use(requireShopSelectionForWrite);
 
 router.get("/", authorizeFeature("people.customers"), customerController.getAllCustomers);
 router.get("/search", authorizeFeature("people.customers"), customerController.searchCustomers);
-router.post("/", customerRateLimit, authorizeCustomerBasicWrite, authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"), customerController.createCustomer);
+router.post("/", customerRateLimit, validateCustomerCreation, validate, authorizeCustomerBasicWrite, authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"), customerController.createCustomer);
 router.get("/:id", authorizeFeature("people.customers"), customerController.getCustomerById);
 router.get("/:id/sales", authorizeFeature("people.customers"), customerController.getCustomerSales);
 router.put("/:id", authorizeCustomerBasicWrite, authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"), customerController.updateCustomer);

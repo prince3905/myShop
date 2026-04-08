@@ -2,6 +2,7 @@ const express = require("express");
 const salesController = require("../controllers/salesController");
 const { protect, attachShop, authorizeRoles, authorizeFeature, requireShopSelectionForWrite } = require("../middleware/authMiddleware");
 const { salesRateLimit } = require("../middleware/rateLimiter");
+const { validateSaleCreation, validate } = require("../middleware/salesValidation");
 
 const router = express.Router();
 
@@ -9,10 +10,12 @@ router.use(protect);
 router.use(attachShop);
 router.use(requireShopSelectionForWrite);
 
-// Apply rate limiting to write endpoints
+// Apply rate limiting and validation to write endpoints
 router.post(
   "/",
   salesRateLimit,
+  validateSaleCreation,
+  validate,
   authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"),
   authorizeFeature("sales.create"),
   salesController.createSale,
