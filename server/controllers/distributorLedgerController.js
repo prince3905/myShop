@@ -176,6 +176,6 @@ exports.getDistributorLedger = async (req, res) => {
     });
   } catch (err) {
     console.error("Get Ledger Error:", err);
-    res.status(500).json({ message: "Error fetching ledger" });
+    res.status(500).json({ success: false, message: "Error fetching ledger" });
   }
 };

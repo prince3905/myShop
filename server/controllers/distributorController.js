@@ -62,7 +62,7 @@ exports.allDistributors = async (req, res) => {
     });
   } catch (err) {
     console.error("Error retrieving distributors:", err);
-    res.status(500).json({ error: "Error retrieving distributors" });
+    res.status(500).json({ success: false, message: "Error retrieving distributors" });
   }
 };
 
@@ -148,7 +148,7 @@ exports.addDistributor = async (req, res) => {
         message: "Distributor phone already exists in this shop",
       });
     }
-    res.status(500).json({ error: "Error saving distributor" });
+    res.status(500).json({ success: false, message: "Error saving distributor" });
   }
 };
 
@@ -169,7 +169,7 @@ exports.getDistributorDetails = async (req, res) => {
 
     res.status(200).json(distributor);
   } catch (err) {
-    res.status(500).json({ error: "Error retrieving distributor details" });
+    res.status(500).json({ success: false, message: "Error retrieving distributor details" });
   }
 };
 
@@ -213,7 +213,7 @@ exports.updateDistributor = async (req, res) => {
     );
 
     if (!updatedDistributor) {
-      return res.status(404).json({ message: "Distributor not found" });
+      return res.status(404).json({ success: false, message: "Distributor not found" });
     }
 
     res.json({
@@ -228,7 +228,7 @@ exports.updateDistributor = async (req, res) => {
         message: "Distributor phone already exists in this shop",
       });
     }
-    res.status(500).json({ message: "Error updating distributor" });
+    res.status(500).json({ success: false, message: "Error updating distributor" });
   }
 };
 
@@ -258,7 +258,7 @@ exports.deleteDistributor = async (req, res) => {
       message: "Distributor deleted",
     });
   } catch (err) {
-    res.status(500).json({ error: "Error deleting distributor" });
+    res.status(500).json({ success: false, message: "Error deleting distributor" });
   }
 };
 
@@ -329,6 +329,6 @@ exports.distributorSuggestions = async (req, res) => {
     res.json(results.map((d) => d.name));
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Error searching distributor" });
+    res.status(500).json({ success: false, message: "Error searching distributor" });
   }
 };
