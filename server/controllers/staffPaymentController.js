@@ -1,3 +1,4 @@
+const logger = require("../utils/logger");
 const mongoose = require("mongoose");
 const StaffPayment = require("../models/StaffPayment");
 const Staff = require("../models/Staff");
@@ -90,7 +91,7 @@ exports.createStaffPayment = async (req, res) => {
       payment,
     });
   } catch (error) {
-    console.error("Create Staff Payment Error:", error);
+    logger.error("Create Staff Payment Error:", error);
     return res.status(500).json({ success: false, message: "Failed to create staff entry" });
   }
 };
@@ -156,7 +157,7 @@ exports.getStaffPayments = async (req, res) => {
 
     return res.json({ success: true, payments });
   } catch (error) {
-    console.error("Get Staff Payments Error:", error);
+    logger.error("Get Staff Payments Error:", error);
     return res.status(500).json({ success: false, message: "Failed to fetch staff entries" });
   }
 };
@@ -225,7 +226,7 @@ exports.getStaffPaymentSummary = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Staff Payment Summary Error:", error);
+    logger.error("Staff Payment Summary Error:", error);
     return res.status(500).json({ success: false, message: "Failed to fetch staff payment summary" });
   }
 };
@@ -290,7 +291,7 @@ exports.updateStaffPayment = async (req, res) => {
 
     return res.json({ success: true, message: "Entry updated", payment });
   } catch (error) {
-    console.error("Update Staff Payment Error:", error);
+    logger.error("Update Staff Payment Error:", error);
     return res.status(500).json({ success: false, message: "Failed to update entry" });
   }
 };
@@ -317,7 +318,7 @@ exports.deleteStaffPayment = async (req, res) => {
 
     return res.json({ success: true, message: "Entry deleted" });
   } catch (error) {
-    console.error("Delete Staff Payment Error:", error);
+    logger.error("Delete Staff Payment Error:", error);
     return res.status(500).json({ success: false, message: "Failed to delete entry" });
   }
 };

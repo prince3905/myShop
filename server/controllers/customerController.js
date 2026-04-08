@@ -1,3 +1,4 @@
+const logger = require("../utils/logger");
 const Customer = require("../models/Customer");
 const EntityAuditLog = require("../models/EntityAuditLog");
 const { logEntityAudit } = require("../utils/entityAudit.service");
@@ -196,7 +197,7 @@ exports.getCustomerSales = async (req, res) => {
       summary: ledger.summary,
     });
   } catch (err) {
-    console.error("Error getting customer sales:", err);
+    logger.error("Error getting customer sales:", err);
     return res.status(500).json({ success: false, error: "Error retrieving customer sales" });
   }
 };

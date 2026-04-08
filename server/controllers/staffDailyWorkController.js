@@ -1,3 +1,4 @@
+const logger = require("../utils/logger");
 const mongoose = require("mongoose");
 const StaffDailyWork = require("../models/StaffDailyWork");
 const Staff = require("../models/Staff");
@@ -384,7 +385,7 @@ exports.createDailyWork = async (req, res) => {
       dailyWork: populated,
     });
   } catch (error) {
-    console.error("Create Staff Daily Work Error:", error);
+    logger.error("Create Staff Daily Work Error:", error);
     return res.status(500).json({ success: false, message: "Failed to create daily work entry" });
   }
 };
@@ -455,7 +456,7 @@ exports.getDailyWorks = async (req, res) => {
 
     return res.json({ success: true, dailyWorks });
   } catch (error) {
-    console.error("Get Staff Daily Works Error:", error);
+    logger.error("Get Staff Daily Works Error:", error);
     return res.status(500).json({ success: false, message: "Failed to fetch daily work entries" });
   }
 };
@@ -498,7 +499,7 @@ exports.getFactoryPushHistory = async (req, res) => {
 
     return res.json({ success: true, rows });
   } catch (error) {
-    console.error("Get Factory Push History Error:", error);
+    logger.error("Get Factory Push History Error:", error);
     return res.status(500).json({ success: false, message: "Failed to fetch factory push history" });
   }
 };
@@ -570,7 +571,7 @@ exports.getDailyWorkSummary = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Staff Daily Work Summary Error:", error);
+    logger.error("Staff Daily Work Summary Error:", error);
     return res.status(500).json({ success: false, message: "Failed to fetch daily work summary" });
   }
 };
@@ -690,7 +691,7 @@ exports.updateDailyWork = async (req, res) => {
 
     return res.json({ success: true, message: "Daily work entry updated", dailyWork: populated });
   } catch (error) {
-    console.error("Update Staff Daily Work Error:", error);
+    logger.error("Update Staff Daily Work Error:", error);
     return res.status(500).json({ success: false, message: "Failed to update daily work entry" });
   }
 };
@@ -725,7 +726,7 @@ exports.deleteDailyWork = async (req, res) => {
 
     return res.json({ success: true, message: "Daily work entry deleted" });
   } catch (error) {
-    console.error("Delete Staff Daily Work Error:", error);
+    logger.error("Delete Staff Daily Work Error:", error);
     return res.status(500).json({ success: false, message: "Failed to delete daily work entry" });
   }
 };
@@ -898,7 +899,7 @@ exports.pushDailyWorkToStock = async (req, res) => {
       dailyWork: populated,
     });
   } catch (error) {
-    console.error("Push Staff Daily Work To Stock Error:", error);
+    logger.error("Push Staff Daily Work To Stock Error:", error);
     return res.status(500).json({ success: false, message: "Failed to push output to shop stock" });
   }
 };
@@ -972,7 +973,7 @@ exports.verifyDailyWork = async (req, res) => {
       dailyWork: populated,
     });
   } catch (error) {
-    console.error("Verify Staff Daily Work Error:", error);
+    logger.error("Verify Staff Daily Work Error:", error);
     return res.status(500).json({ success: false, message: "Failed to verify daily work entry" });
   }
 };

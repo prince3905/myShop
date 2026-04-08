@@ -1,3 +1,4 @@
+const logger = require("../utils/logger");
 const FactoryProduct = require("../models/FactoryProduct");
 const Brand = require("../models/Brand");
 const Category = require("../models/Category");
@@ -271,7 +272,7 @@ exports.createFactoryProduct = async (req, res) => {
 
     return res.status(201).json({ success: true, message: "Factory product added", product: populated });
   } catch (error) {
-    console.error("Create Factory Product Error:", error);
+    logger.error("Create Factory Product Error:", error);
     return res.status(500).json({ success: false, message: "Failed to create factory product" });
   }
 };
@@ -308,7 +309,7 @@ exports.getFactoryProducts = async (req, res) => {
 
     return res.json({ success: true, products });
   } catch (error) {
-    console.error("Get Factory Products Error:", error);
+    logger.error("Get Factory Products Error:", error);
     return res.status(500).json({ success: false, message: "Failed to fetch factory products" });
   }
 };
@@ -341,7 +342,7 @@ exports.getFactoryProductOptions = async (req, res) => {
 
     return res.json({ success: true, products });
   } catch (error) {
-    console.error("Get Factory Product Options Error:", error);
+    logger.error("Get Factory Product Options Error:", error);
     return res.status(500).json({ success: false, message: "Failed to fetch factory product options" });
   }
 };
@@ -394,7 +395,7 @@ exports.getFactoryProductSummary = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Factory Product Summary Error:", error);
+    logger.error("Factory Product Summary Error:", error);
     return res.status(500).json({ success: false, message: "Failed to fetch factory product summary" });
   }
 };
@@ -494,7 +495,7 @@ exports.updateFactoryProduct = async (req, res) => {
     const populated = await populateFactoryProduct(FactoryProduct.findById(product._id));
     return res.json({ success: true, message: "Factory product updated", product: populated });
   } catch (error) {
-    console.error("Update Factory Product Error:", error);
+    logger.error("Update Factory Product Error:", error);
     return res.status(500).json({ success: false, message: "Failed to update factory product" });
   }
 };
@@ -521,7 +522,7 @@ exports.deleteFactoryProduct = async (req, res) => {
 
     return res.json({ success: true, message: "Factory product deleted" });
   } catch (error) {
-    console.error("Delete Factory Product Error:", error);
+    logger.error("Delete Factory Product Error:", error);
     return res.status(500).json({ success: false, message: "Failed to delete factory product" });
   }
 };

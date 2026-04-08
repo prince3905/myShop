@@ -1,3 +1,4 @@
+const logger = require("../utils/logger");
 const mongoose = require("mongoose");
 const Order = require("../models/order");
 const Customer = require("../models/Customer");
@@ -712,7 +713,7 @@ exports.getAllOrders = async (req, res) => {
       overview,
     });
   } catch (err) {
-    console.error("Error retrieving orders:", err);
+    logger.error("Error retrieving orders:", err);
     return res.status(500).json({ success: false, error: "Error retrieving orders" });
   }
 };
@@ -782,7 +783,7 @@ exports.createOrder = async (req, res) => {
       order: savedOrder,
     });
   } catch (err) {
-    console.error("Error creating order:", err);
+    logger.error("Error creating order:", err);
     return res.status(err.statusCode || 500).json({
       success: false,
       message: "Error creating order. Please try again.",
@@ -879,7 +880,7 @@ exports.updateOrder = async (req, res) => {
       order: updatedOrder,
     });
   } catch (err) {
-    console.error("Error updating order:", err);
+    logger.error("Error updating order:", err);
     return res.status(err.statusCode || 500).json({
       success: false,
       message: "Error updating order. Please try again.",
@@ -907,7 +908,7 @@ exports.getOrderById = async (req, res) => {
       order: sanitizeOrderPricing(order, req),
     });
   } catch (err) {
-    console.error("Error retrieving order:", err);
+    logger.error("Error retrieving order:", err);
     return res.status(500).json({ success: false, error: "Error retrieving order" });
   }
 };
@@ -1005,7 +1006,7 @@ exports.updateOrderStatus = async (req, res) => {
       order: updatedOrder,
     });
   } catch (err) {
-    console.error("Error updating order:", err);
+    logger.error("Error updating order:", err);
     return res.status(err.statusCode || 500).json({
       success: false,
       message: "Error updating order. Please try again.",
@@ -1080,7 +1081,7 @@ exports.collectOrderPayment = async (req, res) => {
       order: updatedOrder,
     });
   } catch (err) {
-    console.error("Error collecting order payment:", err);
+    logger.error("Error collecting order payment:", err);
     return res.status(500).json({
       success: false,
       message: "Error collecting order payment. Please try again.",

@@ -1,3 +1,4 @@
+const logger = require("../utils/logger");
 const mongoose = require("mongoose");
 const Distributor = require("../models/Distributor");
 const RawMaterial = require("../models/RawMaterial");
@@ -175,7 +176,7 @@ exports.createPurchase = async (req, res) => {
 
     return res.status(201).json({ success: true, message: "Raw material purchase saved", purchase: populated });
   } catch (error) {
-    console.error("Create Raw Material Purchase Error:", error);
+    logger.error("Create Raw Material Purchase Error:", error);
     if (error?.code === 11000 && error?.keyPattern?.invoiceNo) {
       return res.status(409).json({ success: false, message: "Invoice number already exists for this shop" });
     }
@@ -219,7 +220,7 @@ exports.listPurchases = async (req, res) => {
 
     return res.json({ success: true, purchases, summary });
   } catch (error) {
-    console.error("List Raw Material Purchases Error:", error);
+    logger.error("List Raw Material Purchases Error:", error);
     return res.status(500).json({ success: false, message: "Failed to load raw material purchases" });
   }
 };
@@ -279,7 +280,7 @@ exports.updatePurchase = async (req, res) => {
 
     return res.json({ success: true, message: "Raw material purchase updated" });
   } catch (error) {
-    console.error("Update Raw Material Purchase Error:", error);
+    logger.error("Update Raw Material Purchase Error:", error);
     if (error?.code === 11000 && error?.keyPattern?.invoiceNo) {
       return res.status(409).json({ success: false, message: "Invoice number already exists for this shop" });
     }
@@ -341,7 +342,7 @@ exports.approvePurchase = async (req, res) => {
 
     return res.json({ success: true, message: "Material receipt approved" });
   } catch (error) {
-    console.error("Approve Raw Material Purchase Error:", error);
+    logger.error("Approve Raw Material Purchase Error:", error);
     return res.status(500).json({ success: false, message: "Failed to approve raw material purchase" });
   }
 };
@@ -399,7 +400,7 @@ exports.addPayment = async (req, res) => {
 
     return res.json({ success: true, message: "Payment added successfully" });
   } catch (error) {
-    console.error("Raw Material Purchase Add Payment Error:", error);
+    logger.error("Raw Material Purchase Add Payment Error:", error);
     return res.status(500).json({ success: false, message: "Failed to add payment" });
   }
 };
@@ -427,7 +428,7 @@ exports.cancelPurchase = async (req, res) => {
 
     return res.json({ success: true, message: "Raw material purchase cancelled" });
   } catch (error) {
-    console.error("Cancel Raw Material Purchase Error:", error);
+    logger.error("Cancel Raw Material Purchase Error:", error);
     return res.status(500).json({ success: false, message: "Failed to cancel raw material purchase" });
   }
 };

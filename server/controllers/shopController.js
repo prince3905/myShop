@@ -1,3 +1,4 @@
+const logger = require("../utils/logger");
 const Shop = require("../models/Shop");
 
 /* =========================================
@@ -56,7 +57,7 @@ exports.createShop = async (req, res) => {
       data: shop,
     });
   } catch (error) {
-    console.error("Create Shop Error:", error);
+    logger.error("Create Shop Error:", error);
 
     return res.status(500).json({
       success: false,
@@ -92,7 +93,7 @@ exports.getMyShops = async (req, res) => {
       data: shops,
     });
   } catch (error) {
-    console.error("Get Shops Error:", error);
+    logger.error("Get Shops Error:", error);
 
     return res.status(500).json({
       success: false,
@@ -125,7 +126,7 @@ exports.getShopById = async (req, res) => {
       data: shop,
     });
   } catch (error) {
-    console.error("Get Shop Error:", error);
+    logger.error("Get Shop Error:", error);
 
     return res.status(500).json({
       success: false,
@@ -181,7 +182,7 @@ exports.updateShop = async (req, res) => {
       data: updatedShop,
     });
   } catch (error) {
-    console.error("Update Shop Error:", error);
+    logger.error("Update Shop Error:", error);
 
     return res.status(500).json({
       success: false,
@@ -213,7 +214,7 @@ exports.deleteShop = async (req, res) => {
       message: "Shop deleted successfully",
     });
   } catch (error) {
-    console.error("Delete Shop Error:", error);
+    logger.error("Delete Shop Error:", error);
 
     return res.status(500).json({
       success: false,

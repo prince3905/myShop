@@ -270,7 +270,7 @@ exports.syncCustomerAccountSnapshotDebounced = ({ shopId, customerId }) => {
   const timer = setTimeout(() => {
     snapshotDebounceTimers.delete(key);
     syncCustomerAccountSnapshot({ shopId, customerId }).catch((err) => {
-      console.error(`Customer snapshot sync failed for ${key}:`, err.message);
+      logger.error(`Customer snapshot sync failed`, { key, message: err.message });
     });
   }, SNAPSHOT_DEBOUNCE_MS);
 

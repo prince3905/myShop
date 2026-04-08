@@ -1,3 +1,4 @@
+const logger = require("../utils/logger");
 const DailyExpense = require("../models/DailyExpense");
 
 const STAFF_ONLY_FILTER = (req) => `${req.user?.role || ""}` === "STAFF";
@@ -65,7 +66,7 @@ exports.createExpense = async (req, res) => {
       expense: populated,
     });
   } catch (error) {
-    console.error("Create Daily Expense Error:", error);
+    logger.error("Create Daily Expense Error:", error);
     return res.status(500).json({ success: false, message: "Failed to create daily expense" });
   }
 };
@@ -124,7 +125,7 @@ exports.getExpenses = async (req, res) => {
       expenses,
     });
   } catch (error) {
-    console.error("Get Daily Expenses Error:", error);
+    logger.error("Get Daily Expenses Error:", error);
     return res.status(500).json({ success: false, message: "Failed to fetch daily expenses" });
   }
 };
@@ -183,7 +184,7 @@ exports.getExpenseSummary = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Daily Expense Summary Error:", error);
+    logger.error("Daily Expense Summary Error:", error);
     return res.status(500).json({ success: false, message: "Failed to fetch expense summary" });
   }
 };
@@ -239,7 +240,7 @@ exports.updateExpense = async (req, res) => {
       expense,
     });
   } catch (error) {
-    console.error("Update Daily Expense Error:", error);
+    logger.error("Update Daily Expense Error:", error);
     return res.status(500).json({ success: false, message: "Failed to update daily expense" });
   }
 };
@@ -269,7 +270,7 @@ exports.deleteExpense = async (req, res) => {
       message: "Daily expense deleted",
     });
   } catch (error) {
-    console.error("Delete Daily Expense Error:", error);
+    logger.error("Delete Daily Expense Error:", error);
     return res.status(500).json({ success: false, message: "Failed to delete daily expense" });
   }
 };

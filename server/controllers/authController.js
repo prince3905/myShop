@@ -1,3 +1,4 @@
+const logger = require("../utils/logger");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const User = require("../models/User");
@@ -195,7 +196,7 @@ exports.login = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     res.status(500).json({ success: false, message: "Server Error" });
   }
 };
@@ -288,7 +289,7 @@ exports.register = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Registration Error:", error);
+    logger.error("Registration Error:", error);
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 };

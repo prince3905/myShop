@@ -8,6 +8,12 @@ body {
   text-size-adjust: 100%;
 }
 
+@media (min-width: 1200px) {
+  html.hosted-runtime {
+    zoom: 0.92;
+  }
+}
+
 body,
 .card,
 .card-title,

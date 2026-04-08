@@ -1,3 +1,4 @@
+const logger = require("../utils/logger");
 const Staff = require("../models/Staff");
 const StaffWorkType = require("../models/StaffWorkType");
 const MANAGER_AND_ABOVE = ["SUPER_ADMIN", "ADMIN", "MANAGER"];
@@ -97,7 +98,7 @@ exports.createStaff = async (req, res) => {
       staff: populated,
     });
   } catch (error) {
-    console.error("Create Staff Error:", error);
+    logger.error("Create Staff Error:", error);
     return res.status(500).json({ success: false, message: "Failed to create staff" });
   }
 };
@@ -144,7 +145,7 @@ exports.getStaffs = async (req, res) => {
 
     return res.json({ success: true, staffs });
   } catch (error) {
-    console.error("Get Staffs Error:", error);
+    logger.error("Get Staffs Error:", error);
     return res.status(500).json({ success: false, message: "Failed to fetch staff list" });
   }
 };
@@ -203,7 +204,7 @@ exports.getStaffSummary = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Staff Summary Error:", error);
+    logger.error("Staff Summary Error:", error);
     return res.status(500).json({ success: false, message: "Failed to fetch staff summary" });
   }
 };
@@ -291,7 +292,7 @@ exports.updateStaff = async (req, res) => {
       staff,
     });
   } catch (error) {
-    console.error("Update Staff Error:", error);
+    logger.error("Update Staff Error:", error);
     return res.status(500).json({ success: false, message: "Failed to update staff" });
   }
 };
@@ -318,7 +319,7 @@ exports.deleteStaff = async (req, res) => {
 
     return res.json({ success: true, message: "Staff deleted" });
   } catch (error) {
-    console.error("Delete Staff Error:", error);
+    logger.error("Delete Staff Error:", error);
     return res.status(500).json({ success: false, message: "Failed to delete staff" });
   }
 };

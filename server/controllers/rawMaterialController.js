@@ -1,3 +1,4 @@
+const logger = require("../utils/logger");
 const RawMaterial = require("../models/RawMaterial");
 const RawMaterialPurchase = require("../models/RawMaterialPurchase");
 const StaffDailyWork = require("../models/StaffDailyWork");
@@ -157,7 +158,7 @@ exports.createRawMaterial = async (req, res) => {
       material: populated,
     });
   } catch (error) {
-    console.error("Create Raw Material Error:", error);
+    logger.error("Create Raw Material Error:", error);
     return res.status(500).json({ success: false, message: "Failed to create raw material" });
   }
 };
@@ -201,7 +202,7 @@ exports.getRawMaterials = async (req, res) => {
 
     return res.json({ success: true, materials: materialsWithMetrics });
   } catch (error) {
-    console.error("Get Raw Materials Error:", error);
+    logger.error("Get Raw Materials Error:", error);
     return res.status(500).json({ success: false, message: "Failed to fetch raw materials" });
   }
 };
@@ -241,7 +242,7 @@ exports.getRawMaterialOptions = async (req, res) => {
 
     return res.json({ success: true, materials: materialsWithMetrics });
   } catch (error) {
-    console.error("Get Raw Material Options Error:", error);
+    logger.error("Get Raw Material Options Error:", error);
     return res.status(500).json({ success: false, message: "Failed to fetch raw material options" });
   }
 };
@@ -296,7 +297,7 @@ exports.getRawMaterialSummary = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Raw Material Summary Error:", error);
+    logger.error("Raw Material Summary Error:", error);
     return res.status(500).json({ success: false, message: "Failed to fetch raw material summary" });
   }
 };
@@ -456,7 +457,7 @@ exports.getRawMaterialHistory = async (req, res) => {
       usageSummary,
     });
   } catch (error) {
-    console.error("Raw Material History Error:", error);
+    logger.error("Raw Material History Error:", error);
     return res.status(500).json({ success: false, message: "Failed to load raw material history" });
   }
 };
@@ -517,7 +518,7 @@ exports.updateRawMaterial = async (req, res) => {
 
     return res.json({ success: true, message: "Raw material updated", material });
   } catch (error) {
-    console.error("Update Raw Material Error:", error);
+    logger.error("Update Raw Material Error:", error);
     return res.status(500).json({ success: false, message: "Failed to update raw material" });
   }
 };
@@ -544,7 +545,7 @@ exports.deleteRawMaterial = async (req, res) => {
 
     return res.json({ success: true, message: "Raw material deleted" });
   } catch (error) {
-    console.error("Delete Raw Material Error:", error);
+    logger.error("Delete Raw Material Error:", error);
     return res.status(500).json({ success: false, message: "Failed to delete raw material" });
   }
 };

@@ -3,6 +3,18 @@ services:
     name: myshop
     env: node
     rootDir: .
-    buildCommand: npm run build
+    buildCommand: npm run install:all && npm run build:client && npm run build:server:public
     startCommand: npm start
     autoDeploy: true
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_EXPIRES_IN
+        value: 12h
+      - key: PORT
+        value: 10000

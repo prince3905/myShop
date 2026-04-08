@@ -1,3 +1,4 @@
+const logger = require("../utils/logger");
 const DistributorLedger = require("../models/DistributorLedger");
 const Purchase = require("../models/Purchase");
 const RawMaterialPurchase = require("../models/RawMaterialPurchase");
@@ -112,7 +113,7 @@ exports.createLedger = async (req, res) => {
       ledger,
     });
   } catch (err) {
-    console.error("Create Ledger Error:", err);
+    logger.error("Create Ledger Error:", err);
     res.status(err.statusCode || 500).json({
       success: false,
       message: "Error creating ledger",
@@ -175,7 +176,7 @@ exports.getDistributorLedger = async (req, res) => {
       ledger: enrichedLedger,
     });
   } catch (err) {
-    console.error("Get Ledger Error:", err);
+    logger.error("Get Ledger Error:", err);
     res.status(500).json({ success: false, message: "Error fetching ledger" });
   }
 };

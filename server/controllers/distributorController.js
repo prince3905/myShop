@@ -1,3 +1,4 @@
+const logger = require("../utils/logger");
 const Distributor = require("../models/Distributor");
 const Shop = require("../models/Shop");
 const {
@@ -61,7 +62,7 @@ exports.allDistributors = async (req, res) => {
       totalItems,
     });
   } catch (err) {
-    console.error("Error retrieving distributors:", err);
+    logger.error("Error retrieving distributors:", err);
     res.status(500).json({ success: false, message: "Error retrieving distributors" });
   }
 };
@@ -141,7 +142,7 @@ exports.addDistributor = async (req, res) => {
       distributor: savedDistributor,
     });
   } catch (err) {
-    console.error(err);
+    logger.error(err);
     if (err?.code === 11000) {
       return res.status(409).json({
         success: false,
@@ -221,7 +222,7 @@ exports.updateDistributor = async (req, res) => {
       distributor: updatedDistributor,
     });
   } catch (error) {
-    console.error("Update Distributor Error:", error);
+    logger.error("Update Distributor Error:", error);
     if (error?.code === 11000) {
       return res.status(409).json({
         success: false,
@@ -301,7 +302,7 @@ exports.updateStatus = async (req, res) => {
     });
 
   } catch (err) {
-    console.error("updateStatus error", err);
+    logger.error("updateStatus error", err);
     return res.status(500).json({
       success: false,
       message: "Server error",
@@ -328,7 +329,7 @@ exports.distributorSuggestions = async (req, res) => {
 
     res.json(results.map((d) => d.name));
   } catch (err) {
-    console.error(err);
+    logger.error(err);
     res.status(500).json({ success: false, message: "Error searching distributor" });
   }
 };

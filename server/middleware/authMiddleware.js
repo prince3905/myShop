@@ -1,3 +1,4 @@
+const logger = require("../utils/logger");
 const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
 const User = require("../models/User");
@@ -203,7 +204,7 @@ exports.attachShop = async (req, res, next) => {
     next();
 
   } catch (error) {
-    console.error("Attach Shop Error:", error);
+    logger.error("Attach Shop Error", { message: error.message });
     return res.status(500).json({
       message: "Server error while attaching shop",
     });

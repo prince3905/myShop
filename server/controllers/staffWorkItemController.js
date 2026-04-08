@@ -1,3 +1,4 @@
+const logger = require("../utils/logger");
 const StaffWorkItem = require("../models/StaffWorkItem");
 const StaffWorkType = require("../models/StaffWorkType");
 
@@ -51,7 +52,7 @@ exports.getStaffWorkItems = async (req, res) => {
 
     return res.json({ success: true, items });
   } catch (error) {
-    console.error("Get Staff Work Items Error:", error);
+    logger.error("Get Staff Work Items Error:", error);
     return res.status(500).json({ success: false, message: "Failed to fetch work items" });
   }
 };
@@ -96,7 +97,7 @@ exports.getStaffWorkItemSummary = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Staff Work Item Summary Error:", error);
+    logger.error("Staff Work Item Summary Error:", error);
     return res.status(500).json({ success: false, message: "Failed to fetch work item summary" });
   }
 };
@@ -150,7 +151,7 @@ exports.createStaffWorkItem = async (req, res) => {
 
     return res.status(201).json({ success: true, message: "Work item added", item });
   } catch (error) {
-    console.error("Create Staff Work Item Error:", error);
+    logger.error("Create Staff Work Item Error:", error);
     return res.status(500).json({ success: false, message: "Failed to create work item" });
   }
 };
@@ -197,7 +198,7 @@ exports.updateStaffWorkItem = async (req, res) => {
     await item.save();
     return res.json({ success: true, message: "Work item updated", item });
   } catch (error) {
-    console.error("Update Staff Work Item Error:", error);
+    logger.error("Update Staff Work Item Error:", error);
     return res.status(500).json({ success: false, message: "Failed to update work item" });
   }
 };
@@ -222,7 +223,7 @@ exports.deleteStaffWorkItem = async (req, res) => {
 
     return res.json({ success: true, message: "Work item deleted" });
   } catch (error) {
-    console.error("Delete Staff Work Item Error:", error);
+    logger.error("Delete Staff Work Item Error:", error);
     return res.status(500).json({ success: false, message: "Failed to delete work item" });
   }
 };

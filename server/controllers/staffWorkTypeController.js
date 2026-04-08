@@ -1,3 +1,4 @@
+const logger = require("../utils/logger");
 const StaffWorkType = require("../models/StaffWorkType");
 
 const MANAGER_AND_ABOVE = ["SUPER_ADMIN", "ADMIN", "MANAGER"];
@@ -21,7 +22,7 @@ exports.getStaffWorkTypes = async (req, res) => {
     const workTypes = await StaffWorkType.find(filter).sort({ active: -1, name: 1 });
     return res.json({ success: true, workTypes });
   } catch (error) {
-    console.error("Get Staff Work Types Error:", error);
+    logger.error("Get Staff Work Types Error:", error);
     return res.status(500).json({ success: false, message: "Failed to fetch work types" });
   }
 };
@@ -61,7 +62,7 @@ exports.createStaffWorkType = async (req, res) => {
 
     return res.status(201).json({ success: true, message: "Work type added", workType });
   } catch (error) {
-    console.error("Create Staff Work Type Error:", error);
+    logger.error("Create Staff Work Type Error:", error);
     return res.status(500).json({ success: false, message: "Failed to create work type" });
   }
 };
@@ -109,7 +110,7 @@ exports.updateStaffWorkType = async (req, res) => {
 
     return res.json({ success: true, message: "Work type updated", workType });
   } catch (error) {
-    console.error("Update Staff Work Type Error:", error);
+    logger.error("Update Staff Work Type Error:", error);
     return res.status(500).json({ success: false, message: "Failed to update work type" });
   }
 };
@@ -136,7 +137,7 @@ exports.deleteStaffWorkType = async (req, res) => {
 
     return res.json({ success: true, message: "Work type deleted" });
   } catch (error) {
-    console.error("Delete Staff Work Type Error:", error);
+    logger.error("Delete Staff Work Type Error:", error);
     return res.status(500).json({ success: false, message: "Failed to delete work type" });
   }
 };
