@@ -246,11 +246,19 @@ const saleSchema = new mongoose.Schema(
    INDEXES (Performance)
 ========================= */
 
+// Core queries
 saleSchema.index({ shop: 1, createdAt: -1 });
 saleSchema.index({ orderSource: 1 });
 saleSchema.index(
   { shop: 1, invoiceNo: 1 },
   { unique: true, partialFilterExpression: { invoiceNo: { $type: "string", $ne: "" } } },
 );
+
+// Compound indexes for common filter combinations (500 shops scale)
+saleSchema.index({ shop: 1, paymentMethod: 1, createdAt: -1 });
+saleSchema.index({ shop: 1, customer: 1, createdAt: -1 });
+saleSchema.index({ shop: 1, customerName: 1, createdAt: -1 });
+saleSchema.index({ shop: 1, status: 1, createdAt: -1 });
+saleSchema.index({ shop: 1, dueAmount: 1, createdAt: -1 });
 
 module.exports = mongoose.model("Sale", saleSchema);

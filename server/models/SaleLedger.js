@@ -60,4 +60,9 @@ const saleLedgerSchema = new mongoose.Schema(
 
 saleLedgerSchema.index({ shop: 1, sale: 1, createdAt: -1 });
 
+// Compound indexes for customer ledger queries (500 shops scale)
+saleLedgerSchema.index({ shop: 1, customer: 1, createdAt: -1 });
+saleLedgerSchema.index({ shop: 1, type: 1, createdAt: -1 });
+saleLedgerSchema.index({ shop: 1, customer: 1, type: 1, createdAt: -1 });
+
 module.exports = mongoose.model("SaleLedger", saleLedgerSchema);
