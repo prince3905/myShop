@@ -457,114 +457,151 @@ exports.createSale = async (req, res) => {
           : "SPLIT")
       : normalizedPaymentMethod;
 
-    const saleDocItems = normalizedItems.map((it) => {
-      const output = { ...it };
-      delete output._variationRef;
-      return output;
-    });
+    // MONGODB TRANSACTION: Ensure atomicity of Sale + Ledger + Stock operations
+    // If any step fails, entire transaction is rolled back - no orphaned records
+    const mongooseSession = await mongoose.startSession();
+    mongooseSession.startTransaction();
 
-    const invoiceNo = await generateInvoiceNo({ type: "SALE" });
-    const sale = await Sale.create({
-      shop: req.shopId,
-      customer: customerDoc?._id || req.body?.customer || undefined,
-      customerName,
-      invoiceNo,
-      items: saleDocItems,
-      totalQuantity,
-      subTotal,
-      billDiscount: safeBillDiscount,
-      totalAmount,
-      paymentMethod: resolvedPaymentMethod,
-      paymentBreakdown: hasSplitPayments ? normalizedSplitPayments : [],
-      paidAmount: safePaidAmount,
-      walletUsedAmount: safeWalletUsedAmount,
-      dueAmount: getSaleCollectibleDue({
+    try {
+      const saleDocItems = normalizedItems.map((it) => {
+        const output = { ...it };
+        delete output._variationRef;
+        return output;
+      });
+
+      const invoiceNo = await generateInvoiceNo({ type: "SALE" });
+      const sale = await Sale.create([{
+        shop: req.shopId,
+        customer: customerDoc?._id || req.body?.customer || undefined,
+        customerName,
+        invoiceNo,
+        items: saleDocItems,
+        totalQuantity,
+        subTotal,
+        billDiscount: safeBillDiscount,
         totalAmount,
+        paymentMethod: resolvedPaymentMethod,
+        paymentBreakdown: hasSplitPayments ? normalizedSplitPayments : [],
         paidAmount: safePaidAmount,
         walletUsedAmount: safeWalletUsedAmount,
-        returnedAmount: 0,
-      }),
-      orderSource: "POS",
-      status: "COMPLETED",
-    });
+        dueAmount: getSaleCollectibleDue({
+          totalAmount,
+          paidAmount: safePaidAmount,
+          walletUsedAmount: safeWalletUsedAmount,
+          returnedAmount: 0,
+        }),
+        orderSource: "POS",
+        status: "COMPLETED",
+      }], { session: mongooseSession });
 
-    await createSaleLedgerEntry({
-      shop: req.shopId,
-      sale: sale._id,
-      customer: sale.customer,
-      customerName: sale.customerName,
-      type: "sale",
-      amount: Number(sale.totalAmount || 0),
-      referenceId: sale._id,
-      note: `Sale ${sale.invoiceNo || sale._id}`,
-      createdBy: req.user?._id,
-    });
-    if (safePaidAmount > 0) {
-      const paymentRows = hasSplitPayments
-        ? normalizedSplitPayments
-        : [{ method: normalizedPaymentMethod, amount: safePaidAmount }];
+      const saleDoc = sale[0];
 
-      for (const paymentRow of paymentRows) {
-        await createSaleLedgerEntry({
-          shop: req.shopId,
-          sale: sale._id,
-          customer: sale.customer,
-          customerName: sale.customerName,
-          type: "payment",
-          amount: Number(paymentRow.amount || 0),
-          paymentMethod: paymentRow.method,
-          referenceId: sale._id,
-          note: `Sale payment (${paymentRow.method}) ${sale.invoiceNo || sale._id}`,
-          createdBy: req.user?._id,
-        });
-      }
-    }
-    if (safeWalletUsedAmount > 0) {
       await createSaleLedgerEntry({
         shop: req.shopId,
-        sale: sale._id,
-        customer: sale.customer,
-        customerName: sale.customerName,
-        type: "wallet_use",
-        amount: safeWalletUsedAmount,
-        paymentMethod: "STORE_CREDIT",
-        referenceId: sale._id,
-        note: `Wallet used ${sale.invoiceNo || sale._id}`,
+        sale: saleDoc._id,
+        customer: saleDoc.customer,
+        customerName: saleDoc.customerName,
+        type: "sale",
+        amount: Number(saleDoc.totalAmount || 0),
+        referenceId: saleDoc._id,
+        note: `Sale ${saleDoc.invoiceNo || saleDoc._id}`,
         createdBy: req.user?._id,
+        session: mongooseSession,
       });
+
+      if (safePaidAmount > 0) {
+        const paymentRows = hasSplitPayments
+          ? normalizedSplitPayments
+          : [{ method: normalizedPaymentMethod, amount: safePaidAmount }];
+
+        for (const paymentRow of paymentRows) {
+          await createSaleLedgerEntry({
+            shop: req.shopId,
+            sale: saleDoc._id,
+            customer: saleDoc.customer,
+            customerName: saleDoc.customerName,
+            type: "payment",
+            amount: Number(paymentRow.amount || 0),
+            paymentMethod: paymentRow.method,
+            referenceId: saleDoc._id,
+            note: `Sale payment (${paymentRow.method}) ${saleDoc.invoiceNo || saleDoc._id}`,
+            createdBy: req.user?._id,
+            session: mongooseSession,
+          });
+        }
+      }
+
+      if (safeWalletUsedAmount > 0) {
+        await createSaleLedgerEntry({
+          shop: req.shopId,
+          sale: saleDoc._id,
+          customer: saleDoc.customer,
+          customerName: saleDoc.customerName,
+          type: "wallet_use",
+          amount: safeWalletUsedAmount,
+          paymentMethod: "STORE_CREDIT",
+          referenceId: saleDoc._id,
+          note: `Wallet used ${saleDoc.invoiceNo || saleDoc._id}`,
+          createdBy: req.user?._id,
+          session: mongooseSession,
+        });
+      }
+
+      // Update customer wallet balance atomically within transaction
+      if (safeWalletUsedAmount > 0 && saleDoc.customer) {
+        await Customer.findByIdAndUpdate(
+          saleDoc.customer,
+          { $inc: { walletBalance: -safeWalletUsedAmount } },
+          { session: mongooseSession }
+        );
+      }
+
+      // Stock deductions - all atomic within transaction
+      await Promise.all(
+        normalizedItems.map((it) => {
+          const variation = it._variationRef;
+          return applyStockTransaction({
+            shop: req.shopId,
+            product: variation.product?._id || variation.product,
+            model: variation.model?._id || variation.model,
+            variation: variation._id,
+            sku: variation.sku,
+            type: "OUT",
+            quantity: Number(it.quantity || 0),
+            referenceType: "SALE",
+            referenceId: saleDoc._id,
+            note: `POS sale ${saleDoc.invoiceNo || saleDoc._id}`,
+            createdBy: req.user?._id,
+            session: mongooseSession,
+          });
+        }),
+      );
+
+      // Commit transaction - all operations succeeded
+      await mongooseSession.commitTransaction();
+      mongooseSession.endSession();
+
+      // Sync customer snapshot AFTER transaction (non-blocking, can fail without affecting sale)
+      if (saleDoc.customer) {
+        syncCustomerAccountSnapshot({
+          shopId: req.shopId,
+          customerId: saleDoc.customer,
+        }).catch((err) => {
+          console.error("Customer snapshot sync failed (non-critical):", err.message);
+        });
+      }
+
+      return res.status(201).json({
+        success: true,
+        message: "Sale created successfully",
+        sale: saleDoc,
+      });
+    } catch (transactionError) {
+      // Rollback transaction - all changes undone
+      await mongooseSession.abortTransaction();
+      mongooseSession.endSession();
+      throw transactionError;
     }
-
-    if (sale.customer) {
-      await syncCustomerAccountSnapshot({
-        shopId: req.shopId,
-        customerId: sale.customer,
-      });
-    }
-
-    await Promise.all(
-      normalizedItems.map((it) => {
-        const variation = it._variationRef;
-        return applyStockTransaction({
-        shop: req.shopId,
-        product: variation.product?._id || variation.product,
-        model: variation.model?._id || variation.model,
-        variation: variation._id,
-        sku: variation.sku,
-        type: "OUT",
-        quantity: Number(it.quantity || 0),
-        referenceType: "SALE",
-        referenceId: sale._id,
-        note: `POS sale ${sale.invoiceNo || sale._id}`,
-        createdBy: req.user?._id,
-      });
-      }),
-    );
-
-    return res.status(201).json({
-      success: true,
-      message: "Sale created successfully",
-      sale,
-    });
   } catch (error) {
     if (error?.code === 11000 && error?.keyPattern?.invoiceNo) {
       return res.status(409).json({
@@ -572,10 +609,10 @@ exports.createSale = async (req, res) => {
         message: "Invoice number conflict, please retry sale",
       });
     }
+    console.error("Error creating sale:", error.message);
     return res.status(500).json({
       success: false,
-      message: "Error creating sale",
-      error: error.message,
+      message: "Error creating sale. Please try again.",
     });
   }
 };

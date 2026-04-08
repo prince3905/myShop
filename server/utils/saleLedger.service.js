@@ -27,6 +27,7 @@ exports.createSaleLedgerEntry = async ({
   referenceId = null,
   note = "",
   createdBy = null,
+  session = null,
 }) => {
   const safeAmount = Math.max(0, Number(amount || 0));
   if (safeAmount <= 0) return null;
@@ -36,7 +37,7 @@ exports.createSaleLedgerEntry = async ({
   const delta = getDelta(type, safeAmount);
   const balanceAfter = Math.max(0, Number((previousBalance + delta).toFixed(2)));
 
-  const ledger = await SaleLedger.create({
+  const ledger = await SaleLedger.create([{
     shop,
     sale,
     customer: customer || undefined,
@@ -48,7 +49,7 @@ exports.createSaleLedgerEntry = async ({
     referenceId,
     note,
     createdBy: createdBy || undefined,
-  });
+  }], { session });
 
-  return ledger;
+  return ledger[0];
 };

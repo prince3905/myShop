@@ -29,20 +29,22 @@ exports.applyStockTransaction = async ({
   referenceId = null,
   note = "",
   createdBy = null,
+  session = null,
 }) => {
   const delta = getDelta(type, Number(quantity || 0));
   const absQty = Math.abs(Number(quantity || 0));
 
-  let stock = await Stock.findOne({ shop, variation });
+  let stock = await Stock.findOne({ shop, variation }).session(session);
   if (!stock) {
-    stock = await Stock.create({
+    stock = await Stock.create([{
       shop,
       product,
       model,
       variation,
       sku,
       quantity: 0,
-    });
+    }], { session });
+    stock = stock[0];
   }
 
   const previousQuantity = Number(stock.quantity || 0);
@@ -55,27 +57,27 @@ exports.applyStockTransaction = async ({
   // ATOMIC UPDATE: Prevent race condition for OUT/RESERVE operations
   // Uses findOneAndUpdate with $inc to ensure concurrent sales don't corrupt stock
   const isDeductOperation = type === "OUT" || type === "RESERVE";
-  
+
   if (isDeductOperation) {
     // Atomic deduct: only succeed if sufficient stock exists
     const updatedStock = await Stock.findOneAndUpdate(
       { shop, variation, quantity: { $gte: absQty } },
-      { 
+      {
         $inc: { quantity: delta },
         $set: { product, model, sku }
       },
-      { new: true }
+      { new: true, session }
     );
 
     if (!updatedStock) {
       throw new Error("Insufficient stock for this transaction");
     }
 
-    await ProductVariation.findByIdAndUpdate(variation, { 
-      quantity: updatedStock.quantity 
-    });
+    await ProductVariation.findByIdAndUpdate(variation, {
+      quantity: updatedStock.quantity
+    }, { session });
 
-    const tx = await StockTransaction.create({
+    const tx = await StockTransaction.create([{
       shop,
       product,
       model,
@@ -90,9 +92,9 @@ exports.applyStockTransaction = async ({
       referenceId,
       note,
       createdBy,
-    });
+    }], { session });
 
-    return { stock: updatedStock, tx };
+    return { stock: updatedStock, tx: tx[0] };
   }
 
   // For IN/RELEASE/ADJUSTMENT: Safe to use regular save (stock is increasing)
@@ -100,11 +102,11 @@ exports.applyStockTransaction = async ({
   stock.model = model;
   stock.sku = sku;
   stock.quantity = nextQuantity;
-  await stock.save();
+  await stock.save({ session });
 
-  await ProductVariation.findByIdAndUpdate(variation, { quantity: nextQuantity });
+  await ProductVariation.findByIdAndUpdate(variation, { quantity: nextQuantity }, { session });
 
-  const tx = await StockTransaction.create({
+  const tx = await StockTransaction.create([{
     shop,
     product,
     model,
@@ -119,7 +121,7 @@ exports.applyStockTransaction = async ({
     referenceId,
     note,
     createdBy,
-  });
+  }], { session });
 
-  return { stock, tx };
+  return { stock, tx: tx[0] };
 };
