@@ -14,6 +14,7 @@ const {
   getCustomerDuplicateMessage,
   normalizeCustomerPhone,
   syncCustomerAccountSnapshot,
+  syncCustomerAccountSnapshotDebounced,
 } = require("../utils/customerAccount.service");
 const { generateInvoiceNo } = require("../utils/invoice.service");
 
@@ -601,13 +602,11 @@ exports.createSale = async (req, res) => {
       await mongooseSession.commitTransaction();
       mongooseSession.endSession();
 
-      // Sync customer snapshot AFTER transaction (non-blocking, can fail without affecting sale)
+      // Debounced customer snapshot sync AFTER transaction (batches multiple calls per customer)
       if (saleDoc.customer) {
-        syncCustomerAccountSnapshot({
+        syncCustomerAccountSnapshotDebounced({
           shopId: req.shopId,
           customerId: saleDoc.customer,
-        }).catch((err) => {
-          console.error("Customer snapshot sync failed (non-critical):", err.message);
         });
       }
 
@@ -957,8 +956,9 @@ exports.collectSalePayment = async (req, res) => {
       createdBy: req.user?._id,
     });
 
+    // Debounced customer snapshot sync (batches multiple payment calls per customer)
     if (sale.customer) {
-      await syncCustomerAccountSnapshot({
+      syncCustomerAccountSnapshotDebounced({
         shopId: req.shopId,
         customerId: sale.customer,
       });
@@ -1901,8 +1901,9 @@ exports.createSaleReturn = async (req, res) => {
       });
     }
 
+    // Debounced customer snapshot sync (batches multiple return calls per customer)
     if (sale.customer) {
-      await syncCustomerAccountSnapshot({
+      syncCustomerAccountSnapshotDebounced({
         shopId: req.shopId,
         customerId: sale.customer,
       });

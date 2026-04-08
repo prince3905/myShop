@@ -5,7 +5,7 @@ const ProductVariation = require("../models/ProductVariation");
 const { generateInvoiceNo } = require("../utils/invoice.service");
 const { applyStockTransaction } = require("../utils/stock.service");
 const { syncOrderLedger } = require("../utils/orderLedger.service");
-const { syncCustomerAccountSnapshot } = require("../utils/customerAccount.service");
+const { syncCustomerAccountSnapshot, syncCustomerAccountSnapshotDebounced } = require("../utils/customerAccount.service");
 
 const ORDER_STATUSES = new Set([
   "PENDING",
@@ -770,7 +770,7 @@ exports.createOrder = async (req, res) => {
       createdBy: req.user?._id,
     });
     if (savedOrder?.customer?._id || savedOrder?.customer) {
-      await syncCustomerAccountSnapshot({
+      syncCustomerAccountSnapshotDebounced({
         shopId: req.shopId,
         customerId: savedOrder.customer?._id || savedOrder.customer,
       });
@@ -856,18 +856,18 @@ exports.updateOrder = async (req, res) => {
         : null;
 
     if (previousCustomerId) {
-      await syncCustomerAccountSnapshot({
+      syncCustomerAccountSnapshotDebounced({
         shopId: req.shopId,
         customerId: previousCustomerId,
       });
     }
     if (currentCustomerId && currentCustomerId !== previousCustomerId) {
-      await syncCustomerAccountSnapshot({
+      syncCustomerAccountSnapshotDebounced({
         shopId: req.shopId,
         customerId: currentCustomerId,
       });
     } else if (currentCustomerId) {
-      await syncCustomerAccountSnapshot({
+      syncCustomerAccountSnapshotDebounced({
         shopId: req.shopId,
         customerId: currentCustomerId,
       });
@@ -993,7 +993,7 @@ exports.updateOrderStatus = async (req, res) => {
       createdBy: req.user?._id,
     });
     if (updatedOrder?.customer?._id || updatedOrder?.customer) {
-      await syncCustomerAccountSnapshot({
+      syncCustomerAccountSnapshotDebounced({
         shopId: req.shopId,
         customerId: updatedOrder.customer?._id || updatedOrder.customer,
       });
@@ -1068,7 +1068,7 @@ exports.collectOrderPayment = async (req, res) => {
       createdBy: req.user?._id,
     });
     if (updatedOrder?.customer?._id || updatedOrder?.customer) {
-      await syncCustomerAccountSnapshot({
+      syncCustomerAccountSnapshotDebounced({
         shopId: req.shopId,
         customerId: updatedOrder.customer?._id || updatedOrder.customer,
       });

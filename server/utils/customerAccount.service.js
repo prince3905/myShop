@@ -251,6 +251,32 @@ const syncCustomerAccountSnapshot = async ({ shopId, customerId }) => {
   };
 };
 
+// DEBOUNCED SNAPSHOT SYNC: Batch multiple calls per customer within 1s window
+// Prevents redundant aggregation when multiple sales happen for same customer quickly
+const snapshotDebounceTimers = new Map();
+const SNAPSHOT_DEBOUNCE_MS = 1000; // 1 second window
+
+exports.syncCustomerAccountSnapshotDebounced = ({ shopId, customerId }) => {
+  if (!shopId || !customerId) return;
+
+  const key = `${shopId}:${customerId}`;
+
+  // Clear existing timer for this customer
+  if (snapshotDebounceTimers.has(key)) {
+    clearTimeout(snapshotDebounceTimers.get(key));
+  }
+
+  // Set new timer - only the LAST call within the window will actually execute
+  const timer = setTimeout(() => {
+    snapshotDebounceTimers.delete(key);
+    syncCustomerAccountSnapshot({ shopId, customerId }).catch((err) => {
+      console.error(`Customer snapshot sync failed for ${key}:`, err.message);
+    });
+  }, SNAPSHOT_DEBOUNCE_MS);
+
+  snapshotDebounceTimers.set(key, timer);
+};
+
 const sortByTimeline = (a, b) => {
   const aTime = new Date(a.createdAt).getTime();
   const bTime = new Date(b.createdAt).getTime();
@@ -621,6 +647,7 @@ module.exports = {
   ensureUniqueCustomerIdentity,
   buildCustomerPayload,
   syncCustomerAccountSnapshot,
+  syncCustomerAccountSnapshotDebounced,
   buildCustomerLedger,
   getCustomerDuplicateMessage,
 };
