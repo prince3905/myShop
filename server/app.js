@@ -1,6 +1,7 @@
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
+const helmet = require("helmet");
 const app = express();
 const cors = require("cors");
 
@@ -28,10 +29,7 @@ const authMaxRequests = 20;
 const authRequestStore = new Map();
 
 const securityHeaders = (req, res, next) => {
-  res.setHeader("X-Content-Type-Options", "nosniff");
-  res.setHeader("X-Frame-Options", "DENY");
-  res.setHeader("Referrer-Policy", "no-referrer");
-  res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+  // Additional custom headers (helmet already covers standard security headers)
   res.setHeader("Cross-Origin-Resource-Policy", "same-site");
   next();
 };
@@ -109,6 +107,24 @@ app.use(
       return callback(new Error("CORS blocked"));
     },
     credentials: false,
+  }),
+);
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        fontSrc: ["'self'", "https://fonts.gstatic.com"],
+        imgSrc: ["'self'", "data:", "https:"],
+        connectSrc: ["'self'"],
+        frameSrc: ["'none'"],
+        objectSrc: ["'none'"],
+        upgradeInsecureRequests: [],
+      },
+    },
+    crossOriginEmbedderPolicy: false, // Needed for some frontend assets
   }),
 );
 app.use(securityHeaders);
