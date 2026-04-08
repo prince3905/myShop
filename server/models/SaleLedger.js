@@ -54,15 +54,29 @@ const saleLedgerSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
+    // Sequence number to allow multiple payments of same type
+    sequenceNo: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
   },
   { timestamps: true },
 );
 
+// Indexes
 saleLedgerSchema.index({ shop: 1, sale: 1, createdAt: -1 });
 
 // Compound indexes for customer ledger queries (500 shops scale)
 saleLedgerSchema.index({ shop: 1, customer: 1, createdAt: -1 });
 saleLedgerSchema.index({ shop: 1, type: 1, createdAt: -1 });
 saleLedgerSchema.index({ shop: 1, customer: 1, type: 1, createdAt: -1 });
+
+// UNIQUE CONSTRAINT: Prevent duplicate ledger entries
+// Allows multiple payments but prevents exact duplicates
+saleLedgerSchema.index(
+  { shop: 1, sale: 1, type: 1, amount: 1, paymentMethod: 1, sequenceNo: 1 },
+  { unique: true, name: "unique_ledger_entry" },
+);
 
 module.exports = mongoose.model("SaleLedger", saleLedgerSchema);

@@ -37,6 +37,10 @@ exports.createSaleLedgerEntry = async ({
   const delta = getDelta(type, safeAmount);
   const balanceAfter = Math.max(0, Number((previousBalance + delta).toFixed(2)));
 
+  // Assign sequence number to prevent duplicate constraint violations
+  // Count existing entries of same type for this sale to determine sequence
+  const sameTypeCount = await SaleLedger.countDocuments({ shop, sale, type }, { session });
+
   const ledger = await SaleLedger.create([{
     shop,
     sale,
@@ -49,6 +53,7 @@ exports.createSaleLedgerEntry = async ({
     referenceId,
     note,
     createdBy: createdBy || undefined,
+    sequenceNo: sameTypeCount,
   }], { session });
 
   return ledger[0];
