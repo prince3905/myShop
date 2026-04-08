@@ -11,6 +11,7 @@ import { AuthService } from "app/shared/services/auth.service";
   selector: "sales-list",
   templateUrl: "./sales-list.component.html",
   styleUrls: ["./sales-list.component.css"],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SalesListComponent implements OnInit {
   loading = false;

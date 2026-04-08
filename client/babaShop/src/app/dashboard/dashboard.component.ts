@@ -9,10 +9,13 @@ import { CategoryService } from "app/shared/services/category.service";
 import { BrandService } from "app/shared/services/brand.service";
 import { ActivatedRoute, Router } from "@angular/router";
 
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, ChangeDetectionStrategy } from "@angular/core";
+
 @Component({
   selector: "app-dashboard",
   templateUrl: "./dashboard.component.html",
   styleUrls: ["./dashboard.component.css"],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DashboardComponent implements OnInit, OnDestroy {
   selectedRange: "daily" | "weekly" | "monthly" | "yearly" | "all" = "daily";

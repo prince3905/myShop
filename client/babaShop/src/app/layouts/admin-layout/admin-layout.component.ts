@@ -1,19 +1,19 @@
-import { Component, OnInit, AfterViewInit, OnDestroy } from '@angular/core';
-import { Location, LocationStrategy, PathLocationStrategy, PopStateEvent } from '@angular/common';
-import { Router, NavigationEnd, NavigationStart } from '@angular/router';
+import { Component, OnInit, AfterViewInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
+import { Location, PopStateEvent } from '@angular/common';
+import { Router, NavigationEnd, NavigationStart, Event as RouterEvent } from '@angular/router';
 import PerfectScrollbar from 'perfect-scrollbar';
-import * as $ from "jquery";
 import { filter, Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-admin-layout',
   templateUrl: './admin-layout.component.html',
-  styleUrls: ['./admin-layout.component.scss']
+  styleUrls: ['./admin-layout.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class AdminLayoutComponent implements OnInit, OnDestroy {
+export class AdminLayoutComponent implements OnInit, AfterViewInit, OnDestroy {
   private _router: Subscription;
   private _navigationSubscription: Subscription;
-  private lastPoppedUrl: string;
+  private lastPoppedUrl: string | undefined;
   private yScrollStack: number[] = [];
   private mainPanelScrollbar?: PerfectScrollbar;
   private sidebarScrollbar?: PerfectScrollbar;
@@ -21,144 +21,60 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   constructor( public location: Location, private router: Router) {}
 
   ngOnInit() {
-      const isWindows = navigator.platform.indexOf('Win') > -1 ? true : false;
+      const isWindows = navigator.platform.indexOf('Win') > -1;
 
-      if (isWindows && !document.getElementsByTagName('body')[0].classList.contains('sidebar-mini')) {
-          // if we are on windows OS we activate the perfectScrollbar function
-
-          document.getElementsByTagName('body')[0].classList.add('perfect-scrollbar-on');
+      if (isWindows && !document.body.classList.contains('sidebar-mini')) {
+          document.body.classList.add('perfect-scrollbar-on');
       } else {
-          document.getElementsByTagName('body')[0].classList.remove('perfect-scrollbar-off');
+          document.body.classList.remove('perfect-scrollbar-off');
       }
-      const elemMainPanel = <HTMLElement>document.querySelector('.main-panel');
-      const elemSidebar = <HTMLElement>document.querySelector('.sidebar .sidebar-wrapper');
 
-      this.location.subscribe((ev:PopStateEvent) => {
-          this.lastPoppedUrl = ev.url;
-      });
-       this._navigationSubscription = this.router.events.subscribe((event:any) => {
+      this._navigationSubscription = this.router.events.subscribe((event: RouterEvent) => {
           if (event instanceof NavigationStart) {
-             if (event.url != this.lastPoppedUrl)
+             if (event.url !== this.lastPoppedUrl) {
                  this.yScrollStack.push(window.scrollY);
-         } else if (event instanceof NavigationEnd) {
-             if (event.url == this.lastPoppedUrl) {
+             }
+          } else if (event instanceof NavigationEnd) {
+             if (event.url === this.lastPoppedUrl) {
                  this.lastPoppedUrl = undefined;
                  window.scrollTo(0, this.yScrollStack.pop());
-             } else
+             } else {
                  window.scrollTo(0, 0);
-         }
+             }
+          }
       });
-      this._router = this.router.events.pipe(filter(event => event instanceof NavigationEnd)).subscribe((event: NavigationEnd) => {
-           elemMainPanel.scrollTop = 0;
-           elemSidebar.scrollTop = 0;
+
+      this._router = this.router.events.pipe(
+        filter(event => event instanceof NavigationEnd)
+      ).subscribe(() => {
+           const mainPanel = document.querySelector('.main-panel') as HTMLElement | null;
+           const sidebar = document.querySelector('.sidebar .sidebar-wrapper') as HTMLElement | null;
+           if (mainPanel) mainPanel.scrollTop = 0;
+           if (sidebar) sidebar.scrollTop = 0;
            this.mainPanelScrollbar?.update();
            this.sidebarScrollbar?.update();
       });
-      if (window.matchMedia(`(min-width: 960px)`).matches && !this.isMac()) {
-          this.mainPanelScrollbar = new PerfectScrollbar(elemMainPanel);
-          this.sidebarScrollbar = new PerfectScrollbar(elemSidebar);
-      }
-
-      const hasFixedPlugin = !!document.querySelector('.fixed-plugin');
-      if (!hasFixedPlugin) {
-        return;
-      }
-
-      const window_width = $(window).width();
-      let $sidebar = $('.sidebar');
-      let $sidebar_responsive = $('body > .navbar-collapse');
-      let $sidebar_img_container = $sidebar.find('.sidebar-background');
-
-
-      if(window_width > 767){
-          if($('.fixed-plugin .dropdown').hasClass('show-dropdown')){
-              $('.fixed-plugin .dropdown').addClass('open');
-          }
-
-      }
-
-      $('.fixed-plugin a').click(function(event){
-        // Alex if we click on switch, stop propagation of the event, so the dropdown will not be hide, otherwise we set the  section active
-          if($(this).hasClass('switch-trigger')){
-              if(event.stopPropagation){
-                  event.stopPropagation();
-              }
-              else if(window.event){
-                 window.event.cancelBubble = true;
-              }
-          }
-      });
-
-      $('.fixed-plugin .badge').click(function(){
-          let $full_page_background = $('.full-page-background');
-
-
-          $(this).siblings().removeClass('active');
-          $(this).addClass('active');
-
-          var new_color = $(this).data('color');
-
-          if($sidebar.length !== 0){
-              $sidebar.attr('data-color', new_color);
-          }
-
-          if($sidebar_responsive.length != 0){
-              $sidebar_responsive.attr('data-color',new_color);
-          }
-      });
-
-      $('.fixed-plugin .img-holder').click(function(){
-          let $full_page_background = $('.full-page-background');
-
-          $(this).parent('li').siblings().removeClass('active');
-          $(this).parent('li').addClass('active');
-
-
-          var new_image = $(this).find("img").attr('src');
-
-          if($sidebar_img_container.length !=0 ){
-              $sidebar_img_container.fadeOut('fast', function(){
-                 $sidebar_img_container.css('background-image','url("' + new_image + '")');
-                 $sidebar_img_container.fadeIn('fast');
-              });
-          }
-
-          if($full_page_background.length != 0){
-
-              $full_page_background.fadeOut('fast', function(){
-                 $full_page_background.css('background-image','url("' + new_image + '")');
-                 $full_page_background.fadeIn('fast');
-              });
-          }
-
-          if($sidebar_responsive.length != 0){
-              $sidebar_responsive.css('background-image','url("' + new_image + '")');
-          }
-      });
   }
+
   ngAfterViewInit() {
-      this.runOnRouteChange();
-  }
-  isMaps(path){
-      var titlee = this.location.prepareExternalUrl(this.location.path());
-      titlee = titlee.slice( 1 );
-      if(path == titlee){
-          return false;
-      }
-      else {
-          return true;
+      if (window.matchMedia('(min-width: 960px)').matches && !this.isMac()) {
+          const mainPanel = document.querySelector('.main-panel') as HTMLElement | null;
+          const sidebar = document.querySelector('.sidebar .sidebar-wrapper') as HTMLElement | null;
+
+          if (mainPanel && sidebar) {
+              this.mainPanelScrollbar = new PerfectScrollbar(mainPanel);
+              this.sidebarScrollbar = new PerfectScrollbar(sidebar);
+          }
       }
   }
+
   runOnRouteChange(): void {
     this.mainPanelScrollbar?.update();
     this.sidebarScrollbar?.update();
   }
+
   isMac(): boolean {
-      let bool = false;
-      if (navigator.platform.toUpperCase().indexOf('MAC') >= 0 || navigator.platform.toUpperCase().indexOf('IPAD') >= 0) {
-          bool = true;
-      }
-      return bool;
+      return /MAC|IPAD/i.test(navigator.platform.toUpperCase());
   }
 
   ngOnDestroy(): void {
@@ -167,5 +83,4 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
       this.mainPanelScrollbar?.destroy();
       this.sidebarScrollbar?.destroy();
   }
-
 }
