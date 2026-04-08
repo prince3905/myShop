@@ -4,6 +4,7 @@ const User = require("../models/User");
 const Shop = require("../models/Shop");
 const rolePermissions = require("../config/permissions");
 const featureRegistry = require("../config/featureRegistry");
+const { JWT_SECRET, SESSION_TTL, MAX_SESSIONS_PER_USER } = require("../config/app");
 const {
   getEffectiveRoleFeaturePolicy,
   getAllowedFeaturesForRole,
@@ -178,7 +179,7 @@ exports.login = async (req, res) => {
         shop: sessionShop,
         sid: sessionId,
       },
-      process.env.JWT_SECRET,
+      JWT_SECRET,
       { expiresIn: SESSION_TTL },
     );
 
@@ -303,7 +304,7 @@ exports.protect = async (req, res, next) => {
       });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, JWT_SECRET);
 
     const user = await User.findById(decoded.id);
 
@@ -359,7 +360,7 @@ exports.logoutCurrent = async (req, res) => {
       });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, JWT_SECRET);
     if (decoded?.sid) {
       await User.findByIdAndUpdate(req.user._id, {
         $pull: { sessions: { sid: decoded.sid } },

@@ -4,6 +4,7 @@ const User = require("../models/User");
 const Shop = require("../models/Shop");
 const rolePermissions = require("../config/permissions");
 const { hasFeatureAccess } = require("../utils/featureAccess");
+const { JWT_SECRET, SESSION_TTL, MAX_SESSIONS_PER_USER } = require("../config/app");
 
 
 
@@ -25,7 +26,7 @@ exports.protect = async (req, res, next) => {
       return res.status(401).json({ message: "Not authorized" });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, JWT_SECRET);
 
     const user = await User.findById(decoded.id);
 
