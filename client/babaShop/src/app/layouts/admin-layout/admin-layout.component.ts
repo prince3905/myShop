@@ -73,6 +73,10 @@ export class AdminLayoutComponent implements OnInit, AfterViewInit, OnDestroy {
     this.sidebarScrollbar?.update();
   }
 
+  isMaps(path: string): boolean {
+      return this.location.prepareExternalUrl(this.location.path()) === `/${path}`;
+  }
+
   isMac(): boolean {
       return /MAC|IPAD/i.test(navigator.platform.toUpperCase());
   }
