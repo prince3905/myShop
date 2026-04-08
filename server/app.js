@@ -155,6 +155,82 @@ app.get("/api/health", (req, res) => {
   });
 });
 
+// ========================================
+// GLOBAL ERROR HANDLER MIDDLEWARE
+// Catches all unhandled errors and prevents server crashes
+// ========================================
+app.use((err, req, res, next) => {
+  // Log error for debugging (never expose to client)
+  console.error("Unhandled Error:", {
+    message: err.message,
+    stack: err.stack,
+    path: req.path,
+    method: req.method,
+    timestamp: new Date().toISOString(),
+  });
+
+  // MongoDB duplicate key error
+  if (err.code === 11000) {
+    return res.status(409).json({
+      success: false,
+      message: "Duplicate entry. This record already exists.",
+    });
+  }
+
+  // MongoDB validation error
+  if (err.name === "ValidationError") {
+    const errors = Object.values(err.errors).map((e) => e.message);
+    return res.status(400).json({
+      success: false,
+      message: "Validation failed",
+      errors,
+    });
+  }
+
+  // MongoDB cast error (invalid ObjectId)
+  if (err.name === "CastError") {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid ID format",
+    });
+  }
+
+  // JSON Web Token errors
+  if (err.name === "JsonWebTokenError" || err.name === "TokenExpiredError") {
+    return res.status(401).json({
+      success: false,
+      message: "Invalid or expired token. Please login again.",
+    });
+  }
+
+  // Default: Generic server error
+  const statusCode = err.statusCode || err.status || 500;
+  return res.status(statusCode).json({
+    success: false,
+    message: statusCode === 500 ? "Internal server error. Please try again later." : err.message || "Something went wrong",
+  });
+});
+
+// Handle unhandled promise rejections (prevent server crash)
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("Unhandled Rejection at:", {
+    promise: promise,
+    reason: reason?.message || reason,
+    stack: reason?.stack,
+  });
+  // Don't exit - keep server running
+});
+
+// Handle uncaught exceptions (last resort)
+process.on("uncaughtException", (error) => {
+  console.error("Uncaught Exception:", {
+    message: error.message,
+    stack: error.stack,
+  });
+  // Graceful shutdown
+  process.exit(1);
+});
+
 const resolveClientDistPath = () => {
   const candidates = [
     path.join(__dirname, "public"),
