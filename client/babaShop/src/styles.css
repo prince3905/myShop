@@ -946,3 +946,9 @@ body, .mat-typography {
   line-height: 1.4 !important;
 }
 
+
+/* Global UI Scale to match 80% zoom alignment */
+body {
+  zoom: 0.8;
+  transform-origin: top left;
+}
