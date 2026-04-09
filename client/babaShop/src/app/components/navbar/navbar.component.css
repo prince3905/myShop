@@ -79,26 +79,6 @@
   font-size: 11px;
 }
 
-/* Current Shop Display Styling */
-.current-shop-display {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 4px;
-  padding: 4px 12px;
-  background: rgba(255, 255, 255, 0.15); /* Subtle background for visibility */
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: #fff;
-  font-size: 14px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.current-shop-display .material-icons {
-  font-size: 18px;
-}
-
 .navbar .nav-item .nav-link {
   padding: 6px 8px;
 }
@@ -220,34 +200,9 @@
 .navbar {
   -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
-  /* background: rgba(255, 255, 255, 0.74); */ /* Removed to allow bg-danger */
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-  color: #fff !important; /* Force white text */
-}
-
-.navbar *, .navbar ::ng-deep * {
-  color: #fff !important; /* Force white text for all children */
-}
-
-/* Keep icons white */
-.navbar .material-icons {
-  color: #fff !important;
-}
-
-/* Adjust specific elements if needed */
-.corner-dashboard-link {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 255, 255, 0.3);
-  color: #fff !important;
-}
-
-.breadcrumb-link {
-  color: rgba(255, 255, 255, 0.8) !important;
-}
-
-.breadcrumb-sep {
-  color: rgba(255, 255, 255, 0.6) !important;
+  background: rgba(255, 255, 255, 0.74);
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
 }
 
 @media (max-width: 1400px) {
