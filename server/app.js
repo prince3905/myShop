@@ -27,6 +27,7 @@ const dynamicOriginPatterns = [
 
 const authWindowMs = 15 * 60 * 1000;
 const authMaxRequests = 20;
+const isDevelopment = `${process.env.NODE_ENV || "development"}` !== "production";
 
 // Import rate limiters
 const { authRateLimit, salesRateLimit, userRateLimit, customerRateLimit, generalRateLimit } = require("./middleware/rateLimiter");
@@ -80,19 +81,21 @@ app.use(
 app.use(logger.requestLogger);
 app.use(
   helmet({
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-        fontSrc: ["'self'", "https://fonts.gstatic.com"],
-        imgSrc: ["'self'", "data:", "https:"],
-        connectSrc: ["'self'"],
-        frameSrc: ["'none'"],
-        objectSrc: ["'none'"],
-        upgradeInsecureRequests: [],
-      },
-    },
+    contentSecurityPolicy: isDevelopment
+      ? false
+      : {
+          directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://maxcdn.bootstrapcdn.com", "https://cdnjs.cloudflare.com"],
+            styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://maxcdn.bootstrapcdn.com", "https://cdnjs.cloudflare.com"],
+            fontSrc: ["'self'", "https://fonts.gstatic.com", "https://maxcdn.bootstrapcdn.com", "https://cdnjs.cloudflare.com"],
+            imgSrc: ["'self'", "data:", "https:"],
+            connectSrc: ["'self'"],
+            frameSrc: ["'none'"],
+            objectSrc: ["'none'"],
+            upgradeInsecureRequests: [],
+          },
+        },
     crossOriginEmbedderPolicy: false, // Needed for some frontend assets
   }),
 );
