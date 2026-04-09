@@ -76,20 +76,47 @@ export class ItemsListComponent implements OnInit {
 
   ngOnInit() {
     this.getCategoryAndBrand();
-    this.loadProducts();
+    this.Router.queryParams.subscribe((params) => {
+      const page = Math.max(1, Number(params.page || 1));
+      const perPage = Math.max(1, Number(params.perPage || this.pageSize));
+      this.selectedOption = params.selectedOption || null;
+      this.itemName = params.name || "";
+      this.selectedCategory = params.category || null;
+      this.selectedBrand = params.brand || null;
+      this.pageSize = perPage;
+      this.updateFilteredBrands();
+      this.loadProducts(page, perPage);
+    });
   }
 
   toggleVariations(item: any) {
     item.showVariations = !item.showVariations;
   }
 
-  loadProducts() {
-    this.productService.getAllProducts().subscribe((res: any) => {
+  loadProducts(page = 1, perPage = this.pageSize) {
+    this.loading = true;
+    const query: any = {
+      page,
+      perPage,
+    };
+
+    if (this.selectedOption === "name") {
+      query.name = this.itemName?.trim() || undefined;
+      query.category = this.selectedCategory || undefined;
+      query.brand = this.selectedBrand || undefined;
+    } else if (this.selectedOption === "category") {
+      query.category = this.selectedCategory || undefined;
+      query.brand = this.selectedBrand || undefined;
+    } else if (this.selectedOption === "brand") {
+      query.brand = this.selectedBrand || undefined;
+    }
+
+    this.productService.getAllProducts(query).subscribe((res: any) => {
       this.allItems = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
       this.items = [...this.allItems];
-      this.summaryCounts.products = this.allItems.length;
+      this.summaryCounts.products = Number(res?.totalItems || this.allItems.length);
 
-      this.allItems.forEach((item: any) => {
+      this.items.forEach((item: any) => {
         item.totalStock =
           item.variations?.reduce(
             (sum: number, v: any) => sum + (v.quantity ? v.quantity : 0),
@@ -97,23 +124,30 @@ export class ItemsListComponent implements OnInit {
           ) || 0;
       });
 
-      this.totalItems = this.items.length;
-      this.paginatedItems = this.items.slice(0, this.pageSize);
-
+      this.totalItems = Number(res?.totalItems || this.items.length);
+      this.paginatedItems = [...this.items];
+      if (this.paginator) {
+        this.paginator.pageIndex = page - 1;
+      }
+      this.loading = false;
+    }, () => {
+      this.allItems = [];
+      this.items = [];
+      this.paginatedItems = [];
+      this.totalItems = 0;
       this.loading = false;
     });
   }
 
   ngAfterViewInit(): void {
     if (!this.paginator) return;
-    this.paginator.page.subscribe(() => this.updatePaginatedItems());
-    this.updatePaginatedItems();
   }
 
-  getQueryParams(): any {
+  getQueryParams(page = (this.paginator?.pageIndex || 0) + 1, perPage = this.pageSize): any {
     let queryParamsObj: any = {
-      page: this.paginator.pageIndex + 1,
-      perPage: this.pageSize,
+      page,
+      perPage,
+      selectedOption: this.selectedOption || null,
     };
     if (this.selectedOption === "name") {
       queryParamsObj.name = this.itemName;
@@ -133,11 +167,7 @@ export class ItemsListComponent implements OnInit {
 
   onPageChange(event: PageEvent): void {
     this.pageSize = event.pageSize;
-    this.navigateWithQuery(this.getQueryParams());
-    this.paginatedItems = this.items.slice(
-      event.pageIndex * this.pageSize,
-      event.pageIndex * this.pageSize + this.pageSize,
-    );
+    this.navigateWithQuery(this.getQueryParams(event.pageIndex + 1, event.pageSize));
   }
 
   onStartDateChange(event: any): void {
@@ -170,42 +200,7 @@ export class ItemsListComponent implements OnInit {
     if (this.paginator) {
       this.paginator.pageIndex = 0;
     }
-    let queryParamsObj: any = {
-      page: 1,
-      perPage: perPage,
-    };
-
-    if (this.selectedOption === "name") {
-      queryParamsObj = {
-        ...queryParamsObj,
-        name: this.itemName,
-        category: this.selectedCategory,
-        brand: this.selectedBrand,
-      };
-    } else if (this.selectedOption === "category") {
-      queryParamsObj = {
-        ...queryParamsObj,
-        name: null,
-        category: this.selectedCategory,
-        brand: this.selectedBrand,
-      };
-    } else if (this.selectedOption === "brand") {
-      queryParamsObj = {
-        ...queryParamsObj,
-        name: null,
-        category: null,
-        brand: this.selectedBrand,
-      };
-    } else if (this.selectedOption === "date") {
-      queryParamsObj = {
-        ...queryParamsObj,
-        startDate: this.startDate.toISOString().slice(0, 10),
-        endDate: this.endDate.toISOString().slice(0, 10),
-      };
-    }
-
-    this.navigateWithQuery(queryParamsObj);
-    this.applyFilters();
+    this.navigateWithQuery(this.getQueryParams(page, perPage));
   }
 
   onFilterModeChange(): void {
@@ -214,21 +209,22 @@ export class ItemsListComponent implements OnInit {
     this.selectedBrand = null;
     this.startDate = null;
     this.endDate = null;
-    this.items = [...this.allItems];
-    this.totalItems = this.items.length;
     if (this.paginator) {
       this.paginator.pageIndex = 0;
     }
     this.updateFilteredBrands();
-    this.updatePaginatedItems();
+    this.navigateWithQuery({
+      page: 1,
+      perPage: this.pageSize,
+      selectedOption: this.selectedOption || null,
+      name: null,
+      category: null,
+      brand: null,
+    });
   }
 
   onFilterInputChange(): void {
-    if (this.paginator) {
-      this.paginator.pageIndex = 0;
-    }
     this.updateFilteredBrands();
-    this.applyFilters();
   }
 
   onClear() {
@@ -245,13 +241,10 @@ export class ItemsListComponent implements OnInit {
       endDate: null,
     });
     this.selectedOption = null;
-    this.items = [...this.allItems];
-    this.totalItems = this.items.length;
     if (this.paginator) {
       this.paginator.pageIndex = 0;
     }
     this.updateFilteredBrands();
-    this.updatePaginatedItems();
   }
 
   // getAllItems(queryParamsObj): void {
@@ -269,69 +262,6 @@ export class ItemsListComponent implements OnInit {
   //   this.loading = true;
   //   this.cdr.detectChanges();
   // }
-
-  updatePaginatedItems(): void {
-    const pageIndex = this.paginator?.pageIndex || 0;
-    const startIndex = pageIndex * this.pageSize;
-    this.paginatedItems = this.items.slice(
-      startIndex,
-      startIndex + this.pageSize,
-    );
-  }
-
-  private applyFilters(): void {
-    const byName = (item: any): boolean => {
-      if (!this.itemName?.trim()) return true;
-      return (item?.name || "").toLowerCase().includes(this.itemName.trim().toLowerCase());
-    };
-
-    const byCategory = (item: any): boolean => {
-      if (!this.selectedCategory) return true;
-      return item?.category?._id === this.selectedCategory;
-    };
-
-    const byBrand = (item: any): boolean => {
-      if (!this.selectedBrand) return true;
-      return item?.brand?._id === this.selectedBrand;
-    };
-
-    const byDate = (item: any): boolean => {
-      if (!this.startDate && !this.endDate) return true;
-      const createdAt = new Date(item?.createdAt);
-      if (Number.isNaN(createdAt.getTime())) return false;
-
-      if (this.startDate) {
-        const from = new Date(this.startDate);
-        from.setHours(0, 0, 0, 0);
-        if (createdAt < from) return false;
-      }
-      if (this.endDate) {
-        const to = new Date(this.endDate);
-        to.setHours(23, 59, 59, 999);
-        if (createdAt > to) return false;
-      }
-      return true;
-    };
-
-    this.items = this.allItems.filter((item: any) => {
-      if (this.selectedOption === "name") {
-        return byName(item) && byCategory(item) && byBrand(item);
-      }
-      if (this.selectedOption === "category") {
-        return byCategory(item) && byBrand(item);
-      }
-      if (this.selectedOption === "brand") {
-        return byBrand(item);
-      }
-      if (this.selectedOption === "date") {
-        return byDate(item);
-      }
-      return true;
-    });
-
-    this.totalItems = this.items.length;
-    this.updatePaginatedItems();
-  }
 
   private extractList(response: any): any[] {
     if (Array.isArray(response?.data)) return response.data;
@@ -374,7 +304,7 @@ export class ItemsListComponent implements OnInit {
         this.router.navigate(["/add-detail", result.productId]);
         return;
       }
-      this.loadProducts();
+      this.loadProducts((this.paginator?.pageIndex || 0) + 1, this.pageSize);
     });
   }
 

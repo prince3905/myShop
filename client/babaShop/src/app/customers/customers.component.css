@@ -39,6 +39,34 @@
   width: 250px;
 }
 
+.toolbar .mat-mdc-form-field {
+  --mdc-outlined-text-field-container-shape: 12px;
+}
+
+.toolbar .mat-mdc-text-field-wrapper {
+  min-height: 42px !important;
+  background: #fff !important;
+}
+
+.toolbar .mat-mdc-form-field-infix {
+  min-height: 42px !important;
+  padding-top: 10px !important;
+  padding-bottom: 10px !important;
+}
+
+.toolbar .mat-mdc-form-field .mat-mdc-input-element,
+.toolbar .mat-mdc-form-field .mdc-floating-label {
+  font-size: 12.5px !important;
+}
+
+.toolbar button[mat-stroked-button],
+.toolbar button[mat-raised-button] {
+  min-height: 40px;
+  border-radius: 11px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
 .loading {
   display: flex;
   justify-content: center;
@@ -53,6 +81,10 @@
 
 .customer-table-card .card-body {
   padding: 0;
+}
+
+.customer-table-card .table-responsive {
+  margin: 0;
 }
 
 .customer-table {
@@ -141,6 +173,8 @@
   padding: 0 10px;
   line-height: 28px;
   font-size: 11px;
+  border-radius: 10px;
+  font-weight: 700;
 }
 
 .empty-state {

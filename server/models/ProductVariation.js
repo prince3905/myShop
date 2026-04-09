@@ -88,6 +88,8 @@ productVariationSchema.index(
   { shop: 1, sku: 1 },
   { unique: true }
 );
+productVariationSchema.index({ shop: 1, product: 1, createdAt: -1 });
+productVariationSchema.index({ shop: 1, product: 1, model: 1, createdAt: -1 });
 
 /* Unique Barcode per shop (if barcode exists) */
 productVariationSchema.index(

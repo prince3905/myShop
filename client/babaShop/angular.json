@@ -75,6 +75,22 @@
                 "fonts": true
               },
               "outputHashing": "all"
+            },
+            "localpublic": {
+              "vendorChunk": true,
+              "extractLicenses": false,
+              "namedChunks": true,
+              "buildOptimizer": false,
+              "sourceMap": true,
+              "optimization": {
+                "scripts": true,
+                "styles": {
+                  "minify": false,
+                  "inlineCritical": false
+                },
+                "fonts": false
+              },
+              "outputHashing": "none"
             }
           }
         },

@@ -47,9 +47,17 @@ exports.createProductModel = async (req, res) => {
 exports.getProductModels = async (req, res) => {
   try {
     const filter = isSuperAdminGlobal(req) ? {} : { shop: req.shopId };
+    const { product } = req.query;
+
+    if (product) {
+      filter.product = product;
+    }
+
     const models = await ProductModel.find(filter)
-      .populate("shop", "name")
-      .populate("product", "name");
+      .select("name product isActive createdAt")
+      .populate("product", "name")
+      .sort("name")
+      .lean();
 
     res.json({
       success: true,

@@ -189,6 +189,43 @@
   min-width: 0;
 }
 
+.customer-bar .mat-mdc-form-field,
+.selector-row .mat-mdc-form-field,
+.split-row .mat-mdc-form-field,
+.payment-block .mat-mdc-form-field {
+  --mdc-outlined-text-field-container-shape: 12px;
+}
+
+.customer-bar .mat-mdc-text-field-wrapper,
+.selector-row .mat-mdc-text-field-wrapper,
+.split-row .mat-mdc-text-field-wrapper,
+.payment-block .mat-mdc-text-field-wrapper {
+  min-height: 42px !important;
+  background: #fff !important;
+}
+
+.customer-bar .mat-mdc-form-field-infix,
+.selector-row .mat-mdc-form-field-infix,
+.split-row .mat-mdc-form-field-infix,
+.payment-block .mat-mdc-form-field-infix {
+  min-height: 42px !important;
+  padding-top: 10px !important;
+  padding-bottom: 10px !important;
+}
+
+.customer-bar .mat-mdc-form-field .mat-mdc-input-element,
+.selector-row .mat-mdc-form-field .mat-mdc-input-element,
+.split-row .mat-mdc-form-field .mat-mdc-input-element,
+.payment-block .mat-mdc-form-field .mat-mdc-input-element,
+.customer-bar .mat-mdc-form-field .mdc-floating-label,
+.selector-row .mat-mdc-form-field .mdc-floating-label,
+.split-row .mat-mdc-form-field .mdc-floating-label,
+.payment-block .mat-mdc-form-field .mdc-floating-label,
+.selector-row .mat-mdc-select-min-line,
+.split-row .mat-mdc-select-min-line {
+  font-size: 12.5px !important;
+}
+
 .selector-row {
   grid-template-columns: 1.35fr 1.25fr 88px 112px 132px;
   margin-bottom: 6px;
@@ -262,6 +299,16 @@
   font-size: 12px;
   font-weight: 700;
   align-self: start;
+}
+
+.split-row button[mat-stroked-button],
+.split-row button[mat-raised-button],
+.payment-block button[mat-stroked-button],
+.payment-block button[mat-raised-button] {
+  min-height: 40px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .customer-bar button[mat-stroked-button] mat-icon {

@@ -154,10 +154,13 @@ exports.getVariations = async (req, res) => {
 
     const [variations, total] = await Promise.all([
       ProductVariation.find(filter)
-        .populate("product model shop")
+        .select("product model sku barcode attributes quantity costPrice sellingPrice isActive createdAt")
+        .populate("product", "name")
+        .populate("model", "name")
         .sort(sort)
         .skip(Number(skip) || 0)
-        .limit(Math.min(200, Number(limit) || 100)),
+        .limit(Math.min(200, Number(limit) || 100))
+        .lean(),
       ProductVariation.countDocuments(filter),
     ]);
 

@@ -83,13 +83,17 @@ export class FactoryProductMasterComponent implements OnInit {
 
   ngOnInit(): void {
     this.userRole = this.authService.getUserRole();
-    this.loadRawMaterials();
-    this.loadCategoryOptions();
-    this.loadBrandOptions();
-    this.loadShopProducts();
-    this.loadShopModels();
-    this.loadShopVariations();
     this.loadAll();
+    setTimeout(() => {
+      this.loadRawMaterials();
+      this.loadCategoryOptions();
+      this.loadBrandOptions();
+      this.loadShopProducts();
+    }, 0);
+    setTimeout(() => {
+      this.loadShopModels();
+      this.loadShopVariations();
+    }, 120);
   }
 
   get canManage(): boolean {

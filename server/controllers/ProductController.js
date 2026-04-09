@@ -230,33 +230,73 @@ exports.createProduct = async (req, res) => {
 ========================= */
 exports.getProducts = async (req, res) => {
   try {
-    const { limit, skip, sort = "-createdAt", search } = req.query;
+    const {
+      limit,
+      skip,
+      sort = "-createdAt",
+      search,
+      name,
+      category,
+      brand,
+      page,
+      perPage,
+      startDate,
+      endDate,
+    } = req.query;
     const query = isSuperAdminGlobal(req)
       ? { isDeleted: { $ne: true } }
       : { shop: req.shopId, isDeleted: { $ne: true } };
 
-    if (search) {
-      query.name = { $regex: search, $options: "i" };
+    if (search || name) {
+      query.name = { $regex: search || name, $options: "i" };
     }
 
+    if (category) {
+      query.category = category;
+    }
+
+    if (brand) {
+      query.brand = brand;
+    }
+
+    if (startDate || endDate) {
+      query.createdAt = {};
+      if (startDate) {
+        query.createdAt.$gte = new Date(`${startDate}T00:00:00.000Z`);
+      }
+      if (endDate) {
+        query.createdAt.$lte = new Date(`${endDate}T23:59:59.999Z`);
+      }
+    }
+
+    const resolvedLimit = Number(limit || perPage || 0);
+    const resolvedSkip = Number.isFinite(Number(skip))
+      ? Number(skip || 0)
+      : Math.max(0, (Number(page || 1) - 1) * resolvedLimit);
+
+    const totalItems = await Product.countDocuments(query);
+
     let productQuery = Product.find(query)
+      .select("name brand category createdAt")
       .sort(sort)
       .populate("brand", "name")
       .populate("category", "name")
       .populate({
         path: "variations",
+        select: "model sku barcode attributes sellingPrice costPrice quantity",
         populate: {
           path: "model",
           select: "name",
         },
-      });
+      })
+      .lean({ virtuals: true });
 
-    if (limit) {
-      productQuery = productQuery.limit(Number(limit) || 0);
+    if (resolvedLimit) {
+      productQuery = productQuery.limit(resolvedLimit);
     }
 
-    if (skip) {
-      productQuery = productQuery.skip(Number(skip) || 0);
+    if (resolvedSkip) {
+      productQuery = productQuery.skip(resolvedSkip);
     }
 
     const products = await productQuery;
@@ -265,6 +305,9 @@ exports.getProducts = async (req, res) => {
     res.json({
       success: true,
       count: safeProducts.length,
+      totalItems,
+      page: Number(page || 1),
+      perPage: resolvedLimit || totalItems,
       data: safeProducts,
     });
   } catch (error) {
@@ -380,15 +423,18 @@ exports.getProductById = async (req, res) => {
       : { _id: req.params.id, shop: req.shopId, isDeleted: { $ne: true } };
 
     const product = await Product.findOne(filter)
+      .select("name slug description images category brand createdAt updatedAt shop")
       .populate("category", "name")
       .populate("brand", "name")
       .populate({
         path: "variations",
+        select: "model sku barcode attributes sellingPrice costPrice quantity isActive createdAt",
         populate: {
           path: "model",
           select: "name",
         },
-      });
+      })
+      .lean({ virtuals: true });
 
     if (!product) {
       return res.status(404).json({

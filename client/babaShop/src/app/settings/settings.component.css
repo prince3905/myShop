@@ -20,6 +20,9 @@
   justify-content: flex-start;
   font-size: 13px;
   color: #424242;
+  border-radius: 12px;
+  min-height: 40px;
+  font-weight: 700;
 }
 
 .section-btn.active {
@@ -231,6 +234,42 @@ input:checked + .slider:before {
 
 .role-access-table tbody td {
   vertical-align: middle;
+  font-size: 12.5px;
+}
+
+.settings-nav-card .mat-mdc-button-base,
+.settings-section-card .mat-mdc-button-base,
+.role-section-card .mat-mdc-button-base {
+  border-radius: 11px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.settings-section-card .mat-mdc-form-field,
+.role-section-card .mat-mdc-form-field {
+  --mdc-outlined-text-field-container-shape: 12px;
+}
+
+.settings-section-card .mat-mdc-text-field-wrapper,
+.role-section-card .mat-mdc-text-field-wrapper {
+  min-height: 42px !important;
+  background: #fff !important;
+}
+
+.settings-section-card .mat-mdc-form-field-infix,
+.role-section-card .mat-mdc-form-field-infix {
+  min-height: 42px !important;
+  padding-top: 10px !important;
+  padding-bottom: 10px !important;
+}
+
+.settings-section-card .mat-mdc-form-field .mat-mdc-input-element,
+.settings-section-card .mat-mdc-form-field .mdc-floating-label,
+.settings-section-card .mat-mdc-select-min-line,
+.role-section-card .mat-mdc-form-field .mat-mdc-input-element,
+.role-section-card .mat-mdc-form-field .mdc-floating-label,
+.role-section-card .mat-mdc-select-min-line {
+  font-size: 12.5px !important;
 }
 
 .module-cell {

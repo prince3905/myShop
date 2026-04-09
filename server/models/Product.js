@@ -67,6 +67,7 @@ const productSchema = new mongoose.Schema({
 
 /* Unique product per shop */
 productSchema.index({ shop: 1, name: 1 }, { unique: true });
+productSchema.index({ shop: 1, isDeleted: 1, createdAt: -1 });
 
 /* Text search */
 productSchema.index({ name: "text" });

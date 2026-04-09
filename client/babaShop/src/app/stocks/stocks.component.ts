@@ -116,9 +116,13 @@ export class StocksComponent implements OnInit {
 
     this.loadStocks();
     this.loadTransactions();
-    this.loadProductsForAdjust();
-    this.loadDistributorsForReorder();
-    this.loadCurrentReconciliation();
+    setTimeout(() => {
+      this.loadProductsForAdjust();
+      this.loadDistributorsForReorder();
+    }, 0);
+    setTimeout(() => {
+      this.loadCurrentReconciliation();
+    }, 120);
   }
 
   get canAdjustStock(): boolean {

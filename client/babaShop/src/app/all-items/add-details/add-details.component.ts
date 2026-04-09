@@ -99,10 +99,9 @@ export class AddDetailsComponent implements OnInit {
   }
 
   loadModels() {
-    this.productModelService.getModels().subscribe({
+    this.productModelService.getModels({ product: this.productId }).subscribe({
       next: (res: any) => {
-        const all = Array.isArray(res?.data) ? res.data : [];
-        this.models = all.filter((m: any) => m?.product?._id === this.productId || m?.product === this.productId);
+        this.models = Array.isArray(res?.data) ? res.data : [];
       },
       error: () => {
         this.snackBar.open("Failed to load models", "Close", { duration: 2500 });

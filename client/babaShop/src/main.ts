@@ -22,6 +22,19 @@ import { AppModule } from './app/app.module';
 import { environment } from './environments/environment';
 import 'hammerjs';
 
+if (typeof window !== 'undefined') {
+  (window as any).global = window;
+}
+
+if (
+  typeof document !== 'undefined' &&
+  location.hostname &&
+  location.hostname !== 'localhost' &&
+  location.hostname !== '127.0.0.1'
+) {
+  document.documentElement.classList.add('hosted-runtime');
+}
+
 if (environment.production) {
   enableProdMode();
 }

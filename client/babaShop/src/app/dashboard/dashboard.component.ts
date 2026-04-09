@@ -323,6 +323,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
           this.shops = res.data; // global for super admin without shop
         }
         this.loadDashboardData();
+        this.cdr.markForCheck();
       }
     });
   }
@@ -331,17 +332,22 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.loadKpis();
     this.loadOverview();
     this.loadTrends();
-    this.loadInventorySummary();
-    if (this.canViewFinancialDashboard) {
-      this.loadPurchaseAnalytics();
-      this.loadPaymentCollectionAnalytics();
-    }
-    this.loadReturnAnalytics();
-    this.loadPurchaseReturnAnalytics();
+    setTimeout(() => {
+      this.loadInventorySummary();
+    }, 0);
+    setTimeout(() => {
+      if (this.canViewFinancialDashboard) {
+        this.loadPurchaseAnalytics();
+        this.loadPaymentCollectionAnalytics();
+      }
+      this.loadReturnAnalytics();
+      this.loadPurchaseReturnAnalytics();
+    }, 120);
   }
 
   loadKpis() {
     this.loadingKpis = true;
+    this.cdr.markForCheck();
     this.dashboardService.getKpisByRange(this.selectedRange).subscribe({
       next: (res: any) => {
         this.kpis = {
@@ -349,9 +355,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
           ...(res?.data || {}),
         };
         this.loadingKpis = false;
+        this.cdr.markForCheck();
       },
       error: () => {
         this.loadingKpis = false;
+        this.cdr.markForCheck();
       },
     });
   }
@@ -363,8 +371,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
           ...this.purchaseReturnAnalytics,
           ...(res?.data || {}),
         };
+        this.cdr.markForCheck();
       },
-      error: () => {},
+      error: () => {
+        this.cdr.markForCheck();
+      },
     });
   }
 
@@ -673,6 +684,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
           dueSummary: res?.data?.dueSummary || null,
           customerCreditSummary: res?.data?.customerCreditSummary || null,
         };
+        this.cdr.markForCheck();
       },
       error: () => {
         this.overview = {
@@ -684,6 +696,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
           dueSummary: null,
           customerCreditSummary: null,
         };
+        this.cdr.markForCheck();
       },
     });
   }
@@ -707,9 +720,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
           data.orders || [],
           data.purchase || [],
         );
+        this.cdr.markForCheck();
       },
       error: () => {
         this.scheduleTrendChartsRender([], [], [], []);
+        this.cdr.markForCheck();
       },
     });
   }
@@ -732,9 +747,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
           "items",
           "brands",
         ]);
+        this.cdr.markForCheck();
       },
       error: () => {
         this.inventorySummary = { products: 0, categories: 0, brands: 0 };
+        this.cdr.markForCheck();
       },
     });
   }
@@ -749,6 +766,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
           monthly: data.monthly || this.purchaseAnalytics.monthly,
         };
         this.schedulePurchaseAnalyticsChartRender();
+        this.cdr.markForCheck();
       },
       error: () => {
         this.purchaseAnalytics = {
@@ -757,6 +775,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
           monthly: { totalAmount: 0, totalPaid: 0, totalDue: 0, count: 0 },
         };
         this.schedulePurchaseAnalyticsChartRender();
+        this.cdr.markForCheck();
       },
     });
   }
@@ -768,6 +787,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
           ...this.paymentCollectionSummary,
           ...(res?.data || {}),
         };
+        this.cdr.markForCheck();
       },
       error: () => {
         this.paymentCollectionSummary = {
@@ -785,6 +805,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
           orderBillCount: 0,
           walletUseCount: 0,
         };
+        this.cdr.markForCheck();
       },
     });
   }
@@ -812,6 +833,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
           weekly: data.weekly || this.returnAnalytics.weekly,
           monthly: data.monthly || this.returnAnalytics.monthly,
         };
+        this.cdr.markForCheck();
       },
       error: () => {
         this.returnAnalytics = {
@@ -819,6 +841,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
           weekly: { totalAmount: 0, totalRefund: 0, totalCredit: 0, totalQty: 0, count: 0, saleReturnCount: 0, orderReturnCount: 0, saleReturnAmount: 0, orderReturnAmount: 0 },
           monthly: { totalAmount: 0, totalRefund: 0, totalCredit: 0, totalQty: 0, count: 0, saleReturnCount: 0, orderReturnCount: 0, saleReturnAmount: 0, orderReturnAmount: 0 },
         };
+        this.cdr.markForCheck();
       },
     });
   }
@@ -845,48 +868,60 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.ordersChart?.detach?.();
     this.purchaseChart?.detach?.();
 
-    if (salesContainer) {
-      this.salesChart = new Chartist.Line(
-        "#dailySalesChart",
-        { labels: finalLabels, series: [finalSales] },
-        {
-          lineSmooth: Chartist.Interpolation.cardinal({ tension: 0 }),
-          showPoint: true,
-          low: 0,
-          chartPadding: { top: 0, right: 0, bottom: 0, left: 0 },
-        },
-      );
-      this.attachPointTooltips(this.salesChart, finalLabels, finalSales, "₹ ");
-      this.startAnimationForLineChart(this.salesChart);
+    if (salesContainer instanceof Element) {
+      try {
+        this.salesChart = new Chartist.Line(
+          salesContainer,
+          { labels: finalLabels, series: [finalSales] },
+          {
+            lineSmooth: Chartist.Interpolation.cardinal({ tension: 0 }),
+            showPoint: true,
+            low: 0,
+            chartPadding: { top: 0, right: 0, bottom: 0, left: 0 },
+          },
+        );
+        this.attachPointTooltips(this.salesChart, finalLabels, finalSales, "₹ ");
+        this.startAnimationForLineChart(this.salesChart);
+      } catch (error) {
+        this.salesChart = null;
+      }
     }
 
-    if (ordersContainer) {
-      this.ordersChart = new Chartist.Bar(
-        "#websiteViewsChart",
-        { labels: finalLabels, series: [finalOrders] },
-        {
-          axisX: { showGrid: false },
-          low: 0,
-          chartPadding: { top: 0, right: 5, bottom: 0, left: 0 },
-        },
-      );
-      this.attachPointTooltips(this.ordersChart, finalLabels, finalOrders);
-      this.startAnimationForBarChart(this.ordersChart);
+    if (ordersContainer instanceof Element) {
+      try {
+        this.ordersChart = new Chartist.Bar(
+          ordersContainer,
+          { labels: finalLabels, series: [finalOrders] },
+          {
+            axisX: { showGrid: false },
+            low: 0,
+            chartPadding: { top: 0, right: 5, bottom: 0, left: 0 },
+          },
+        );
+        this.attachPointTooltips(this.ordersChart, finalLabels, finalOrders);
+        this.startAnimationForBarChart(this.ordersChart);
+      } catch (error) {
+        this.ordersChart = null;
+      }
     }
 
-    if (purchaseContainer) {
-      this.purchaseChart = new Chartist.Line(
-        "#completedTasksChart",
-        { labels: finalLabels, series: [finalPurchase] },
-        {
-          lineSmooth: Chartist.Interpolation.cardinal({ tension: 0 }),
-          showPoint: true,
-          low: 0,
-          chartPadding: { top: 0, right: 0, bottom: 0, left: 0 },
-        },
-      );
-      this.attachPointTooltips(this.purchaseChart, finalLabels, finalPurchase, "₹ ");
-      this.startAnimationForLineChart(this.purchaseChart);
+    if (purchaseContainer instanceof Element) {
+      try {
+        this.purchaseChart = new Chartist.Line(
+          purchaseContainer,
+          { labels: finalLabels, series: [finalPurchase] },
+          {
+            lineSmooth: Chartist.Interpolation.cardinal({ tension: 0 }),
+            showPoint: true,
+            low: 0,
+            chartPadding: { top: 0, right: 0, bottom: 0, left: 0 },
+          },
+        );
+        this.attachPointTooltips(this.purchaseChart, finalLabels, finalPurchase, "₹ ");
+        this.startAnimationForLineChart(this.purchaseChart);
+      } catch (error) {
+        this.purchaseChart = null;
+      }
     }
   }
 
@@ -985,7 +1020,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   private renderPurchaseAnalyticsChart(): void {
-    if (typeof document === "undefined" || !document.querySelector("#purchaseAnalyticsChart")) {
+    if (typeof document === "undefined") {
+      return;
+    }
+    const container = document.querySelector("#purchaseAnalyticsChart");
+    if (!(container instanceof Element)) {
       return;
     }
     const values = [
@@ -995,20 +1034,24 @@ export class DashboardComponent implements OnInit, OnDestroy {
     ];
 
     this.purchaseAnalyticsChart?.detach?.();
-    this.purchaseAnalyticsChart = new Chartist.Bar(
-      "#purchaseAnalyticsChart",
-      {
-        labels: ["Today", "Weekly", "Monthly"],
-        series: [values],
-      },
-      {
-        axisX: { showGrid: false },
-        low: 0,
-        chartPadding: { top: 0, right: 8, bottom: 0, left: 0 },
-      },
-    );
-    this.attachPointTooltips(this.purchaseAnalyticsChart, ["Today", "Weekly", "Monthly"], values, "₹ ");
-    this.startAnimationForBarChart(this.purchaseAnalyticsChart);
+    try {
+      this.purchaseAnalyticsChart = new Chartist.Bar(
+        container,
+        {
+          labels: ["Today", "Weekly", "Monthly"],
+          series: [values],
+        },
+        {
+          axisX: { showGrid: false },
+          low: 0,
+          chartPadding: { top: 0, right: 8, bottom: 0, left: 0 },
+        },
+      );
+      this.attachPointTooltips(this.purchaseAnalyticsChart, ["Today", "Weekly", "Monthly"], values, "₹ ");
+      this.startAnimationForBarChart(this.purchaseAnalyticsChart);
+    } catch (error) {
+      this.purchaseAnalyticsChart = null;
+    }
   }
 
   private schedulePurchaseAnalyticsChartRender(): void {
