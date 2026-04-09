@@ -7,10 +7,14 @@
     "install:all": "npm run install:client && npm run install:server",
     "build:client": "npm --prefix client/babaShop run build:mobile",
     "build:server:public": "rm -rf server/public && mkdir -p server/public && cp -R client/babaShop/dist/. server/public/",
+    "verify:server:public": "node -e \"const fs=require('fs'); const path=require('path'); const p=path.join(process.cwd(),'server','public','index.html'); if(!fs.existsSync(p)){console.error('Missing built frontend:', p); process.exit(1)} console.log('Verified built frontend:', p)\"",
     "build": "npm run install:all && npm run build:client && npm run build:server:public",
     "start:server": "npm --prefix server run dev",
     "start:prod": "npm --prefix server run start:prod",
-    "start": "npm run start:prod",
+    "start:ui": "npm --prefix client/babaShop start",
+    "start:local": "node scripts/start-local.js",
+    "start:prod-local": "sh -c 'npm run build:client && npm run build:server:public && npm run verify:server:public && npm --prefix server run dev'",
+    "start": "npm run start:local",
     "dev:client": "npm --prefix client/babaShop start",
     "dev:server": "npm --prefix server run dev"
   }

@@ -7,6 +7,8 @@
     "start": "ng serve",
     "build": "ng build",
     "build:mobile": "ng build --configuration production",
+    "build:public": "ng build --configuration development --output-path=../../server/public",
+    "build:watch:public": "ng build --watch --configuration development --output-path=../../server/public",
     "test": "ng test",
     "lint": "ng lint",
     "e2e": "ng e2e",
