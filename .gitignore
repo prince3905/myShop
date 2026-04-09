@@ -3,6 +3,11 @@ client/babaShop/node_modules/
 server/node_modules/
 node_modules/
 .DS_Store
+server/public/
+client/babaShop/dist/
+node_modules/
+*.log
+.env
 .idea/
 .ngrok.yml
 client/babaShop/android/
