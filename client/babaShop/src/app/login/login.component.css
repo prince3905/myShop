@@ -151,6 +151,102 @@
   margin-right: 10px;
 }
 
+:host ::ng-deep .login-wrapper .mat-mdc-form-field {
+  width: 100%;
+}
+
+:host ::ng-deep .login-wrapper .mat-mdc-text-field-wrapper {
+  background: rgba(0, 0, 0, 0.55) !important;
+  border-radius: 12px !important;
+  min-height: 54px !important;
+}
+
+:host ::ng-deep .login-wrapper .mat-mdc-form-field-icon-prefix {
+  align-self: center !important;
+  padding: 0 0 0 12px !important;
+}
+
+:host ::ng-deep .login-wrapper .mat-mdc-form-field-icon-prefix > .mat-icon {
+  margin-right: 10px;
+  width: 20px;
+  height: 20px;
+  font-size: 20px;
+  line-height: 20px;
+}
+
+:host ::ng-deep .login-wrapper .mdc-notched-outline__leading,
+:host ::ng-deep .login-wrapper .mdc-notched-outline__notch,
+:host ::ng-deep .login-wrapper .mdc-notched-outline__trailing {
+  border-color: #665c3b !important;
+}
+
+:host ::ng-deep .login-wrapper .mat-mdc-form-field.mat-focused .mdc-notched-outline__leading,
+:host ::ng-deep .login-wrapper .mat-mdc-form-field.mat-focused .mdc-notched-outline__notch,
+:host ::ng-deep .login-wrapper .mat-mdc-form-field.mat-focused .mdc-notched-outline__trailing {
+  border-color: #ffd700 !important;
+}
+
+:host ::ng-deep .login-wrapper .mat-mdc-form-field .mdc-floating-label {
+  color: #bfa361 !important;
+  font-size: 14px !important;
+}
+
+:host ::ng-deep .login-wrapper .mat-mdc-form-field.mat-focused .mdc-floating-label {
+  color: #ffd700 !important;
+}
+
+:host ::ng-deep .login-wrapper .mat-mdc-form-field .mat-mdc-form-field-icon-prefix,
+:host ::ng-deep .login-wrapper .mat-mdc-form-field .mat-mdc-form-field-icon-suffix {
+  color: #d4af37 !important;
+}
+
+:host ::ng-deep .login-wrapper .mat-mdc-form-field .mat-mdc-input-element {
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+  caret-color: #d4af37 !important;
+  font-size: 14px !important;
+  line-height: 1.35 !important;
+}
+
+:host ::ng-deep .login-wrapper .mat-mdc-form-field .mat-mdc-input-element::placeholder {
+  color: rgba(255, 255, 255, 0.48) !important;
+  -webkit-text-fill-color: rgba(255, 255, 255, 0.48) !important;
+}
+
+:host ::ng-deep .login-wrapper .mat-mdc-form-field-hint {
+  color: #bfa361 !important;
+  font-size: 11px !important;
+  line-height: 1.35;
+}
+
+:host ::ng-deep .login-wrapper .mat-mdc-form-field-error {
+  color: #f87171 !important;
+  font-size: 11px !important;
+  line-height: 1.35;
+}
+
+:host ::ng-deep .login-wrapper .mat-mdc-form-field-subscript-wrapper {
+  min-height: 34px;
+  padding-top: 6px;
+}
+
+:host ::ng-deep .login-wrapper .mat-mdc-form-field-infix {
+  min-height: 54px !important;
+  padding-top: 14px !important;
+  padding-bottom: 12px !important;
+}
+
+:host ::ng-deep .login-wrapper .mat-mdc-form-field-hint-wrapper,
+:host ::ng-deep .login-wrapper .mat-mdc-form-field-error-wrapper {
+  padding: 0 12px !important;
+}
+
+:host ::ng-deep .login-wrapper .login-btn .mdc-button__label {
+  color: #000 !important;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
 /* Input Text Color (Jab type karoge) */
 :host ::ng-deep .login-wrapper .mat-input-element {
   color: #fff !important; /* Type karte waqt white taaki dikhe */
