@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit, ChangeDetectionStrategy } from "@angular/core";
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from "@angular/core";
 import * as Chartist from "chartist";
 import { ShopService } from "./../shared/services/shop.service";
 import { AuthService } from "../shared/services/auth.service";
@@ -13,7 +13,6 @@ import { ActivatedRoute, Router } from "@angular/router";
   selector: "app-dashboard",
   templateUrl: "./dashboard.component.html",
   styleUrls: ["./dashboard.component.css"],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DashboardComponent implements OnInit, OnDestroy {
   selectedRange: "daily" | "weekly" | "monthly" | "yearly" | "all" = "daily";

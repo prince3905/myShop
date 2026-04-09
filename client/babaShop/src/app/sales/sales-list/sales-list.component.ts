@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, OnInit, ViewChild } from "@angular/core";
+import { ChangeDetectorRef, Component, ElementRef, OnInit, ViewChild } from "@angular/core";
 import { MatDialog } from "@angular/material/dialog";
 import { PageEvent } from "@angular/material/paginator";
 import { MatSnackBar } from "@angular/material/snack-bar";
@@ -11,7 +11,6 @@ import { AuthService } from "app/shared/services/auth.service";
   selector: "sales-list",
   templateUrl: "./sales-list.component.html",
   styleUrls: ["./sales-list.component.css"],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SalesListComponent implements OnInit {
   loading = false;
@@ -57,7 +56,7 @@ export class SalesListComponent implements OnInit {
     private snackBar: MatSnackBar,
     private router: Router,
     public authService: AuthService,
-    private cdr: ChangeDetectorRef,
+    private cdr: ChangeDetectorRef, // Added back
   ) {}
 
   ngOnInit(): void {
@@ -70,7 +69,6 @@ export class SalesListComponent implements OnInit {
 
   loadSales(): void {
     this.loading = true;
-    this.cdr.markForCheck();
 
     const params: any = {
       page: this.page,
@@ -99,14 +97,12 @@ export class SalesListComponent implements OnInit {
           0,
         );
         this.loading = false;
-        this.cdr.markForCheck();
       },
       error: (err) => {
         this.loading = false;
         this.salesRows = [];
         this.totalItems = 0;
         this.summary = { totalSales: 0, totalRevenue: 0, totalQty: 0 };
-        this.cdr.markForCheck();
         this.snackBar.open(err?.error?.message || "Failed to load sales", "Close", {
           duration: 2800,
         });
@@ -233,7 +229,6 @@ export class SalesListComponent implements OnInit {
 
   showDetails(row: any): void {
     this.selectedSale = row;
-    this.cdr.markForCheck();
     setTimeout(() => {
       this.saleDetailsCard?.nativeElement?.scrollIntoView({
         behavior: "smooth",
@@ -244,7 +239,6 @@ export class SalesListComponent implements OnInit {
 
   closeDetails(): void {
     this.selectedSale = null;
-    this.cdr.markForCheck();
   }
 
   openReturn(row: any): void {
@@ -270,7 +264,6 @@ export class SalesListComponent implements OnInit {
         this.loadSales();
         if (this.selectedSale?._id === row?._id) {
           this.selectedSale = null;
-          this.cdr.markForCheck();
         }
       }
     });
