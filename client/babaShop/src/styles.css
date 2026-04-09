@@ -932,3 +932,17 @@ body, .mat-typography {
   transform: translateX(-50%) !important;
   z-index: 10000 !important;
 }
+
+/* Compact Shop Switcher List */
+.mat-mdc-menu-panel.mat-mdc-menu-panel {
+  font-size: 12px !important;
+}
+.mat-mdc-menu-item {
+  min-height: 36px !important;
+  font-size: 11px !important;
+}
+.mat-mdc-menu-item .mdc-list-item__primary-text {
+  font-size: 11px !important;
+  line-height: 1.4 !important;
+}
+
