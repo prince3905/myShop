@@ -42,6 +42,63 @@ textarea,
 }
 
 /* =========================================
+   SIDEBAR FIX (Force Small Text)
+   ========================================= */
+
+/* Sidebar Text Links */
+.sidebar .nav-item .nav-link p,
+.sidebar .nav-item a .nav-link p {
+  font-size: 13px !important;
+  font-weight: 400 !important;
+  letter-spacing: 0.3px !important;
+  color: #3a416f !important;
+  margin: 0 !important;
+}
+
+/* Sidebar Active Item */
+.sidebar .nav-item.active .nav-link p,
+.sidebar .nav-item.active .nav-link i {
+  color: #e21b1b !important;
+  font-weight: 600 !important;
+}
+
+/* Sidebar Icons */
+.sidebar .nav-item .nav-link i {
+  font-size: 19px !important;
+}
+
+/* =========================================
+   NAVBAR FIX (Force Small Text & Layout)
+   ========================================= */
+
+/* Navbar General Text */
+.navbar .nav-item .nav-link {
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: #fff !important; /* Force white on red bg */
+}
+
+/* Dashboard Breadcrumb */
+.navbar .navbar-breadcrumb {
+  font-size: 12px !important;
+}
+
+/* Current Shop Chip */
+.navbar .current-shop-display,
+.navbar .shop-chip,
+.navbar .shop-chip-value,
+.navbar .shop-chip-label {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+}
+
+/* Corner Dashboard Link */
+.navbar .corner-dashboard-link span {
+  font-size: 10px !important;
+  font-weight: 800 !important;
+}
+
+/* =========================================
    Angular 17 Typography Fix (High Specificity)
    ========================================= */
 
