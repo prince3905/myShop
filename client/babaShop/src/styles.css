@@ -952,3 +952,70 @@ body {
   zoom: 0.8;
   transform-origin: top left;
 }
+
+/* =========================================
+   Single Row Navbar Fix (Force all elements in one line)
+   ========================================= */
+.navbar .container-fluid {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 0 15px !important;
+}
+
+.navbar .navbar-wrapper {
+  flex: 1 !important;
+  min-width: 0 !important;
+}
+
+.navbar .navbar-title-wrap {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-wrap: nowrap !important;
+  white-space: nowrap !important;
+  max-width: 100% !important;
+}
+
+/* Compact Title/Breadcrumb */
+.navbar .corner-dashboard-link {
+  padding: 4px 8px !important;
+  font-size: 10px !important;
+}
+.navbar .navbar-breadcrumb {
+  font-size: 11px !important;
+  max-width: 300px !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+/* Compact Chips */
+.navbar .mode-chip,
+.navbar .readonly-chip,
+.navbar .shop-chip {
+  padding: 4px 8px !important;
+  font-size: 10px !important;
+  white-space: nowrap !important;
+}
+
+/* Compact Nav Links */
+.navbar .navbar-collapse {
+  flex-grow: 0 !important;
+  justify-content: flex-end !important;
+}
+.navbar .navbar-nav {
+  gap: 4px !important;
+  flex-wrap: nowrap !important;
+}
+.navbar .nav-item .nav-link {
+  font-size: 11px !important;
+  padding: 4px 6px !important;
+}
+
+/* Hide quick-link-text on smaller screens to keep single row */
+@media (max-width: 1400px) {
+  .quick-link-text {
+    display: none !important;
+  }
+}
