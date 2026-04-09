@@ -866,3 +866,69 @@ app-view-distributor .summary-card {
     z-index: 1035;
   }
 }
+
+/* =========================================
+   Angular 17 MDC Component Compatibility
+   ========================================= */
+
+/* 1. Global Typography Reset */
+html {
+  font-size: 14px !important;
+}
+body, .mat-typography {
+  font-family: 'Roboto', 'Helvetica Neue', sans-serif !important;
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+  color: #333;
+}
+
+/* 2. Sidebar Text Fix */
+.sidebar .nav-item .nav-link p {
+  font-size: 14px !important;
+  margin: 0 !important;
+}
+
+/* 3. Material Cards */
+.mat-mdc-card {
+  border-radius: 6px !important;
+  box-shadow: 0 1px 4px 0 rgba(0,0,0,.14) !important;
+  margin-bottom: 30px !important;
+  display: block;
+}
+.mat-mdc-card-header {
+  padding: 15px 15px 0 !important;
+}
+.mat-mdc-card-content {
+  padding: 0 15px 15px !important;
+}
+
+/* 4. Material Buttons */
+.mat-mdc-raised-button {
+  border-radius: 3px !important;
+  padding: 12px 30px !important;
+  font-size: 12px !important;
+  font-weight: 400 !important;
+  text-transform: uppercase !important;
+  line-height: 1.42857 !important;
+}
+
+/* 5. Form Fields (Inputs) */
+.mat-mdc-form-field {
+  width: 100%;
+}
+
+/* 6. Tables */
+.mat-mdc-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+/* 7. Snackbar Fix */
+.mat-mdc-snack-bar-container {
+  margin: 0 auto !important;
+  position: fixed !important;
+  bottom: 20px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  z-index: 10000 !important;
+}
