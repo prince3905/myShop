@@ -102,6 +102,36 @@ export class SalesReportsComponent implements OnInit, OnDestroy {
     }
   }
 
+  openZReport(): void {
+    if (!this.zReport.data) {
+      // If data not loaded, generate it first
+      this.generateZReport();
+    }
+    // Scroll after a short delay to allow data to render
+    setTimeout(() => {
+      this.scrollToSection('z-report-section');
+    }, 500);
+  }
+
+  generateZReport(): void {
+    this.zReport.loading = true;
+    this.zReport.data = null;
+
+    // Z-Report is usually for "Today", but we can use filters if set.
+    // Defaulting to today for standard Z-Report behavior.
+    this.salesService.getZReport().subscribe({
+      next: (res: any) => {
+        this.zReport.data = res?.data;
+        this.zReport.loading = false;
+      },
+      error: (err) => {
+        console.error("Failed to generate Z-Report", err);
+        this.zReport.loading = false;
+        this.snackBar.open("Failed to generate Z-Report", "Close", { duration: 3000 });
+      },
+    });
+  }
+
   loadPaymentSummary(): void {
     const params = {
       startDate: this.filters.dateFrom ? this.formatDate(this.filters.dateFrom) : undefined,

@@ -72,7 +72,7 @@
           <button mat-stroked-button class="nav-btn" (click)="scrollToSection('payment-summary')">
             <mat-icon>payments</mat-icon> Payment Collection
           </button>
-          <button mat-stroked-button class="nav-btn" (click)="scrollToSection('z-report-section')">
+          <button mat-stroked-button class="nav-btn" (click)="openZReport()">
             <mat-icon>receipt_long</mat-icon> Z-Report
           </button>
           <button mat-stroked-button class="nav-btn" (click)="scrollToSection('sales-list-section')">
@@ -87,9 +87,6 @@
           <button mat-button color="accent" (click)="setQuickDate('year')">This Year</button>
           <button mat-button color="accent" (click)="setQuickDate('all')">All Time</button>
           <button mat-raised-button color="primary" (click)="loadPaymentSummary()">Refresh Collection</button>
-          <button mat-stroked-button color="warn" (click)="generateZReport()">
-            <mat-icon>receipt_long</mat-icon> Generate Z-Report
-          </button>
         </div>
       </div>
     </div>
