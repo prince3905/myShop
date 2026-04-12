@@ -113,60 +113,7 @@ export class SalesReportsComponent implements OnInit, OnDestroy {
     }, 500);
   }
 
-  generateZReport(): void {
-    this.zReport.loading = true;
-    this.zReport.data = null;
-
-    // Z-Report is usually for "Today", but we can use filters if set.
-    // Defaulting to today for standard Z-Report behavior.
-    this.salesService.getZReport().subscribe({
-      next: (res: any) => {
-        this.zReport.data = res?.data;
-        this.zReport.loading = false;
-      },
-      error: (err) => {
-        console.error("Failed to generate Z-Report", err);
-        this.zReport.loading = false;
-        this.snackBar.open("Failed to generate Z-Report", "Close", { duration: 3000 });
-      },
-    });
-  }
-
   loadPaymentSummary(): void {
-    const params = {
-      startDate: this.filters.dateFrom ? this.formatDate(this.filters.dateFrom) : undefined,
-      endDate: this.filters.dateTo ? this.formatDate(this.filters.dateTo) : undefined,
-    };
-
-    this.salesService.getPaymentSummary(params).subscribe({
-      next: (res: any) => {
-        this.paymentSummary = res?.data || this.paymentSummary;
-      },
-      error: (err) => {
-        console.error("Failed to load payment summary", err);
-        this.paymentSummary = { totalCash: 0, totalOnline: 0, totalCollected: 0 };
-      },
-    });
-  }
-
-  generateZReport(): void {
-    this.zReport.loading = true;
-    this.zReport.data = null;
-
-    // Z-Report is usually for "Today", but we can use filters if set.
-    // Defaulting to today for standard Z-Report behavior.
-    this.salesService.getZReport().subscribe({
-      next: (res: any) => {
-        this.zReport.data = res?.data;
-        this.zReport.loading = false;
-      },
-      error: (err) => {
-        console.error("Failed to generate Z-Report", err);
-        this.zReport.loading = false;
-        this.snackBar.open("Failed to generate Z-Report", "Close", { duration: 3000 });
-      },
-    });
-  }
 
   setQuickDate(range: "today" | "week" | "month" | "year" | "all"): void {
     const now = new Date();
