@@ -281,25 +281,6 @@ export class SalesListComponent implements OnInit {
     return this.getReturnBadge(row) === "full";
   }
 
-  printInvoice(row: any): void {
-    this.selectedSale = row;
-    // ... (existing print logic usually goes here or calls window.print)
-    // For this component, it seems to use a specific method, checking imports...
-    // Actually, let's just open the window for printing based on the data
-    const invoiceId = row?.invoiceNo || row?._id || "-";
-    const customerName = row?.customerName || "Walk-in";
-    const dateStr = row?.purchaseDate ? new Date(row.purchaseDate).toLocaleString() : "-";
-    const grandTotal = Number(row?.totalAmount ?? Math.max(row?.totalPurchasePrice || 0 - row?.billDiscount || 0, 0));
-    const paidAmount = Number(row?.paidAmount || 0);
-    const dueAmount = Number(row?.dueAmount ?? Math.max(grandTotal - paidAmount, 0));
-    
-    // Simple text for sharing
-    const text = `*INVOICE: ${invoiceId}*\nCustomer: ${customerName}\nDate: ${dateStr}\nTotal: Rs ${grandTotal.toFixed(2)}\nPaid: Rs ${paidAmount.toFixed(2)}\nDue: Rs ${dueAmount.toFixed(2)}\n\nThank you for shopping with us!`;
-    
-    const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
-    window.open(url, '_blank');
-  }
-
   shareOnWhatsApp(row: any): void {
     const invoiceId = row?.invoiceNo || row?._id || "-";
     const customerName = row?.customerName || "Walk-in";
