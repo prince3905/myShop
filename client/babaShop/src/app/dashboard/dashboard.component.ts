@@ -3,6 +3,7 @@ import * as Chartist from "chartist";
 import { ShopService } from "./../shared/services/shop.service";
 import { AuthService } from "../shared/services/auth.service";
 import { DashboardService } from "app/shared/services/dashboard.service";
+import { StocksService } from "app/shared/services/stocks.service";
 import { forkJoin } from "rxjs";
 import { ProductService } from "app/shared/services/product.service";
 import { CategoryService } from "app/shared/services/category.service";
@@ -116,6 +117,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private shopService: ShopService,
     private authService: AuthService,
     private dashboardService: DashboardService,
+    private stocksService: StocksService,
     private productService: ProductService,
     private categoryService: CategoryService,
     private brandService: BrandService,
@@ -123,6 +125,20 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private router: Router,
     private cdr: ChangeDetectorRef,
   ) {}
+
+  loadLowStockAlerts(): void {
+    if (!this.canOpenStocks) return;
+
+    this.stocksService.getLowStockAlerts().subscribe({
+      next: (res: any) => {
+        this.overview.lowStockItems = res?.data || [];
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error("Failed to load low stock alerts", err);
+      },
+    });
+  }
 
   startAnimationForLineChart(chart) {
     let seq: any, delays: any, durations: any;
@@ -330,6 +346,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private loadDashboardData(): void {
     this.loadKpis();
     this.loadOverview();
+    this.loadLowStockAlerts(); // Load Low Stock Alerts immediately
     this.loadTrends();
     setTimeout(() => {
       this.loadInventorySummary();

@@ -39,6 +39,10 @@ export class StocksService {
     return this.http.post(`${this.baseURL}/api/stocks/adjust`, payload);
   }
 
+  getLowStockAlerts(): Observable<any> {
+    return this.http.get(`${this.baseURL}/api/stocks/alerts/low-stock`);
+  }
+
   getCurrentReconciliation(monthKey: string) {
     const params = new HttpParams().set("monthKey", monthKey);
     return this.http.get(`${this.baseURL}/api/stocks/reconciliation/current`, { params });
