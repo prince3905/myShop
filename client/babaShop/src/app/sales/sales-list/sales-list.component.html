@@ -163,7 +163,9 @@
                     (click)="openReturn(row)">
                     Return from Customer
                   </button>
-                  <button mat-stroked-button class="action-btn" color="primary" (click)="printInvoice(row)">Print</button>
+                  <button mat-stroked-button class="action-btn pdf-btn" (click)="printInvoice(row)">
+                    <mat-icon>picture_as_pdf</mat-icon> PDF / Print
+                  </button>
                   <button mat-stroked-button class="action-btn whatsapp-btn" (click)="shareOnWhatsApp(row)">
                     <mat-icon>share</mat-icon> WhatsApp
                   </button>
