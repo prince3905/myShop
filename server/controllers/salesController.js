@@ -23,7 +23,7 @@ const isSuperAdminGlobal = (req) =>
   req.user?.role === "SUPER_ADMIN" && !req.shopId;
 const ALLOWED_REFUND_METHODS = new Set(["CASH", "BANK", "ONLINE", "UPI", "CARD", "STORE_CREDIT"]);
 const ALLOWED_PAYMENT_METHODS = new Set(["CASH", "BANK", "ONLINE", "UPI", "CARD", "CHEQUE"]);
-const ALLOWED_SALE_PAYMENT_METHODS = new Set(["CASH", "UPI", "CARD", "BANK", "ONLINE", "CREDIT", "WALLET"]);
+const ALLOWED_SALE_PAYMENT_METHODS = new Set(["CASH", "UPI", "CARD", "BANK", "ONLINE", "CREDIT", "SPLIT"]);
 const canViewSensitiveFinancials = (req) =>
   ["SUPER_ADMIN", "ADMIN"].includes(`${req.user?.role || ""}`);
 
