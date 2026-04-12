@@ -710,7 +710,9 @@ exports.getSales = async (req, res) => {
     }
 
     const [rows, totalItems] = await Promise.all([
-      Sale.find(query).sort({ createdAt: -1 }).skip(skip).limit(safeLimit),
+      Sale.find(query)
+        .populate("customer", "phone") // Populate customer to get phone number
+        .sort({ createdAt: -1 }).skip(skip).limit(safeLimit),
       Sale.countDocuments(query),
     ]);
 
