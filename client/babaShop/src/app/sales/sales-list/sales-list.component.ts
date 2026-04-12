@@ -313,6 +313,8 @@ export class SalesListComponent implements OnInit {
     const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
     window.open(url, '_blank');
   }
+
+  printInvoice(row: any): void {
     const invoiceId = row?.invoiceNo || row?._id || "-";
     const customerName = row?.customerName || "Walk-in";
     const dateStr = row?.purchaseDate ? new Date(row.purchaseDate).toLocaleString() : "-";
