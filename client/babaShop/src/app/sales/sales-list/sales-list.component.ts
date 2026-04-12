@@ -307,6 +307,19 @@ export class SalesListComponent implements OnInit {
   }
 
   shareOnWhatsApp(row: any): void {
+    // Agar details load nahi hui hain toh pehle load karein
+    if (!this.shopUpiId || this.shopUpiId === "N/A") {
+      this.loadShopDetails();
+      // User ko thoda wait karwayein taaki data aa jaye
+      setTimeout(() => {
+        this.generateWhatsAppMessage(row);
+      }, 1000);
+    } else {
+      this.generateWhatsAppMessage(row);
+    }
+  }
+
+  generateWhatsAppMessage(row: any): void {
     const invoiceId = row?.invoiceNo || row?._id || "-";
     const customerName = row?.customerName || "Walk-in";
     const dateStr = row?.purchaseDate ? new Date(row.purchaseDate).toLocaleString() : "-";
@@ -321,7 +334,7 @@ export class SalesListComponent implements OnInit {
     message += `Customer: ${customerName}\n`;
     message += `Date: ${dateStr}\n\n`;
 
-    // Add Items List (Smart Bill)
+    // Add Items List
     if (row.items && row.items.length > 0) {
       message += `📦 *ITEMS:*\n`;
       row.items.forEach((item: any, index: number) => {
@@ -349,10 +362,10 @@ export class SalesListComponent implements OnInit {
       message += `✨ *Status: Fully Paid* ✨\n`;
     }
 
-    // Payment Details
+    // Payment Details (Dynamic from Settings)
     message += `\n📲 *PAYMENT DETAILS*\n`;
-    message += `UPI ID: ${this.shopUpiId || "N/A"}\n`;
-    message += `Phone: ${this.shopPhone || "N/A"}\n`;
+    message += `UPI ID: ${this.shopUpiId || "Not Set in Settings"}\n`;
+    message += `Phone: ${this.shopPhone || "Not Set in Settings"}\n`;
     message += `\n_Please pay to the details above only._`;
 
     message += `\n\n_Thank you for shopping with us!_`;
