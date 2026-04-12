@@ -341,10 +341,6 @@
               <mat-icon>qr_code_2</mat-icon>
               <span class="pay-label">UPI</span>
             </button>
-            <button *ngIf="!useSplitPayment" type="button" class="pay-button credit" [class.active]="paymentMethod === 'CREDIT'" (click)="setPaymentMethod('CREDIT')">
-              <mat-icon>account_balance_wallet</mat-icon>
-              <span class="pay-label">Credit</span>
-            </button>
           </div>
 
           <div class="split-payment-panel" *ngIf="useSplitPayment">

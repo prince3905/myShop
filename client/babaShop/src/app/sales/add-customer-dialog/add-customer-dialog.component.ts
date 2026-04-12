@@ -26,8 +26,7 @@ export class AddCustomerDialogComponent implements OnInit {
       name: ['', [Validators.required, Validators.minLength(2)]],
       phone: ['', [Validators.required, Validators.pattern(/^[0-9]{10}$/)]],
       email: ['', [Validators.email]],
-      address: [''],
-      creditLimit: [0]
+      address: ['']
     });
   }
 
@@ -39,8 +38,7 @@ export class AddCustomerDialogComponent implements OnInit {
         name: customer.name || '',
         phone: customer.phone || '',
         email: customer.email || '',
-        address: customer.address || '',
-        creditLimit: customer.creditLimit || 0
+        address: customer.address || ''
       });
     }
   }
@@ -56,11 +54,6 @@ export class AddCustomerDialogComponent implements OnInit {
 
     this.loading = true;
     const customerData = this.customerForm.value;
-    
-    // Ensure creditLimit is a number
-    if (customerData.creditLimit) {
-      customerData.creditLimit = Number(customerData.creditLimit);
-    }
 
     const request$ = this.isEditMode
       ? this.customerService.updateCustomer(this.data.customer._id, customerData)

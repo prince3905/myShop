@@ -65,12 +65,6 @@ const customerSchema = new mongoose.Schema({
     default: 0
   },
 
-  // Credit Limit Feature: Maximum amount of Udhaar (Due) allowed for this customer
-  creditLimit: {
-    type: Number,
-    default: 0, // 0 means no limit set
-  },
-
   purchaseCount: {
     type: Number,
     default: 0

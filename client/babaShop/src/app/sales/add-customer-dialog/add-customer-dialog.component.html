@@ -39,13 +39,6 @@
         <textarea matInput formControlName="address" rows="2" placeholder="Enter address (optional)" appCapitalizeFirst></textarea>
       </mat-form-field>
 
-      <!-- Credit Limit Field -->
-      <mat-form-field appearance="outline" class="full-width" *ngIf="isEditMode">
-        <mat-label>Credit Limit (Udhaar Seema)</mat-label>
-        <input matInput formControlName="creditLimit" type="number" min="0" placeholder="Enter credit limit" />
-        <mat-hint>Maximum amount of Udhaar allowed for this customer. Set 0 for no limit.</mat-hint>
-      </mat-form-field>
-
     </form>
   </mat-dialog-content>
 

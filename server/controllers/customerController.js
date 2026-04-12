@@ -96,7 +96,7 @@ exports.searchCustomers = async (req, res) => {
     const customers = await Customer.find(query)
       .sort({ name: 1 })
       .limit(Math.min(100, Number(limit || 20)))
-      .select('_id name phone email address totalPurchase totalPaid totalDue walletBalance purchaseCount creditLimit');
+      .select('_id name phone email address totalPurchase totalPaid totalDue walletBalance purchaseCount');
 
     return res.status(200).json({ success: true, customers });
   } catch (err) {

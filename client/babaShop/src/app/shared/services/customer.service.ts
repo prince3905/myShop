@@ -49,10 +49,4 @@ export class CustomerService {
   updateCustomer(id: string, customerData: any) {
     return this.http.put(`${this.baseURL}/api/customer/${id}`, customerData);
   }
-
-  searchCustomersByPhone(phone: string) {
-    return this.http.get(`${this.baseURL}/api/customer/search`, {
-      params: { q: phone, limit: '1' }
-    });
-  }
 }

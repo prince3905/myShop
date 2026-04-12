@@ -91,14 +91,6 @@ const buildCustomerPayload = async ({
 
   const payload = { ...body };
 
-  // Credit Limit Logic: Default 5000, Max 5000
-  let limitInput = body.creditLimit;
-  if (limitInput === undefined || limitInput === null || limitInput === "") {
-    payload.creditLimit = 5000; // Default limit
-  } else {
-    payload.creditLimit = Math.min(5000, Number(limitInput)); // Cap at 5000
-  }
-
   if (hasPhone || requirePhone) {
     payload.phone = normalized.phone;
   }

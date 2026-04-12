@@ -449,19 +449,6 @@ exports.createSale = async (req, res) => {
       });
     }
 
-    // Credit Limit Check: If customer has a limit set, verify due amount
-    if (customerDoc && customerDoc.creditLimit > 0) {
-      const currentDue = Number(customerDoc.totalDue || 0);
-      const limit = Number(customerDoc.creditLimit || 0);
-
-      if (currentDue >= limit) {
-        return res.status(400).json({
-          success: false,
-          message: `Credit Limit Exceeded! Current Due: Rs ${currentDue.toFixed(2)}, Limit: Rs ${limit.toFixed(2)}. Clear dues first.`,
-        });
-      }
-    }
-
     const normalizedItems = [];
     const fastLookupItems = items.filter((raw) => raw?.variationId || raw?.variationSku || raw?.variations);
     const variationIds = fastLookupItems

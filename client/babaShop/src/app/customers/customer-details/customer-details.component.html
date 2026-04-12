@@ -87,17 +87,6 @@
                     <div class="label">Still Receivable</div>
                     <div class="amount">Rs {{ customer.totalDue | number:'1.2-2' }}</div>
                   </div>
-                  
-                  <!-- Credit Limit Card -->
-                  <div class="summary-card" [class.limit-exceeded]="customer.totalDue >= customer.creditLimit && customer.creditLimit > 0">
-                    <div class="label">Credit Limit (Udhaar Seema)</div>
-                    <div class="amount">Rs {{ customer.creditLimit | number:'1.2-2' }}</div>
-                    <div class="status-badge" *ngIf="customer.creditLimit > 0">
-                      <span class="status-dot" [class.green]="customer.totalDue < customer.creditLimit" [class.red]="customer.totalDue >= customer.creditLimit"></span>
-                      {{ customer.totalDue >= customer.creditLimit ? 'Limit Exceeded' : 'Within Limit' }}
-                    </div>
-                  </div>
-
                   <div class="summary-card total-paid">
                     <div class="label">Wallet Balance</div>
                     <div class="amount">Rs {{ customer.walletBalance | number:'1.2-2' }}</div>
