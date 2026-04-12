@@ -289,36 +289,47 @@ export class SalesListComponent implements OnInit {
     const paidAmount = Number(row?.paidAmount || 0);
     const dueAmount = Number(row?.dueAmount ?? Math.max(grandTotal - paidAmount, 0));
 
-    // Start Message
-    let message = `*INVOICE: ${invoiceId}*\n`;
+    // Professional Header
+    let message = `🏢 *BABA VISHWANATH TRUNK & FURNITURE HOUSE*\n\n`;
+
+    message += `🧾 *INVOICE: ${invoiceId}*\n`;
     message += `Customer: ${customerName}\n`;
     message += `Date: ${dateStr}\n\n`;
 
     // Add Items List (Smart Bill)
     if (row.items && row.items.length > 0) {
-      message += `🧾 *ITEMS:*\n`;
+      message += `📦 *ITEMS:*\n`;
       row.items.forEach((item: any, index: number) => {
         message += `${index + 1}. ${item.itemName || 'Item'}\n`;
+        if (item.model || item.size || item.color) {
+          const details = [item.model, item.size, item.color].filter(Boolean).join(', ');
+          if (details) message += `   (${details})\n`;
+        }
         message += `   Qty: ${item.quantity} | Rate: ${item.sellingPrice}\n`;
-        message += `   Rs ${item.total}\n\n`;
+        message += `   Total: Rs ${item.total}\n\n`;
       });
       message += `----------------------------\n`;
     }
 
     // Totals
-    message += `💰 *Total:* Rs ${grandTotal.toFixed(2)}\n`;
+    message += `💰 *Grand Total:* Rs ${grandTotal.toFixed(2)}\n`;
     message += `✅ *Paid:* Rs ${paidAmount.toFixed(2)}\n`;
 
     // Due Alert
     if (dueAmount > 0.5) {
       message += `⚠️ *DUE AMOUNT: Rs ${dueAmount.toFixed(2)}*\n\n`;
-      message += `📲 *Action:* Please clear the pending dues via UPI.\n`;
+      message += `📲 *Action:* Please clear the pending dues.\n`;
     } else {
       message += `----------------------------\n`;
       message += `✨ *Status: Fully Paid* ✨\n`;
     }
 
-    message += `\nThank you for shopping with us!`;
+    // Payment Details
+    message += `\n📲 *PAYMENT DETAILS*\n`;
+    message += `UPI ID: yourshop@upi\n`; // Edit this in code or settings
+    message += `Phone: +91 98765 43210\n`; // Edit this in code or settings
+
+    message += `\n_Thank you for shopping with us!_`;
 
     // Check for phone number
     let phone = "";
