@@ -734,6 +734,7 @@ exports.getSales = async (req, res) => {
         _id: s._id,
         invoiceNo: s.invoiceNo || null,
         customerName: s.customerName || "Walk-in",
+        customerPhone: s.customerPhone || (s.customer ? s.customer.phone : null), // Added Phone
         totalPurchasePrice: Number(s.totalAmount || 0),
         totalSaleAmount,
         ...(allowFinancials

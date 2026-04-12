@@ -285,14 +285,37 @@ export class SalesListComponent implements OnInit {
     const invoiceId = row?.invoiceNo || row?._id || "-";
     const customerName = row?.customerName || "Walk-in";
     const dateStr = row?.purchaseDate ? new Date(row.purchaseDate).toLocaleString() : "-";
-    const grandTotal = Number(row?.totalAmount ?? Math.max(row?.totalPurchasePrice || 0 - row?.billDiscount || 0, 0));
+    const grandTotal = Number(row?.totalAmount ?? 0);
     const paidAmount = Number(row?.paidAmount || 0);
     const dueAmount = Number(row?.dueAmount ?? Math.max(grandTotal - paidAmount, 0));
 
+    // Check for customer phone number
+    let phone = "";
+    if (row?.customerPhone) {
+      phone = String(row.customerPhone).replace(/\D/g, '');
+    } else if (row?.customer?.phone) {
+      phone = String(row.customer.phone).replace(/\D/g, '');
+    }
+    
+    // Format text
     const text = `*INVOICE: ${invoiceId}*\nCustomer: ${customerName}\nDate: ${dateStr}\nTotal: Rs ${grandTotal.toFixed(2)}\nPaid: Rs ${paidAmount.toFixed(2)}\nDue: Rs ${dueAmount.toFixed(2)}\n\nThank you for shopping with us!`;
 
-    const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+    let url = "";
+    if (phone.length >= 10) {
+      // Assuming India (+91) if 10 digits, else just use number
+      const prefix = phone.length === 10 ? "91" : "";
+      url = `https://wa.me/${prefix}${phone}?text=${encodeURIComponent(text)}`;
+    } else {
+      // Fallback to manual entry if no number
+      url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+    }
+
     window.open(url, '_blank');
+  }
+
+  downloadPDF(row: any): void {
+    // Trigger print dialog which allows "Save as PDF"
+    this.printInvoice(row);
   }
 
   printInvoice(row: any): void {
