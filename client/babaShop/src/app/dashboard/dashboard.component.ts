@@ -3,7 +3,6 @@ import * as Chartist from "chartist";
 import { ShopService } from "./../shared/services/shop.service";
 import { AuthService } from "../shared/services/auth.service";
 import { DashboardService } from "app/shared/services/dashboard.service";
-import { StocksService } from "app/shared/services/stocks.service";
 import { forkJoin } from "rxjs";
 import { ProductService } from "app/shared/services/product.service";
 import { CategoryService } from "app/shared/services/category.service";
@@ -117,7 +116,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private shopService: ShopService,
     private authService: AuthService,
     private dashboardService: DashboardService,
-    private stocksService: StocksService,
     private productService: ProductService,
     private categoryService: CategoryService,
     private brandService: BrandService,
@@ -125,46 +123,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private router: Router,
     private cdr: ChangeDetectorRef,
   ) {}
-
-  loadOverview() {
-    this.dashboardService.getOverviewByRange(this.selectedRange).subscribe({
-      next: (res: any) => {
-        // First update with standard overview data
-        this.overview = {
-          lowStockItems: res?.data?.lowStockItems || [],
-          recentOrders: res?.data?.recentOrders || [],
-          recentSales: res?.data?.recentSales || [],
-          topSellingProducts: res?.data?.topSellingProducts || [],
-          recentPayments: res?.data?.recentPayments || [],
-          dueSummary: res?.data?.dueSummary || null,
-          customerCreditSummary: res?.data?.customerCreditSummary || null,
-        };
-        this.cdr.markForCheck();
-
-        // Then fetch specific low stock alerts to ensure they are shown
-        if (this.canOpenStocks) {
-          this.stocksService.getLowStockAlerts().subscribe({
-            next: (stockRes: any) => {
-              this.overview.lowStockItems = stockRes?.data || [];
-              this.cdr.markForCheck();
-            },
-          });
-        }
-      },
-      error: () => {
-        this.overview = {
-          lowStockItems: [],
-          recentOrders: [],
-          recentSales: [],
-          topSellingProducts: [],
-          recentPayments: [],
-          dueSummary: null,
-          customerCreditSummary: null,
-        };
-        this.cdr.markForCheck();
-      },
-    });
-  }
 
   startAnimationForLineChart(chart) {
     let seq: any, delays: any, durations: any;
@@ -371,7 +329,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   private loadDashboardData(): void {
     this.loadKpis();
-    this.loadOverview(); // This now handles low stock alerts internally
+    this.loadOverview();
     this.loadTrends();
     setTimeout(() => {
       this.loadInventorySummary();
@@ -711,6 +669,35 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   openOperationalCard(card: { action: () => void }): void {
     card.action();
+  }
+
+  loadOverview() {
+    this.dashboardService.getOverviewByRange(this.selectedRange).subscribe({
+      next: (res: any) => {
+        this.overview = {
+          lowStockItems: res?.data?.lowStockItems || [],
+          recentOrders: res?.data?.recentOrders || [],
+          recentSales: res?.data?.recentSales || [],
+          topSellingProducts: res?.data?.topSellingProducts || [],
+          recentPayments: res?.data?.recentPayments || [],
+          dueSummary: res?.data?.dueSummary || null,
+          customerCreditSummary: res?.data?.customerCreditSummary || null,
+        };
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.overview = {
+          lowStockItems: [],
+          recentOrders: [],
+          recentSales: [],
+          topSellingProducts: [],
+          recentPayments: [],
+          dueSummary: null,
+          customerCreditSummary: null,
+        };
+        this.cdr.markForCheck();
+      },
+    });
   }
 
   loadTrends() {
