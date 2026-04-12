@@ -104,16 +104,46 @@ export class SalesReportsComponent implements OnInit, OnDestroy {
 
   openZReport(): void {
     if (!this.zReport.data) {
-      // If data not loaded, generate it first
       this.generateZReport();
     }
-    // Scroll after a short delay to allow data to render
     setTimeout(() => {
       this.scrollToSection('z-report-section');
     }, 500);
   }
 
+  generateZReport(): void {
+    this.zReport.loading = true;
+    this.zReport.data = null;
+
+    this.salesService.getZReport().subscribe({
+      next: (res: any) => {
+        this.zReport.data = res?.data;
+        this.zReport.loading = false;
+      },
+      error: (err) => {
+        console.error("Failed to generate Z-Report", err);
+        this.zReport.loading = false;
+        this.snackBar.open("Failed to generate Z-Report", "Close", { duration: 3000 });
+      },
+    });
+  }
+
   loadPaymentSummary(): void {
+    const params = {
+      startDate: this.filters.dateFrom ? this.formatDate(this.filters.dateFrom) : undefined,
+      endDate: this.filters.dateTo ? this.formatDate(this.filters.dateTo) : undefined,
+    };
+
+    this.salesService.getPaymentSummary(params).subscribe({
+      next: (res: any) => {
+        this.paymentSummary = res?.data || this.paymentSummary;
+      },
+      error: (err) => {
+        console.error("Failed to load payment summary", err);
+        this.paymentSummary = { totalCash: 0, totalOnline: 0, totalCollected: 0 };
+      },
+    });
+  }
 
   setQuickDate(range: "today" | "week" | "month" | "year" | "all"): void {
     const now = new Date();
@@ -139,7 +169,6 @@ export class SalesReportsComponent implements OnInit, OnDestroy {
       this.filters.dateTo = null;
     }
 
-    // Refresh both Payment Summary and Main Report
     this.applyFilters();
   }
 
