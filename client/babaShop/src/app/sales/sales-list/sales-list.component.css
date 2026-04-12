@@ -273,6 +273,11 @@
   border-color: #25D366 !important;
 }
 
+.pdf-btn {
+  color: #f44336 !important;
+  border-color: #f44336 !important;
+}
+
 .whatsapp-btn:hover {
   background-color: #25D366 !important;
   color: #fff !important;

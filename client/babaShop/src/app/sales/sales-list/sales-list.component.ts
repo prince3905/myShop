@@ -289,12 +289,10 @@ export class SalesListComponent implements OnInit {
     const paidAmount = Number(row?.paidAmount || 0);
     const dueAmount = Number(row?.dueAmount ?? Math.max(grandTotal - paidAmount, 0));
 
-    // Check for customer phone number
+    // Check for customer phone number from the backend response
     let phone = "";
     if (row?.customerPhone) {
       phone = String(row.customerPhone).replace(/\D/g, '');
-    } else if (row?.customer?.phone) {
-      phone = String(row.customer.phone).replace(/\D/g, '');
     }
     
     // Format text
