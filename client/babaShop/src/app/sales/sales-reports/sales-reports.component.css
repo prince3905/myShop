@@ -13,6 +13,31 @@
   min-width: 170px;
 }
 
+.quick-dates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.kpi-cash {
+  border-color: #dcfce7;
+  background: linear-gradient(180deg, #dcfce7 0%, #ffffff 100%);
+}
+
+.kpi-online {
+  border-color: #dbeafe;
+  background: linear-gradient(180deg, #dbeafe 0%, #ffffff 100%);
+}
+
+.kpi-total {
+  border-color: #f3e8ff;
+  background: linear-gradient(180deg, #f3e8ff 0%, #ffffff 100%);
+  font-weight: bold;
+}
+
 .loading-wrap {
   display: flex;
   justify-content: center;

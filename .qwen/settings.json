@@ -36,7 +36,8 @@
       "Bash(justify-content: *)",
       "Bash(@media)",
       "Bash(.quick-link-text *)",
-      "Bash(eof)"
+      "Bash(eof)",
+      "Bash(git merge *)"
     ]
   },
   "$version": 3

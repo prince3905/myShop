@@ -53,6 +53,16 @@ export class SalesService {
     return this.http.get(`${this.baseURL}/api/sales/returns`, { params: query });
   }
 
+  getPaymentSummary(params?: any): Observable<any> {
+    let query = new HttpParams();
+    Object.keys(params || {}).forEach((key) => {
+      const value = params[key];
+      if (value === null || value === undefined || value === "") return;
+      query = query.set(key, String(value));
+    });
+    return this.http.get(`${this.baseURL}/api/sales/reports/payment-summary`, { params: query });
+  }
+
   getSalesReportOverview(params?: any): Observable<any> {
     let query = new HttpParams();
     Object.keys(params || {}).forEach((key) => {

@@ -1622,6 +1622,78 @@ exports.getSalesReportOverview = async (req, res) => {
   }
 };
 
+exports.getPaymentCollectionSummary = async (req, res) => {
+  try {
+    if (!req.shopId) {
+      return res.status(400).json({ success: false, message: "Please select a shop first" });
+    }
+
+    const { startDate, endDate } = req.query;
+
+    const query = { shop: req.shopId };
+    if (startDate && endDate) {
+      query.createdAt = {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate),
+      };
+    }
+
+    // Fetch only necessary fields to keep memory usage low
+    const sales = await Sale.find(query)
+      .select("paymentMethod paymentBreakdown paidAmount")
+      .lean();
+
+    let totalCash = 0;
+    let totalOnline = 0;
+
+    sales.forEach((sale) => {
+      let saleCash = 0;
+      let saleOnline = 0;
+
+      if (sale.paymentBreakdown && sale.paymentBreakdown.length > 0) {
+        sale.paymentBreakdown.forEach((p) => {
+          const method = p.method?.toUpperCase();
+          const amount = p.amount || 0;
+
+          if (["CASH", "CREDIT"].includes(method)) {
+            saleCash += amount;
+          } else {
+            saleOnline += amount;
+          }
+        });
+      } else {
+        // Fallback for older sales without split payment breakdown
+        const method = sale.paymentMethod?.toUpperCase();
+        const amount = sale.paidAmount || 0;
+
+        if (["CASH", "CREDIT"].includes(method)) {
+          saleCash += amount;
+        } else {
+          saleOnline += amount;
+        }
+      }
+
+      totalCash += saleCash;
+      totalOnline += saleOnline;
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        totalCash,
+        totalOnline,
+        totalCollected: totalCash + totalOnline,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Error calculating payment summary",
+      error: "Internal server error",
+    });
+  }
+};
+
 exports.createSaleReturn = async (req, res) => {
   try {
     if (!req.shopId) {

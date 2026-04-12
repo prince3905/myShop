@@ -66,11 +66,44 @@
           <button mat-raised-button color="primary" (click)="applyFilters()">Apply</button>
           <button mat-stroked-button color="warn" (click)="resetFilters()">Reset</button>
         </div>
+
+        <div class="quick-dates">
+          <button mat-button color="accent" (click)="setQuickDate('today')">Today</button>
+          <button mat-button color="accent" (click)="setQuickDate('week')">This Week</button>
+          <button mat-button color="accent" (click)="setQuickDate('month')">This Month</button>
+          <button mat-button color="accent" (click)="setQuickDate('year')">This Year</button>
+          <button mat-button color="accent" (click)="setQuickDate('all')">All Time</button>
+          <button mat-raised-button color="primary" (click)="loadPaymentSummary()">Refresh Collection</button>
+        </div>
       </div>
     </div>
 
     <div class="loading-wrap" *ngIf="loading">
       <mat-spinner diameter="36"></mat-spinner>
+    </div>
+
+    <!-- Payment Collection Summary -->
+    <div class="card report-card" *ngIf="!loading">
+      <div class="card-header card-header-info">
+        <h4 class="card-title">Payment Collection</h4>
+        <p class="card-category">Cash vs Online Collection for selected period</p>
+      </div>
+      <div class="card-body">
+        <div class="kpi-grid">
+          <div class="kpi kpi-cash">
+            <div class="label">Total Cash Received</div>
+            <div class="val">Rs {{ paymentSummary.totalCash | number:'1.2-2' }}</div>
+          </div>
+          <div class="kpi kpi-online">
+            <div class="label">Total Online/UPI/Card</div>
+            <div class="val">Rs {{ paymentSummary.totalOnline | number:'1.2-2' }}</div>
+          </div>
+          <div class="kpi kpi-total">
+            <div class="label">Total Collected</div>
+            <div class="val">Rs {{ paymentSummary.totalCollected | number:'1.2-2' }}</div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="kpi-grid" *ngIf="!loading">

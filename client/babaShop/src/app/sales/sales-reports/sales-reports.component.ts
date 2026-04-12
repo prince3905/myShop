@@ -53,6 +53,12 @@ export class SalesReportsComponent implements OnInit, OnDestroy {
     },
   };
 
+  paymentSummary = {
+    totalCash: 0,
+    totalOnline: 0,
+    totalCollected: 0,
+  };
+
   salesRows: any[] = [];
   returnRows: any[] = [];
   private profitTrendChart: any = null;
@@ -81,6 +87,52 @@ export class SalesReportsComponent implements OnInit, OnDestroy {
 
   applyFilters(): void {
     this.loadAll();
+  }
+
+  loadPaymentSummary(): void {
+    this.loading = true;
+    const params = {
+      startDate: this.filters.dateFrom ? this.formatDate(this.filters.dateFrom) : undefined,
+      endDate: this.filters.dateTo ? this.formatDate(this.filters.dateTo) : undefined,
+    };
+
+    this.salesService.getPaymentSummary(params).subscribe({
+      next: (res: any) => {
+        this.paymentSummary = res?.data || this.paymentSummary;
+        this.loading = false;
+      },
+      error: () => {
+        this.paymentSummary = { totalCash: 0, totalOnline: 0, totalCollected: 0 };
+        this.loading = false;
+      },
+    });
+  }
+
+  setQuickDate(range: "today" | "week" | "month" | "year" | "all"): void {
+    const now = new Date();
+    this.filters.dateFrom = null;
+    this.filters.dateTo = null;
+
+    if (range === "today") {
+      this.filters.dateFrom = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      this.filters.dateTo = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+    } else if (range === "week") {
+      const day = now.getDay();
+      const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+      this.filters.dateFrom = new Date(now.setDate(diff));
+      this.filters.dateTo = new Date();
+    } else if (range === "month") {
+      this.filters.dateFrom = new Date(now.getFullYear(), now.getMonth(), 1);
+      this.filters.dateTo = new Date();
+    } else if (range === "year") {
+      this.filters.dateFrom = new Date(now.getFullYear(), 0, 1);
+      this.filters.dateTo = new Date();
+    } else {
+      this.filters.dateFrom = null;
+      this.filters.dateTo = null;
+    }
+
+    this.loadPaymentSummary();
   }
 
   resetFilters(): void {
