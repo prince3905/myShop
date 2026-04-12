@@ -91,9 +91,12 @@ const buildCustomerPayload = async ({
 
   const payload = { ...body };
 
-  // Allow creditLimit to be updated if present in body
-  if (body.creditLimit !== undefined) {
-    payload.creditLimit = Number(body.creditLimit) >= 0 ? Number(body.creditLimit) : 0;
+  // Credit Limit Logic: Default 5000, Max 5000
+  let limitInput = body.creditLimit;
+  if (limitInput === undefined || limitInput === null || limitInput === "") {
+    payload.creditLimit = 5000; // Default limit
+  } else {
+    payload.creditLimit = Math.min(5000, Number(limitInput)); // Cap at 5000
   }
 
   if (hasPhone || requirePhone) {

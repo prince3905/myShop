@@ -13,6 +13,7 @@ import { Inject } from '@angular/core';
 export class AddCustomerDialogComponent implements OnInit {
   customerForm: FormGroup;
   loading: boolean = false;
+  isEdit: boolean = false;
 
   constructor(
     private fb: FormBuilder,
@@ -25,26 +26,27 @@ export class AddCustomerDialogComponent implements OnInit {
       name: ['', [Validators.required, Validators.minLength(2)]],
       phone: ['', [Validators.required, Validators.pattern(/^[0-9]{10}$/)]],
       email: ['', [Validators.email]],
-      address: ['']
+      address: [''],
+      creditLimit: [0]
     });
   }
 
   ngOnInit(): void {
     const customer = this.data?.customer || null;
-    if (!customer) {
-      return;
+    if (customer && customer._id) {
+      this.isEdit = true;
+      this.customerForm.patchValue({
+        name: customer.name || '',
+        phone: customer.phone || '',
+        email: customer.email || '',
+        address: customer.address || '',
+        creditLimit: customer.creditLimit || 0
+      });
     }
-
-    this.customerForm.patchValue({
-      name: customer.name || '',
-      phone: customer.phone || '',
-      email: customer.email || '',
-      address: customer.address || '',
-    });
   }
 
   get isEditMode(): boolean {
-    return !!this.data?.customer?._id;
+    return this.isEdit;
   }
 
   onSubmit(): void {
@@ -54,6 +56,11 @@ export class AddCustomerDialogComponent implements OnInit {
 
     this.loading = true;
     const customerData = this.customerForm.value;
+    
+    // Ensure creditLimit is a number
+    if (customerData.creditLimit) {
+      customerData.creditLimit = Number(customerData.creditLimit);
+    }
 
     const request$ = this.isEditMode
       ? this.customerService.updateCustomer(this.data.customer._id, customerData)

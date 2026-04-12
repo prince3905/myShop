@@ -34,6 +34,8 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
   customerAddress: string = "";
   selectedCustomerId: string = "";
   currentCustomerWalletBalance: number = 0;
+  currentCustomerCreditLimit: number = 0;
+  currentCustomerDue: number = 0;
   walletUsedAmount: number = 0;
   model: string = "";
   variations: string = "";
