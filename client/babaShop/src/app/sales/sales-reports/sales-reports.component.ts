@@ -87,10 +87,10 @@ export class SalesReportsComponent implements OnInit, OnDestroy {
 
   applyFilters(): void {
     this.loadAll();
+    this.loadPaymentSummary(); // Sync payment summary with main filters
   }
 
   loadPaymentSummary(): void {
-    this.loading = true;
     const params = {
       startDate: this.filters.dateFrom ? this.formatDate(this.filters.dateFrom) : undefined,
       endDate: this.filters.dateTo ? this.formatDate(this.filters.dateTo) : undefined,
@@ -99,11 +99,10 @@ export class SalesReportsComponent implements OnInit, OnDestroy {
     this.salesService.getPaymentSummary(params).subscribe({
       next: (res: any) => {
         this.paymentSummary = res?.data || this.paymentSummary;
-        this.loading = false;
       },
-      error: () => {
+      error: (err) => {
+        console.error("Failed to load payment summary", err);
         this.paymentSummary = { totalCash: 0, totalOnline: 0, totalCollected: 0 };
-        this.loading = false;
       },
     });
   }
@@ -132,7 +131,8 @@ export class SalesReportsComponent implements OnInit, OnDestroy {
       this.filters.dateTo = null;
     }
 
-    this.loadPaymentSummary();
+    // Refresh both Payment Summary and Main Report
+    this.applyFilters();
   }
 
   resetFilters(): void {
