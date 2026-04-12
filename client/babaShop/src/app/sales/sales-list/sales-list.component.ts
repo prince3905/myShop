@@ -6,6 +6,7 @@ import { Router } from "@angular/router";
 import { SalesService } from "app/shared/services/sales.service";
 import { SalePaymentDialogComponent } from "../sale-payment-dialog/sale-payment-dialog.component";
 import { AuthService } from "app/shared/services/auth.service";
+import { ShopService } from "app/shared/services/shop.service";
 
 @Component({
   selector: "sales-list",
@@ -23,6 +24,10 @@ export class SalesListComponent implements OnInit {
 
   selectedSale: any = null;
   @ViewChild("saleDetailsCard") saleDetailsCard?: ElementRef<HTMLElement>;
+  
+  // Shop Details for Payment
+  shopUpiId: string = "";
+  shopPhone: string = "";
 
   filters: {
     invoiceNo: string;
@@ -56,11 +61,31 @@ export class SalesListComponent implements OnInit {
     private snackBar: MatSnackBar,
     private router: Router,
     public authService: AuthService,
+    private shopService: ShopService, // Injected ShopService
     private cdr: ChangeDetectorRef, // Added back
   ) {}
 
   ngOnInit(): void {
     this.loadSales();
+    this.loadShopDetails();
+  }
+
+  loadShopDetails(): void {
+    const shopId = this.authService.getShopId();
+    if (shopId) {
+      this.shopService.getShopById(shopId).subscribe({
+        next: (res: any) => {
+          const shop = res?.data;
+          if (shop) {
+            this.shopUpiId = shop.paymentSettings?.upiId || "N/A";
+            this.shopPhone = shop.contactNumber || shop.owner?.phoneNo || "N/A";
+          }
+        },
+        error: (err) => {
+          console.error("Failed to load shop details for bill", err);
+        }
+      });
+    }
   }
 
   get canCreateSale(): boolean {
@@ -326,10 +351,11 @@ export class SalesListComponent implements OnInit {
 
     // Payment Details
     message += `\n📲 *PAYMENT DETAILS*\n`;
-    message += `UPI ID: yourshop@upi\n`; // Edit this in code or settings
-    message += `Phone: +91 98765 43210\n`; // Edit this in code or settings
+    message += `UPI ID: ${this.shopUpiId || "N/A"}\n`;
+    message += `Phone: ${this.shopPhone || "N/A"}\n`;
+    message += `\n_Please pay to the details above only._`;
 
-    message += `\n_Thank you for shopping with us!_`;
+    message += `\n\n_Thank you for shopping with us!_`;
 
     // Check for phone number
     let phone = "";
