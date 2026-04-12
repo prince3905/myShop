@@ -91,6 +91,11 @@ const buildCustomerPayload = async ({
 
   const payload = { ...body };
 
+  // Allow creditLimit to be updated if present in body
+  if (body.creditLimit !== undefined) {
+    payload.creditLimit = Number(body.creditLimit) >= 0 ? Number(body.creditLimit) : 0;
+  }
+
   if (hasPhone || requirePhone) {
     payload.phone = normalized.phone;
   }

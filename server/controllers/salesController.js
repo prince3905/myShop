@@ -443,10 +443,23 @@ exports.createSale = async (req, res) => {
         }
       }
     } else if (normalizedCustomerName && normalizedCustomerName !== "Walk-in") {
-      customerDoc = await Customer.findOne({ 
-        shop: req.shopId, 
+      customerDoc = await Customer.findOne({
+        shop: req.shopId,
         name: { $regex: new RegExp(`^${normalizedCustomerName}$`, 'i') }
       });
+    }
+
+    // Credit Limit Check: If customer has a limit set, verify due amount
+    if (customerDoc && customerDoc.creditLimit > 0) {
+      const currentDue = Number(customerDoc.totalDue || 0);
+      const limit = Number(customerDoc.creditLimit || 0);
+
+      if (currentDue >= limit) {
+        return res.status(400).json({
+          success: false,
+          message: `Credit Limit Exceeded! Current Due: Rs ${currentDue.toFixed(2)}, Limit: Rs ${limit.toFixed(2)}. Clear dues first.`,
+        });
+      }
     }
 
     const normalizedItems = [];
