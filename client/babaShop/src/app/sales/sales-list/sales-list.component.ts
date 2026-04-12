@@ -294,18 +294,33 @@ export class SalesListComponent implements OnInit {
     if (row?.customerPhone) {
       phone = String(row.customerPhone).replace(/\D/g, '');
     }
-    
-    // Format text
-    const text = `*INVOICE: ${invoiceId}*\nCustomer: ${customerName}\nDate: ${dateStr}\nTotal: Rs ${grandTotal.toFixed(2)}\nPaid: Rs ${paidAmount.toFixed(2)}\nDue: Rs ${dueAmount.toFixed(2)}\n\nThank you for shopping with us!`;
+
+    // Smart Payment Message Logic
+    let message = `*INVOICE: ${invoiceId}*\n`;
+    message += `Customer: ${customerName}\n`;
+    message += `Date: ${dateStr}\n`;
+    message += `----------------------------\n`;
+    message += `💰 Total: Rs ${grandTotal.toFixed(2)}\n`;
+    message += `✅ Paid: Rs ${paidAmount.toFixed(2)}\n`;
+
+    if (dueAmount > 0.5) {
+      message += `⚠️ *Due Amount: Rs ${dueAmount.toFixed(2)}*\n\n`;
+      message += `*Action:* Please clear the pending dues at your earliest convenience.\n`;
+    } else {
+      message += `----------------------------\n`;
+      message += `✨ *Status: Fully Paid* ✨\n`;
+    }
+
+    message += `\nThank you for shopping with us!`;
 
     let url = "";
     if (phone.length >= 10) {
       // Assuming India (+91) if 10 digits, else just use number
       const prefix = phone.length === 10 ? "91" : "";
-      url = `https://wa.me/${prefix}${phone}?text=${encodeURIComponent(text)}`;
+      url = `https://wa.me/${prefix}${phone}?text=${encodeURIComponent(message)}`;
     } else {
       // Fallback to manual entry if no number
-      url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+      url = `https://wa.me/?text=${encodeURIComponent(message)}`;
     }
 
     window.open(url, '_blank');
