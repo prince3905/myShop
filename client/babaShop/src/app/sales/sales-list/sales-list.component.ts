@@ -289,23 +289,30 @@ export class SalesListComponent implements OnInit {
     const paidAmount = Number(row?.paidAmount || 0);
     const dueAmount = Number(row?.dueAmount ?? Math.max(grandTotal - paidAmount, 0));
 
-    // Check for customer phone number from the backend response
-    let phone = "";
-    if (row?.customerPhone) {
-      phone = String(row.customerPhone).replace(/\D/g, '');
-    }
-
-    // Smart Payment Message Logic
+    // Start Message
     let message = `*INVOICE: ${invoiceId}*\n`;
     message += `Customer: ${customerName}\n`;
-    message += `Date: ${dateStr}\n`;
-    message += `----------------------------\n`;
-    message += `💰 Total: Rs ${grandTotal.toFixed(2)}\n`;
-    message += `✅ Paid: Rs ${paidAmount.toFixed(2)}\n`;
+    message += `Date: ${dateStr}\n\n`;
 
+    // Add Items List (Smart Bill)
+    if (row.items && row.items.length > 0) {
+      message += `🧾 *ITEMS:*\n`;
+      row.items.forEach((item: any, index: number) => {
+        message += `${index + 1}. ${item.itemName || 'Item'}\n`;
+        message += `   Qty: ${item.quantity} | Rate: ${item.sellingPrice}\n`;
+        message += `   Rs ${item.total}\n\n`;
+      });
+      message += `----------------------------\n`;
+    }
+
+    // Totals
+    message += `💰 *Total:* Rs ${grandTotal.toFixed(2)}\n`;
+    message += `✅ *Paid:* Rs ${paidAmount.toFixed(2)}\n`;
+
+    // Due Alert
     if (dueAmount > 0.5) {
-      message += `⚠️ *Due Amount: Rs ${dueAmount.toFixed(2)}*\n\n`;
-      message += `*Action:* Please clear the pending dues at your earliest convenience.\n`;
+      message += `⚠️ *DUE AMOUNT: Rs ${dueAmount.toFixed(2)}*\n\n`;
+      message += `📲 *Action:* Please clear the pending dues via UPI.\n`;
     } else {
       message += `----------------------------\n`;
       message += `✨ *Status: Fully Paid* ✨\n`;
@@ -313,13 +320,17 @@ export class SalesListComponent implements OnInit {
 
     message += `\nThank you for shopping with us!`;
 
+    // Check for phone number
+    let phone = "";
+    if (row?.customerPhone) {
+      phone = String(row.customerPhone).replace(/\D/g, '');
+    }
+
     let url = "";
     if (phone.length >= 10) {
-      // Assuming India (+91) if 10 digits, else just use number
       const prefix = phone.length === 10 ? "91" : "";
       url = `https://wa.me/${prefix}${phone}?text=${encodeURIComponent(message)}`;
     } else {
-      // Fallback to manual entry if no number
       url = `https://wa.me/?text=${encodeURIComponent(message)}`;
     }
 
