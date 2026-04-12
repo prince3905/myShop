@@ -95,6 +95,13 @@ export class SalesReportsComponent implements OnInit, OnDestroy {
     this.loadPaymentSummary(); // Sync payment summary with main filters
   }
 
+  scrollToSection(id: string): void {
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
   loadPaymentSummary(): void {
     const params = {
       startDate: this.filters.dateFrom ? this.formatDate(this.filters.dateFrom) : undefined,

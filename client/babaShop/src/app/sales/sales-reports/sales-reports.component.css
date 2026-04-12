@@ -206,3 +206,48 @@
 
 .text-danger { color: #dc2626 !important; }
 .text-warning { color: #d97706 !important; }
+
+/* Sticky Navigation Bar */
+.report-nav-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.report-nav-bar .nav-btn {
+  min-width: 160px;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 8px !important;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.report-nav-bar .nav-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.report-nav-bar .nav-btn .mat-icon {
+  font-size: 18px;
+  height: 18px;
+  width: 18px;
+  margin-right: 5px;
+}
+
+/* Smooth Scrolling for the page */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Card Styles */
+.mt-3 {
+  margin-top: 1.5rem !important;
+}
+
+.sales-list-table {
+  transition: all 0.3s ease;
+}

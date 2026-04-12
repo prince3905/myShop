@@ -67,6 +67,19 @@
           <button mat-stroked-button color="warn" (click)="resetFilters()">Reset</button>
         </div>
 
+        <!-- Quick Navigation Bar -->
+        <div class="report-nav-bar">
+          <button mat-stroked-button class="nav-btn" (click)="scrollToSection('payment-summary')">
+            <mat-icon>payments</mat-icon> Payment Collection
+          </button>
+          <button mat-stroked-button class="nav-btn" (click)="scrollToSection('z-report-section')">
+            <mat-icon>receipt_long</mat-icon> Z-Report
+          </button>
+          <button mat-stroked-button class="nav-btn" (click)="scrollToSection('sales-list-section')">
+            <mat-icon>list</mat-icon> Sales List
+          </button>
+        </div>
+
         <div class="quick-dates">
           <button mat-button color="accent" (click)="setQuickDate('today')">Today</button>
           <button mat-button color="accent" (click)="setQuickDate('week')">This Week</button>
@@ -86,7 +99,7 @@
     </div>
 
     <!-- Payment Collection Summary (Separate Card) -->
-    <div class="card report-card payment-summary-card" *ngIf="!loading">
+    <div id="payment-summary" class="card report-card payment-summary-card" *ngIf="!loading">
       <div class="card-header card-header-success">
         <h4 class="card-title">Payment Collection</h4>
         <p class="card-category">Cash vs Online/Digital Collection for selected period</p>
@@ -166,7 +179,7 @@
       </div>
     </div>
 
-    <div class="card mt-3" *ngIf="!loading">
+    <div class="card mt-3 sales-list-table" id="sales-list-section" *ngIf="!loading">
       <div class="card-header card-header-info">
         <h4 class="card-title">Recent Sales (Filtered)</h4>
       </div>
@@ -353,7 +366,7 @@
     </div>
 
     <!-- Z-Report Section -->
-    <div class="card report-card z-report-card" *ngIf="zReport.data">
+    <div id="z-report-section" class="card report-card z-report-card" *ngIf="zReport.data">
       <div class="card-header card-header-dark">
         <h4 class="card-title">
           <mat-icon>receipt_long</mat-icon> Z-Report (Daily Closing)

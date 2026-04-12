@@ -65,7 +65,19 @@
       "Bash(.highlight-card *)",
       "Bash(border-color:)",
       "Bash(.text-danger *)",
-      "Bash(.text-warning *)"
+      "Bash(.text-warning *)",
+      "Bash(.report-nav-bar *)",
+      "Bash(margin-bottom: *)",
+      "Bash(transition: *)",
+      "Bash(transform: *)",
+      "Bash(-2px)",
+      "Bash(height: *)",
+      "Bash(width: *)",
+      "Bash(margin-right: *)",
+      "Bash(html *)",
+      "Bash(scroll-behavior: *)",
+      "Bash(.mt-3 *)",
+      "Bash(.sales-list-table *)"
     ]
   },
   "$version": 3
