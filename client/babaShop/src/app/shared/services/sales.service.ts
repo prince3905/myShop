@@ -63,6 +63,12 @@ export class SalesService {
     return this.http.get(`${this.baseURL}/api/sales/reports/payment-summary`, { params: query });
   }
 
+  getZReport(date?: string): Observable<any> {
+    let params = new HttpParams();
+    if (date) params = params.set('date', date);
+    return this.http.get(`${this.baseURL}/api/sales/reports/z-report`, { params });
+  }
+
   getSalesReportOverview(params?: any): Observable<any> {
     let query = new HttpParams();
     Object.keys(params || {}).forEach((key) => {

@@ -73,6 +73,10 @@
           <button mat-button color="accent" (click)="setQuickDate('month')">This Month</button>
           <button mat-button color="accent" (click)="setQuickDate('year')">This Year</button>
           <button mat-button color="accent" (click)="setQuickDate('all')">All Time</button>
+          <button mat-raised-button color="primary" (click)="loadPaymentSummary()">Refresh Collection</button>
+          <button mat-stroked-button color="warn" (click)="generateZReport()">
+            <mat-icon>receipt_long</mat-icon> Generate Z-Report
+          </button>
         </div>
       </div>
     </div>
@@ -345,6 +349,81 @@
             </tr>
           </tbody>
         </table>
+      </div>
+    </div>
+
+    <!-- Z-Report Section -->
+    <div class="card report-card z-report-card" *ngIf="zReport.data">
+      <div class="card-header card-header-dark">
+        <h4 class="card-title">
+          <mat-icon>receipt_long</mat-icon> Z-Report (Daily Closing)
+        </h4>
+        <p class="card-category">Shift Summary for {{ zReport.data?.date | date:'fullDate' }}</p>
+      </div>
+      <div class="card-body">
+        <div class="z-report-grid">
+          <!-- Sales Totals -->
+          <div class="z-card">
+            <h5>Sales Summary</h5>
+            <div class="z-row">
+              <span>Gross Sales:</span>
+              <span>Rs {{ zReport.data?.salesSummary?.grossSales | number:'1.2-2' }}</span>
+            </div>
+            <div class="z-row">
+              <span>Total Returns:</span>
+              <span class="text-danger">- Rs {{ zReport.data?.salesSummary?.totalReturns | number:'1.2-2' }}</span>
+            </div>
+            <div class="z-row highlight">
+              <span>Net Sales:</span>
+              <span>Rs {{ zReport.data?.salesSummary?.netSales | number:'1.2-2' }}</span>
+            </div>
+          </div>
+
+          <!-- Payment Breakdown -->
+          <div class="z-card">
+            <h5>Payment Collected</h5>
+            <div class="z-row success">
+              <span>Cash:</span>
+              <span>Rs {{ zReport.data?.paymentBreakdown?.cash | number:'1.2-2' }}</span>
+            </div>
+            <div class="z-row">
+              <span>Card:</span>
+              <span>Rs {{ zReport.data?.paymentBreakdown?.card | number:'1.2-2' }}</span>
+            </div>
+            <div class="z-row">
+              <span>Digital (UPI/Bank):</span>
+              <span>Rs {{ zReport.data?.paymentBreakdown?.digital | number:'1.2-2' }}</span>
+            </div>
+            <div class="z-row">
+              <span>Wallet/Credit:</span>
+              <span>Rs {{ zReport.data?.paymentBreakdown?.wallet | number:'1.2-2' }}</span>
+            </div>
+          </div>
+
+          <!-- Drawer Reconciliation -->
+          <div class="z-card highlight-card">
+            <h5>Cash Drawer Check</h5>
+            <div class="z-row big-row">
+              <span>Expected Cash:</span>
+              <span>Rs {{ zReport.data?.expectedCashInDrawer | number:'1.2-2' }}</span>
+            </div>
+            <div class="z-row note">
+              <small>* Count physical cash and match with this value.</small>
+            </div>
+          </div>
+          
+           <div class="z-card">
+            <h5>Other Stats</h5>
+            <div class="z-row">
+              <span>Transactions:</span>
+              <span>{{ zReport.data?.transactionCount || 0 }}</span>
+            </div>
+            <div class="z-row">
+              <span>Outstanding (Udhaar):</span>
+              <span class="text-warning">Rs {{ zReport.data?.salesSummary?.totalDue | number:'1.2-2' }}</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>

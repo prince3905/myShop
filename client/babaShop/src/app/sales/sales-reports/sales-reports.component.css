@@ -145,3 +145,64 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Z-Report Styles */
+.z-report-card .card-header-dark {
+  background: linear-gradient(60deg, #344767, #1e293b) !important;
+  box-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.14);
+}
+
+.z-report-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.z-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.z-card h5 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #64748b;
+  border-bottom: 1px solid #cbd5e1;
+  padding-bottom: 8px;
+}
+
+.z-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  font-size: 14px;
+  color: #334155;
+}
+
+.z-row.highlight {
+  font-weight: 700;
+  color: #0f172a;
+  border-top: 1px dashed #cbd5e1;
+  margin-top: 4px;
+  padding-top: 12px;
+}
+
+.z-row.success span:first-child {
+  color: #166534;
+  font-weight: 600;
+}
+
+.highlight-card {
+  background: #fffbeb !important;
+  border-color: #fcd34d !important;
+}
+
+.text-danger { color: #dc2626 !important; }
+.text-warning { color: #d97706 !important; }

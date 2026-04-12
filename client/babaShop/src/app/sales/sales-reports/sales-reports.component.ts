@@ -59,6 +59,11 @@ export class SalesReportsComponent implements OnInit, OnDestroy {
     totalCollected: 0,
   };
 
+  zReport: any = {
+    loading: false,
+    data: null,
+  };
+
   salesRows: any[] = [];
   returnRows: any[] = [];
   private profitTrendChart: any = null;
@@ -103,6 +108,25 @@ export class SalesReportsComponent implements OnInit, OnDestroy {
       error: (err) => {
         console.error("Failed to load payment summary", err);
         this.paymentSummary = { totalCash: 0, totalOnline: 0, totalCollected: 0 };
+      },
+    });
+  }
+
+  generateZReport(): void {
+    this.zReport.loading = true;
+    this.zReport.data = null;
+
+    // Z-Report is usually for "Today", but we can use filters if set.
+    // Defaulting to today for standard Z-Report behavior.
+    this.salesService.getZReport().subscribe({
+      next: (res: any) => {
+        this.zReport.data = res?.data;
+        this.zReport.loading = false;
+      },
+      error: (err) => {
+        console.error("Failed to generate Z-Report", err);
+        this.zReport.loading = false;
+        this.snackBar.open("Failed to generate Z-Report", "Close", { duration: 3000 });
       },
     });
   }

@@ -21,6 +21,110 @@ const { generateInvoiceNo } = require("../utils/invoice.service");
 
 const isSuperAdminGlobal = (req) =>
   req.user?.role === "SUPER_ADMIN" && !req.shopId;
+
+// ... (existing code) ...
+
+// Helper to get start and end of a specific date (default Today)
+const getDateRange = (dateStr) => {
+  const date = dateStr ? new Date(dateStr) : new Date();
+  const start = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const end = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
+  return { start, end };
+};
+
+exports.getZReport = async (req, res) => {
+  try {
+    if (!req.shopId) {
+      return res.status(400).json({ success: false, message: "Please select a shop first" });
+    }
+
+    const { date } = req.query; // Optional date param
+    const { start, end } = getDateRange(date);
+    const query = { shop: req.shopId, createdAt: { $gte: start, $lte: end } };
+
+    // Fetch Sales
+    const sales = await Sale.find(query).select("paymentMethod paymentBreakdown totalAmount dueAmount paidAmount walletUsedAmount");
+    
+    // Fetch Returns
+    const returns = await SaleReturn.find({ shop: req.shopId, createdAt: { $gte: start, $lte: end } }).select("refundAmount creditAmount totalAmount");
+
+    let totalSales = 0;
+    let totalCash = 0;
+    let totalCard = 0;
+    let totalDigital = 0;
+    let totalWallet = 0;
+    let totalDue = 0;
+    let totalRefund = 0;
+    let transactionCount = 0;
+
+    sales.forEach((sale) => {
+      totalSales += Number(sale.totalAmount || 0);
+      totalDue += Number(sale.dueAmount || 0);
+      transactionCount++;
+
+      // Calculate payment methods from breakdown or fallback to paymentMethod
+      if (sale.paymentBreakdown && sale.paymentBreakdown.length > 0) {
+        sale.paymentBreakdown.forEach((p) => {
+          const amt = Number(p.amount || 0);
+          const method = p.method?.toUpperCase();
+          if (method === "CASH") totalCash += amt;
+          else if (method === "CARD") totalCard += amt;
+          else if (["UPI", "BANK", "ONLINE"].includes(method)) totalDigital += amt;
+          else if (method === "CREDIT" || method === "STORE_CREDIT") totalWallet += amt; // Wallet/Credit
+        });
+      } else {
+        // Fallback logic if no breakdown exists (older sales)
+        const method = sale.paymentMethod?.toUpperCase();
+        const amt = Number(sale.paidAmount || 0);
+        if (method === "CASH") totalCash += amt;
+        else if (method === "CARD") totalCard += amt;
+        else if (["UPI", "BANK", "ONLINE"].includes(method)) totalDigital += amt;
+      }
+      
+      // Add wallet used amount to totalWallet
+      totalWallet += Number(sale.walletUsedAmount || 0);
+    });
+
+    // Summarize Returns
+    returns.forEach((ret) => {
+      totalRefund += Number(ret.totalAmount || 0);
+    });
+
+    const netCash = totalCash; // Cash in hand before deducting refunds (usually refunds are separate or cash out)
+    const systemTotal = totalSales;
+    
+    // What should be in the drawer: Opening Balance (if tracked) + Cash Sales - Cash Refunds
+    // Since we don't track Opening Balance yet, we just show Expected Cash from Sales.
+    const expectedCashInDrawer = netCash; 
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        date: start,
+        transactionCount,
+        salesSummary: {
+          grossSales: totalSales,
+          netSales: totalSales - totalRefund,
+          totalReturns: totalRefund,
+          totalDue: totalDue, // Outstanding credit sales
+        },
+        paymentBreakdown: {
+          cash: totalCash,
+          card: totalCard,
+          digital: totalDigital, // UPI/Bank/Online
+          wallet: totalWallet,
+        },
+        expectedCashInDrawer: expectedCashInDrawer,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Error generating Z-Report",
+      error: "Internal server error",
+    });
+  }
+};
 const ALLOWED_REFUND_METHODS = new Set(["CASH", "BANK", "ONLINE", "UPI", "CARD", "STORE_CREDIT"]);
 const ALLOWED_PAYMENT_METHODS = new Set(["CASH", "BANK", "ONLINE", "UPI", "CARD", "CHEQUE"]);
 const ALLOWED_SALE_PAYMENT_METHODS = new Set(["CASH", "UPI", "CARD", "BANK", "ONLINE", "CREDIT", "SPLIT"]);
