@@ -126,16 +126,42 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private cdr: ChangeDetectorRef,
   ) {}
 
-  loadLowStockAlerts(): void {
-    if (!this.canOpenStocks) return;
-
-    this.stocksService.getLowStockAlerts().subscribe({
+  loadOverview() {
+    this.dashboardService.getOverviewByRange(this.selectedRange).subscribe({
       next: (res: any) => {
-        this.overview.lowStockItems = res?.data || [];
+        // First update with standard overview data
+        this.overview = {
+          lowStockItems: res?.data?.lowStockItems || [],
+          recentOrders: res?.data?.recentOrders || [],
+          recentSales: res?.data?.recentSales || [],
+          topSellingProducts: res?.data?.topSellingProducts || [],
+          recentPayments: res?.data?.recentPayments || [],
+          dueSummary: res?.data?.dueSummary || null,
+          customerCreditSummary: res?.data?.customerCreditSummary || null,
+        };
         this.cdr.markForCheck();
+
+        // Then fetch specific low stock alerts to ensure they are shown
+        if (this.canOpenStocks) {
+          this.stocksService.getLowStockAlerts().subscribe({
+            next: (stockRes: any) => {
+              this.overview.lowStockItems = stockRes?.data || [];
+              this.cdr.markForCheck();
+            },
+          });
+        }
       },
-      error: (err) => {
-        console.error("Failed to load low stock alerts", err);
+      error: () => {
+        this.overview = {
+          lowStockItems: [],
+          recentOrders: [],
+          recentSales: [],
+          topSellingProducts: [],
+          recentPayments: [],
+          dueSummary: null,
+          customerCreditSummary: null,
+        };
+        this.cdr.markForCheck();
       },
     });
   }
@@ -345,8 +371,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   private loadDashboardData(): void {
     this.loadKpis();
-    this.loadOverview();
-    this.loadLowStockAlerts(); // Load Low Stock Alerts immediately
+    this.loadOverview(); // This now handles low stock alerts internally
     this.loadTrends();
     setTimeout(() => {
       this.loadInventorySummary();
@@ -686,35 +711,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   openOperationalCard(card: { action: () => void }): void {
     card.action();
-  }
-
-  loadOverview() {
-    this.dashboardService.getOverviewByRange(this.selectedRange).subscribe({
-      next: (res: any) => {
-        this.overview = {
-          lowStockItems: res?.data?.lowStockItems || [],
-          recentOrders: res?.data?.recentOrders || [],
-          recentSales: res?.data?.recentSales || [],
-          topSellingProducts: res?.data?.topSellingProducts || [],
-          recentPayments: res?.data?.recentPayments || [],
-          dueSummary: res?.data?.dueSummary || null,
-          customerCreditSummary: res?.data?.customerCreditSummary || null,
-        };
-        this.cdr.markForCheck();
-      },
-      error: () => {
-        this.overview = {
-          lowStockItems: [],
-          recentOrders: [],
-          recentSales: [],
-          topSellingProducts: [],
-          recentPayments: [],
-          dueSummary: null,
-          customerCreditSummary: null,
-        };
-        this.cdr.markForCheck();
-      },
-    });
   }
 
   loadTrends() {
