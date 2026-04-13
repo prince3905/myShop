@@ -1,0 +1,6 @@
+{
+  "appId": "com.babashop.app",
+  "appName": "BabaShop",
+  "webDir": "dist",
+  "bundledWebRuntime": false
+}

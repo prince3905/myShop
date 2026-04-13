@@ -1,14 +1,14 @@
-export type ApiMode = "auto" | "local" | "emulator" | "ngrok" | "custom";
+export type ApiMode = "auto" | "local" | "emulator" | "render" | "custom";
 
 export const API_MODE_STORAGE_KEY = "babashop.apiMode";
 export const API_OVERRIDE_STORAGE_KEY = "babashop.apiBaseURLOverride";
-export const DEFAULT_NGROK_URL = "https://example.ngrok-free.app";
+export const DEFAULT_RENDER_URL = "https://myshop-amdm.onrender.com";
 
 export const API_MODE_OPTIONS: Array<{ value: ApiMode; label: string }> = [
   { value: "auto", label: "Auto" },
   { value: "local", label: "Localhost" },
   { value: "emulator", label: "Android Emulator" },
-  { value: "ngrok", label: "ngrok" },
+  { value: "render", label: "Render (Cloud)" },
   { value: "custom", label: "Custom URL" },
 ];
 
@@ -60,8 +60,8 @@ export const resolveApiURLForMode = (mode: ApiMode, customURL = ""): string => {
   if (mode === "emulator") {
     return "http://10.0.2.2:3000";
   }
-  if (mode === "ngrok") {
-    return DEFAULT_NGROK_URL;
+  if (mode === "render") {
+    return DEFAULT_RENDER_URL;
   }
   if (mode === "custom") {
     return normalizeApiURL(customURL);
@@ -72,7 +72,7 @@ export const resolveApiURLForMode = (mode: ApiMode, customURL = ""): string => {
 
 export const getDefaultApiBaseURL = (production = false): string => {
   if (isNativeApp()) {
-    return DEFAULT_NGROK_URL;
+    return DEFAULT_RENDER_URL;
   }
 
   return !production && isLocalFrontend() ? "http://localhost:3000" : getCurrentOrigin();

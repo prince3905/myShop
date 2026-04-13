@@ -210,7 +210,7 @@ export class SettingsComponent implements OnInit {
       return;
     }
 
-    this.customApiURL = this.apiMode === "custom" || this.apiMode === "ngrok"
+    this.customApiURL = this.apiMode === "custom" || this.apiMode === "render"
       ? this.apiEndpointService.normalizeCustomURL(this.customApiURL)
       : this.customApiURL;
     this.activeApiURL = result.resolvedURL;

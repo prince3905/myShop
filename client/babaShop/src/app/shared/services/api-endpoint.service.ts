@@ -5,7 +5,7 @@ import {
   API_MODE_STORAGE_KEY,
   API_OVERRIDE_STORAGE_KEY,
   ApiMode,
-  DEFAULT_NGROK_URL,
+  DEFAULT_RENDER_URL,
   getStoredApiBaseURL,
   getStoredApiMode,
   normalizeApiURL,
@@ -17,7 +17,7 @@ import {
 })
 export class ApiEndpointService {
   readonly apiModeOptions = API_MODE_OPTIONS;
-  readonly defaultNgrokURL = DEFAULT_NGROK_URL;
+  readonly defaultRenderURL = DEFAULT_RENDER_URL;
 
   getActiveApiURL(): string {
     return environment.apiBaseURL;
@@ -29,17 +29,17 @@ export class ApiEndpointService {
 
     return {
       apiMode,
-      customApiURL: storedApiURL || this.defaultNgrokURL,
+      customApiURL: storedApiURL || this.defaultRenderURL,
       activeApiURL: this.getActiveApiURL(),
     };
   }
 
   saveSettings(apiMode: ApiMode, customApiURL = ""): { success: boolean; resolvedURL: string } {
     const effectiveCustomURL =
-      apiMode === "ngrok" ? (normalizeApiURL(customApiURL) || this.defaultNgrokURL) : customApiURL;
+      apiMode === "render" ? (normalizeApiURL(customApiURL) || this.defaultRenderURL) : customApiURL;
     const resolvedURL = resolveApiURLForMode(apiMode, effectiveCustomURL);
 
-    if ((apiMode === "custom" || apiMode === "ngrok") && !resolvedURL) {
+    if ((apiMode === "custom" || apiMode === "render") && !resolvedURL) {
       return { success: false, resolvedURL: "" };
     }
 
