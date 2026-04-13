@@ -673,7 +673,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
     event.preventDefault();
     event.stopPropagation();
     this.setDashboardRange(range);
+    
+    // Smooth scroll to charts/data when range changes
+    setTimeout(() => {
+      this.scrollToSection('dailySalesChart');
+    }, 100);
   }
+
 
   openOperationalCard(card: { action: () => void }): void {
     card.action();
@@ -960,28 +966,29 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   openSale(): void {
     if (!this.canOpenSales) return;
-    this.scrollToSection('dailySalesChart');
+    this.goToRoute("/sale-list");
   }
 
   openProducts(): void {
     if (!this.canOpenProducts) return;
-    this.scrollToSection('stockWatchSection');
+    this.goToRoute("/item-list");
   }
 
   openStocks(): void {
     if (!this.canOpenStocks) return;
-    this.scrollToSection('stockWatchSection');
+    this.goToRoute("/stocks");
   }
 
   openPurchase(): void {
     if (!this.canOpenPurchase) return;
-    this.scrollToSection('completedTasksChart');
+    this.goToRoute("/purchase");
   }
 
   openOrders(): void {
     if (!this.canOpenOrders) return;
-    this.scrollToSection('websiteViewsChart');
+    this.goToRoute("/order");
   }
+
 
 
   openReturns(): void {
