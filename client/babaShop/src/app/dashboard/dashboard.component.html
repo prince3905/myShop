@@ -1,592 +1,161 @@
-<div class="main-content">
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col-12">
-                <div class="dashboard-header-card">
-                    <div class="dashboard-header-main">
-                        <div class="dashboard-scope-badge">{{ getScopeLabel() }}</div>
-                        <div class="dashboard-range-badge" *ngIf="canUseDashboardRangeControls">{{ selectedRangeLabel }} View</div>
-                        <h3 class="dashboard-header-title">{{ dashboardTitle }}</h3>
-                        <p class="dashboard-header-subtitle">{{ dashboardSubtitle }}</p>
-                    </div>
-                    <div class="dashboard-header-side">
-                        <div class="dashboard-header-meta">
-                            <span class="header-pill">Products: {{ inventorySummary.products }}</span>
-                            <span class="header-pill">Categories: {{ inventorySummary.categories }}</span>
-                            <span class="header-pill">Brands: {{ inventorySummary.brands }}</span>
-                        </div>
-                        <div class="dashboard-header-note">
-                            {{ getScopeNote() }}
-                        </div>
-                    </div>
+<div class="main-content ion-padding">
+    <div class="dashboard-wrapper">
+        <!-- Header Section -->
+        <ion-card class="dashboard-header-card">
+            <ion-card-content>
+                <div class="header-top">
+                    <ion-badge color="primary" class="scope-badge">{{ getScopeLabel() }}</ion-badge>
+                    <ion-badge color="light" class="range-badge" *ngIf="canUseDashboardRangeControls">{{ selectedRangeLabel }} View</ion-badge>
                 </div>
-            </div>
-        </div>
-        <div class="row" *ngIf="showOperationalWorkboard && operationalQuickCards.length">
-            <div class="col-12">
-                <div class="operational-workboard">
-                    <div class="operational-workboard-header">
-                        <div>
-                            <h4>Operations Snapshot</h4>
-                            <p>Clean quick view for the tools and counts you actively use.</p>
-                        </div>
-                    </div>
-                    <div class="operational-workboard-grid">
-                        <button
-                            type="button"
-                            class="operational-quick-card"
-                            *ngFor="let card of operationalQuickCards"
-                            (click)="openOperationalCard(card)"
-                        >
-                            <div class="operational-quick-icon">
-                                <i class="material-icons">{{ card.icon }}</i>
+                <h1 class="header-title">{{ dashboardTitle }}</h1>
+                <p class="header-subtitle">{{ dashboardSubtitle }}</p>
+                <div class="header-meta">
+                    <span class="meta-pill">📦 {{ inventorySummary.products }}</span>
+                    <span class="meta-pill">🏷️ {{ inventorySummary.brands }}</span>
+                </div>
+            </ion-card-content>
+        </ion-card>
+
+        <!-- Range Selector -->
+        <ion-segment *ngIf="canUseDashboardRangeControls" [(ngModel)]="selectedRange" (ionChange)="onRangeChange()" class="range-segment" scrollable>
+            <ion-segment-button value="daily">
+                <ion-label>Daily</ion-label>
+            </ion-segment-button>
+            <ion-segment-button value="weekly">
+                <ion-label>Weekly</ion-label>
+            </ion-segment-button>
+            <ion-segment-button value="monthly">
+                <ion-label>Monthly</ion-label>
+            </ion-segment-button>
+        </ion-segment>
+
+        <!-- KPI Grid -->
+        <ion-grid class="kpi-grid">
+            <ion-row>
+                <!-- Sales KPI -->
+                <ion-col size="6" size-md="3" *ngIf="canOpenSales">
+                    <ion-card class="kpi-card" (click)="openSale()">
+                        <ion-card-content>
+                            <div class="kpi-value text-success">₹ {{ kpis?.todaySales | number:'1.0-0' }}</div>
+                            <div class="kpi-label">Sales</div>
+                            <ion-icon name="cart" class="kpi-icon bg-success"></ion-icon>
+                        </ion-card-content>
+                    </ion-card>
+                </ion-col>
+
+                <!-- Orders KPI -->
+                <ion-col size="6" size-md="3" *ngIf="canOpenOrders">
+                    <ion-card class="kpi-card" (click)="openOrders()">
+                        <ion-card-content>
+                            <div class="kpi-value text-warning">{{ kpis?.todayOrders || 0 }}</div>
+                            <div class="kpi-label">Orders</div>
+                            <ion-icon name="clipboard" class="kpi-icon bg-warning"></ion-icon>
+                        </ion-card-content>
+                    </ion-card>
+                </ion-col>
+
+                <!-- Low Stock KPI -->
+                <ion-col size="6" size-md="3" *ngIf="canOpenStocks">
+                    <ion-card class="kpi-card" (click)="openStocks()">
+                        <ion-card-content>
+                            <div class="kpi-value text-danger">{{ kpis?.lowStockCount || 0 }}</div>
+                            <div class="kpi-label">Low Stock</div>
+                            <ion-icon name="warning" class="kpi-icon bg-danger"></ion-icon>
+                        </ion-card-content>
+                    </ion-card>
+                </ion-col>
+
+                <!-- Customers KPI -->
+                <ion-col size="6" size-md="3" *ngIf="canOpenCustomers">
+                    <ion-card class="kpi-card" (click)="openCustomers()">
+                        <ion-card-content>
+                            <div class="kpi-value text-primary">{{ kpis?.totalCustomers || 0 }}</div>
+                            <div class="kpi-label">Customers</div>
+                            <ion-icon name="people" class="kpi-icon bg-primary"></ion-icon>
+                        </ion-card-content>
+                    </ion-card>
+                </ion-col>
+            </ion-row>
+        </ion-grid>
+
+        <!-- Charts Section -->
+        <ion-grid>
+            <ion-row>
+                <ion-col size="12" size-md="6">
+                    <ion-card>
+                        <ion-card-header>
+                            <ion-card-title>Sales Trend</ion-card-title>
+                        </ion-card-header>
+                        <ion-card-content>
+                            <div class="chart-wrapper" id="dailySalesChart"></div>
+                        </ion-card-content>
+                    </ion-card>
+                </ion-col>
+                <ion-col size="12" size-md="6">
+                    <ion-card>
+                        <ion-card-header>
+                            <ion-card-title>Purchase Trend</ion-card-title>
+                        </ion-card-header>
+                        <ion-card-content>
+                            <div class="chart-wrapper" id="purchaseAnalyticsChart"></div>
+                        </ion-card-content>
+                    </ion-card>
+                </ion-col>
+            </ion-row>
+        </ion-grid>
+
+        <!-- Low Stock Alerts -->
+        <ion-card *ngIf="canOpenStocks">
+            <ion-card-header>
+                <ion-card-title color="danger">⚠️ Low Stock Alerts</ion-card-title>
+            </ion-card-header>
+            <ion-card-content>
+                <ion-list lines="full" *ngIf="overview.lowStockItems?.length; else noStock">
+                    <ion-item *ngFor="let item of overview.lowStockItems">
+                        <ion-icon name="cube" slot="start" color="warning"></ion-icon>
+                        <ion-label>
+                            <h2>{{ item.productName }}</h2>
+                            <p>SKU: {{ item.sku }}</p>
+                        </ion-label>
+                        <ion-badge slot="end" color="danger">{{ item.availableQuantity }} Left</ion-badge>
+                    </ion-item>
+                </ion-list>
+                <ng-template #noStock>
+                    <div class="empty-state">✅ All items are well stocked!</div>
+                </ng-template>
+            </ion-card-content>
+        </ion-card>
+
+        <!-- Outstanding Summary -->
+        <ion-card *ngIf="canViewFinancialDashboard">
+            <ion-card-header>
+                <ion-card-title color="primary">💰 Outstanding Summary</ion-card-title>
+            </ion-card-header>
+            <ion-card-content>
+                <ion-grid>
+                    <ion-row>
+                        <ion-col size="4">
+                            <div class="summary-box">
+                                <div class="label">Sales Due</div>
+                                <div class="value">₹ {{ overview.dueSummary?.salesDue | number:'1.0-0' }}</div>
                             </div>
-                            <div class="operational-quick-copy">
-                                <div class="operational-quick-title">{{ card.title }}</div>
-                                <div class="operational-quick-value">{{ card.value }}</div>
-                                <div class="operational-quick-meta">{{ card.meta }}</div>
+                        </ion-col>
+                        <ion-col size="4">
+                            <div class="summary-box">
+                                <div class="label">Orders Due</div>
+                                <div class="value">₹ {{ overview.dueSummary?.orderDue | number:'1.0-0' }}</div>
                             </div>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="row" *ngIf="canUseDashboardRangeControls && priorityFlowSteps.length">
-            <div class="col-12">
-                <div class="dashboard-flow-card">
-                    <div class="dashboard-flow-title">Dashboard Priority Flow</div>
-                    <div class="dashboard-flow-status">
-                        Showing calculated dashboard data for <strong>{{ selectedRangeLabel }}</strong> range
-                    </div>
-                    <div class="dashboard-flow-grid">
-                        <button
-                            type="button"
-                            class="dashboard-flow-step"
-                            *ngFor="let step of priorityFlowSteps"
-                            [class.active]="selectedRange === step.key"
-                            [class.muted]="step.muted"
-                            (pointerdown)="onRangeInteract($event, step.key)"
-                            (click)="onRangeInteract($event, step.key)"
-                            (keydown.enter)="onRangeInteract($event, step.key)"
-                            (keydown.space)="onRangeInteract($event, step.key)"
-                        >
-                            <span class="step-state">{{ selectedRange === step.key ? 'Current View' : 'Tap to View' }}</span>
-                            <span class="step-label">{{ step.label }}</span>
-                            <span class="step-copy">{{ step.copy }}</span>
-                        </button>
-                        
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="row" *ngIf="canUseDashboardRangeControls">
-            <div class="col-12">
-                <div class="dashboard-range-summary-card">
-                    <div class="range-summary-label">Current Dashboard Filter</div>
-                    <div class="range-summary-title">{{ selectedRangeLabel }} View</div>
-                    <div class="range-summary-copy">{{ rangeSummaryLine }}</div>
-                </div>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-lg-3 col-md-6 col-sm-6" *ngIf="!isStaff && canOpenSales">
-                <div class="card card-stats dashboard-click-card" (click)="openSale()">
-                    <div class="card-header card-header-success card-header-icon">
-                        <div class="card-icon">
-                            <i class="material-icons">store</i>
-                        </div>
-                        <p class="card-category">{{ salesKpiLabel }}</p>
-                        <h3 class="card-title">₹ {{ kpis?.todaySales | number:'1.2-2' }}</h3>
-                    </div>
-                    <div class="card-footer">
-                        <div class="stats">
-                            <i class="material-icons">date_range</i> {{ loadingKpis ? 'Loading...' : rangeFooterCopy }}
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-3 col-md-6 col-sm-6" *ngIf="canOpenOrders">
-                <div class="card card-stats dashboard-click-card" (click)="openOrders()">
-                    <div class="card-header card-header-warning card-header-icon">
-                        <div class="card-icon">
-                            <i class="material-icons">content_copy</i>
-                        </div>
-                        <p class="card-category">{{ ordersKpiLabel }}</p>
-                        <h3 class="card-title">{{ kpis?.todayOrders || 0 }}</h3>
-                    </div>
-                    <div class="card-footer">
-                        <div class="stats">
-                            <i class="material-icons text-success">shopping_cart</i>
-                            Active customers: {{ kpis?.totalCustomers || 0 }}
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-3 col-md-6 col-sm-6" *ngIf="canViewFinancialDashboard && canOpenPurchase">
-                <div class="card card-stats dashboard-click-card" (click)="openPurchase()">
-                    <div class="card-header card-header-danger card-header-icon">
-                        <div class="card-icon">
-                            <i class="material-icons">info_outline</i>
-                        </div>
-                        <p class="card-category">{{ purchaseKpiLabel }}</p>
-                        <h3 class="card-title">₹ {{ kpis?.todayPurchase | number:'1.2-2' }}</h3>
-                    </div>
-                    <div class="card-footer">
-                        <div class="stats">
-                            <i class="material-icons">assignment_return</i> Returned in {{ selectedRangeLabel.toLowerCase() }} range: ₹ {{ kpis?.todayPurchaseReturnAmount | number:'1.2-2' }}
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-3 col-md-6 col-sm-6" *ngIf="canOpenStocks">
-                <div class="card card-stats dashboard-click-card" (click)="openStocks()">
-                    <div class="card-header card-header-info card-header-icon">
-                        <div class="card-icon">
-                            <i class="fa fa-twitter"></i>
-                        </div>
-                        <p class="card-category">{{ isStaff ? 'Stock Alerts' : 'Low Stock Alerts' }}</p>
-                        <h3 class="card-title">{{ kpis?.lowStockCount || 0 }}</h3>
-                    </div>
-                    <div class="card-footer">
-                        <div class="stats">
-                            <ng-container *ngIf="canViewFinancialDashboard; else stockFooterBasic">
-                                <i class="material-icons">currency_rupee</i> Customer credit in {{ selectedRangeLabel.toLowerCase() }} range: ₹ {{ kpis?.todaySaleCreditAmount | number:'1.2-2' }}
-                            </ng-container>
-                            <ng-template #stockFooterBasic>
-                                <i class="material-icons">inventory_2</i> Reorder watch active
-                            </ng-template>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-3 col-md-6 col-sm-6" *ngIf="!canViewFinancialDashboard && canOpenCustomers">
-                <div class="card card-stats dashboard-click-card" (click)="openCustomers()">
-                    <div class="card-header card-header-primary card-header-icon">
-                        <div class="card-icon">
-                            <i class="material-icons">groups</i>
-                        </div>
-                        <p class="card-category">Customers</p>
-                        <h3 class="card-title">{{ kpis?.totalCustomers || 0 }}</h3>
-                    </div>
-                    <div class="card-footer">
-                        <div class="stats">
-                            <i class="material-icons">person_search</i> Basic customer lookup ready
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-3 col-md-6 col-sm-6" *ngIf="!canViewFinancialDashboard && canOpenProducts">
-                <div class="card card-stats dashboard-click-card" (click)="openProducts()">
-                    <div class="card-header card-header-primary card-header-icon">
-                        <div class="card-icon">
-                            <i class="material-icons">inventory_2</i>
-                        </div>
-                        <p class="card-category">Products</p>
-                        <h3 class="card-title">{{ inventorySummary.products }}</h3>
-                    </div>
-                    <div class="card-footer">
-                        <div class="stats">
-                            <i class="material-icons">category</i> Categories: {{ inventorySummary.categories }} | Brands: {{ inventorySummary.brands }}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="row" *ngIf="showTopAnalyticsFirst && canShowRangeSnapshotCards && (canOpenReturns || (canViewFinancialDashboard && canOpenPurchase))">
-            <div class="col-12">
-                <div class="analytics-strip">
-                    <div class="analytics-card dashboard-click-card" *ngIf="canViewFinancialDashboard && canOpenPurchase" (click)="openPurchase()">
-                        <div class="title">{{ selectedRangeSnapshotTitle }} Purchase</div>
-                        <div class="amount">₹ {{ selectedPurchaseAnalytics?.totalAmount | number:'1.2-2' }}</div>
-                        <div class="meta">
-                            Paid: ₹ {{ selectedPurchaseAnalytics?.totalPaid | number:'1.2-2' }} |
-                            Due: ₹ {{ selectedPurchaseAnalytics?.totalDue | number:'1.2-2' }} |
-                            Count: {{ selectedPurchaseAnalytics?.count || 0 }}
-                        </div>
-                    </div>
-                    <div class="analytics-card return-card dashboard-click-card" *ngIf="canOpenReturns" (click)="openReturns()">
-                        <div class="title">{{ selectedRangeSnapshotTitle }} Customer Returns</div>
-                        <div class="amount" *ngIf="canViewReturnAmounts; else selectedReturnOpsOnly">₹ {{ selectedReturnAnalytics?.totalAmount | number:'1.2-2' }}</div>
-                        <ng-template #selectedReturnOpsOnly>
-                            <div class="amount">{{ selectedReturnAnalytics?.count || 0 }}</div>
-                        </ng-template>
-                        <div class="meta" *ngIf="canViewReturnAmounts; else selectedReturnOpsMeta">
-                            Refund to Customer: ₹ {{ selectedReturnAnalytics?.totalRefund | number:'1.2-2' }} |
-                            Customer Credit: ₹ {{ selectedReturnAnalytics?.totalCredit | number:'1.2-2' }} |
-                            Sales: {{ selectedReturnAnalytics?.saleReturnCount || 0 }} |
-                            Orders: {{ selectedReturnAnalytics?.orderReturnCount || 0 }} |
-                            Qty: {{ selectedReturnAnalytics?.totalQty || 0 }}
-                        </div>
-                        <ng-template #selectedReturnOpsMeta>
-                            Sales: {{ selectedReturnAnalytics?.saleReturnCount || 0 }} |
-                            Orders: {{ selectedReturnAnalytics?.orderReturnCount || 0 }} |
-                            Qty: {{ selectedReturnAnalytics?.totalQty || 0 }}
-                        </ng-template>
-                    </div>
-                    <div class="analytics-card purchase-return-card dashboard-click-card" *ngIf="canViewFinancialDashboard && canOpenPurchase" (click)="openPurchase()">
-                        <div class="title">{{ selectedRangeSnapshotTitle }} Returned to Distributor</div>
-                        <div class="amount">₹ {{ selectedPurchaseReturnAnalytics?.totalAmount | number:'1.2-2' }}</div>
-                        <div class="meta">
-                            Qty: {{ selectedPurchaseReturnAnalytics?.totalQty || 0 }} |
-                            Count: {{ selectedPurchaseReturnAnalytics?.count || 0 }}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="row" *ngIf="showTopAnalyticsFirst && canViewFinancialDashboard && canOpenPurchase">
-            <div class="col-md-12">
-                <div class="card card-chart dashboard-click-card" (click)="openPurchase()">
-                    <div class="card-header card-header-info">
-                        <div class="ct-chart" id="purchaseAnalyticsChart"></div>
-                    </div>
-                    <div class="card-body">
-                        <h4 class="card-title">Purchase Analytics Snapshot</h4>
-                        <p class="card-category">Today vs Weekly vs Monthly purchase value</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-md-4" *ngIf="canOpenSales">
-                <div class="card card-chart dashboard-click-card" (click)="openSale()">
-                    <div class="card-header card-header-success">
-                        <div class="ct-chart" id="dailySalesChart"></div>
-                    </div>
-                    <div class="card-body">
-                        <h4 class="card-title">{{ canUseDashboardRangeControls ? (selectedRangeLabel + ' Sales Trend (' + trendDays + ' days)') : 'Sales Trend' }}</h4>
-                        <p class="card-category">{{ isStaff ? 'Daily sales activity' : isManager ? 'Operational sales movement' : 'Shop scoped line trend' }}</p>
-                    </div>
-                    <div class="card-footer">
-                        <div class="stats">
-                            <i class="material-icons">access_time</i> updated 4 minutes ago
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4" *ngIf="canOpenOrders">
-                <div class="card card-chart dashboard-click-card" (click)="openOrders()">
-                    <div class="card-header card-header-warning">
-                        <div class="ct-chart" id="websiteViewsChart"></div>
-                    </div>
-                    <div class="card-body">
-                        <h4 class="card-title">{{ canUseDashboardRangeControls ? (selectedRangeLabel + ' Orders Trend (' + trendDays + ' days)') : 'Orders Trend' }}</h4>
-                        <p class="card-category">{{ isStaff ? 'Daily order activity' : 'Daily order count' }}</p>
-                    </div>
-                    <div class="card-footer">
-                        <div class="stats">
-                            <i class="material-icons">access_time</i> campaign sent 2 days ago
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4" *ngIf="canViewFinancialDashboard && canOpenPurchase">
-                <div class="card card-chart dashboard-click-card" (click)="openPurchase()">
-                    <div class="card-header card-header-danger">
-                        <div class="ct-chart" id="completedTasksChart"></div>
-                    </div>
-                    <div class="card-body">
-                        <h4 class="card-title">{{ canUseDashboardRangeControls ? (selectedRangeLabel + ' Purchase Trend (' + trendDays + ' days)') : 'Purchase Trend' }}</h4>
-                        <p class="card-category">Confirmed purchases value</p>
-                    </div>
-                    <div class="card-footer">
-                        <div class="stats">
-                            <i class="material-icons">access_time</i> campaign sent 2 days ago
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-lg-6 col-md-12" *ngIf="canViewFinancialDashboard && canOpenStocks">
-                <div class="card dashboard-detail-card dashboard-click-card" (click)="openStocks()">
-                    <div class="card-header card-header-danger">
-                        <h4 class="card-title">{{ isStaff ? 'Stock Watch' : 'Low Stock Alerts' }}</h4>
-                        <p class="card-category">{{ isStaff ? 'Items needing quick stock attention' : 'Top items that need reorder attention' }}</p>
-                    </div>
-                    <div class="card-body">
-                        <div class="dashboard-list" *ngIf="overview.lowStockItems?.length; else noLowStockItems">
-                            <div class="dashboard-list-row" *ngFor="let item of overview.lowStockItems; trackBy: trackById">
-                                <div class="dashboard-list-main">
-                                    <div class="dashboard-list-title">{{ item.productName }}</div>
-                                    <div class="dashboard-list-meta">SKU: {{ item.sku }} | Reorder: {{ item.reorderLevel }}</div>
-                                </div>
-                                <div class="dashboard-list-side danger">
-                                    <div>Avail: {{ item.availableQuantity }}</div>
-                                    <div>Qty: {{ item.quantity }}</div>
-                                </div>
+                        </ion-col>
+                        <ion-col size="4">
+                            <div class="summary-box">
+                                <div class="label">Total Due</div>
+                                <div class="value highlight">₹ {{ overview.dueSummary?.totalDue | number:'1.0-0' }}</div>
                             </div>
-                        </div>
-                        <ng-template #noLowStockItems>
-                            <div class="dashboard-empty-state">No low stock items right now.</div>
-                        </ng-template>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-6 col-md-12">
-                <div class="card dashboard-detail-card dashboard-click-card" (click)="canViewFinancialDashboard && canOpenOrders ? openOrders() : null">
-                    <div class="card-header card-header-info">
-                        <h4 class="card-title">Outstanding Summary</h4>
-                        <p class="card-category">Live due visibility across billing and orders</p>
-                    </div>
-                    <div class="card-body">
-                        <div class="due-summary-grid" *ngIf="canViewFinancialDashboard && overview.dueSummary; else dueRestricted">
-                            <div class="due-summary-card">
-                                <div class="due-summary-label">Sales Due</div>
-                                <div class="due-summary-value">₹ {{ overview.dueSummary.salesDue | number:'1.2-2' }}</div>
-                                <div class="due-summary-meta">{{ overview.dueSummary.salesDueCount }} bills pending</div>
-                            </div>
-                            <div class="due-summary-card">
-                                <div class="due-summary-label">Orders Due</div>
-                                <div class="due-summary-value">₹ {{ overview.dueSummary.orderDue | number:'1.2-2' }}</div>
-                                <div class="due-summary-meta">{{ overview.dueSummary.orderDueCount }} orders pending</div>
-                            </div>
-                            <div class="due-summary-card">
-                                <div class="due-summary-label">Customer Due</div>
-                                <div class="due-summary-value">₹ {{ overview.dueSummary.customerDue | number:'1.2-2' }}</div>
-                                <div class="due-summary-meta">{{ overview.dueSummary.customerDueCount }} customers pending</div>
-                            </div>
-                        </div>
-                        <ng-template #dueRestricted>
-                            <div class="operational-summary-fallback">
-                                <div class="operational-summary-card" *ngIf="canOpenProducts">
-                                    <div class="operational-summary-label">Products</div>
-                                    <div class="operational-summary-value">{{ inventorySummary.products }}</div>
-                                    <div class="operational-summary-meta">Catalog available in current scope</div>
-                                </div>
-                                <div class="operational-summary-card" *ngIf="canOpenCustomers">
-                                    <div class="operational-summary-label">Customers</div>
-                                    <div class="operational-summary-value">{{ kpis?.totalCustomers || 0 }}</div>
-                                    <div class="operational-summary-meta">Ready for billing and lookup</div>
-                                </div>
-                                <div class="operational-summary-card" *ngIf="canOpenStocks">
-                                    <div class="operational-summary-label">Stock Watch</div>
-                                    <div class="operational-summary-value">{{ kpis?.lowStockCount || 0 }}</div>
-                                    <div class="operational-summary-meta">Items currently on alert</div>
-                                </div>
-                            </div>
-                        </ng-template>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-12 col-md-12" *ngIf="canViewFinancialDashboard && canOpenCustomers">
-                <div class="card dashboard-detail-card dashboard-click-card payment-collection-card" (click)="canOpenReports ? openReports() : openSale()">
-                    <div class="card-header card-header-success">
-                        <h4 class="card-title">{{ paymentCollectionTitle }}</h4>
-                        <p class="card-category">Cash vs online collection with sales and order payment counts</p>
-                    </div>
-                    <div class="card-body">
-                        <div class="due-summary-grid payment-collection-grid">
-                            <div class="due-summary-card payment-collection-panel payment-total-panel">
-                                <div class="due-summary-label">Total Collected</div>
-                                <div class="due-summary-value">₹ {{ paymentCollectionSummary.totalCollected | number:'1.2-2' }}</div>
-                                <div class="due-summary-meta">
-                                    Sales: ₹ {{ paymentCollectionSummary.saleCollected | number:'1.2-2' }} ({{ paymentCollectionSummary.saleBillCount || 0 }} bills) |
-                                    Orders: ₹ {{ paymentCollectionSummary.orderCollected | number:'1.2-2' }} ({{ paymentCollectionSummary.orderBillCount || 0 }} orders)
-                                </div>
-                            </div>
-                            <div class="due-summary-card payment-collection-panel payment-cash-panel">
-                                <div class="due-summary-label">Cash Collected</div>
-                                <div class="due-summary-value">₹ {{ paymentCollectionSummary.cashCollected | number:'1.2-2' }}</div>
-                                <div class="due-summary-meta">{{ paymentCollectionSummary.cashEntryCount || 0 }} cash entries in {{ selectedRangeLabel.toLowerCase() }} range</div>
-                            </div>
-                            <div class="due-summary-card payment-collection-panel payment-online-panel">
-                                <div class="due-summary-label">Online Collected</div>
-                                <div class="due-summary-value">₹ {{ paymentCollectionSummary.onlineCollected | number:'1.2-2' }}</div>
-                                <div class="due-summary-meta">{{ paymentCollectionSummary.onlineEntryCount || 0 }} online entries in {{ selectedRangeLabel.toLowerCase() }} range</div>
-                            </div>
-                            <div class="due-summary-card payment-collection-panel payment-wallet-panel">
-                                <div class="due-summary-label">Wallet Used</div>
-                                <div class="due-summary-value">₹ {{ paymentCollectionSummary.walletUsed | number:'1.2-2' }}</div>
-                                <div class="due-summary-meta">{{ paymentCollectionSummary.walletUseCount || 0 }} bills adjusted from wallet</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-12 col-md-12" *ngIf="canViewFinancialDashboard && canOpenCustomers">
-                <div class="card dashboard-detail-card dashboard-click-card" (click)="openCustomers()">
-                    <div class="card-header card-header-success customer-credit-header">
-                        <div class="customer-credit-header-main">
-                            <h4 class="card-title">Customer Credit & Wallet</h4>
-                            <p class="card-category">Store credit issued, wallet used, and current wallet balance</p>
-                        </div>
-                    </div>
-                    <div class="customer-credit-chip-row">
-                        <div class="customer-credit-chip">Live Wallet View</div>
-                    </div>
-                    <div class="card-body">
-                        <div class="due-summary-grid customer-credit-grid" *ngIf="overview.customerCreditSummary; else noCustomerCreditSummary">
-                            <div class="due-summary-card customer-credit-panel">
-                                <div class="due-summary-label">Wallet Balance</div>
-                                <div class="due-summary-value">₹ {{ overview.customerCreditSummary.totalWalletBalance | number:'1.2-2' }}</div>
-                                <div class="due-summary-meta">{{ overview.customerCreditSummary.walletCustomerCount }} customers with balance</div>
-                            </div>
-                            <div class="due-summary-card customer-credit-panel">
-                                <div class="due-summary-label">Credit Issued</div>
-                                <div class="due-summary-value">₹ {{ overview.customerCreditSummary.totalCreditIssued | number:'1.2-2' }}</div>
-                                <div class="due-summary-meta">{{ overview.customerCreditSummary.creditIssueCount }} credit-note returns</div>
-                            </div>
-                            <div class="due-summary-card customer-credit-panel">
-                                <div class="due-summary-label">Wallet Used</div>
-                                <div class="due-summary-value">₹ {{ overview.customerCreditSummary.totalWalletUsed | number:'1.2-2' }}</div>
-                                <div class="due-summary-meta">{{ overview.customerCreditSummary.walletUseCount }} sales adjusted</div>
-                            </div>
-                        </div>
-                        <ng-template #noCustomerCreditSummary>
-                            <div class="dashboard-empty-state">No customer credit or wallet activity found.</div>
-                        </ng-template>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-lg-6 col-md-12" *ngIf="canOpenSales">
-                <div class="card dashboard-detail-card dashboard-click-card" (click)="openSale()">
-                    <div class="card-header card-header-success">
-                        <h4 class="card-title">{{ canUseDashboardRangeControls ? (selectedRangeLabel + ' ' + (isStaff ? 'Bills' : 'Sales Activity')) : (isStaff ? 'Bills' : 'Sales Activity') }}</h4>
-                        <p class="card-category">{{ isStaff ? 'Latest billing activity from current scope' : 'Latest completed bills from current scope' }}</p>
-                    </div>
-                    <div class="card-body">
-                        <div class="dashboard-list" *ngIf="overview.recentSales?.length; else noRecentSales">
-                            <div class="dashboard-list-row" *ngFor="let sale of overview.recentSales; trackBy: trackById">
-                                <div class="dashboard-list-main">
-                                    <div class="dashboard-list-title">{{ sale.invoiceNo }}</div>
-                                    <div class="dashboard-list-meta">{{ sale.customerName }} | {{ sale.paymentMethod }} | {{ sale.createdAt | date:'dd MMM, hh:mm a' }}</div>
-                                </div>
-                                <div class="dashboard-list-side">
-                                    <div *ngIf="canViewOperationalAmounts">₹ {{ sale.totalAmount | number:'1.2-2' }}</div>
-                                    <div *ngIf="canViewOperationalAmounts && sale.dueAmount > 0" class="text-danger">Due ₹ {{ sale.dueAmount | number:'1.2-2' }}</div>
-                                    <div *ngIf="!canViewOperationalAmounts">{{ sale.status }}</div>
-                                </div>
-                            </div>
-                        </div>
-                        <ng-template #noRecentSales>
-                            <div class="dashboard-empty-state">No recent sales found.</div>
-                        </ng-template>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-6 col-md-12" *ngIf="canOpenOrders">
-                <div class="card dashboard-detail-card dashboard-click-card" (click)="openOrders()">
-                    <div class="card-header card-header-warning">
-                        <h4 class="card-title">{{ canUseDashboardRangeControls ? (selectedRangeLabel + ' ' + (isStaff ? 'Orders' : 'Orders Activity')) : (isStaff ? 'Orders' : 'Orders Activity') }}</h4>
-                        <p class="card-category">{{ isStaff ? 'Latest order activity and status' : 'Latest orders with delivery/payment status' }}</p>
-                    </div>
-                    <div class="card-body">
-                        <div class="dashboard-list" *ngIf="overview.recentOrders?.length; else noRecentOrders">
-                            <div class="dashboard-list-row dashboard-click-card" *ngFor="let order of overview.recentOrders; trackBy: trackById" (click)="openOrder(order); $event.stopPropagation()">
-                                <div class="dashboard-list-main">
-                                    <div class="dashboard-list-title">{{ order.orderNo }}</div>
-                                    <div class="dashboard-list-meta">{{ order.customerName }} | {{ order.orderSource }} | {{ order.createdAt | date:'dd MMM, hh:mm a' }}</div>
-                                </div>
-                                <div class="dashboard-list-side">
-                                    <div *ngIf="canViewOperationalAmounts">₹ {{ order.totalAmount | number:'1.2-2' }}</div>
-                                    <div class="dashboard-status-line">{{ order.orderStatus }} / {{ order.paymentStatus }}</div>
-                                </div>
-                            </div>
-                        </div>
-                        <ng-template #noRecentOrders>
-                            <div class="dashboard-empty-state">No recent orders found.</div>
-                        </ng-template>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="row" *ngIf="hasOperationalPeriodAnalytics">
-            <div class="col-12">
-                <div class="section-kicker">{{ reviewSectionTitle }}</div>
-            </div>
-        </div>
-        <div class="row" *ngIf="showOperationalWorkboard && canShowRangeSnapshotCards && (canOpenReturns || (canViewFinancialDashboard && canOpenPurchase))">
-            <div class="col-12">
-                <div class="analytics-strip">
-                    <div class="analytics-card dashboard-click-card" *ngIf="canViewFinancialDashboard && canOpenPurchase" (click)="openPurchase()">
-                        <div class="title">{{ selectedRangeSnapshotTitle }} Purchase</div>
-                        <div class="amount">₹ {{ selectedPurchaseAnalytics?.totalAmount | number:'1.2-2' }}</div>
-                        <div class="meta">Paid: ₹ {{ selectedPurchaseAnalytics?.totalPaid | number:'1.2-2' }} | Due: ₹ {{ selectedPurchaseAnalytics?.totalDue | number:'1.2-2' }}</div>
-                    </div>
-                    <div class="analytics-card return-card dashboard-click-card" *ngIf="canOpenReturns" (click)="openReturns()">
-                        <div class="title">{{ selectedRangeSnapshotTitle }} Customer Returns</div>
-                        <div class="amount">{{ canViewReturnAmounts ? (selectedReturnAnalytics?.totalAmount | number:'1.2-2') : (selectedReturnAnalytics?.count || 0) }}</div>
-                        <div class="meta">Sales: {{ selectedReturnAnalytics?.saleReturnCount || 0 }} | Orders: {{ selectedReturnAnalytics?.orderReturnCount || 0 }} | Qty: {{ selectedReturnAnalytics?.totalQty || 0 }}</div>
-                    </div>
-                    <div class="analytics-card purchase-return-card dashboard-click-card" *ngIf="canViewFinancialDashboard && canOpenPurchase" (click)="openPurchase()">
-                        <div class="title">{{ selectedRangeSnapshotTitle }} Returned to Distributor</div>
-                        <div class="amount">₹ {{ selectedPurchaseReturnAnalytics?.totalAmount | number:'1.2-2' }}</div>
-                        <div class="meta">Qty: {{ selectedPurchaseReturnAnalytics?.totalQty || 0 }} | Count: {{ selectedPurchaseReturnAnalytics?.count || 0 }}</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-lg-6 col-md-12" *ngIf="canOpenSales">
-                <div class="card dashboard-detail-card dashboard-click-card" (click)="canOpenReports ? openReports() : openSale()">
-                    <div class="card-header card-header-rose">
-                        <h4 class="card-title">{{ canUseDashboardRangeControls ? (selectedRangeLabel + ' ' + (canOpenReports ? (isStaff ? 'Fast Moving Products' : 'Top Selling Products') : 'Popular Products')) : (canOpenReports ? (isStaff ? 'Fast Moving Products' : 'Top Selling Products') : 'Popular Products') }}</h4>
-                        <p class="card-category">{{ canOpenReports ? (isStaff ? 'Best moving items from recent billing' : 'Best moving items from current billing data') : 'Best moving items by quantity from current scope' }}</p>
-                    </div>
-                    <div class="card-body">
-                        <div class="dashboard-list" *ngIf="overview.topSellingProducts?.length; else noTopSellingProducts">
-                            <div class="dashboard-list-row dashboard-rank-row" *ngFor="let item of overview.topSellingProducts; let i = index; trackBy: trackById">
-                                <div class="dashboard-rank-chip">#{{ i + 1 }}</div>
-                                <div class="dashboard-list-main">
-                                    <div class="dashboard-list-title">{{ item.productName }}</div>
-                                    <div class="dashboard-list-meta" *ngIf="item.modelName">{{ item.modelName }}</div>
-                                </div>
-                                <div class="dashboard-list-side">
-                                    <div>{{ item.totalQty }} sold</div>
-                                    <div *ngIf="canViewFinancialDashboard">₹ {{ item.totalRevenue | number:'1.2-2' }}</div>
-                                </div>
-                            </div>
-                        </div>
-                        <ng-template #noTopSellingProducts>
-                            <div class="dashboard-empty-state">Top selling items will appear after sales data builds up.</div>
-                        </ng-template>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-6 col-md-12" *ngIf="canViewFinancialDashboard && canOpenReports; else dashboardRoleNote">
-                <div class="card dashboard-detail-card dashboard-click-card" (click)="openReports()">
-                    <div class="card-header card-header-primary">
-                        <h4 class="card-title">{{ canUseDashboardRangeControls ? (selectedRangeLabel + ' Recent Payments') : 'Recent Payments' }}</h4>
-                        <p class="card-category">Latest collected amounts from sales and orders</p>
-                    </div>
-                    <div class="card-body">
-                        <div class="dashboard-list" *ngIf="overview.recentPayments?.length; else noRecentPayments">
-                            <div class="dashboard-list-row" *ngFor="let payment of overview.recentPayments; trackBy: trackById">
-                                <div class="dashboard-list-main">
-                                    <div class="dashboard-list-title">{{ payment.referenceNo }}</div>
-                                    <div class="dashboard-list-meta">{{ payment.customerName }} | {{ payment.source }} | {{ payment.method }}</div>
-                                </div>
-                                <div class="dashboard-list-side success">
-                                    <div>₹ {{ payment.amount | number:'1.2-2' }}</div>
-                                    <div>{{ payment.createdAt | date:'dd MMM, hh:mm a' }}</div>
-                                </div>
-                            </div>
-                        </div>
-                        <ng-template #noRecentPayments>
-                            <div class="dashboard-empty-state">No payment records found yet.</div>
-                        </ng-template>
-                    </div>
-                </div>
-            </div>
-            <ng-template #dashboardRoleNote>
-                <div class="col-lg-6 col-md-12" *ngIf="showOperationalWorkboard">
-                    <div class="card dashboard-detail-card">
-                        <div class="card-header card-header-primary">
-                            <h4 class="card-title">Role Focus</h4>
-                            <p class="card-category">This dashboard is tuned for operations, not finance-heavy reporting.</p>
-                        </div>
-                        <div class="card-body">
-                            <div class="dashboard-empty-state role-focus-copy">
-                                Sales profit, payout summaries, and sensitive financial widgets stay hidden here.
-                                You still get orders, billing activity, customer lookup, product access, and stock watch tools.
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </ng-template>
-        </div>
+                        </ion-col>
+                    </ion-row>
+                </ion-grid>
+            </ion-card-content>
+        </ion-card>
+
     </div>
 </div>
