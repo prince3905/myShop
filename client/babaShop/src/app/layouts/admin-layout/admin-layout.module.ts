@@ -1,7 +1,8 @@
-import { NgModule } from "@angular/core";
+import { NgModule, CUSTOM_ELEMENTS_SCHEMA } from "@angular/core";
 import { RouterModule } from "@angular/router";
 import { CommonModule } from "@angular/common";
 import { FormsModule, ReactiveFormsModule } from "@angular/forms";
+import { IonicModule } from "@ionic/angular";
 import { AdminLayoutRoutes } from "./admin-layout.routing";
 import { DashboardComponent } from "../../dashboard/dashboard.component";
 import { UserProfileComponent } from "../../user-profile/user-profile.component";
@@ -79,6 +80,7 @@ import { FactoryReportComponent } from "app/factory/factory-report/factory-repor
     RouterModule.forChild(AdminLayoutRoutes),
     FormsModule,
     ReactiveFormsModule,
+    IonicModule,
     MatButtonModule,
     MatRippleModule,
     MatFormFieldModule,
@@ -151,6 +153,7 @@ import { FactoryReportComponent } from "app/factory/factory-report/factory-repor
     HasRoleDirective,
     CapitalizeFirstDirective,
   ],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class AdminLayoutModule {
   panelOpenState = false;
