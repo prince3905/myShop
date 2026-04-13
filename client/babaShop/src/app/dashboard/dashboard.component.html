@@ -8,14 +8,19 @@
             <div class="col-12">
                 <div class="dashboard-header-card">
                     <div class="dashboard-header-main">
-                        <div class="greeting-badge" style="background: rgba(251, 191, 36, 0.2); color: #fbbf24; display: inline-flex; padding: 4px 12px; border-radius: 99px; font-size: 10px; font-weight: 800; text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.1em;">{{ getScopeLabel() }} • PRO EXECUTIVE</div>
-                        <h1 style="font-size: 32px; font-weight: 900; margin: 0; letter-spacing: -0.04em;">Good Morning, {{ userDisplayName }}!</h1>
-                        <p style="margin: 8px 0 0; opacity: 0.8; font-size: 14px;">Business commands at your fingertips.</p>
+                        <div class="dashboard-scope-badge">{{ getScopeLabel() }}</div>
+                        <div class="dashboard-range-badge" *ngIf="canUseDashboardRangeControls">{{ selectedRangeLabel }} View</div>
+                        <h3 class="dashboard-header-title">{{ dashboardTitle }}</h3>
+                        <p class="dashboard-header-subtitle">{{ dashboardSubtitle }}</p>
                     </div>
                     <div class="dashboard-header-side">
                         <div class="dashboard-header-meta">
-                            <span class="header-pill">Stock: {{ kpis?.lowStockCount || 0 }} Alerts</span>
-                            <span class="header-pill">Sales: {{ kpis?.todaySales | number:'1.0-0' }}</span>
+                            <span class="header-pill">Products: {{ inventorySummary.products }}</span>
+                            <span class="header-pill">Categories: {{ inventorySummary.categories }}</span>
+                            <span class="header-pill">Brands: {{ inventorySummary.brands }}</span>
+                        </div>
+                        <div class="dashboard-header-note">
+                            {{ getScopeNote() }}
                         </div>
                     </div>
                 </div>
@@ -87,42 +92,107 @@
                 </div>
             </div>
         </div>
-        <!-- Bento Stats Grid -->
-        <div class="bento-grid">
-            <!-- Sales KPI (Large Royal Card) -->
-            <div class="dashboard-click-card bento-card-lg" *ngIf="!isStaff && canOpenSales" (click)="openSale()">
-                <div class="card-icon-modern">
-                    <i class="material-icons">payments</i>
-                </div>
-                <div class="card-label-modern">{{ salesKpiLabel }} (Status)</div>
-                <div class="card-value-modern">₹ {{ kpis?.todaySales | number:'1.2-2' }}</div>
-                <div class="card-meta-modern">
-                    <i class="material-icons" style="font-size: 14px; vertical-align: middle;">auto_graph</i>
-                    Current business momentum focus
-                </div>
-            </div>
-
-            <!-- Orders KPI -->
-            <div class="dashboard-click-card" *ngIf="canOpenOrders" (click)="openOrders()">
-                <div class="card-icon-modern warning">
-                    <i class="material-icons">shopping_bag</i>
-                </div>
-                <div class="card-label-modern">Orders</div>
-                <div class="card-value-modern">{{ kpis?.todayOrders || 0 }}</div>
-                <div class="card-meta-modern">
-                    {{ kpis?.totalCustomers || 0 }} active customers
+        <div class="row">
+            <div class="col-lg-3 col-md-6 col-sm-6" *ngIf="!isStaff && canOpenSales">
+                <div class="card card-stats dashboard-click-card" (click)="openSale()">
+                    <div class="card-header card-header-success card-header-icon">
+                        <div class="card-icon">
+                            <i class="material-icons">store</i>
+                        </div>
+                        <p class="card-category">{{ salesKpiLabel }}</p>
+                        <h3 class="card-title">₹ {{ kpis?.todaySales | number:'1.2-2' }}</h3>
+                    </div>
+                    <div class="card-footer">
+                        <div class="stats">
+                            <i class="material-icons">date_range</i> {{ loadingKpis ? 'Loading...' : rangeFooterCopy }}
+                        </div>
+                    </div>
                 </div>
             </div>
-
-            <!-- Products KPI -->
-            <div class="dashboard-click-card" *ngIf="canOpenProducts" (click)="openProducts()">
-                <div class="card-icon-modern info">
-                    <i class="material-icons">inventory_2</i>
+            <div class="col-lg-3 col-md-6 col-sm-6" *ngIf="canOpenOrders">
+                <div class="card card-stats dashboard-click-card" (click)="openOrders()">
+                    <div class="card-header card-header-warning card-header-icon">
+                        <div class="card-icon">
+                            <i class="material-icons">content_copy</i>
+                        </div>
+                        <p class="card-category">{{ ordersKpiLabel }}</p>
+                        <h3 class="card-title">{{ kpis?.todayOrders || 0 }}</h3>
+                    </div>
+                    <div class="card-footer">
+                        <div class="stats">
+                            <i class="material-icons text-success">shopping_cart</i>
+                            Active customers: {{ kpis?.totalCustomers || 0 }}
+                        </div>
+                    </div>
                 </div>
-                <div class="card-label-modern">Catalog</div>
-                <div class="card-value-modern">{{ inventorySummary.products }}</div>
-                <div class="card-meta-modern">
-                    Across {{ inventorySummary.categories }} categories
+            </div>
+            <div class="col-lg-3 col-md-6 col-sm-6" *ngIf="canViewFinancialDashboard && canOpenPurchase">
+                <div class="card card-stats dashboard-click-card" (click)="openPurchase()">
+                    <div class="card-header card-header-danger card-header-icon">
+                        <div class="card-icon">
+                            <i class="material-icons">info_outline</i>
+                        </div>
+                        <p class="card-category">{{ purchaseKpiLabel }}</p>
+                        <h3 class="card-title">₹ {{ kpis?.todayPurchase | number:'1.2-2' }}</h3>
+                    </div>
+                    <div class="card-footer">
+                        <div class="stats">
+                            <i class="material-icons">assignment_return</i> Returned in {{ selectedRangeLabel.toLowerCase() }} range: ₹ {{ kpis?.todayPurchaseReturnAmount | number:'1.2-2' }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 col-sm-6" *ngIf="canOpenStocks">
+                <div class="card card-stats dashboard-click-card" (click)="openStocks()">
+                    <div class="card-header card-header-info card-header-icon">
+                        <div class="card-icon">
+                            <i class="fa fa-twitter"></i>
+                        </div>
+                        <p class="card-category">{{ isStaff ? 'Stock Alerts' : 'Low Stock Alerts' }}</p>
+                        <h3 class="card-title">{{ kpis?.lowStockCount || 0 }}</h3>
+                    </div>
+                    <div class="card-footer">
+                        <div class="stats">
+                            <ng-container *ngIf="canViewFinancialDashboard; else stockFooterBasic">
+                                <i class="material-icons">currency_rupee</i> Customer credit in {{ selectedRangeLabel.toLowerCase() }} range: ₹ {{ kpis?.todaySaleCreditAmount | number:'1.2-2' }}
+                            </ng-container>
+                            <ng-template #stockFooterBasic>
+                                <i class="material-icons">inventory_2</i> Reorder watch active
+                            </ng-template>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 col-sm-6" *ngIf="!canViewFinancialDashboard && canOpenCustomers">
+                <div class="card card-stats dashboard-click-card" (click)="openCustomers()">
+                    <div class="card-header card-header-primary card-header-icon">
+                        <div class="card-icon">
+                            <i class="material-icons">groups</i>
+                        </div>
+                        <p class="card-category">Customers</p>
+                        <h3 class="card-title">{{ kpis?.totalCustomers || 0 }}</h3>
+                    </div>
+                    <div class="card-footer">
+                        <div class="stats">
+                            <i class="material-icons">person_search</i> Basic customer lookup ready
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 col-sm-6" *ngIf="!canViewFinancialDashboard && canOpenProducts">
+                <div class="card card-stats dashboard-click-card" (click)="openProducts()">
+                    <div class="card-header card-header-primary card-header-icon">
+                        <div class="card-icon">
+                            <i class="material-icons">inventory_2</i>
+                        </div>
+                        <p class="card-category">Products</p>
+                        <h3 class="card-title">{{ inventorySummary.products }}</h3>
+                    </div>
+                    <div class="card-footer">
+                        <div class="stats">
+                            <i class="material-icons">category</i> Categories: {{ inventorySummary.categories }} | Brands: {{ inventorySummary.brands }}
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
