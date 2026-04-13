@@ -1,6 +1,7 @@
 import { NgModule } from "@angular/core";
 import { RouterModule } from "@angular/router";
 import { CommonModule } from "@angular/common";
+import { IonicModule } from "@ionic/angular";
 import { FormsModule, ReactiveFormsModule } from "@angular/forms";
 import { AdminLayoutRoutes } from "./admin-layout.routing";
 import { DashboardComponent } from "../../dashboard/dashboard.component";
@@ -99,6 +100,7 @@ import { FactoryReportComponent } from "app/factory/factory-report/factory-repor
     MatCheckboxModule,
     MatSnackBarModule,
     MatChipsModule,
+    IonicModule,
   ],
   declarations: [
     DashboardComponent,

@@ -6,6 +6,7 @@ import { RouterModule } from '@angular/router';
 import { AppRoutingModule } from './app.routing';
 import { ComponentsModule } from './components/components.module';
 import { AppComponent } from './app.component';
+import { IonicModule } from '@ionic/angular';
 
 import { AdminLayoutComponent } from './layouts/admin-layout/admin-layout.component';
 
@@ -53,7 +54,8 @@ import { MatIconModule } from '@angular/material/icon';
     MatExpansionModule,
     MatAutocompleteModule,
     MatDialogModule,
-    MatIconModule
+    MatIconModule,
+    IonicModule.forRoot({ mode: 'md', hardwareBackButton: true })
 ],
   declarations: [
     AppComponent,

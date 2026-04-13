@@ -10,6 +10,47 @@
             <app-footer></app-footer>
         </div>
     </div>
+    
+    <!-- Industry-Leading Premium Mobile Navigation -->
+    <nav class="mobile-bottom-nav d-block d-lg-none">
+        <div class="glass-container">
+            <a routerLink="/dashboard" routerLinkActive="active-tab" class="nav-item">
+                <div class="icon-wrapper">
+                    <i class="material-icons">dashboard</i>
+                </div>
+                <span>Home</span>
+            </a>
+            <a routerLink="/sale-list" routerLinkActive="active-tab" class="nav-item">
+                <div class="icon-wrapper">
+                    <i class="material-icons">receipt_long</i>
+                </div>
+                <span>Sales</span>
+            </a>
+            
+            <!-- Strategic Center Action (POS) -->
+            <a routerLink="/pos" routerLinkActive="active-tab" class="nav-item pos-center-item">
+                <div class="pos-fab-glow"></div>
+                <div class="pos-fab">
+                    <i class="material-icons">add</i>
+                </div>
+                <span class="pos-label">POS</span>
+            </a>
+
+            <a routerLink="/item-list" routerLinkActive="active-tab" class="nav-item">
+                <div class="icon-wrapper">
+                    <i class="material-icons">inventory_2</i>
+                </div>
+                <span>Items</span>
+            </a>
+            <a routerLink="/profile" routerLinkActive="active-tab" class="nav-item">
+                <div class="icon-wrapper">
+                    <i class="material-icons">account_circle</i>
+                </div>
+                <span>Profile</span>
+            </a>
+        </div>
+    </nav>
+
     <div class="fixed-plugin" style="display: none;">
         <div class="dropdown show-dropdown open show">
             <a href="#" data-toggle="dropdown" aria-expanded="true">
