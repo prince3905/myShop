@@ -17,6 +17,7 @@ import { ActivatedRoute, Router } from "@angular/router";
 export class DashboardComponent implements OnInit, OnDestroy {
   selectedRange: "daily" | "weekly" | "monthly" | "yearly" | "all" = "daily";
   currentDay: Date = new Date();
+
   shops: any[] = [];
   selectedShop: string | null = null;
   isSuperAdmin = false;
@@ -135,6 +136,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (hour < 17) return 'Good Afternoon';
     return 'Good Evening';
   }
+
 
   startAnimationForLineChart(chart) {
     let seq: any, delays: any, durations: any;

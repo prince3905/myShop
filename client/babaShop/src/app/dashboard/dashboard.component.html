@@ -1,30 +1,26 @@
 <div class="main-content">
-    <div class="dashboard-wrapper">
-        <!-- Premium Decoration Mesh -->
-        <div class="dashboard-decor shadow-blob-1"></div>
-        <div class="dashboard-decor shadow-blob-2"></div>
-        <div class="dashboard-decor shadow-blob-3"></div>
-        
-        <!-- Luxury Morning Greeting -->
-        <header class="dashboard-header-modern">
-            <div class="greeting-main">
-                <div class="greeting-badge">{{ getScopeLabel() }} • {{ selectedRangeLabel }} View</div>
-                <h1>{{ greetingText }}, {{ userDisplayName }}! </h1>
-                <p>Here is what's happening in your business today.</p>
-            </div>
-            <div class="header-actions">
-                <div class="action-pill">
-                    <i class="material-icons">calendar_today</i>
-                    {{ currentDay | date:'fullDate' }}
-                </div>
-                <div class="action-pill" *ngIf="canUseDashboardRangeControls">
-                    <i class="material-icons">tune</i>
-                    Filters
+    <!-- Premium Decoration Blobs -->
+    <div class="dashboard-decor shadow-blob-1"></div>
+    <div class="dashboard-decor shadow-blob-2"></div>
+    
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="dashboard-header-card">
+                    <div class="dashboard-header-main">
+                        <div class="greeting-badge" style="background: rgba(251, 191, 36, 0.2); color: #fbbf24; display: inline-flex; padding: 4px 12px; border-radius: 99px; font-size: 10px; font-weight: 800; text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.1em;">{{ getScopeLabel() }} • PRO EXECUTIVE</div>
+                        <h1 style="font-size: 32px; font-weight: 900; margin: 0; letter-spacing: -0.04em;">Good Morning, {{ userDisplayName }}!</h1>
+                        <p style="margin: 8px 0 0; opacity: 0.8; font-size: 14px;">Business commands at your fingertips.</p>
+                    </div>
+                    <div class="dashboard-header-side">
+                        <div class="dashboard-header-meta">
+                            <span class="header-pill">Stock: {{ kpis?.lowStockCount || 0 }} Alerts</span>
+                            <span class="header-pill">Sales: {{ kpis?.todaySales | number:'1.0-0' }}</span>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </header>
-
-        <!-- Premium Bento Stats Grid -->
+        </div>
         <div class="row" *ngIf="showOperationalWorkboard && operationalQuickCards.length">
             <div class="col-12">
                 <div class="operational-workboard">
@@ -91,18 +87,18 @@
                 </div>
             </div>
         </div>
-        <!-- Premium Bento Stats Grid -->
+        <!-- Bento Stats Grid -->
         <div class="bento-grid">
-            <!-- Sales KPI (Large Bento Spacing) -->
+            <!-- Sales KPI (Large Royal Card) -->
             <div class="dashboard-click-card bento-card-lg" *ngIf="!isStaff && canOpenSales" (click)="openSale()">
-                <div class="card-icon-modern success">
-                    <i class="material-icons">account_balance_wallet</i>
+                <div class="card-icon-modern">
+                    <i class="material-icons">payments</i>
                 </div>
-                <div class="card-label-modern">{{ salesKpiLabel }} (Overview)</div>
+                <div class="card-label-modern">{{ salesKpiLabel }} (Status)</div>
                 <div class="card-value-modern">₹ {{ kpis?.todaySales | number:'1.2-2' }}</div>
                 <div class="card-meta-modern">
                     <i class="material-icons" style="font-size: 14px; vertical-align: middle;">auto_graph</i>
-                    {{ loadingKpis ? 'Calculating current momentum...' : rangeFooterCopy + ' Performance' }}
+                    Current business momentum focus
                 </div>
             </div>
 
@@ -111,34 +107,22 @@
                 <div class="card-icon-modern warning">
                     <i class="material-icons">shopping_bag</i>
                 </div>
-                <div class="card-label-modern">{{ ordersKpiLabel }}</div>
+                <div class="card-label-modern">Orders</div>
                 <div class="card-value-modern">{{ kpis?.todayOrders || 0 }}</div>
                 <div class="card-meta-modern">
-                    Active: {{ kpis?.totalCustomers || 0 }} customers
+                    {{ kpis?.totalCustomers || 0 }} active customers
                 </div>
             </div>
 
-            <!-- Financials / Purchase -->
-            <div class="dashboard-click-card" *ngIf="canViewFinancialDashboard && canOpenPurchase" (click)="openPurchase()">
-                <div class="card-icon-modern danger">
-                    <i class="material-icons">account_balance_wallet</i>
-                </div>
-                <div class="card-label-modern">{{ purchaseKpiLabel }}</div>
-                <div class="card-value-modern">₹ {{ kpis?.todayPurchase | number:'1.2-2' }}</div>
-                <div class="card-meta-modern">
-                    Returns: ₹ {{ kpis?.todayPurchaseReturnAmount | number:'1.2-2' }}
-                </div>
-            </div>
-
-            <!-- Stock Alerts -->
-            <div class="dashboard-click-card" *ngIf="canOpenStocks" (click)="openStocks()">
+            <!-- Products KPI -->
+            <div class="dashboard-click-card" *ngIf="canOpenProducts" (click)="openProducts()">
                 <div class="card-icon-modern info">
-                    <i class="material-icons">notification_important</i>
+                    <i class="material-icons">inventory_2</i>
                 </div>
-                <div class="card-label-modern">Stock Alerts</div>
-                <div class="card-value-modern">{{ kpis?.lowStockCount || 0 }}</div>
+                <div class="card-label-modern">Catalog</div>
+                <div class="card-value-modern">{{ inventorySummary.products }}</div>
                 <div class="card-meta-modern">
-                    Items needing reorder
+                    Across {{ inventorySummary.categories }} categories
                 </div>
             </div>
         </div>
