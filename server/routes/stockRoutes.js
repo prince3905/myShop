@@ -37,6 +37,14 @@ router.use(protect);
 router.use(attachShop);
 router.use(requireShopSelectionForWrite);
 
+// Low Stock Alerts
+router.get(
+  "/alerts/low-stock",
+  authorizeFeature("inventory.stocks"),
+  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER"),
+  stockController.getLowStockAlerts,
+);
+
 router.get(
   "/",
   authorizeStockRead,

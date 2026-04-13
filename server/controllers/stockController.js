@@ -52,6 +52,60 @@ const buildSummary = (lines = []) => {
   };
 };
 
+exports.getLowStockAlerts = async (req, res) => {
+  try {
+    const query = isSuperAdminGlobal(req) ? {} : { shop: req.shopId };
+    query.$expr = { $and: [{ $lte: ["$quantity", "$reorderLevel"] }, { $gt: ["$reorderLevel", 0] }] };
+
+    const items = await Stock.find(query)
+      .limit(50)
+      .sort({ quantity: 1 })
+      .populate("product", "name")
+      .populate("variation", "sku attributes")
+      .lean();
+
+    return res.status(200).json({
+      success: true,
+      data: items,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Error fetching low stock alerts",
+      error: "Internal server error",
+    });
+  }
+};
+
+exports.getLowStockAlerts = async (req, res) => {
+  try {
+    const query = isSuperAdminGlobal(req) ? {} : { shop: req.shopId };
+    // Check where current quantity is less than or equal to reorder level
+    // And reorder level is actually set (> 0)
+    query.$expr = { $and: [{ $lte: ["$quantity", "$reorderLevel"] }, { $gt: ["$reorderLevel", 0] }] };
+
+    const items = await Stock.find(query)
+      .limit(50)
+      .sort({ quantity: 1 }) // Show lowest stock first
+      .populate("product", "name")
+      .populate("model", "name")
+      .populate("variation", "sku")
+      .lean();
+
+    return res.status(200).json({
+      success: true,
+      count: items.length,
+      data: items,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Error fetching low stock alerts",
+      error: "Internal server error",
+    });
+  }
+};
+
 exports.getStockReport = async (req, res) => {
   try {
     const {

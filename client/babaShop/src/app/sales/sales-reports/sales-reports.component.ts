@@ -53,6 +53,17 @@ export class SalesReportsComponent implements OnInit, OnDestroy {
     },
   };
 
+  paymentSummary = {
+    totalCash: 0,
+    totalOnline: 0,
+    totalCollected: 0,
+  };
+
+  zReport: any = {
+    loading: false,
+    data: null,
+  };
+
   salesRows: any[] = [];
   returnRows: any[] = [];
   private profitTrendChart: any = null;
@@ -81,6 +92,84 @@ export class SalesReportsComponent implements OnInit, OnDestroy {
 
   applyFilters(): void {
     this.loadAll();
+    this.loadPaymentSummary(); // Sync payment summary with main filters
+  }
+
+  scrollToSection(id: string): void {
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  openZReport(): void {
+    if (!this.zReport.data) {
+      this.generateZReport();
+    }
+    setTimeout(() => {
+      this.scrollToSection('z-report-section');
+    }, 500);
+  }
+
+  generateZReport(): void {
+    this.zReport.loading = true;
+    this.zReport.data = null;
+
+    this.salesService.getZReport().subscribe({
+      next: (res: any) => {
+        this.zReport.data = res?.data;
+        this.zReport.loading = false;
+      },
+      error: (err) => {
+        console.error("Failed to generate Z-Report", err);
+        this.zReport.loading = false;
+        this.snackBar.open("Failed to generate Z-Report", "Close", { duration: 3000 });
+      },
+    });
+  }
+
+  loadPaymentSummary(): void {
+    const params = {
+      startDate: this.filters.dateFrom ? this.formatDate(this.filters.dateFrom) : undefined,
+      endDate: this.filters.dateTo ? this.formatDate(this.filters.dateTo) : undefined,
+    };
+
+    this.salesService.getPaymentSummary(params).subscribe({
+      next: (res: any) => {
+        this.paymentSummary = res?.data || this.paymentSummary;
+      },
+      error: (err) => {
+        console.error("Failed to load payment summary", err);
+        this.paymentSummary = { totalCash: 0, totalOnline: 0, totalCollected: 0 };
+      },
+    });
+  }
+
+  setQuickDate(range: "today" | "week" | "month" | "year" | "all"): void {
+    const now = new Date();
+    this.filters.dateFrom = null;
+    this.filters.dateTo = null;
+
+    if (range === "today") {
+      this.filters.dateFrom = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      this.filters.dateTo = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+    } else if (range === "week") {
+      const day = now.getDay();
+      const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+      this.filters.dateFrom = new Date(now.setDate(diff));
+      this.filters.dateTo = new Date();
+    } else if (range === "month") {
+      this.filters.dateFrom = new Date(now.getFullYear(), now.getMonth(), 1);
+      this.filters.dateTo = new Date();
+    } else if (range === "year") {
+      this.filters.dateFrom = new Date(now.getFullYear(), 0, 1);
+      this.filters.dateTo = new Date();
+    } else {
+      this.filters.dateFrom = null;
+      this.filters.dateTo = null;
+    }
+
+    this.applyFilters();
   }
 
   resetFilters(): void {

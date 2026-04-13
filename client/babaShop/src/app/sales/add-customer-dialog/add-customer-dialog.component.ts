@@ -13,6 +13,7 @@ import { Inject } from '@angular/core';
 export class AddCustomerDialogComponent implements OnInit {
   customerForm: FormGroup;
   loading: boolean = false;
+  isEdit: boolean = false;
 
   constructor(
     private fb: FormBuilder,
@@ -31,20 +32,19 @@ export class AddCustomerDialogComponent implements OnInit {
 
   ngOnInit(): void {
     const customer = this.data?.customer || null;
-    if (!customer) {
-      return;
+    if (customer && customer._id) {
+      this.isEdit = true;
+      this.customerForm.patchValue({
+        name: customer.name || '',
+        phone: customer.phone || '',
+        email: customer.email || '',
+        address: customer.address || ''
+      });
     }
-
-    this.customerForm.patchValue({
-      name: customer.name || '',
-      phone: customer.phone || '',
-      email: customer.email || '',
-      address: customer.address || '',
-    });
   }
 
   get isEditMode(): boolean {
-    return !!this.data?.customer?._id;
+    return this.isEdit;
   }
 
   onSubmit(): void {

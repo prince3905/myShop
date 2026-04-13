@@ -6,6 +6,7 @@ import { Router } from "@angular/router";
 import { SalesService } from "app/shared/services/sales.service";
 import { SalePaymentDialogComponent } from "../sale-payment-dialog/sale-payment-dialog.component";
 import { AuthService } from "app/shared/services/auth.service";
+import { ShopService } from "app/shared/services/shop.service";
 
 @Component({
   selector: "sales-list",
@@ -23,6 +24,10 @@ export class SalesListComponent implements OnInit {
 
   selectedSale: any = null;
   @ViewChild("saleDetailsCard") saleDetailsCard?: ElementRef<HTMLElement>;
+  
+  // Shop Details for Payment
+  shopUpiId: string = "";
+  shopPhone: string = "";
 
   filters: {
     invoiceNo: string;
@@ -56,11 +61,31 @@ export class SalesListComponent implements OnInit {
     private snackBar: MatSnackBar,
     private router: Router,
     public authService: AuthService,
+    private shopService: ShopService, // Injected ShopService
     private cdr: ChangeDetectorRef, // Added back
   ) {}
 
   ngOnInit(): void {
     this.loadSales();
+    this.loadShopDetails();
+  }
+
+  loadShopDetails(): void {
+    const shopId = this.authService.getShopId();
+    if (shopId) {
+      this.shopService.getShopById(shopId).subscribe({
+        next: (res: any) => {
+          const shop = res?.data;
+          if (shop) {
+            this.shopUpiId = shop.paymentSettings?.upiId || "N/A";
+            this.shopPhone = shop.contactNumber || shop.owner?.phoneNo || "N/A";
+          }
+        },
+        error: (err) => {
+          console.error("Failed to load shop details for bill", err);
+        }
+      });
+    }
   }
 
   get canCreateSale(): boolean {
@@ -279,6 +304,92 @@ export class SalesListComponent implements OnInit {
 
   isReturnClosed(row: any): boolean {
     return this.getReturnBadge(row) === "full";
+  }
+
+  shareOnWhatsApp(row: any): void {
+    // Agar details load nahi hui hain toh pehle load karein
+    if (!this.shopUpiId || this.shopUpiId === "N/A") {
+      this.loadShopDetails();
+      // User ko thoda wait karwayein taaki data aa jaye
+      setTimeout(() => {
+        this.generateWhatsAppMessage(row);
+      }, 1000);
+    } else {
+      this.generateWhatsAppMessage(row);
+    }
+  }
+
+  generateWhatsAppMessage(row: any): void {
+    const invoiceId = row?.invoiceNo || row?._id || "-";
+    const customerName = row?.customerName || "Walk-in";
+    const dateStr = row?.purchaseDate ? new Date(row.purchaseDate).toLocaleString() : "-";
+    const grandTotal = Number(row?.totalAmount ?? 0);
+    const paidAmount = Number(row?.paidAmount || 0);
+    const dueAmount = Number(row?.dueAmount ?? Math.max(grandTotal - paidAmount, 0));
+
+    // Professional Header
+    let message = `🏢 *BABA VISHWANATH TRUNK & FURNITURE HOUSE*\n\n`;
+
+    message += `🧾 *INVOICE: ${invoiceId}*\n`;
+    message += `Customer: ${customerName}\n`;
+    message += `Date: ${dateStr}\n\n`;
+
+    // Add Items List
+    if (row.items && row.items.length > 0) {
+      message += `📦 *ITEMS:*\n`;
+      row.items.forEach((item: any, index: number) => {
+        message += `${index + 1}. ${item.itemName || 'Item'}\n`;
+        if (item.model || item.size || item.color) {
+          const details = [item.model, item.size, item.color].filter(Boolean).join(', ');
+          if (details) message += `   (${details})\n`;
+        }
+        message += `   Qty: ${item.quantity} | Rate: ${item.sellingPrice}\n`;
+        message += `   Total: Rs ${item.total}\n\n`;
+      });
+      message += `----------------------------\n`;
+    }
+
+    // Totals
+    message += `💰 *Grand Total:* Rs ${grandTotal.toFixed(2)}\n`;
+    message += `✅ *Paid:* Rs ${paidAmount.toFixed(2)}\n`;
+
+    // Due Alert
+    if (dueAmount > 0.5) {
+      message += `⚠️ *DUE AMOUNT: Rs ${dueAmount.toFixed(2)}*\n\n`;
+      message += `📲 *Action:* Please clear the pending dues.\n`;
+    } else {
+      message += `----------------------------\n`;
+      message += `✨ *Status: Fully Paid* ✨\n`;
+    }
+
+    // Payment Details (Dynamic from Settings)
+    message += `\n📲 *PAYMENT DETAILS*\n`;
+    message += `UPI ID: ${this.shopUpiId || "Not Set in Settings"}\n`;
+    message += `Phone: ${this.shopPhone || "Not Set in Settings"}\n`;
+    message += `\n_Please pay to the details above only._`;
+
+    message += `\n\n_Thank you for shopping with us!_`;
+
+    // Check for phone number
+    let phone = "";
+    if (row?.customerPhone) {
+      phone = String(row.customerPhone).replace(/\D/g, '');
+    }
+
+    let url = "";
+    if (phone.length >= 10) {
+      const prefix = phone.length === 10 ? "91" : "";
+      url = `https://wa.me/${prefix}${phone}?text=${encodeURIComponent(message)}`;
+    } else {
+      url = `https://wa.me/?text=${encodeURIComponent(message)}`;
+    }
+
+    window.open(url, '_blank');
+  }
+
+  downloadPDF(row: any): void {
+    // Trigger print dialog which allows "Save as PDF"
+    this.printInvoice(row);
   }
 
   printInvoice(row: any): void {

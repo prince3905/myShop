@@ -13,6 +13,31 @@
   min-width: 170px;
 }
 
+.quick-dates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.kpi-cash {
+  border-color: #dcfce7;
+  background: linear-gradient(180deg, #dcfce7 0%, #ffffff 100%);
+}
+
+.kpi-online {
+  border-color: #dbeafe;
+  background: linear-gradient(180deg, #dbeafe 0%, #ffffff 100%);
+}
+
+.kpi-total {
+  border-color: #f3e8ff;
+  background: linear-gradient(180deg, #f3e8ff 0%, #ffffff 100%);
+  font-weight: bold;
+}
+
 .loading-wrap {
   display: flex;
   justify-content: center;
@@ -119,4 +144,110 @@
   .profit-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* Z-Report Styles */
+.z-report-card .card-header-dark {
+  background: linear-gradient(60deg, #344767, #1e293b) !important;
+  box-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.14);
+}
+
+.z-report-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.z-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.z-card h5 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #64748b;
+  border-bottom: 1px solid #cbd5e1;
+  padding-bottom: 8px;
+}
+
+.z-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  font-size: 14px;
+  color: #334155;
+}
+
+.z-row.highlight {
+  font-weight: 700;
+  color: #0f172a;
+  border-top: 1px dashed #cbd5e1;
+  margin-top: 4px;
+  padding-top: 12px;
+}
+
+.z-row.success span:first-child {
+  color: #166534;
+  font-weight: 600;
+}
+
+.highlight-card {
+  background: #fffbeb !important;
+  border-color: #fcd34d !important;
+}
+
+.text-danger { color: #dc2626 !important; }
+.text-warning { color: #d97706 !important; }
+
+/* Sticky Navigation Bar */
+.report-nav-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.report-nav-bar .nav-btn {
+  min-width: 160px;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 8px !important;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.report-nav-bar .nav-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.report-nav-bar .nav-btn .mat-icon {
+  font-size: 18px;
+  height: 18px;
+  width: 18px;
+  margin-right: 5px;
+}
+
+/* Smooth Scrolling for the page */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Card Styles */
+.mt-3 {
+  margin-top: 1.5rem !important;
+}
+
+.sales-list-table {
+  transition: all 0.3s ease;
 }

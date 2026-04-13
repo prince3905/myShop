@@ -59,6 +59,20 @@ router.get(
 );
 
 router.get(
+  "/reports/payment-summary",
+  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER"),
+  authorizeFeature("sales.list"),
+  salesController.getPaymentCollectionSummary,
+);
+
+router.get(
+  "/reports/z-report",
+  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER"),
+  authorizeFeature("sales.list"), // Or a specific feature if you have one
+  salesController.getZReport,
+);
+
+router.get(
   "/",
   authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"),
   authorizeFeature("sales.list"),
