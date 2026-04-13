@@ -1,31 +1,29 @@
 <div class="main-content">
-    <!-- Premium Decoration Blobs -->
-    <div class="dashboard-decor shadow-blob-1"></div>
-    <div class="dashboard-decor shadow-blob-2"></div>
-    
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col-12">
-                <div class="dashboard-header-card">
-                    <div class="dashboard-header-main">
-                        <div class="dashboard-scope-badge">{{ getScopeLabel() }}</div>
-                        <div class="dashboard-range-badge" *ngIf="canUseDashboardRangeControls">{{ selectedRangeLabel }} View</div>
-                        <h3 class="dashboard-header-title">{{ dashboardTitle }}</h3>
-                        <p class="dashboard-header-subtitle">{{ dashboardSubtitle }}</p>
-                    </div>
-                    <div class="dashboard-header-side">
-                        <div class="dashboard-header-meta">
-                            <span class="header-pill">Products: {{ inventorySummary.products }}</span>
-                            <span class="header-pill">Categories: {{ inventorySummary.categories }}</span>
-                            <span class="header-pill">Brands: {{ inventorySummary.brands }}</span>
+    <div class="dashboard-wrapper">
+        <!-- Ultra-Premium Decoration Mesh -->
+        <div class="dashboard-decor shadow-blob-1"></div>
+        <div class="dashboard-decor shadow-blob-2"></div>
+        <div class="dashboard-decor shadow-blob-3"></div>
+        
+        <div class="container-fluid">
+            <!-- Luxury Bento Header -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="dashboard-header-card">
+                        <div class="dashboard-header-main">
+                            <div class="greeting-badge" style="background: rgba(251, 191, 36, 0.25); color: #fbbf24; display: inline-flex; padding: 6px 16px; border-radius: 99px; font-size: 11px; font-weight: 800; text-transform: uppercase; margin-bottom: 16px; letter-spacing: 0.12em; border: 1px solid rgba(251, 191, 36, 0.3);">{{ getScopeLabel() }} • EXECUTIVE COMMAND</div>
+                            <h1 class="dashboard-header-title">{{ greetingText }}, {{ userDisplayName }}! </h1>
+                            <p style="margin: 8px 0 0; opacity: 0.85; font-size: 16px; font-weight: 500;">Everything we need to grow your business today.</p>
                         </div>
-                        <div class="dashboard-header-note">
-                            {{ getScopeNote() }}
+                        <div class="dashboard-header-side">
+                            <div class="dashboard-header-meta">
+                                <span class="header-pill" style="border-color: rgba(255, 255, 255, 0.2); background: rgba(255, 255, 255, 0.1);">Stock: {{ inventorySummary.products }}</span>
+                                <span class="header-pill" style="border-color: rgba(255, 255, 255, 0.2); background: rgba(255, 255, 255, 0.1);">Day: {{ currentDay | date:'EEE' }}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
         <div class="row" *ngIf="showOperationalWorkboard && operationalQuickCards.length">
             <div class="col-12">
                 <div class="operational-workboard">
