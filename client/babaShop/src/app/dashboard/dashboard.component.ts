@@ -661,10 +661,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }, 0);
   }
 
-  onRangeChange(): void {
-    this.setDashboardRange(this.selectedRange);
-  }
-
   onRangeInteract(event: Event, range: "daily" | "weekly" | "monthly" | "yearly" | "all"): void {
     event.preventDefault();
     event.stopPropagation();
