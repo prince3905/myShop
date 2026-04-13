@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { SplashScreen } from '@capacitor/splash-screen';
 import { AuthService } from './shared/services/auth.service';
 import { Router } from '@angular/router';
 import { ConnectivityService } from './shared/services/connectivity.service';
@@ -23,6 +24,7 @@ export class AppComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    SplashScreen.hide().catch(() => {});
     this.connectivityService.startMonitoring();
     this.connectivityService.serverReachable$.subscribe((reachable) => {
       this.serverReachable = reachable;
