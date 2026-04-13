@@ -1,161 +1,169 @@
-<div class="main-content ion-padding">
-    <div class="dashboard-wrapper">
-        <!-- Header Section -->
-        <ion-card class="dashboard-header-card">
-            <ion-card-content>
-                <div class="header-top">
-                    <ion-badge color="primary" class="scope-badge">{{ getScopeLabel() }}</ion-badge>
-                    <ion-badge color="light" class="range-badge" *ngIf="canUseDashboardRangeControls">{{ selectedRangeLabel }} View</ion-badge>
-                </div>
-                <h1 class="header-title">{{ dashboardTitle }}</h1>
-                <p class="header-subtitle">{{ dashboardSubtitle }}</p>
-                <div class="header-meta">
-                    <span class="meta-pill">📦 {{ inventorySummary.products }}</span>
-                    <span class="meta-pill">🏷️ {{ inventorySummary.brands }}</span>
-                </div>
-            </ion-card-content>
-        </ion-card>
+<ion-content class="ion-padding" color="light">
 
-        <!-- Range Selector -->
-        <ion-segment *ngIf="canUseDashboardRangeControls" [(ngModel)]="selectedRange" (ionChange)="onRangeChange()" class="range-segment" scrollable>
-            <ion-segment-button value="daily">
-                <ion-label>Daily</ion-label>
-            </ion-segment-button>
-            <ion-segment-button value="weekly">
-                <ion-label>Weekly</ion-label>
-            </ion-segment-button>
-            <ion-segment-button value="monthly">
-                <ion-label>Monthly</ion-label>
-            </ion-segment-button>
-        </ion-segment>
-
-        <!-- KPI Grid -->
-        <ion-grid class="kpi-grid">
-            <ion-row>
-                <!-- Sales KPI -->
-                <ion-col size="6" size-md="3" *ngIf="canOpenSales">
-                    <ion-card class="kpi-card" (click)="openSale()">
-                        <ion-card-content>
-                            <div class="kpi-value text-success">₹ {{ kpis?.todaySales | number:'1.0-0' }}</div>
-                            <div class="kpi-label">Sales</div>
-                            <ion-icon name="cart" class="kpi-icon bg-success"></ion-icon>
-                        </ion-card-content>
-                    </ion-card>
-                </ion-col>
-
-                <!-- Orders KPI -->
-                <ion-col size="6" size-md="3" *ngIf="canOpenOrders">
-                    <ion-card class="kpi-card" (click)="openOrders()">
-                        <ion-card-content>
-                            <div class="kpi-value text-warning">{{ kpis?.todayOrders || 0 }}</div>
-                            <div class="kpi-label">Orders</div>
-                            <ion-icon name="clipboard" class="kpi-icon bg-warning"></ion-icon>
-                        </ion-card-content>
-                    </ion-card>
-                </ion-col>
-
-                <!-- Low Stock KPI -->
-                <ion-col size="6" size-md="3" *ngIf="canOpenStocks">
-                    <ion-card class="kpi-card" (click)="openStocks()">
-                        <ion-card-content>
-                            <div class="kpi-value text-danger">{{ kpis?.lowStockCount || 0 }}</div>
-                            <div class="kpi-label">Low Stock</div>
-                            <ion-icon name="warning" class="kpi-icon bg-danger"></ion-icon>
-                        </ion-card-content>
-                    </ion-card>
-                </ion-col>
-
-                <!-- Customers KPI -->
-                <ion-col size="6" size-md="3" *ngIf="canOpenCustomers">
-                    <ion-card class="kpi-card" (click)="openCustomers()">
-                        <ion-card-content>
-                            <div class="kpi-value text-primary">{{ kpis?.totalCustomers || 0 }}</div>
-                            <div class="kpi-label">Customers</div>
-                            <ion-icon name="people" class="kpi-icon bg-primary"></ion-icon>
-                        </ion-card-content>
-                    </ion-card>
-                </ion-col>
-            </ion-row>
-        </ion-grid>
-
-        <!-- Charts Section -->
-        <ion-grid>
-            <ion-row>
-                <ion-col size="12" size-md="6">
-                    <ion-card>
-                        <ion-card-header>
-                            <ion-card-title>Sales Trend</ion-card-title>
-                        </ion-card-header>
-                        <ion-card-content>
-                            <div class="chart-wrapper" id="dailySalesChart"></div>
-                        </ion-card-content>
-                    </ion-card>
-                </ion-col>
-                <ion-col size="12" size-md="6">
-                    <ion-card>
-                        <ion-card-header>
-                            <ion-card-title>Purchase Trend</ion-card-title>
-                        </ion-card-header>
-                        <ion-card-content>
-                            <div class="chart-wrapper" id="purchaseAnalyticsChart"></div>
-                        </ion-card-content>
-                    </ion-card>
-                </ion-col>
-            </ion-row>
-        </ion-grid>
-
-        <!-- Low Stock Alerts -->
-        <ion-card *ngIf="canOpenStocks">
-            <ion-card-header>
-                <ion-card-title color="danger">⚠️ Low Stock Alerts</ion-card-title>
-            </ion-card-header>
-            <ion-card-content>
-                <ion-list lines="full" *ngIf="overview.lowStockItems?.length; else noStock">
-                    <ion-item *ngFor="let item of overview.lowStockItems">
-                        <ion-icon name="cube" slot="start" color="warning"></ion-icon>
-                        <ion-label>
-                            <h2>{{ item.productName }}</h2>
-                            <p>SKU: {{ item.sku }}</p>
-                        </ion-label>
-                        <ion-badge slot="end" color="danger">{{ item.availableQuantity }} Left</ion-badge>
-                    </ion-item>
-                </ion-list>
-                <ng-template #noStock>
-                    <div class="empty-state">✅ All items are well stocked!</div>
-                </ng-template>
-            </ion-card-content>
-        </ion-card>
-
-        <!-- Outstanding Summary -->
-        <ion-card *ngIf="canViewFinancialDashboard">
-            <ion-card-header>
-                <ion-card-title color="primary">💰 Outstanding Summary</ion-card-title>
-            </ion-card-header>
-            <ion-card-content>
-                <ion-grid>
-                    <ion-row>
-                        <ion-col size="4">
-                            <div class="summary-box">
-                                <div class="label">Sales Due</div>
-                                <div class="value">₹ {{ overview.dueSummary?.salesDue | number:'1.0-0' }}</div>
-                            </div>
-                        </ion-col>
-                        <ion-col size="4">
-                            <div class="summary-box">
-                                <div class="label">Orders Due</div>
-                                <div class="value">₹ {{ overview.dueSummary?.orderDue | number:'1.0-0' }}</div>
-                            </div>
-                        </ion-col>
-                        <ion-col size="4">
-                            <div class="summary-box">
-                                <div class="label">Total Due</div>
-                                <div class="value highlight">₹ {{ overview.dueSummary?.totalDue | number:'1.0-0' }}</div>
-                            </div>
-                        </ion-col>
-                    </ion-row>
-                </ion-grid>
-            </ion-card-content>
-        </ion-card>
-
+    <!-- Header Section -->
+    <div class="dashboard-header">
+        <div class="header-top">
+            <ion-badge color="light" class="scope-badge">{{ getScopeLabel() }}</ion-badge>
+            <ion-badge color="warning" class="range-badge" *ngIf="canUseDashboardRangeControls">{{ selectedRangeLabel }} View</ion-badge>
+        </div>
+        <h1 class="header-title">{{ dashboardTitle }}</h1>
+        <p class="header-subtitle">{{ dashboardSubtitle }}</p>
+        <div class="header-meta">
+            <span class="meta-pill">📦 {{ inventorySummary.products }} Items</span>
+            <span class="meta-pill">🏷️ {{ inventorySummary.brands }} Brands</span>
+        </div>
     </div>
-</div>
+
+    <!-- Range Selector -->
+    <ion-segment *ngIf="canUseDashboardRangeControls" [(ngModel)]="selectedRange" (ionChange)="onRangeChange()" class="range-segment" scrollable>
+        <ion-segment-button value="daily">
+            <ion-label>Daily</ion-label>
+        </ion-segment-button>
+        <ion-segment-button value="weekly">
+            <ion-label>Weekly</ion-label>
+        </ion-segment-button>
+        <ion-segment-button value="monthly">
+            <ion-label>Monthly</ion-label>
+        </ion-segment-button>
+    </ion-segment>
+
+    <!-- KPI Grid -->
+    <ion-grid class="kpi-grid">
+        <ion-row>
+            <!-- Sales KPI -->
+            <ion-col size="6" size-md="3" *ngIf="canOpenSales">
+                <ion-card class="kpi-card kpi-sales" (click)="openSale()">
+                    <ion-card-content>
+                        <div class="kpi-icon bg-success">
+                            <ion-icon name="cart"></ion-icon>
+                        </div>
+                        <div class="kpi-value text-success">₹ {{ kpis?.todaySales | number:'1.0-0' }}</div>
+                        <div class="kpi-label">Total Sales</div>
+                    </ion-card-content>
+                </ion-card>
+            </ion-col>
+
+            <!-- Orders KPI -->
+            <ion-col size="6" size-md="3" *ngIf="canOpenOrders">
+                <ion-card class="kpi-card kpi-orders" (click)="openOrders()">
+                    <ion-card-content>
+                        <div class="kpi-icon bg-warning">
+                            <ion-icon name="clipboard"></ion-icon>
+                        </div>
+                        <div class="kpi-value text-warning">{{ kpis?.todayOrders || 0 }}</div>
+                        <div class="kpi-label">Active Orders</div>
+                    </ion-card-content>
+                </ion-card>
+            </ion-col>
+
+            <!-- Low Stock KPI -->
+            <ion-col size="6" size-md="3" *ngIf="canOpenStocks">
+                <ion-card class="kpi-card kpi-stock" (click)="openStocks()">
+                    <ion-card-content>
+                        <div class="kpi-icon bg-danger">
+                            <ion-icon name="warning"></ion-icon>
+                        </div>
+                        <div class="kpi-value text-danger">{{ kpis?.lowStockCount || 0 }}</div>
+                        <div class="kpi-label">Low Stock</div>
+                    </ion-card-content>
+                </ion-card>
+            </ion-col>
+
+            <!-- Customers KPI -->
+            <ion-col size="6" size-md="3" *ngIf="canOpenCustomers">
+                <ion-card class="kpi-card kpi-customers" (click)="openCustomers()">
+                    <ion-card-content>
+                        <div class="kpi-icon bg-primary">
+                            <ion-icon name="people"></ion-icon>
+                        </div>
+                        <div class="kpi-value text-primary">{{ kpis?.totalCustomers || 0 }}</div>
+                        <div class="kpi-label">Customers</div>
+                    </ion-card-content>
+                </ion-card>
+            </ion-col>
+        </ion-row>
+    </ion-grid>
+
+    <!-- Charts Section -->
+    <ion-grid>
+        <ion-row>
+            <ion-col size="12" size-md="6">
+                <ion-card>
+                    <ion-card-header>
+                        <ion-card-title>Sales Trend</ion-card-title>
+                    </ion-card-header>
+                    <ion-card-content>
+                        <div class="chart-wrapper" id="dailySalesChart"></div>
+                    </ion-card-content>
+                </ion-card>
+            </ion-col>
+            <ion-col size="12" size-md="6">
+                <ion-card>
+                    <ion-card-header>
+                        <ion-card-title>Purchase Trend</ion-card-title>
+                    </ion-card-header>
+                    <ion-card-content>
+                        <div class="chart-wrapper" id="purchaseAnalyticsChart"></div>
+                    </ion-card-content>
+                </ion-card>
+            </ion-col>
+        </ion-row>
+    </ion-grid>
+
+    <!-- Low Stock Alerts -->
+    <ion-card *ngIf="canOpenStocks">
+        <ion-card-header>
+            <ion-card-title color="danger">⚠️ Low Stock Alerts</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+            <ion-list lines="full" *ngIf="overview.lowStockItems?.length; else noStock">
+                <ion-item *ngFor="let item of overview.lowStockItems">
+                    <ion-icon name="cube" slot="start" color="warning"></ion-icon>
+                    <ion-label>
+                        <h2>{{ item.productName }}</h2>
+                        <p>SKU: {{ item.sku }}</p>
+                    </ion-label>
+                    <ion-badge slot="end" color="danger">{{ item.availableQuantity }} Left</ion-badge>
+                </ion-item>
+            </ion-list>
+            <ng-template #noStock>
+                <div class="empty-state">
+                    <ion-icon name="checkmark-circle" color="success" style="font-size: 40px;"></ion-icon>
+                    <p>All items are well stocked!</p>
+                </div>
+            </ng-template>
+        </ion-card-content>
+    </ion-card>
+
+    <!-- Outstanding Summary -->
+    <ion-card *ngIf="canViewFinancialDashboard">
+        <ion-card-header>
+            <ion-card-title color="primary">💰 Outstanding Summary</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+            <ion-grid>
+                <ion-row>
+                    <ion-col size="4">
+                        <div class="summary-box">
+                            <div class="label">Sales Due</div>
+                            <div class="value">₹ {{ overview.dueSummary?.salesDue | number:'1.0-0' }}</div>
+                        </div>
+                    </ion-col>
+                    <ion-col size="4">
+                        <div class="summary-box">
+                            <div class="label">Orders Due</div>
+                            <div class="value">₹ {{ overview.dueSummary?.orderDue | number:'1.0-0' }}</div>
+                        </div>
+                    </ion-col>
+                    <ion-col size="4">
+                        <div class="summary-box">
+                            <div class="label">Total Due</div>
+                            <div class="value highlight">₹ {{ overview.dueSummary?.totalDue | number:'1.0-0' }}</div>
+                        </div>
+                    </ion-col>
+                </ion-row>
+            </ion-grid>
+        </ion-card-content>
+    </ion-card>
+
+</ion-content>
