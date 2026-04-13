@@ -124,6 +124,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private cdr: ChangeDetectorRef,
   ) {}
 
+  scrollToSection(sectionId: string): void {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }
+
+
   startAnimationForLineChart(chart) {
     let seq: any, delays: any, durations: any;
     seq = 0;
@@ -952,28 +960,29 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   openSale(): void {
     if (!this.canOpenSales) return;
-    this.goToRoute("/sale-list");
+    this.scrollToSection('dailySalesChart');
   }
 
   openProducts(): void {
     if (!this.canOpenProducts) return;
-    this.goToRoute("/item-list");
+    this.scrollToSection('stockWatchSection');
   }
 
   openStocks(): void {
     if (!this.canOpenStocks) return;
-    this.goToRoute("/stocks");
+    this.scrollToSection('stockWatchSection');
   }
 
   openPurchase(): void {
     if (!this.canOpenPurchase) return;
-    this.goToRoute("/purchase");
+    this.scrollToSection('completedTasksChart');
   }
 
   openOrders(): void {
     if (!this.canOpenOrders) return;
-    this.goToRoute("/order");
+    this.scrollToSection('websiteViewsChart');
   }
+
 
   openReturns(): void {
     if (!this.canOpenReturns) return;

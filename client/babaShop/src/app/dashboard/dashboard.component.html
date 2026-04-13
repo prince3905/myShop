@@ -238,7 +238,7 @@
         </div>
         <div class="row">
             <div class="col-lg-6 col-md-12" *ngIf="canViewFinancialDashboard && canOpenStocks">
-                <div class="card dashboard-detail-card dashboard-click-card" (click)="openStocks()">
+                <div class="card dashboard-detail-card dashboard-click-card" id="stockWatchSection" (click)="openStocks()">
                     <div class="card-header card-header-danger">
                         <h4 class="card-title">{{ isStaff ? 'Stock Watch' : 'Low Stock Alerts' }}</h4>
                         <p class="card-category">{{ isStaff ? 'Items needing quick stock attention' : 'Top items that need reorder attention' }}</p>
