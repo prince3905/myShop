@@ -893,6 +893,51 @@
   .analytics-strip {
     grid-template-columns: 1fr;
   }
+
+  .bento-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .bento-card-lg {
+    grid-column: span 2;
+  }
+
+  .dashboard-click-card {
+    padding: 20px !important;
+    border-radius: 24px !important;
+  }
+
+  .card-value-modern {
+    font-size: 24px;
+  }
+
+  .card-icon-modern {
+    width: 48px;
+    height: 48px;
+    font-size: 24px;
+    margin-bottom: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .bento-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .bento-card-lg {
+    grid-column: span 1;
+  }
+
+  .dashboard-header-card {
+    padding: 20px;
+    border-radius: 20px;
+  }
+
+  .dashboard-wrapper {
+    padding: 16px;
+  }
 }
 
 @media (max-width: 1199px) {
