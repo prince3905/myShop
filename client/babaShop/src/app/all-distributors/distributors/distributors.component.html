@@ -2,8 +2,14 @@
   <div class="container-fluid">
     <div class="card">
       <div class="card-header card-header-danger">
-        <div class="header-main">
-          <h4 class="card-title">Distributors</h4>
+        <div class="header-top">
+          <div>
+            <h4 class="card-title">Distributors</h4>
+            <p class="card-category">Manage your supplier & distributor network</p>
+          </div>
+          <button mat-raised-button color="accent" (click)="openAddDistributor()" *ngIf="!isGlobalSuperAdmin">
+            <mat-icon>add</mat-icon> Add Distributor
+          </button>
         </div>
 
         <div class="header-filters">
@@ -42,9 +48,6 @@
             <button mat-stroked-button color="primary" (click)="onClear()">
               <mat-icon>clear</mat-icon>
             </button>
-            <button mat-raised-button color="accent" (click)="openAddDistributor()" *ngIf="!isGlobalSuperAdmin">
-              <mat-icon>add</mat-icon>
-            </button>
           </div>
         </div>
       </div>
@@ -65,47 +68,50 @@
           <mat-spinner diameter="36"></mat-spinner>
         </div>
 
-        <div class="table-responsive" *ngIf="!loading">
-          <table class="table mat-elevation-z1 distributor-table">
-            <thead class="text-danger">
-              <tr>
-                <th>ID</th>
-                <th>Name</th>
-                <th>Phone</th>
-                <th>Email</th>
-                <th>Status</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let item of Distributors" (click)="openViewDistributor(item, $event)">
-                <td>{{ item._id }}</td>
-                <td>{{ item.name }}</td>
-                <td>{{ item.phone }}</td>
-                <td>{{ item.email || "-" }}</td>
-                <td>
-                  <span class="status-badge" [ngClass]="item.status === 'active' ? 'active' : 'disabled'">
-                    {{ item.status | titlecase }}
-                  </span>
-                </td>
-                <td (click)="$event.stopPropagation()" class="action-col">
-                  <button mat-icon-button color="primary" matTooltip="View" (click)="openViewDistributor(item, $event)">
-                    <mat-icon>visibility</mat-icon>
-                  </button>
-                  <button mat-icon-button color="accent" matTooltip="Edit Distributor" (click)="openEditDistributor(item)" *ngIf="!isGlobalSuperAdmin">
-                    <mat-icon>edit</mat-icon>
-                  </button>
-                  <button mat-stroked-button class="status-btn" [ngClass]="item.status === 'active' ? 'active' : 'disabled'" (click)="toggleStatus(item)" *ngIf="!isGlobalSuperAdmin">
-                    <mat-icon>{{ item.status === 'active' ? 'toggle_on' : 'toggle_off' }}</mat-icon>
-                    {{ item.status === 'active' ? 'Disable' : 'Enable' }}
-                  </button>
-                </td>
-              </tr>
-              <tr *ngIf="Distributors.length === 0">
-                <td colspan="6" class="empty-row">No distributors found</td>
-              </tr>
-            </tbody>
-          </table>
+        <div class="distributors-bento-grid" *ngIf="!loading && Distributors.length > 0">
+          <div class="dist-card-v3" *ngFor="let item of Distributors" (click)="openViewDistributor(item, $event)">
+
+            <div class="dist-card-top">
+              <div class="dist-avatar">{{ (item.name || 'D')[0].toUpperCase() }}</div>
+              <div class="dist-info">
+                <div class="dist-name">{{ item.name }}</div>
+                <div class="dist-meta" *ngIf="item.phone">
+                  <mat-icon>phone</mat-icon> {{ item.phone }}
+                </div>
+                <div class="dist-meta" *ngIf="item.email">
+                  <mat-icon>email</mat-icon> {{ item.email }}
+                </div>
+              </div>
+              <span class="status-badge" [ngClass]="item.status === 'active' ? 'active' : 'disabled'">
+                {{ item.status | titlecase }}
+              </span>
+            </div>
+
+            <div class="dist-card-footer" (click)="$event.stopPropagation()">
+              <button mat-icon-button color="primary" matTooltip="View" (click)="openViewDistributor(item, $event)">
+                <mat-icon>visibility</mat-icon>
+              </button>
+              <button mat-icon-button color="accent" matTooltip="Edit" (click)="openEditDistributor(item)" *ngIf="!isGlobalSuperAdmin">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button
+                mat-stroked-button
+                class="toggle-btn"
+                [ngClass]="item.status === 'active' ? 'disable-btn' : 'enable-btn'"
+                (click)="toggleStatus(item)"
+                *ngIf="!isGlobalSuperAdmin"
+              >
+                <mat-icon>{{ item.status === 'active' ? 'toggle_on' : 'toggle_off' }}</mat-icon>
+                {{ item.status === 'active' ? 'Disable' : 'Enable' }}
+              </button>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="empty-state-bento" *ngIf="!loading && Distributors.length === 0">
+          <mat-icon>local_shipping</mat-icon>
+          <p>No distributors found</p>
         </div>
 
         <mat-paginator
