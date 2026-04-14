@@ -13,6 +13,8 @@ import { StocksService } from "app/shared/services/stocks.service";
 import { VariationService } from "app/shared/services/variation.service";
 import { AuthService } from "app/shared/services/auth.service";
 import { AddCustomerDialogComponent } from "../add-customer-dialog/add-customer-dialog.component";
+import { Capacitor } from "@capacitor/core";
+import { BarcodeScanner, BarcodeFormat } from "@capacitor-mlkit/barcode-scanning";
 
 @Component({
   selector: "add-sales",
@@ -441,6 +443,43 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
       this.purchasePrice = null;
       this.currentAvailableStock = null;
     }
+  }
+
+  async startCameraScan(): Promise<void> {
+    if (!Capacitor.isNativePlatform()) {
+      this.snackBar.open("Camera scan is only available on Android/iOS devices.", "Close", { duration: 3000 });
+      this.onBarcodeScan(); // Fallback to manual entry/focus
+      return;
+    }
+
+    try {
+      const granted = await this.checkBarcodeScannerPermission();
+      if (!granted) {
+        this.snackBar.open("Camera permission is required to scan barcodes.", "Close", { duration: 3000 });
+        return;
+      }
+
+      const { barcodes } = await BarcodeScanner.scan({
+        formats: [BarcodeFormat.Ean13, BarcodeFormat.Ean8, BarcodeFormat.Code128, BarcodeFormat.QrCode],
+      });
+
+      if (barcodes.length > 0) {
+        this.scannedBarcode = barcodes[0].displayValue;
+        this.onBarcodeScan("barcode");
+      }
+    } catch (error) {
+      console.error("Barcode scan failed:", error);
+      this.snackBar.open("Could not start camera scanner.", "Close", { duration: 3000 });
+    }
+  }
+
+  private async checkBarcodeScannerPermission(): Promise<boolean> {
+    const status = await BarcodeScanner.checkPermissions();
+    if (status.camera === "granted") return true;
+    if (status.camera === "denied") return false;
+
+    const request = await BarcodeScanner.requestPermissions();
+    return request.camera === "granted";
   }
 
   onBarcodeScan(source: "barcode" | "primary" = "barcode"): void {

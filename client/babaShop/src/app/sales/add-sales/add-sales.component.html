@@ -41,8 +41,9 @@
                 mat-icon-button
                 type="button"
                 class="barcode-button"
-                (click)="onBarcodeScan()"
+                (click)="startCameraScan()"
                 [disabled]="barcodeLookupLoading"
+                matTooltip="Scan with Camera"
               >
                 <mat-icon>qr_code_scanner</mat-icon>
               </button>
