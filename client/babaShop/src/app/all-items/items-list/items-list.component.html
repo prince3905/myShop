@@ -1,34 +1,52 @@
 <div class="main-content">
+  <div class="dashboard-decor shadow-blob-1"></div>
+  <div class="dashboard-decor shadow-blob-2"></div>
+  <div class="dashboard-decor shadow-blob-3"></div>
+
   <div class="container-fluid">
     <div class="card filter-card">
-      <div class="card-header card-header-danger">
-        <h4 class="card-title">Product Console</h4>
-        <p class="card-category">Manage products, categories, brands, and variations</p>
+      <div class="card-header premium-header">
+        <div class="header-main">
+          <h4 class="card-title">Inventory & Catalog Suite</h4>
+          <p class="card-category">Curate products, manage categories, and optimize availability.</p>
+        </div>
+        <div class="header-badge">STOCK COMMAND</div>
       </div>
       <div class="card-body">
-        <div class="top-bar">
-          <div class="context-chip">Visible Products: {{ totalItems || 0 }}</div>
-          <button
-            *hasRole="['SUPER_ADMIN','ADMIN','MANAGER']"
-            mat-stroked-button
-            color="primary"
-            (click)="openAddItemModal()">
-            Add Product
-          </button>
-          <button
-            *hasRole="['SUPER_ADMIN','ADMIN']"
-            mat-stroked-button
-            color="accent"
-            (click)="openAddCategoryModal()">
-            Add Category
-          </button>
-          <button
-            *hasRole="['SUPER_ADMIN','ADMIN']"
-            mat-stroked-button
-            color="accent"
-            (click)="openAddBrandModal()">
-            Add Brand
-          </button>
+        <div class="bento-summary-row">
+          <div class="bento-summary-card primary" (click)="onSummaryProductsClick()">
+            <div class="card-icon"><i class="material-icons">inventory_2</i></div>
+            <div class="card-content">
+              <div class="label">Total Products</div>
+              <div class="value">{{ summaryCounts.products }}</div>
+            </div>
+          </div>
+          <div class="bento-summary-card success" (click)="onSummaryCategoryFilter()">
+            <div class="card-icon"><i class="material-icons">category</i></div>
+            <div class="card-content">
+              <div class="label">Categories</div>
+              <div class="value">{{ summaryCounts.categories }}</div>
+            </div>
+          </div>
+          <div class="bento-summary-card info" (click)="onSummaryBrandFilter()">
+            <div class="card-icon"><i class="material-icons">verified</i></div>
+            <div class="card-content">
+              <div class="label">Brands</div>
+              <div class="value">{{ summaryCounts.brands }}</div>
+            </div>
+          </div>
+          <div class="spacer"></div>
+          <div class="action-buttons">
+            <button *hasRole="['SUPER_ADMIN','ADMIN','MANAGER']" mat-raised-button class="premium-btn royal" (click)="openAddItemModal()">
+              <mat-icon>add</mat-icon> Product
+            </button>
+            <button *hasRole="['SUPER_ADMIN','ADMIN']" mat-stroked-button class="premium-btn gold" (click)="openAddCategoryModal()">
+              <mat-icon>category</mat-icon> Category
+            </button>
+            <button *hasRole="['SUPER_ADMIN','ADMIN']" mat-stroked-button class="premium-btn gold" (click)="openAddBrandModal()">
+              <mat-icon>style</mat-icon> Brand
+            </button>
+          </div>
         </div>
 
         <div class="filter-row">
@@ -96,26 +114,6 @@
       </div>
     </div>
 
-    <div class="summary-grid">
-      <div class="summary-card clickable" role="button" tabindex="0" (click)="onSummaryProductsClick()">
-        <div class="label">All Products</div>
-        <div class="value">{{ summaryCounts.products }}</div>
-      </div>
-      <div class="summary-card">
-        <div class="label">All Categories</div>
-        <div class="value">{{ summaryCounts.categories }}</div>
-        <button mat-icon-button type="button" matTooltip="Filter categories" (click)="onSummaryCategoryFilter()">
-          <mat-icon>filter_list</mat-icon>
-        </button>
-      </div>
-      <div class="summary-card">
-        <div class="label">All Brands</div>
-        <div class="value">{{ summaryCounts.brands }}</div>
-        <button mat-icon-button type="button" matTooltip="Filter brands" (click)="onSummaryBrandFilter()">
-          <mat-icon>filter_list</mat-icon>
-        </button>
-      </div>
-    </div>
 
     <div class="loading-wrap" *ngIf="loading">
       <mat-spinner color="primary" diameter="40"></mat-spinner>

@@ -1,18 +1,50 @@
 <div class="main-content">
+  <div class="dashboard-decor shadow-blob-1"></div>
+  <div class="dashboard-decor shadow-blob-2"></div>
+  <div class="dashboard-decor shadow-blob-3"></div>
+
   <div class="container-fluid">
     <div class="card filter-card">
-      <div class="card-header card-header-danger">
-        <h4 class="card-title">Sales Console</h4>
-        <p class="card-category">POS sales list, filters and printable invoice</p>
+      <div class="card-header premium-header">
+        <div class="header-main">
+          <h4 class="card-title">Sales Intelligence Console</h4>
+          <p class="card-category">Track performance, manage transactions, and analyze momentum.</p>
+        </div>
+        <div class="header-badge">EXECUTIVE VIEW</div>
       </div>
 
       <div class="card-body">
-        <div class="top-row">
-          <div class="context-chip">Total Sales: {{ summary.totalSales }}</div>
-          <div class="context-chip">Page Revenue: Rs {{ summary.totalRevenue | number:'1.2-2' }}</div>
-          <div class="context-chip">Page Qty: {{ summary.totalQty }}</div>
-          <button mat-stroked-button color="accent" (click)="exportCsv()">Export CSV</button>
-          <button mat-raised-button color="primary" (click)="openAddSaleModal()" *ngIf="canCreateSale">Add Sale</button>
+        <div class="bento-summary-row">
+          <div class="bento-summary-card primary">
+            <div class="card-icon"><i class="material-icons">receipt_long</i></div>
+            <div class="card-content">
+              <div class="label">Total Sales</div>
+              <div class="value">{{ summary.totalSales }}</div>
+            </div>
+          </div>
+          <div class="bento-summary-card success">
+            <div class="card-icon"><i class="material-icons">payments</i></div>
+            <div class="card-content">
+              <div class="label">Revenue</div>
+              <div class="value">₹ {{ summary.totalRevenue | number:'1.2-2' }}</div>
+            </div>
+          </div>
+          <div class="bento-summary-card info">
+            <div class="card-icon"><i class="material-icons">inventory_2</i></div>
+            <div class="card-content">
+              <div class="label">Total Qty</div>
+              <div class="value">{{ summary.totalQty }}</div>
+            </div>
+          </div>
+          <div class="spacer"></div>
+          <div class="action-buttons">
+            <button mat-stroked-button class="premium-btn gold" (click)="exportCsv()">
+              <mat-icon>download</mat-icon> Export CSV
+            </button>
+            <button mat-raised-button class="premium-btn royal" (click)="openAddSaleModal()" *ngIf="canCreateSale">
+              <mat-icon>add</mat-icon> Add Sale
+            </button>
+          </div>
         </div>
 
         <div class="filter-row">
