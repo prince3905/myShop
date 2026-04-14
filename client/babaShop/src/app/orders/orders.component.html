@@ -112,92 +112,104 @@
           <mat-spinner color="primary" mode="indeterminate"></mat-spinner>
         </div>
 
-        <div class="table-responsive" *ngIf="!loading">
-          <table class="table order-table">
-            <thead>
-              <tr>
-                <th>Order</th>
-                <th>Customer</th>
-                <th>Items</th>
-                <th class="text-right">Qty</th>
-                <th class="text-right">Amount</th>
-                <th>Source</th>
-                <th>Order Status</th>
-                <th>Payment Status</th>
-                <th>Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let order of orders">
-                <td>
-                  <button type="button" class="order-link" (click)="openOrder(order)">
-                    {{ order.orderNo || order._id }}
-                  </button>
-                  <div class="order-actions-inline">
-                    <button
-                      mat-stroked-button
-                      color="primary"
-                      type="button"
-                      class="edit-order-btn"
-                      [disabled]="!canEditOrder(order)"
-                      [matTooltip]="getEditOrderHint(order)"
-                      (click)="editOrder(order)"
-                    >
-                      Edit Order
-                    </button>
-                  </div>
-                  <div class="shop-meta" *ngIf="order.shop?.name">
-                    {{ order.shop.name }} <span *ngIf="order.shop?.shopCode">({{ order.shop.shopCode }})</span>
-                  </div>
-                </td>
-                <td>
-                  <div>{{ order.customer?.name || 'Walk-in / Guest' }}</div>
-                  <div class="shop-meta" *ngIf="order.customer?.phone">{{ order.customer.phone }}</div>
-                </td>
-                <td>
-                  <div>{{ getItemSummary(order) }}</div>
-                  <div class="shop-meta" *ngIf="getRemainingItems(order) > 0">
-                    +{{ getRemainingItems(order) }} more item(s)
-                  </div>
-                </td>
-                <td class="text-right">{{ order.totalQuantity || 0 }}</td>
-                <td class="text-right">Rs {{ order.totalAmount | number:'1.2-2' }}</td>
-                <td>
-                  <span class="pill source-pill">{{ order.orderSource }}</span>
-                </td>
-                <td>
-                  <mat-form-field appearance="outline" class="status-field">
-                    <mat-select
-                      [(ngModel)]="order.orderStatus"
-                      [disabled]="updatingOrderId === order._id || !canManageOrders()"
-                      (selectionChange)="updateOrderStatus(order, 'orderStatus', $event.value)"
-                    >
-                      <mat-option *ngFor="let status of orderStatuses" [value]="status">
-                        {{ status }}
-                      </mat-option>
-                    </mat-select>
-                  </mat-form-field>
-                </td>
-                <td>
-                  <mat-form-field appearance="outline" class="status-field">
-                    <mat-select
-                      [(ngModel)]="order.paymentStatus"
-                      [disabled]="updatingOrderId === order._id || !canManageOrders()"
-                      (selectionChange)="updateOrderStatus(order, 'paymentStatus', $event.value)"
-                    >
-                      <mat-option *ngFor="let status of paymentStatuses" [value]="status">
-                        {{ status }}
-                      </mat-option>
-                    </mat-select>
-                  </mat-form-field>
-                </td>
-                <td>{{ order.createdAt | date:'mediumDate' }}</td>
-              </tr>
-              <tr *ngIf="orders.length === 0">
-                <td colspan="9" class="empty-state">No orders found for the current filters.</td>
-              </tr>
-            </tbody>
-          </table>
+        <div class="orders-bento-grid" *ngIf="!loading">
+          <div class="order-card-v3" *ngFor="let order of orders">
+            <div class="card-top-row">
+              <div class="order-id-section">
+                <span class="order-no">{{ order.orderNo || order._id | slice:0:12 }}</span>
+                <span class="source-tag" [class.online]="order.orderSource?.toLowerCase() === 'online'">
+                  {{ order.orderSource }}
+                </span>
+              </div>
+              <div class="date-section">
+                {{ order.createdAt | date:'MMM d, yyyy' }}
+              </div>
+            </div>
+
+            <div class="customer-info">
+              <div class="cust-header">
+                <mat-icon>person</mat-icon>
+                <span class="cust-name">{{ order.customer?.name || 'Walk-in / Guest' }}</span>
+              </div>
+              <div class="cust-meta" *ngIf="order.customer?.phone">
+                <mat-icon>phone</mat-icon>
+                <span>{{ order.customer.phone }}</span>
+              </div>
+              <div class="shop-meta-tag" *ngIf="order.shop?.name">
+                <mat-icon>store</mat-icon>
+                <span>{{ order.shop.name }}</span>
+              </div>
+            </div>
+
+            <div class="items-summary-section" (click)="openOrder(order)">
+              <div class="items-list-preview">
+                {{ getItemSummary(order) }}
+                <span class="more-badge" *ngIf="getRemainingItems(order) > 0">
+                  +{{ getRemainingItems(order) }} more
+                </span>
+              </div>
+            </div>
+
+            <div class="status-controls-row">
+              <div class="status-control-box">
+                <label>Order Status</label>
+                <div class="status-indicator" [style.background-color]="getStatusColor(order.orderStatus)"></div>
+                <mat-select
+                  [(ngModel)]="order.orderStatus"
+                  [disabled]="updatingOrderId === order._id || !canManageOrders()"
+                  (selectionChange)="updateOrderStatus(order, 'orderStatus', $event.value)"
+                >
+                  <mat-option *ngFor="let status of orderStatuses" [value]="status">
+                    {{ status }}
+                  </mat-option>
+                </mat-select>
+              </div>
+
+              <div class="status-control-box">
+                <label>Payment Status</label>
+                <div class="status-indicator" [style.background-color]="getPaymentStatusColor(order.paymentStatus)"></div>
+                <mat-select
+                  [(ngModel)]="order.paymentStatus"
+                  [disabled]="updatingOrderId === order._id || !canManageOrders()"
+                  (selectionChange)="updateOrderStatus(order, 'paymentStatus', $event.value)"
+                >
+                  <mat-option *ngFor="let status of paymentStatuses" [value]="status">
+                    {{ status }}
+                  </mat-option>
+                </mat-select>
+              </div>
+            </div>
+
+            <div class="card-footer-row">
+              <div class="amount-group">
+                <div class="amt-label">Total Amount</div>
+                <div class="amt-value">₹{{ order.totalAmount | number:'1.0-0' }}</div>
+              </div>
+              <div class="qty-group">
+                <div class="amt-label">Quantity</div>
+                <div class="amt-value">{{ order.totalQuantity || 0 }}</div>
+              </div>
+              <div class="action-group">
+                <button
+                  mat-icon-button
+                  color="primary"
+                  [disabled]="!canEditOrder(order)"
+                  (click)="editOrder(order)"
+                  matTooltip="Edit Order"
+                >
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button mat-icon-button color="accent" (click)="openOrder(order)" matTooltip="View Details">
+                  <mat-icon>arrow_forward</mat-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="empty-state-bento" *ngIf="!loading && orders.length === 0">
+          <mat-icon>receipt_long</mat-icon>
+          <p>No orders found for the current filters.</p>
         </div>
 
         <mat-paginator

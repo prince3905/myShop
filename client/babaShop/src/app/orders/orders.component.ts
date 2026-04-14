@@ -126,6 +126,28 @@ export class OrdersComponent implements OnInit {
     this.navigateWithParams(event.pageIndex + 1);
   }
 
+  getStatusColor(status: string): string {
+    switch (status?.toUpperCase()) {
+      case 'DELIVERED': return '#10b981';
+      case 'SHIPPED': return '#3b82f6';
+      case 'CONFIRMED': return '#8b5cf6';
+      case 'PENDING': return '#f59e0b';
+      case 'CANCELLED': return '#ef4444';
+      case 'RETURNED': return '#6b7280';
+      default: return '#94a3b8';
+    }
+  }
+
+  getPaymentStatusColor(status: string): string {
+    switch (status?.toUpperCase()) {
+      case 'PAID': return '#10b981';
+      case 'PENDING': return '#f59e0b';
+      case 'FAILED': return '#ef4444';
+      case 'REFUNDED': return '#6366f1';
+      default: return '#94a3b8';
+    }
+  }
+
   updateOrderStatus(order: any, field: 'orderStatus' | 'paymentStatus', value: string): void {
     if (!order?._id || !value) {
       return;
