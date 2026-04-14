@@ -1,6 +1,7 @@
 .main-content {
   position: relative;
-  overflow: hidden;
+  overflow-x: hidden !important;
+  width: 100%;
   min-height: 100vh;
   font-family: 'Inter', sans-serif !important;
 }
@@ -717,6 +718,44 @@ mat-paginator {
   .context-chip {
     width: 100%;
     justify-content: center;
+  }
+
+  /* Compact Bento Stats for Mobile */
+  .bento-grid.purchase-bento {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px !important;
+    grid-auto-rows: minmax(100px, auto) !important;
+    margin-bottom: 20px !important;
+  }
+
+  .purchase-bento .dashboard-click-card {
+    padding: 16px !important;
+    border-radius: 24px !important;
+  }
+
+  .purchase-bento .card-icon-modern {
+    width: 36px;
+    height: 36px;
+    font-size: 18px;
+    margin-bottom: 8px;
+    border-radius: 12px;
+  }
+
+  .purchase-bento .card-value-modern {
+    font-size: 18px;
+    margin: 2px 0;
+  }
+
+  .purchase-bento .card-label-modern {
+    font-size: 9px;
+  }
+
+  .purchase-bento .card-meta-modern {
+    display: none; /* Hide descriptions to save space */
+  }
+
+  .purchase-bento .bento-card-lg {
+    grid-column: span 2;
   }
 }
 

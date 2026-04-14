@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from "@angular/core";
+import { Component, OnInit, ViewChild, ChangeDetectorRef } from "@angular/core";
 import { MatDialog } from "@angular/material/dialog";
 
 import { AddItemsComponent } from "../add-items/add-items.component";
@@ -12,6 +12,7 @@ import { ProductService } from "app/shared/services/product.service";
 import { CategoryService } from "app/shared/services/category.service";
 import { BrandService } from "app/shared/services/brand.service";
 import { AuthService } from "app/shared/services/auth.service";
+import { StocksService } from "app/shared/services/stocks.service";
 @Component({
   selector: "items-list",
   templateUrl: "./items-list.component.html",
@@ -37,6 +38,9 @@ export class ItemsListComponent implements OnInit {
     products: 0,
     categories: 0,
     brands: 0,
+    totalQuantity: 0,
+    totalReserved: 0,
+    lowStockCount: 0,
   };
 
   productId: string;
@@ -59,9 +63,11 @@ export class ItemsListComponent implements OnInit {
     private productService: ProductService,
     private categoryService: CategoryService,
     private brandService: BrandService,
+    private stocksService: StocksService,
     public authService: AuthService,
     private router: Router,
     private Router: ActivatedRoute,
+    private cdr: ChangeDetectorRef,
   ) {}
 
   private navigateWithQuery(queryParams: any): void {
@@ -184,6 +190,7 @@ export class ItemsListComponent implements OnInit {
     forkJoin({
       categories: this.categoryService.getAllCategories({ page: 1, limit: 500 }),
       brands: this.brandService.getAllBrands({ page: 1, limit: 500 }),
+      stocks: this.stocksService.getStocks({ page: 1, limit: 1 }),
     }).subscribe({
       next: (response: any) => {
         this.Category = this.extractList(response?.categories);
@@ -191,8 +198,12 @@ export class ItemsListComponent implements OnInit {
         this.updateFilteredBrands();
         this.summaryCounts.categories = this.Category.length;
         this.summaryCounts.brands = this.Brands.length;
+        this.summaryCounts.totalQuantity = Number(response?.stocks?.summary?.totalQuantity || 0);
+        this.summaryCounts.totalReserved = Number(response?.stocks?.summary?.totalReserved || 0);
+        this.summaryCounts.lowStockCount = Number(response?.stocks?.summary?.lowStockCount || 0);
+        this.cdr.detectChanges();
       },
-      error: (error) => console.error("Error retrieving category/brand:", error),
+      error: (error) => console.error("Error retrieving category/brand/stock summary:", error),
     });
   }
 
@@ -363,6 +374,10 @@ export class ItemsListComponent implements OnInit {
   onSummaryBrandFilter(): void {
     this.selectedOption = "brand";
     this.onFilterModeChange();
+  }
+
+  goToStocks(): void {
+    this.router.navigateByUrl("/stocks");
   }
 
   editProduct(id: string) {

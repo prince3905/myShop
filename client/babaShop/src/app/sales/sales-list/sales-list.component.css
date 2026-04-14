@@ -1,8 +1,10 @@
 .main-content {
   position: relative;
-  overflow: hidden;
+  overflow-x: hidden !important;
+  width: 100%;
   min-height: 100vh;
   font-family: 'Inter', sans-serif !important;
+  scroll-behavior: smooth !important;
 }
 
 .dashboard-decor {

@@ -254,12 +254,13 @@ export class SalesListComponent implements OnInit {
 
   showDetails(row: any): void {
     this.selectedSale = row;
+    this.cdr.detectChanges();
     setTimeout(() => {
       this.saleDetailsCard?.nativeElement?.scrollIntoView({
         behavior: "smooth",
         block: "start",
       });
-    }, 0);
+    }, 150);
   }
 
   closeDetails(): void {

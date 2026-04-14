@@ -35,7 +35,30 @@
               <div class="value">{{ summaryCounts.brands }}</div>
             </div>
           </div>
-          <div class="spacer"></div>
+          <div class="bento-summary-card purple" (click)="goToStocks()">
+            <div class="card-icon"><i class="material-icons">stored_info</i></div>
+            <div class="card-content">
+              <div class="label">Total Qty</div>
+              <div class="value">{{ summaryCounts.totalQuantity }}</div>
+            </div>
+          </div>
+          <div class="bento-summary-card info-dark" (click)="goToStocks()">
+            <div class="card-icon"><i class="material-icons">event_seat</i></div>
+            <div class="card-content">
+              <div class="label">Reserved</div>
+              <div class="value">{{ summaryCounts.totalReserved }}</div>
+            </div>
+          </div>
+          <div class="bento-summary-card danger" (click)="goToStocks()">
+            <div class="card-icon"><i class="material-icons">report_problem</i></div>
+            <div class="card-content">
+              <div class="label">Low Stock</div>
+              <div class="value">{{ summaryCounts.lowStockCount }}</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="header-actions">
           <div class="action-buttons">
             <button *hasRole="['SUPER_ADMIN','ADMIN','MANAGER']" mat-raised-button class="premium-btn royal" (click)="openAddItemModal()">
               <mat-icon>add</mat-icon> Product
@@ -123,8 +146,7 @@
       <div class="card-body">
         <div class="list-header-grid">
           <span>Name</span>
-          <span>Brand</span>
-          <span>Category</span>
+          <span>Brand & Category</span>
           <span class="text-right">Stock</span>
         </div>
         <div class="table-responsive">
@@ -133,8 +155,11 @@
               <mat-expansion-panel-header>
                 <div class="panel-grid">
                   <div class="name">{{ item.name }}</div>
-                  <div>{{ item.brand?.name || '-' }}</div>
-                  <div>{{ item.category?.name || '-' }}</div>
+                  <div class="panel-meta">
+                    <span>{{ item.brand?.name || '-' }}</span>
+                    <span class="meta-sep">•</span>
+                    <span>{{ item.category?.name || '-' }}</span>
+                  </div>
                   <div class="stock">
                     <span class="stock-badge" [ngClass]="item.totalStock < 5 ? 'low' : 'ok'">
                       {{ item.totalStock }}
@@ -161,14 +186,14 @@
                   <tbody>
                     <ng-container *ngIf="item.variations?.length; else noVariationRow">
                       <tr *ngFor="let v of item.variations">
-                        <td>{{ v.model?.name || '-' }}</td>
-                        <td>{{ v.sku }}</td>
-                        <td>{{ v.barcode || '-' }}</td>
-                        <td>{{ v.attributes?.color || '-' }}</td>
-                        <td>{{ v.attributes?.size || '-' }}</td>
-                        <td>{{ v.quantity ?? 0 }}</td>
-                        <td *ngIf="authService.canViewSensitivePricing()">₹ {{ v.costPrice || 0 }}</td>
-                        <td>₹ {{ v.sellingPrice || 0 }}</td>
+                        <td data-label="Model">{{ v.model?.name || '-' }}</td>
+                        <td data-label="SKU">{{ v.sku }}</td>
+                        <td data-label="Barcode">{{ v.barcode || '-' }}</td>
+                        <td data-label="Color">{{ v.attributes?.color || '-' }}</td>
+                        <td data-label="Size">{{ v.attributes?.size || '-' }}</td>
+                        <td data-label="Qty">{{ v.quantity ?? 0 }}</td>
+                        <td *ngIf="authService.canViewSensitivePricing()" data-label="Cost">₹ {{ v.costPrice || 0 }}</td>
+                        <td data-label="Selling">₹ {{ v.sellingPrice || 0 }}</td>
                         <td (click)="$event.stopPropagation()" class="action-col">
                           <button
                             mat-icon-button

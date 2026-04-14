@@ -1,147 +1,179 @@
 <div class="main-content">
-  <div class="container-fluid">
-    <mat-card class="state-card" *ngIf="loading">
-      Loading product details...
-    </mat-card>
+  <div class="dashboard-decor shadow-blob-1"></div>
+  <div class="dashboard-decor shadow-blob-2"></div>
+  <div class="dashboard-decor shadow-blob-3"></div>
 
-    <mat-card class="state-card error" *ngIf="!loading && errorMessage">
-      {{ errorMessage }}
-    </mat-card>
+  <div class="container-fluid">
+    <div class="card state-card" *ngIf="loading">
+      <mat-spinner diameter="34" class="m-auto"></mat-spinner>
+      <p class="text-center mt-2">Initializing product intelligence...</p>
+    </div>
+
+    <div class="card state-card error" *ngIf="!loading && errorMessage">
+      <mat-icon>error</mat-icon> {{ errorMessage }}
+    </div>
 
     <ng-container *ngIf="!loading && !errorMessage && item">
-      <!-- Product Info -->
-      <mat-card class="mb-3 product-overview-card">
-        <div class="overview-header">
-          <h3 class="overview-title">{{ item.name }}</h3>
-          <p class="overview-subtitle">Product Overview</p>
-        </div>
-        <mat-card-content class="product-overview-content">
-
-          <div class="row info-row">
-            <div class="col-md-6">
-              <p class="detail-line"><strong>Brand:</strong> {{ item.brand?.name || "-" }}</p>
-              <p class="detail-line"><strong>Category:</strong> {{ item.category?.name || "-" }}</p>
-              <p class="detail-line">
-                <strong>Total Stock:</strong>
-                <span [style.color]="item.totalStock < 5 ? 'red' : 'green'">
-                  {{ item.totalStock }}
-                </span>
-              </p>
-            </div>
-
-            <div class="col-md-6">
-              <p class="detail-line"><strong>Description:</strong> {{ item.description || "-" }}</p>
-              <p class="detail-line"><strong>Created:</strong> {{ item.createdAt | date: "medium" }}</p>
-              <div class="action-row">
-                <button
-                  *hasRole="['SUPER_ADMIN','ADMIN']"
-                  mat-stroked-button
-                  color="accent"
-                  type="button"
-                  (click)="openVariationConsole(item)">
-                  Add Variation
-                </button>
-                <button
-                  *hasRole="['SUPER_ADMIN','ADMIN','MANAGER']"
-                  mat-icon-button
-                  color="primary"
-                  matTooltip="Edit Product"
-                  (click)="openEditProduct(item)">
-                  <mat-icon>edit</mat-icon>
-                </button>
-                <button
-                  *hasRole="['SUPER_ADMIN','ADMIN','MANAGER']"
-                  mat-icon-button
-                  color="warn"
-                  matTooltip="Delete Product"
-                  (click)="deleteProduct(item)">
-                  <mat-icon>delete</mat-icon>
-                </button>
-              </div>
-            </div>
+      <!-- Premium Header -->
+      <div class="card filter-card">
+        <div class="card-header premium-header">
+          <div class="header-main">
+            <h4 class="card-title">{{ item.name }}</h4>
+            <p class="card-category">Detailed catalog insights and SKU management.</p>
           </div>
+          <div class="action-buttons">
+            <button
+              *hasRole="['SUPER_ADMIN','ADMIN','MANAGER']"
+              mat-raised-button
+              class="premium-btn royal"
+              (click)="openEditProduct(item)">
+              <mat-icon>edit</mat-icon> Edit
+            </button>
+            <button
+              *hasRole="['SUPER_ADMIN','ADMIN','MANAGER']"
+              mat-stroked-button
+              class="premium-btn gold"
+              (click)="deleteProduct(item)">
+              <mat-icon>delete</mat-icon> Delete
+            </button>
+          </div>
+        </div>
+      </div>
 
-        </mat-card-content>
-      </mat-card>
+      <!-- Bento Summary -->
+      <div class="bento-grid mt-4">
+        <div class="dashboard-click-card primary">
+          <div class="card-icon-modern primary">
+            <i class="material-icons">inventory_2</i>
+          </div>
+          <div class="card-label-modern">Total Stock</div>
+          <div class="card-value-modern" [style.color]="item.totalStock < 5 ? '#e11d48' : '#0f172a'">
+            {{ item.totalStock }}
+          </div>
+          <div class="card-meta-modern">Consolidated SKU quantity</div>
+        </div>
+
+        <div class="dashboard-click-card info">
+          <div class="card-icon-modern info">
+            <i class="material-icons">verified</i>
+          </div>
+          <div class="card-label-modern">Brand</div>
+          <div class="card-value-modern" style="font-size: 22px;">{{ item.brand?.name || "-" }}</div>
+          <div class="card-meta-modern">Manufacturer label</div>
+        </div>
+
+        <div class="dashboard-click-card success">
+          <div class="card-icon-modern success">
+            <i class="material-icons">category</i>
+          </div>
+          <div class="card-label-modern">Category</div>
+          <div class="card-value-modern" style="font-size: 22px;">{{ item.category?.name || "-" }}</div>
+          <div class="card-meta-modern">Catalog classification</div>
+        </div>
+      </div>
+
+      <!-- Description Section -->
+      <div class="card mt-4 description-card">
+        <div class="card-body">
+          <div class="section-title">
+            <mat-icon>description</mat-icon> Product Description
+          </div>
+          <p class="description-text">{{ item.description || "No description available for this catalog entry." }}</p>
+          <div class="meta-row mt-3">
+            <span class="meta-item"><strong>SKUs:</strong> {{ item.variations?.length || 0 }}</span>
+            <span class="meta-sep">•</span>
+            <span class="meta-item"><strong>Registered:</strong> {{ item.createdAt | date: "dd MMM yyyy" }}</span>
+          </div>
+        </div>
+      </div>
 
       <!-- SKU Variations Table -->
-      <mat-card>
-        <mat-card-title>SKU Variations</mat-card-title>
-        <div class="model-filter-strip" *ngIf="selectedModelId">
-          <span>
-            Showing Model:
-            <strong>{{ selectedModelName || selectedModelId }}</strong>
-          </span>
-          <button mat-stroked-button color="primary" type="button" (click)="clearModelFilter()">
-            Show All Models
+      <div class="card mt-4">
+        <div class="card-header premium-header-mini">
+          <h4 class="card-title">SKU Variations Explorer</h4>
+          <button
+            *hasRole="['SUPER_ADMIN','ADMIN']"
+            mat-raised-button
+            class="premium-btn royal-mini"
+            (click)="openVariationConsole(item)">
+            <mat-icon>add</mat-icon> Add Variation
           </button>
         </div>
+        
+        <div class="card-body">
+          <div class="model-filter-strip" *ngIf="selectedModelId">
+            <span>
+              Showing Model:
+              <strong>{{ selectedModelName || selectedModelId }}</strong>
+            </span>
+            <button mat-stroked-button color="primary" type="button" (click)="clearModelFilter()">
+              Show All Models
+            </button>
+          </div>
 
-        <div class="table-responsive">
-          <table class="table table-bordered table-sm">
-            <thead>
-              <tr>
-                <th>Model</th>
-                <th>SKU</th>
-                <th>Barcode</th>
-                <th>Storage</th>
-                <th>Color</th>
-                <th>Size</th>
-                <th>Qty</th>
-                <th *ngIf="authService.canViewSensitivePricing()">Cost</th>
-                <th>Selling</th>
-                <th>Created At</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              <ng-container *ngIf="filteredVariations?.length; else noVariations">
-                <tr *ngFor="let v of filteredVariations">
-                  <td>{{ v.model?.name || "-" }}</td>
-                  <td>{{ v.sku || "-" }}</td>
-                  <td>{{ v.barcode || "-" }}</td>
-                  <td>{{ v.attributes?.storage || "-" }}</td>
-                  <td>{{ v.attributes?.color || "-" }}</td>
-                  <td>{{ v.attributes?.size || "-" }}</td>
-                  <td>{{ v.quantity ?? 0 }}</td>
-                  <td *ngIf="authService.canViewSensitivePricing()">{{ (v.costPrice ?? 0) | currency: "INR":"symbol":"1.2-2":"en-IN" }}</td>
-                  <td>{{ (v.sellingPrice ?? 0) | currency: "INR":"symbol":"1.2-2":"en-IN" }}</td>
-                  <td>{{ v.createdAt ? (v.createdAt | date: "medium") : "-" }}</td>
-                  <td class="table-action-col">
-                    <button
-                      *hasRole="['SUPER_ADMIN','ADMIN']"
-                      mat-stroked-button
-                      color="primary"
-                      type="button"
-                      (click)="openVariationConsole(item, v)">
-                      View
-                    </button>
-                  </td>
+          <div class="table-responsive">
+            <table class="table tx-table variation-table">
+              <thead>
+                <tr>
+                  <th>Model</th>
+                  <th>SKU</th>
+                  <th>Barcode</th>
+                  <th>Storage</th>
+                  <th>Color</th>
+                  <th>Size</th>
+                  <th>Qty</th>
+                  <th *ngIf="authService.canViewSensitivePricing()">Cost</th>
+                  <th>Selling</th>
+                  <th>Action</th>
                 </tr>
-              </ng-container>
-            </tbody>
-          </table>
+              </thead>
+
+              <tbody>
+                <ng-container *ngIf="filteredVariations?.length; else noVariations">
+                  <tr *ngFor="let v of filteredVariations">
+                    <td data-label="Model">{{ v.model?.name || "-" }}</td>
+                    <td data-label="SKU">{{ v.sku || "-" }}</td>
+                    <td data-label="Barcode">{{ v.barcode || "-" }}</td>
+                    <td data-label="Storage">{{ v.attributes?.storage || "-" }}</td>
+                    <td data-label="Color">{{ v.attributes?.color || "-" }}</td>
+                    <td data-label="Size">{{ v.attributes?.size || "-" }}</td>
+                    <td data-label="Qty">{{ v.quantity ?? 0 }}</td>
+                    <td *ngIf="authService.canViewSensitivePricing()" data-label="Cost">₹ {{ (v.costPrice ?? 0) | number:'1.2-2' }}</td>
+                    <td data-label="Selling">₹ {{ (v.sellingPrice ?? 0) | number:'1.2-2' }}</td>
+                    <td class="action-col">
+                      <button
+                        *hasRole="['SUPER_ADMIN','ADMIN']"
+                        mat-icon-button
+                        color="primary"
+                        (click)="openVariationConsole(item, v)">
+                        <mat-icon>visibility</mat-icon>
+                      </button>
+                    </td>
+                  </tr>
+                </ng-container>
+              </tbody>
+            </table>
+          </div>
         </div>
-      </mat-card>
+      </div>
     </ng-container>
 
     <ng-template #noVariations>
       <tr>
-        <td [attr.colspan]="authService.canViewSensitivePricing() ? 11 : 10" class="empty-row">
-          No SKU variations available.
-          <button
-            *hasRole="['SUPER_ADMIN','ADMIN']"
-            mat-stroked-button
-            color="accent"
-            type="button"
-            class="ml-2"
-            (click)="openVariationConsole(item)">
-            Add Variation
-          </button>
+        <td [attr.colspan]="authService.canViewSensitivePricing() ? 10 : 9" class="empty">
+          <div class="empty-state">
+            <mat-icon>inventory_2</mat-icon>
+            <p>No SKU variations available for this product.</p>
+            <button
+              *hasRole="['SUPER_ADMIN','ADMIN']"
+              mat-raised-button
+              color="primary"
+              (click)="openVariationConsole(item)">
+              Create First Variation
+            </button>
+          </div>
         </td>
       </tr>
     </ng-template>
   </div>
-
 </div>

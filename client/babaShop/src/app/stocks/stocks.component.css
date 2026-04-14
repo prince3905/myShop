@@ -57,7 +57,7 @@
 .bento-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  grid-auto-rows: minmax(180px, auto);
+  grid-auto-rows: minmax(140px, auto);
   gap: 24px;
   margin-bottom: 32px;
 }
@@ -364,23 +364,35 @@
   }
 }
 
-@media (max-width: 640px) {
-  .stock-summary-grid {
-    grid-template-columns: 1fr;
+@media (max-width: 991px) {
+  .bento-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
   }
 
-  .summary-card.valuation {
-    grid-column: span 1;
+  .bento-card-lg {
+    grid-column: span 2;
   }
 
-  .filter-row {
-    padding: 16px;
-    gap: 12px;
+  .dashboard-click-card {
+    padding: 16px !important;
+    min-height: 120px;
   }
 
-  .filter-row mat-form-field {
+  .card-value-modern {
+    font-size: 24px;
+  }
+
+  .card-icon-modern {
+    width: 48px;
+    height: 48px;
+    font-size: 24px;
+    margin-bottom: 12px;
+  }
+
+  .search-field, .note-field, .filter-field {
     min-width: 100% !important;
-    width: 100% !important;
   }
 
   .stock-context-row {
@@ -393,11 +405,24 @@
     width: 100%;
     justify-content: center;
   }
+}
 
-  .filter-field,
-  .search-field,
-  .note-field {
-    min-width: 100% !important;
-    width: 100% !important;
+@media (max-width: 640px) {
+  .bento-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .bento-card-lg {
+    grid-column: span 1;
+  }
+
+  .filter-row {
+    padding: 12px;
+    gap: 8px;
+  }
+
+  .reconciliation-audit-grid {
+    grid-template-columns: 1fr;
   }
 }
