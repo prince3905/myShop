@@ -19,18 +19,15 @@
           </mat-form-field>
 
           <button mat-stroked-button color="primary" type="button" (click)="onSearch()">
-            <mat-icon>search</mat-icon>
-            Search
+            <mat-icon>search</mat-icon> Search
           </button>
 
           <button mat-stroked-button type="button" (click)="onClear()">
-            <mat-icon>clear</mat-icon>
-            Clear
+            <mat-icon>clear</mat-icon> Clear
           </button>
 
           <button mat-raised-button color="primary" type="button" (click)="openAddCustomerDialog()" *ngIf="canManageCustomers">
-            <mat-icon>person_add</mat-icon>
-            Add Customer
+            <mat-icon>person_add</mat-icon> Add Customer
           </button>
         </div>
       </div>
@@ -40,58 +37,68 @@
       <mat-spinner color="primary" mode="indeterminate"></mat-spinner>
     </div>
 
-    <div class="card customer-table-card" *ngIf="!loading">
-      <div class="card-body">
-        <div class="table-responsive">
-          <table class="table customer-table">
-          <thead>
-            <tr>
-              <th>Customer ID</th>
-              <th>Name</th>
-              <th>Phone</th>
-              <th>Shop</th>
-              <th>Created</th>
-              <th>Total Purchase</th>
-              <th>Total Paid</th>
-              <th>Total Due</th>
-              <th>Wallet</th>
-              <th>Purchases</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let item of paginatedItems" (click)="viewItemDetails(item._id)">
-              <td class="id-cell">{{ item._id }}</td>
-              <td class="name-cell">{{ item.name }}</td>
-              <td class="phone-cell">{{ item.phone || '-' }}</td>
-              <td class="shop-cell">{{ item.shop?.shopName || item.shop?.shopCode || '-' }}</td>
-              <td class="date-cell">{{ item.createdAt | date:'mediumDate' }}</td>
-              <td class="amount-cell">Rs {{ (item.totalPurchase || 0) | number:'1.0-2' }}</td>
-              <td class="amount-cell">Rs {{ (item.totalPaid || 0) | number:'1.0-2' }}</td>
-              <td class="amount-cell due-cell">Rs {{ (item.totalDue || 0) | number:'1.0-2' }}</td>
-              <td class="amount-cell wallet-cell">Rs {{ (item.walletBalance || 0) | number:'1.0-2' }}</td>
-              <td class="count-cell">{{ item.purchaseCount || 0 }}</td>
-              <td class="action-cell">
-                <button
-                  mat-stroked-button
-                  color="primary"
-                  class="compact-action-btn"
-                  type="button"
-                  *ngIf="canManageCustomers"
-                  (click)="openEditCustomerDialog(item); $event.stopPropagation()"
-                >
-                  Edit
-                </button>
-              </td>
-            </tr>
+    <div class="customers-bento-grid" *ngIf="!loading && paginatedItems.length > 0">
+      <div class="customer-card-v3" *ngFor="let item of paginatedItems" (click)="viewItemDetails(item._id)">
 
-            <tr *ngIf="paginatedItems.length === 0">
-              <td colspan="11" class="text-center empty-state">No customers found</td>
-            </tr>
-          </tbody>
-          </table>
+        <div class="card-top-row">
+          <div class="avatar-circle">{{ (item.name || 'C')[0].toUpperCase() }}</div>
+          <div class="customer-name-block">
+            <div class="cust-name">{{ item.name }}</div>
+            <div class="cust-phone" *ngIf="item.phone">
+              <mat-icon>phone</mat-icon> {{ item.phone }}
+            </div>
+          </div>
+          <button
+            *ngIf="canManageCustomers"
+            mat-icon-button
+            color="primary"
+            matTooltip="Edit Customer"
+            (click)="openEditCustomerDialog(item); $event.stopPropagation()"
+          >
+            <mat-icon>edit</mat-icon>
+          </button>
         </div>
+
+        <div class="shop-tag" *ngIf="item.shop?.shopName || item.shop?.shopCode">
+          <mat-icon>store</mat-icon>
+          <span>{{ item.shop?.shopName || item.shop?.shopCode }}</span>
+        </div>
+
+        <div class="financials-grid">
+          <div class="fin-cell">
+            <div class="fin-label">Purchase</div>
+            <div class="fin-value">₹{{ (item.totalPurchase || 0) | number:'1.0-0' }}</div>
+          </div>
+          <div class="fin-cell">
+            <div class="fin-label">Paid</div>
+            <div class="fin-value paid">₹{{ (item.totalPaid || 0) | number:'1.0-0' }}</div>
+          </div>
+          <div class="fin-cell">
+            <div class="fin-label">Due</div>
+            <div class="fin-value due">₹{{ (item.totalDue || 0) | number:'1.0-0' }}</div>
+          </div>
+          <div class="fin-cell">
+            <div class="fin-label">Wallet</div>
+            <div class="fin-value wallet">₹{{ (item.walletBalance || 0) | number:'1.0-0' }}</div>
+          </div>
+        </div>
+
+        <div class="card-footer-meta">
+          <div class="purchases-badge">
+            <mat-icon>shopping_bag</mat-icon>
+            {{ item.purchaseCount || 0 }} orders
+          </div>
+          <div class="joined-date">
+            {{ item.createdAt | date:'MMM d, yyyy' }}
+          </div>
+        </div>
+
       </div>
+    </div>
+
+    <div class="empty-state-bento" *ngIf="!loading && paginatedItems.length === 0">
+      <mat-icon>group_off</mat-icon>
+      <p>No customers found</p>
     </div>
 
     <mat-paginator
