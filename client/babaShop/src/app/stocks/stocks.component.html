@@ -1,9 +1,23 @@
 <div class="main-content">
+  <div class="dashboard-decor shadow-blob-1"></div>
+  <div class="dashboard-decor shadow-blob-2"></div>
+  <div class="dashboard-decor shadow-blob-3"></div>
+
   <div class="container-fluid">
     <div class="card filter-card">
-      <div class="card-header card-header-danger">
-        <h4 class="card-title">Stock Report</h4>
-        <p class="card-category">Live stock, valuation and low-stock tracking</p>
+      <div class="card-header premium-header">
+        <div class="header-main">
+          <h4 class="card-title">Inventory Intelligence Report</h4>
+          <p class="card-category">Real-time stock analytics, valuation, and optimization suite.</p>
+        </div>
+        <div class="action-buttons">
+          <button mat-stroked-button class="premium-btn gold" (click)="exportStockCsv()">
+            <mat-icon>download</mat-icon> CSV
+          </button>
+          <button *ngIf="canManagePurchases" mat-raised-button class="premium-btn royal" (click)="goToPurchase()">
+            <mat-icon>add_shopping_cart</mat-icon> Purchase
+          </button>
+        </div>
       </div>
       <div class="card-body">
         <div class="stock-context-row">
@@ -65,26 +79,41 @@
       </div>
     </div>
 
-    <div class="stock-summary-grid" *ngIf="!loading">
-      <div class="summary-card">
-        <div class="label">Total Qty</div>
-        <div class="value">{{ summary.totalQuantity }}</div>
+    <div class="bento-grid stock-bento" *ngIf="!loading">
+      <div class="dashboard-click-card primary">
+        <div class="card-icon-modern">
+          <i class="material-icons">inventory</i>
+        </div>
+        <div class="card-label-modern">Total Quantity</div>
+        <div class="card-value-modern">{{ summary.totalQuantity }}</div>
+        <div class="card-meta-modern">Stock Items across all variations</div>
       </div>
-      <div class="summary-card">
-        <div class="label">Reserved Qty</div>
-        <div class="value">{{ summary.totalReserved }}</div>
+
+      <div class="dashboard-click-card info">
+        <div class="card-icon-modern info">
+          <i class="material-icons">event_seat</i>
+        </div>
+        <div class="card-label-modern">Reserved Stock</div>
+        <div class="card-value-modern">{{ summary.totalReserved }}</div>
+        <div class="card-meta-modern">Held for pending orders</div>
       </div>
-      <div class="summary-card">
-        <div class="label">Damaged Qty</div>
-        <div class="value">{{ summary.totalDamaged }}</div>
+
+      <div class="dashboard-click-card danger">
+        <div class="card-icon-modern danger">
+          <i class="material-icons">report_problem</i>
+        </div>
+        <div class="card-label-modern">Low Stock Alerts</div>
+        <div class="card-value-modern">{{ summary.lowStockCount }}</div>
+        <div class="card-meta-modern">Items below reorder level</div>
       </div>
-      <div class="summary-card">
-        <div class="label">Low Stock SKUs</div>
-        <div class="value">{{ summary.lowStockCount }}</div>
-      </div>
-      <div class="summary-card valuation" *ngIf="canViewSensitivePricing">
-        <div class="label">Total Stock Valuation (Cost)</div>
-        <div class="value">₹ {{ summary.totalCostValue | number:'1.2-2' }}</div>
+
+      <div class="dashboard-click-card bento-card-lg success" *ngIf="canViewSensitivePricing">
+        <div class="card-icon-modern success">
+          <i class="material-icons">currency_exchange</i>
+        </div>
+        <div class="card-label-modern">Inventory Valuation (Cost)</div>
+        <div class="card-value-modern">₹ {{ summary.totalCostValue | number:'1.2-2' }}</div>
+        <div class="card-meta-modern">Based on average purchase cost per SKU</div>
       </div>
     </div>
 

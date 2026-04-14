@@ -1,9 +1,16 @@
 <div class="main-content">
+  <div class="dashboard-decor shadow-blob-1"></div>
+  <div class="dashboard-decor shadow-blob-2"></div>
+  <div class="dashboard-decor shadow-blob-3"></div>
+
   <div class="container-fluid">
     <div class="card filter-card">
-      <div class="card-header card-header-danger">
-        <h4 class="card-title">Purchase Console</h4>
-        <p class="card-category">Draft create, confirm automation, stock and ledger sync</p>
+      <div class="card-header premium-header">
+        <div class="header-main">
+          <h4 class="card-title">Procurement Command Console</h4>
+          <p class="card-category">Manage distributor drafts, confirm inventory intake, and financial sync.</p>
+        </div>
+        <div class="header-badge">PROCUREMENT HUB</div>
       </div>
 
       <div class="card-body">
@@ -31,22 +38,32 @@
           <button mat-stroked-button color="warn" type="button" (click)="resetForm()">Reset Form</button>
         </div>
 
-        <div class="summary-grid" *ngIf="!loading">
-          <div class="summary-card">
-            <div class="label">Total Purchases</div>
-            <div class="value">{{ totalPurchases }}</div>
+        <div class="bento-grid purchase-bento" *ngIf="!loading">
+          <div class="dashboard-click-card primary">
+            <div class="card-icon-modern">
+              <i class="material-icons">receipt</i>
+            </div>
+            <div class="card-label-modern">Total Purchases</div>
+            <div class="card-value-modern">{{ totalPurchases }}</div>
+            <div class="card-meta-modern">All confirmed and draft invoices</div>
           </div>
-          <div class="summary-card">
-            <div class="label">Draft</div>
-            <div class="value">{{ draftCount }}</div>
+
+          <div class="dashboard-click-card warning">
+            <div class="card-icon-modern warning">
+              <i class="material-icons">edit_note</i>
+            </div>
+            <div class="card-label-modern">Drafts</div>
+            <div class="card-value-modern">{{ draftCount }}</div>
+            <div class="card-meta-modern">Pending confirmation</div>
           </div>
-          <div class="summary-card">
-            <div class="label">Confirmed</div>
-            <div class="value">{{ confirmedCount }}</div>
-          </div>
-          <div class="summary-card valuation">
-            <div class="label">Current Draft Total</div>
-            <div class="value">₹ {{ getGrandTotalPreview() | number:'1.2-2' }}</div>
+
+          <div class="dashboard-click-card bento-card-lg success">
+            <div class="card-icon-modern success">
+              <i class="material-icons">payments</i>
+            </div>
+            <div class="card-label-modern">Current Transaction Value</div>
+            <div class="card-value-modern">₹ {{ getGrandTotalPreview() | number:'1.2-2' }}</div>
+            <div class="card-meta-modern">Sum of items in active form</div>
           </div>
         </div>
 
