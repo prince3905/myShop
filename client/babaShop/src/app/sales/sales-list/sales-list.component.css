@@ -164,6 +164,11 @@
   border-radius: 24px;
 }
 
+.filter-row mat-form-field {
+  flex: 1;
+  min-width: 200px;
+}
+
 .filter-row .mat-mdc-form-field {
   --mdc-outlined-text-field-container-shape: 16px;
 }
@@ -426,7 +431,28 @@
 @media (max-width: 991px) {
   .filter-field,
   .date-field {
-    min-width: 100%;
+    min-width: 100% !important;
+    width: 100% !important;
+  }
+
+  .filter-row {
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .filter-row mat-form-field {
+    min-width: 100% !important;
+    width: 100% !important;
+  }
+
+  .action-buttons {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .premium-btn {
+    width: 100%;
+    justify-content: center;
   }
 
   .detail-meta {

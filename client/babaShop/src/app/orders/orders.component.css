@@ -192,14 +192,19 @@
 }
 
 .filters {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  display: flex;
+  flex-wrap: wrap;
   gap: 16px;
-  align-items: start;
+  align-items: center;
   margin-bottom: 32px;
   background: rgba(0, 0, 0, 0.02);
   padding: 24px;
   border-radius: 24px;
+}
+
+.filters mat-form-field {
+  flex: 1;
+  min-width: 200px;
 }
 
 .pill {
@@ -267,6 +272,25 @@
 }
 
 @media (max-width: 640px) {
+  .filters {
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .filters mat-form-field {
+    min-width: 100% !important;
+    width: 100% !important;
+  }
+
+  .bento-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px;
+  }
+
+  .bento-card-lg {
+    grid-column: span 1 !important;
+  }
+
   .orders-overview-grid {
     grid-template-columns: 1fr 1fr;
     gap: 10px;
@@ -287,6 +311,6 @@
   }
 
   .status-field {
-    width: 100%;
+    width: 100% !important;
   }
 }

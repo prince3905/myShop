@@ -920,93 +920,27 @@
   }
 }
 
-@media (max-width: 480px) {
-  .bento-grid {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-
-  .bento-card-lg {
-    grid-column: span 1;
-  }
-
-  .dashboard-header-card {
-    padding: 20px;
-    border-radius: 20px;
-  }
-
-  .dashboard-wrapper {
-    padding: 16px;
-  }
-}
-
-@media (max-width: 1199px) {
-  .dashboard-header-card {
-    gap: 12px;
-    padding: 18px;
-  }
-
-  .dashboard-header-side {
-    width: 100%;
-    align-items: flex-start;
-  }
-
-  .dashboard-header-meta {
-    justify-content: flex-start;
-  }
-}
-
-@media (max-width: 991px) {
-  .dashboard-header-title {
-    font-size: 22px;
-  }
-
-  :host ::ng-deep .customer-credit-grid,
-  :host ::ng-deep .due-summary-grid,
-  :host ::ng-deep .payment-collection-grid {
-    grid-template-columns: 1fr;
-  }
-
-  :host ::ng-deep .dashboard-list-side {
-    min-width: 72px;
-  }
+@media (max-width: 960px) {
+  .dashboard-wrapper { padding: 16px; }
+  .bento-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
+  .analytics-strip { grid-template-columns: repeat(2, 1fr); }
+  :host ::ng-deep .due-summary-grid, :host ::ng-deep .payment-collection-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
 @media (max-width: 640px) {
-  .dashboard-header-card {
-    padding: 16px 14px;
-    border-radius: 16px;
-  }
-
-  .dashboard-header-title {
-    font-size: 20px;
-  }
-
-  .dashboard-header-subtitle,
-  .dashboard-header-note {
-    font-size: 12px;
-  }
-
-  .header-pill,
-  .dashboard-scope-badge,
-  .customer-credit-chip {
-    font-size: 10px;
-  }
-
-  :host ::ng-deep .dashboard-detail-card .card-header {
-    min-height: 76px;
-    margin: 10px 10px 0;
-    padding-top: 14px;
-    padding-bottom: 14px;
-  }
-
-  :host ::ng-deep .dashboard-detail-card .card-header .card-title {
-    font-size: 15px;
-  }
-
-  :host ::ng-deep .dashboard-detail-card .card-header .card-category {
-    font-size: 10px;
-  }
+  .dashboard-header-card { flex-direction: column; align-items: flex-start; padding: 24px; gap: 20px; border-radius: 24px; }
+  .dashboard-header-side { align-items: flex-start; width: 100%; }
+  .dashboard-header-meta { justify-content: flex-start; width: 100%; gap: 6px; }
+  .bento-grid { grid-template-columns: 1fr !important; gap: 12px; }
+  .bento-card-lg { grid-column: span 1 !important; }
+  .dashboard-click-card { padding: 24px !important; }
+  .analytics-strip { grid-template-columns: 1fr !important; }
+  .dashboard-flow-grid { grid-template-columns: 1fr !important; gap: 8px; }
+  .operational-workboard-grid { grid-template-columns: 1fr !important; }
+  :host ::ng-deep .due-summary-grid, :host ::ng-deep .payment-collection-grid { grid-template-columns: 1fr !important; }
+  .dashboard-header-title { font-size: 20px; }
+  .card-value-modern { font-size: 26px; }
+  .header-pill, .dashboard-scope-badge, .customer-credit-chip { font-size: 10px; }
 }
 
 /* Advanced Background Decorations */

@@ -136,6 +136,7 @@
 
 .low-stock-toggle {
   margin: 0 8px;
+  min-width: 140px;
 }
 
 .filter-row {
@@ -146,6 +147,11 @@
   background: rgba(0, 0, 0, 0.02);
   padding: 24px;
   border-radius: 24px;
+}
+
+.filter-row mat-form-field {
+  flex: 1;
+  min-width: 200px;
 }
 
 .reconciliation-audit-grid {
@@ -367,15 +373,31 @@
     grid-column: span 1;
   }
 
-  .filter-row,
+  .filter-row {
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .filter-row mat-form-field {
+    min-width: 100% !important;
+    width: 100% !important;
+  }
+
   .stock-context-row {
-    align-items: stretch;
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 10px;
+  }
+
+  .context-chip {
+    width: 100%;
+    justify-content: center;
   }
 
   .filter-field,
   .search-field,
   .note-field {
-    min-width: 100%;
-    width: 100%;
+    min-width: 100% !important;
+    width: 100% !important;
   }
 }

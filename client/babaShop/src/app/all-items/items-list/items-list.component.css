@@ -154,8 +154,16 @@
 .filter-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 16px;
   align-items: center;
+  background: rgba(0, 0, 0, 0.02);
+  padding: 24px;
+  border-radius: 24px;
+}
+
+.filter-row mat-form-field {
+  flex: 1;
+  min-width: 200px;
 }
 
 .filter-field {
@@ -328,8 +336,19 @@
     font-size: 12px;
   }
 
+  .filter-row {
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .filter-row mat-form-field {
+    min-width: 100% !important;
+    width: 100% !important;
+  }
+
   .search-field {
-    min-width: 100%;
+    min-width: 100% !important;
+    width: 100% !important;
   }
 }
 
