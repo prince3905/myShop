@@ -116,11 +116,10 @@
 .shot-panel {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   min-height: 0;
-  max-height: calc(90vh - 40px);
-  overflow-y: auto;
-  overflow-x: hidden;
+  height: auto;
+  overflow: visible;
 }
 
 .search-strip {
@@ -581,6 +580,12 @@
   color: #64748b;
   background: rgba(255, 255, 255, 0.75);
   text-align: center;
+}
+
+@media (max-width: 640px) {
+  .catalog-empty {
+    min-height: 200px;
+  }
 }
 
 .catalog-empty mat-icon {
@@ -1239,6 +1244,18 @@
   color: #64748b;
 }
 
+.held-bill.cart-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  position: sticky;
+  bottom: 0;
+  background: #f8fafc;
+  padding: 10px 0;
+  border-top: 1px solid #e2e8f0;
+  z-index: 10;
+}
+
 .held-bill-actions {
   display: flex;
   gap: 6px;
@@ -1338,94 +1355,39 @@
 
 @media (max-width: 991px) {
   .pos-shell {
-    padding-bottom: 10px;
+    padding-bottom: 80px;
   }
 
   .pos-layout {
-    gap: 8px;
-    padding: 8px;
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "header"
+      "catalog"
+      "cart";
+    padding: 10px;
+    gap: 12px;
   }
 
-  .search-strip,
-  .customer-bar,
-  .selector-row {
-    grid-template-columns: 1fr;
+  .shot-panel {
+    max-height: none;
+    overflow: visible;
   }
 
   .cart-table-wrap {
-    max-height: 280px;
+    max-height: 300px;
   }
-}
 
-@media (max-width: 640px) {
+  .held-bills-list {
+    margin-top: 20px;
+    border-top: 2px solid #e2e8f0;
+    padding-top: 15px;
+  }
+
   .pos-back-inline-button {
     width: 24px;
     height: 24px;
     min-width: 24px;
     font-size: 12px;
-  }
-
-  .search-box,
-  .scan-inline {
-    min-height: 48px;
-    border-radius: 14px;
-    padding-inline: 10px;
-  }
-
-  .search-box input,
-  .scan-inline input {
-    font-size: 13px;
-  }
-
-  .product-card {
-    min-height: 190px;
-    padding: 12px;
-  }
-
-  .catalog-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
-  }
-
-  .product-image {
-    height: 104px;
-    margin-bottom: 10px;
-  }
-
-  .product-image mat-icon {
-    font-size: 42px;
-    width: 42px;
-    height: 42px;
-  }
-
-  .product-name {
-    font-size: 14px;
-  }
-
-  .product-meta,
-  .product-supporting {
-    font-size: 11px;
-  }
-
-  .product-badge {
-    min-height: 24px;
-    padding: 4px 8px;
-    font-size: 10px;
-  }
-
-  .product-action-button {
-    min-height: 34px;
-    font-size: 11px;
-  }
-
-  .cart-title {
-    font-size: 18px;
-  }
-
-  .cart-qty-button {
-    width: 26px;
-    height: 26px;
-    min-width: 26px;
   }
 }
 
