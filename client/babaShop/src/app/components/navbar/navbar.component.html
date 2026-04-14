@@ -11,13 +11,6 @@
                     aria-label="Go back">
                     <i class="material-icons">arrow_back</i>
                 </button>
-                <a
-                    class="corner-dashboard-link"
-                    href="javascript:void(0)"
-                    (click)="onBreadcrumbClick('/dashboard')"
-                    aria-label="Dashboard Home">
-                    <i class="material-icons">room_service</i>
-                </a>
                 <div class="navbar-breadcrumb">
                     <ng-container *ngFor="let crumb of getBreadcrumbs().slice(1); let last = last">
                         <a
