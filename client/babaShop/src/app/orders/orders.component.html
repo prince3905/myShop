@@ -1,63 +1,68 @@
 <div class="main-content">
+  <div class="dashboard-decor shadow-blob-1"></div>
+  <div class="dashboard-decor shadow-blob-2"></div>
+  <div class="dashboard-decor shadow-blob-3"></div>
+
   <div class="container-fluid">
     <div class="card card-plain">
-      <div class="card-header card-header-danger orders-header">
-        <div>
-          <h4 class="card-title">Orders</h4>
-          <p class="card-category">Track online and POS-origin orders with live status control</p>
+      <div class="card-header premium-header">
+        <div class="header-main">
+          <h4 class="card-title">Order Fulfillment Center</h4>
+          <p class="card-category">Omnichannel order tracking, fulfillment status, and lifecycle management.</p>
         </div>
-        <button mat-raised-button color="primary" routerLink="/order/create" *ngIf="canManageOrders()">Create Order</button>
+        <div class="action-buttons">
+          <button mat-raised-button class="premium-btn royal" routerLink="/order/create" *ngIf="canManageOrders()">
+            <mat-icon>add_shopping_cart</mat-icon> Create Order
+          </button>
+        </div>
       </div>
 
       <div class="card-body">
-        <div class="orders-overview-grid">
-          <div class="overview-card">
-            <div class="overview-label">Total Orders</div>
-            <div class="overview-value">{{ overview.totalOrders || 0 }}</div>
+        <div class="bento-grid orders-bento">
+          <div class="dashboard-click-card bento-card-lg primary">
+            <div class="card-icon-modern">
+              <i class="material-icons">shopping_cart</i>
+            </div>
+            <div class="card-label-modern">Total Order Value</div>
+            <div class="card-value-modern">₹ {{ overview.totalAmount | number:'1.2-2' }}</div>
+            <div class="card-meta-modern">Across {{ overview.totalOrders || 0 }} total orders</div>
           </div>
-          <div class="overview-card">
-            <div class="overview-label">Offline Orders</div>
-            <div class="overview-value">{{ overview.offlineOrders || 0 }}</div>
+
+          <div class="dashboard-click-card success">
+            <div class="card-icon-modern success">
+              <i class="material-icons">account_balance_wallet</i>
+            </div>
+            <div class="card-label-modern">Collection</div>
+            <div class="card-value-modern">₹ {{ overview.totalCollected | number:'1.2-2' }}</div>
+            <div class="card-meta-modern">Today: ₹ {{ overview.todayCollection | number:'1.2-2' }}</div>
           </div>
-          <div class="overview-card">
-            <div class="overview-label">Online Orders</div>
-            <div class="overview-value">{{ overview.onlineOrders || 0 }}</div>
+
+          <div class="dashboard-click-card danger">
+            <div class="card-icon-modern danger">
+              <i class="material-icons">pending_actions</i>
+            </div>
+            <div class="card-label-modern">Due Amount</div>
+            <div class="card-value-modern">₹ {{ overview.totalDue | number:'1.2-2' }}</div>
+            <div class="card-meta-modern">{{ overview.deliveryPendingCount || 0 }} deliveries pending</div>
           </div>
-          <div class="overview-card">
-            <div class="overview-label">Total Qty</div>
-            <div class="overview-value">{{ overview.totalQuantity || 0 }}</div>
+
+          <div class="dashboard-click-card info">
+            <div class="card-icon-modern info">
+              <i class="material-icons">speed</i>
+            </div>
+            <div class="card-label-modern">Performance</div>
+            <div class="card-value-modern">{{ overview.todayOrders || 0 }}</div>
+            <div class="card-label-modern" style="font-size: 10px; margin-top: -10px;">Today's Orders</div>
+            <div class="card-meta-modern">{{ overview.overdueDeliveryCount || 0 }} overdue deliveries</div>
           </div>
-          <div class="overview-card">
-            <div class="overview-label">Order Value</div>
-            <div class="overview-value">Rs {{ overview.totalAmount | number:'1.2-2' }}</div>
-          </div>
-          <div class="overview-card">
-            <div class="overview-label">Collection</div>
-            <div class="overview-value">Rs {{ overview.totalCollected | number:'1.2-2' }}</div>
-          </div>
-          <div class="overview-card">
-            <div class="overview-label">Due</div>
-            <div class="overview-value">Rs {{ overview.totalDue | number:'1.2-2' }}</div>
-          </div>
-          <div class="overview-card">
-            <div class="overview-label">Delivery Pending</div>
-            <div class="overview-value">{{ overview.deliveryPendingCount || 0 }}</div>
-          </div>
-          <div class="overview-card">
-            <div class="overview-label">Today Orders</div>
-            <div class="overview-value">{{ overview.todayOrders || 0 }}</div>
-          </div>
-          <div class="overview-card">
-            <div class="overview-label">Today Collection</div>
-            <div class="overview-value">Rs {{ overview.todayCollection | number:'1.2-2' }}</div>
-          </div>
-          <div class="overview-card">
-            <div class="overview-label">Overdue Delivery</div>
-            <div class="overview-value">{{ overview.overdueDeliveryCount || 0 }}</div>
-          </div>
-          <div class="overview-card" *ngIf="canViewSensitivePricing()">
-            <div class="overview-label">Profit</div>
-            <div class="overview-value">Rs {{ overview.totalProfit | number:'1.2-2' }}</div>
+
+          <div class="dashboard-click-card warning" *ngIf="canViewSensitivePricing()">
+            <div class="card-icon-modern warning">
+              <i class="material-icons">trending_up</i>
+            </div>
+            <div class="card-label-modern">Net Profit</div>
+            <div class="card-value-modern">₹ {{ overview.totalProfit | number:'1.2-2' }}</div>
+            <div class="card-meta-modern">Calculated on current orders</div>
           </div>
         </div>
 
