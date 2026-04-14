@@ -27,7 +27,7 @@
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Shop Code</mat-label>
           <mat-icon matPrefix>store</mat-icon>
-          <input matInput placeholder="BABA01" [ngModel]="shopCode" (ngModelChange)="normalizeShopCode($event)" name="shopCode">
+          <input matInput placeholder="BABA01" [ngModel]="shopCode" (ngModelChange)="onShopCodeChange($event)" name="shopCode">
           <mat-hint>Example: BABA01</mat-hint>
           <mat-error *ngIf="shopCode && !shopCodePattern.test(shopCode)">
             Shop code can use uppercase letters, numbers, and hyphens only.

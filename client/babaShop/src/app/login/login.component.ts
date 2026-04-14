@@ -73,8 +73,13 @@ export class LoginComponent implements OnInit {
       );
   }
 
-  normalizeShopCode(value: string): void {
-    this.shopCode = `${value || ''}`.toUpperCase().replace(/\s+/g, '');
+  onShopCodeChange(value: string): void {
+    if (!value) {
+      this.shopCode = '';
+      return;
+    }
+    // Only allow A-Z, 0-9 and hyphens. Convert to uppercase.
+    this.shopCode = value.toUpperCase().replace(/[^A-Z0-9-]/g, '');
   }
 
   checkServerStatus(): void {
