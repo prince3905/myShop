@@ -1,137 +1,197 @@
 <div class="main-content report-page">
   <div class="container-fluid">
-    <div class="page-header-card">
+
+    <!-- ── Hero Header ── -->
+    <div class="expense-hero-bar">
       <div>
-        <h2>Expense Report</h2>
-        <p>Date, category, department aur payment mode wise expense summary.</p>
+        <h2 class="hero-title">Expense Report</h2>
+        <p class="hero-sub">Date, category, department and payment mode wise expense analytics.</p>
       </div>
     </div>
 
-    <div class="card filter-card">
-      <div class="card-header card-header-danger">
-        <h4 class="card-title">Filters</h4>
-      </div>
-      <div class="card-body">
-        <div class="filter-grid">
-          <mat-form-field class="example-full-width"><mat-label>Search</mat-label><input matInput [(ngModel)]="filters.search" name="search"></mat-form-field>
-          <mat-form-field class="example-full-width">
-            <mat-label>Category</mat-label>
-            <mat-select [(ngModel)]="filters.category" name="category">
-              <mat-option value="">All</mat-option>
-              <mat-option *ngFor="let category of categories" [value]="category">{{ category }}</mat-option>
-            </mat-select>
-          </mat-form-field>
-          <mat-form-field class="example-full-width">
-            <mat-label>Department</mat-label>
-            <mat-select [(ngModel)]="filters.department" name="department">
-              <mat-option value="">All</mat-option>
-              <mat-option *ngFor="let department of departments" [value]="department">{{ department }}</mat-option>
-            </mat-select>
-          </mat-form-field>
-          <mat-form-field class="example-full-width">
-            <mat-label>Payment Method</mat-label>
-            <mat-select [(ngModel)]="filters.paymentMethod" name="paymentMethod">
-              <mat-option value="">All</mat-option>
-              <mat-option *ngFor="let method of paymentMethods" [value]="method">{{ method }}</mat-option>
-            </mat-select>
-          </mat-form-field>
-          <mat-form-field class="example-full-width"><mat-label>From Date</mat-label><input matInput type="date" [(ngModel)]="filters.dateFrom" name="dateFrom"></mat-form-field>
-          <mat-form-field class="example-full-width"><mat-label>To Date</mat-label><input matInput type="date" [(ngModel)]="filters.dateTo" name="dateTo"></mat-form-field>
+    <!-- ── KPI Cards ── -->
+    <div class="summary-kpi-row">
+      <div class="kpi-card total">
+        <div class="kpi-icon"><mat-icon>receipt_long</mat-icon></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Total Expense</div>
+          <div class="kpi-value">₹{{ summary.totalAmount | number: '1.0-0' }}</div>
+          <div class="kpi-meta">{{ summary.totalEntries }} entries</div>
         </div>
+      </div>
+      <div class="kpi-card today">
+        <div class="kpi-icon"><mat-icon>today</mat-icon></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Today</div>
+          <div class="kpi-value">₹{{ summary.todayAmount | number: '1.0-0' }}</div>
+          <div class="kpi-meta">{{ summary.todayEntries }} entries</div>
+        </div>
+      </div>
+
+      <div class="kpi-card month">
+        <div class="kpi-icon"><mat-icon>calendar_month</mat-icon></div>
+        <div class="kpi-body">
+          <div class="kpi-label">This Month</div>
+          <div class="kpi-value">₹{{ monthlyComparison.currentMonthAmount | number: '1.0-0' }}</div>
+          <div class="kpi-meta">Current month total</div>
+        </div>
+      </div>
+
+      <div class="kpi-card change">
+        <div class="kpi-icon"><mat-icon>trending_up</mat-icon></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Monthly Change</div>
+          <div class="kpi-value">{{ monthlyComparison.changePercent | number: '1.1-1' }}%</div>
+          <div class="kpi-meta" [class.negative]="monthlyComparison.changeAmount < 0">
+            ₹{{ monthlyComparison.changeAmount | number: '1.0-0' }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Filters ── -->
+    <div class="filter-panel">
+      <div class="panel-title-row">
+        <div class="panel-title">Filters</div>
         <div class="filter-actions">
-          <button mat-raised-button class="btn btn-danger" (click)="loadReport()">Apply Filters</button>
-          <button mat-stroked-button class="btn btn-outline-danger" (click)="showToday()">Today</button>
-          <button mat-stroked-button class="btn btn-outline-danger" (click)="resetFilters()">View All</button>
+          <button mat-stroked-button (click)="showToday()">Today</button>
+          <button mat-stroked-button (click)="resetFilters()">All</button>
+          <button mat-raised-button color="primary" (click)="loadReport()">Apply</button>
         </div>
       </div>
-    </div>
-
-    <div class="summary-grid">
-      <div class="summary-card"><span class="summary-label">Total Expense</span><strong>Rs {{ summary.totalAmount | number: '1.2-2' }}</strong><small>{{ summary.totalEntries }} entries</small></div>
-      <div class="summary-card"><span class="summary-label">Today Expense</span><strong>Rs {{ summary.todayAmount | number: '1.2-2' }}</strong><small>{{ summary.todayEntries }} entries</small></div>
-      <div class="summary-card"><span class="summary-label">This Month</span><strong>Rs {{ monthlyComparison.currentMonthAmount | number: '1.2-2' }}</strong><small>current month total</small></div>
-      <div class="summary-card"><span class="summary-label">Previous Month</span><strong>Rs {{ monthlyComparison.previousMonthAmount | number: '1.2-2' }}</strong><small>last month total</small></div>
-    </div>
-
-    <div class="comparison-grid" *ngIf="!loading">
-      <div class="comparison-card">
-        <span class="summary-label">Monthly Change</span>
-        <strong [class.negative]="monthlyComparison.changeAmount < 0">Rs {{ monthlyComparison.changeAmount | number: '1.2-2' }}</strong>
-        <small [class.negative]="monthlyComparison.changePercent < 0">
-          {{ monthlyComparison.changePercent | number: '1.0-2' }}%
-        </small>
+      <div class="filter-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>Search</mat-label>
+          <input matInput [(ngModel)]="filters.search">
+          <mat-icon matPrefix>search</mat-icon>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Category</mat-label>
+          <mat-select [(ngModel)]="filters.category">
+            <mat-option value="">All Categories</mat-option>
+            <mat-option *ngFor="let category of categories" [value]="category">{{ category }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Department</mat-label>
+          <mat-select [(ngModel)]="filters.department">
+            <mat-option value="">All Departments</mat-option>
+            <mat-option *ngFor="let dept of departments" [value]="dept">{{ dept }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Date From</mat-label>
+          <input matInput type="date" [(ngModel)]="filters.dateFrom">
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Date To</mat-label>
+          <input matInput type="date" [(ngModel)]="filters.dateTo">
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Payment</mat-label>
+          <mat-select [(ngModel)]="filters.paymentMethod">
+            <mat-option value="">All Methods</mat-option>
+            <mat-option *ngFor="let method of paymentMethods" [value]="method">{{ method }}</mat-option>
+          </mat-select>
+        </mat-form-field>
       </div>
-      <div class="comparison-card">
-        <span class="summary-label">Department Mini Report</span>
-        <div class="mini-department-list" *ngIf="departmentHighlights.length > 0">
-          <div class="mini-department-item" *ngFor="let item of departmentHighlights; trackBy: trackByLabel">
-            <span>{{ item.label }}</span>
-            <strong>Rs {{ item.amount | number: '1.2-2' }}</strong>
-          </div>
+    </div>
+
+    <!-- ── Breakdown Cards ── -->
+    <div class="breakdown-grid">
+      <div class="breakdown-panel">
+        <div class="panel-header">
+          <mat-icon>category</mat-icon>
+          <span>By Category</span>
         </div>
-        <small *ngIf="departmentHighlights.length === 0">No department data found.</small>
-      </div>
-    </div>
-
-    <div *ngIf="loading" class="table-empty">Loading expense report...</div>
-
-    <div class="card" *ngIf="!loading">
-      <div class="card-header card-header-danger"><h4 class="card-title">Date-wise Expense Summary</h4></div>
-      <div class="card-body">
-        <div *ngIf="dateWiseSummary.length === 0" class="table-empty">No date-wise expense data found.</div>
-        <div class="date-summary-grid" *ngIf="dateWiseSummary.length > 0">
-          <div class="date-summary-card" *ngFor="let item of dateWiseSummary; trackBy: trackByLabel">
+        <div class="breakdown-list">
+          <div class="breakdown-item" *ngFor="let item of summary.byCategory">
             <div>
-              <div class="breakdown-title">{{ item.label | date: 'dd/MM/yyyy' }}</div>
-              <div class="breakdown-subtitle">{{ item.count }} entries</div>
+              <div class="breakdown-label">{{ item.label }}</div>
+              <div class="breakdown-meta">{{ item.count }} entries</div>
             </div>
-            <strong>Rs {{ item.amount | number: '1.2-2' }}</strong>
+            <div class="breakdown-amount">₹{{ item.amount | number: '1.0-0' }}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="breakdown-panel">
+        <div class="panel-header">
+          <mat-icon>business</mat-icon>
+          <span>By Department</span>
+        </div>
+        <div class="breakdown-list">
+          <div class="breakdown-item" *ngFor="let item of summary.byDepartment">
+            <div>
+              <div class="breakdown-label">{{ item.label }}</div>
+              <div class="breakdown-meta">{{ item.count }} entries</div>
+            </div>
+            <div class="breakdown-amount">₹{{ item.amount | number: '1.0-0' }}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="breakdown-panel">
+        <div class="panel-header">
+          <mat-icon>payment</mat-icon>
+          <span>By Payment Method</span>
+        </div>
+        <div class="breakdown-list">
+          <div class="breakdown-item" *ngFor="let item of summary.byPaymentMethod">
+            <div>
+              <div class="breakdown-label">{{ item.label }}</div>
+              <div class="breakdown-meta">{{ item.count }} entries</div>
+            </div>
+            <div class="breakdown-amount">₹{{ item.amount | number: '1.0-0' }}</div>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="row" *ngIf="!loading">
-      <div class="col-lg-4">
-        <div class="card"><div class="card-header card-header-danger"><h4 class="card-title">By Category</h4></div><div class="card-body">
-          <div *ngIf="summary.byCategory.length === 0" class="table-empty">No data found.</div>
-          <div class="breakdown-list" *ngIf="summary.byCategory.length > 0"><div class="breakdown-row" *ngFor="let item of summary.byCategory; trackBy: trackByLabel"><div><div class="breakdown-title">{{ item.label }}</div><div class="breakdown-subtitle">{{ item.count }} entries</div></div><strong>Rs {{ item.amount | number: '1.2-2' }}</strong></div></div>
-        </div></div>
+    <!-- ── Date-wise Summary ── -->
+    <div class="date-panel">
+      <div class="panel-header">
+        <mat-icon>calendar_view_month</mat-icon>
+        <span>Date-wise Summary</span>
       </div>
-      <div class="col-lg-4">
-        <div class="card"><div class="card-header card-header-danger"><h4 class="card-title">By Department</h4></div><div class="card-body">
-          <div *ngIf="summary.byDepartment.length === 0" class="table-empty">No data found.</div>
-          <div class="breakdown-list" *ngIf="summary.byDepartment.length > 0"><div class="breakdown-row" *ngFor="let item of summary.byDepartment; trackBy: trackByLabel"><div><div class="breakdown-title">{{ item.label }}</div><div class="breakdown-subtitle">{{ item.count }} entries</div></div><strong>Rs {{ item.amount | number: '1.2-2' }}</strong></div></div>
-        </div></div>
-      </div>
-      <div class="col-lg-4">
-        <div class="card"><div class="card-header card-header-danger"><h4 class="card-title">By Payment Method</h4></div><div class="card-body">
-          <div *ngIf="summary.byPaymentMethod.length === 0" class="table-empty">No data found.</div>
-          <div class="breakdown-list" *ngIf="summary.byPaymentMethod.length > 0"><div class="breakdown-row" *ngFor="let item of summary.byPaymentMethod; trackBy: trackByLabel"><div><div class="breakdown-title">{{ item.label }}</div><div class="breakdown-subtitle">{{ item.count }} entries</div></div><strong>Rs {{ item.amount | number: '1.2-2' }}</strong></div></div>
-        </div></div>
-      </div>
-    </div>
-
-    <div class="card" *ngIf="!loading">
-      <div class="card-header card-header-danger"><h4 class="card-title">Recent Expense Entries</h4></div>
-      <div class="card-body">
-        <div *ngIf="expenses.length === 0" class="table-empty">No expense entries found.</div>
-        <div class="table-wrap" *ngIf="expenses.length > 0">
-          <table class="table report-table">
-            <thead><tr><th>Date</th><th>Category</th><th>Department</th><th>Mode</th><th>Amount</th><th>Note</th></tr></thead>
-            <tbody>
-              <tr *ngFor="let item of expenses">
-                <td>{{ item.expenseDate | date: 'dd/MM/yyyy' }}</td>
-                <td>{{ item.category }}</td>
-                <td>{{ item.department }}</td>
-                <td>{{ item.paymentMethod }}</td>
-                <td class="amount-cell">Rs {{ item.amount | number: '1.2-2' }}</td>
-                <td>{{ item.note || '-' }}</td>
-              </tr>
-            </tbody>
-          </table>
+      <div class="date-grid">
+        <div class="date-card" *ngFor="let item of dateWiseSummary">
+          <div class="date-info">
+            <div class="date-label">{{ item.label | date: 'dd MMM' }}</div>
+            <div class="date-meta">{{ item.count }} entries</div>
+          </div>
+          <div class="date-amount">₹{{ item.amount | number: '1.0-0' }}</div>
         </div>
       </div>
     </div>
+
+    <!-- ── Recent Entries Cards ── -->
+    <div class="recent-panel">
+      <div class="panel-header">
+        <mat-icon>recent_actors</mat-icon>
+        <span>Recent Entries</span>
+      </div>
+      <div class="recent-grid" *ngIf="expenses.length > 0; else emptyState">
+        <div class="recent-card" *ngFor="let item of expenses">
+          <div class="recent-top">
+            <span class="recent-cat">{{ item.category }}</span>
+            <span class="recent-dept">{{ item.department }}</span>
+          </div>
+          <div class="recent-amount">₹{{ item.amount | number: '1.0-0' }}</div>
+          <div class="recent-meta">
+            <span>{{ item.paymentMethod }}</span>
+            <span>{{ item.expenseDate | date: 'dd MMM yyyy' }}</span>
+          </div>
+          <div class="recent-note" *ngIf="item.note">{{ item.note }}</div>
+        </div>
+      </div>
+      <ng-template #emptyState>
+        <div class="empty-state">
+          <mat-icon>receipt_long</mat-icon>
+          <p>No recent expenses found for selected filters</p>
+        </div>
+      </ng-template>
+    </div>
+
   </div>
 </div>
