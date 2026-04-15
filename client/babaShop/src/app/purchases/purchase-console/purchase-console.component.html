@@ -1,19 +1,67 @@
-<div class="main-content">
+<div class="main-content purchase-console-page">
   <div class="container-fluid">
-    <div class="card filter-card">
-      <div class="card-header card-header-danger">
-        <h4 class="card-title">Purchase Console</h4>
-        <p class="card-category">Draft create, confirm automation, stock and ledger sync</p>
-      </div>
 
-      <div class="card-body">
+    <div class="purchase-hero-bar">
+      <div>
+        <h2 class="hero-title">Purchase Console</h2>
+        <p class="hero-sub">Draft create, confirm automation, stock and ledger sync in one clean workspace.</p>
+      </div>
+      <div class="hero-chip-row">
+        <div class="context-chip">
+          Role: {{ authService.getUserRole() || '-' }}
+        </div>
+        <div class="context-chip">
+          Scope: {{ authService.getShopId() ? 'Shop Wise' : 'Global' }}
+        </div>
+      </div>
+    </div>
+
+    <div class="summary-kpi-row" *ngIf="!loading">
+      <div class="kpi-card total">
+        <div class="kpi-icon"><mat-icon>receipt_long</mat-icon></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Total Purchases</div>
+          <div class="kpi-value">{{ totalPurchases }}</div>
+          <div class="kpi-meta">All purchase records in current list</div>
+        </div>
+      </div>
+      <div class="kpi-card draft">
+        <div class="kpi-icon"><mat-icon>drafts</mat-icon></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Draft</div>
+          <div class="kpi-value">{{ draftCount }}</div>
+          <div class="kpi-meta">Editable pending purchase drafts</div>
+        </div>
+      </div>
+      <div class="kpi-card confirmed">
+        <div class="kpi-icon"><mat-icon>verified</mat-icon></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Confirmed</div>
+          <div class="kpi-value">{{ confirmedCount }}</div>
+          <div class="kpi-meta">Locked and stock-synced purchases</div>
+        </div>
+      </div>
+      <div class="kpi-card valuation">
+        <div class="kpi-icon"><mat-icon>account_balance_wallet</mat-icon></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Current Draft Total</div>
+          <div class="kpi-value">₹{{ getGrandTotalPreview() | number:'1.0-0' }}</div>
+          <div class="kpi-meta">Live total of the current form</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="purchase-layout">
+      <div class="form-panel">
+        <div class="form-panel-header">
+          <mat-icon>{{ editingPurchaseId ? 'edit_note' : 'playlist_add_circle' }}</mat-icon>
+          <div>
+            <div class="panel-title">{{ editingPurchaseId ? 'Edit Purchase Draft' : 'Create Purchase Draft' }}</div>
+            <div class="panel-sub">Build invoice header, line items and payment details from one place.</div>
+          </div>
+        </div>
+
         <div class="top-bar">
-          <div class="context-chip">
-            Role: {{ authService.getUserRole() || '-' }}
-          </div>
-          <div class="context-chip">
-            Scope: {{ authService.getShopId() ? 'Shop Wise' : 'Global' }}
-          </div>
           <mat-form-field appearance="outline" class="invoice-open-field">
             <mat-label>Open Invoice</mat-label>
             <input
@@ -31,26 +79,7 @@
           <button mat-stroked-button color="warn" type="button" (click)="resetForm()">Reset Form</button>
         </div>
 
-        <div class="summary-grid" *ngIf="!loading">
-          <div class="summary-card">
-            <div class="label">Total Purchases</div>
-            <div class="value">{{ totalPurchases }}</div>
-          </div>
-          <div class="summary-card">
-            <div class="label">Draft</div>
-            <div class="value">{{ draftCount }}</div>
-          </div>
-          <div class="summary-card">
-            <div class="label">Confirmed</div>
-            <div class="value">{{ confirmedCount }}</div>
-          </div>
-          <div class="summary-card valuation">
-            <div class="label">Current Draft Total</div>
-            <div class="value">₹ {{ getGrandTotalPreview() | number:'1.2-2' }}</div>
-          </div>
-        </div>
-
-        <form [formGroup]="purchaseForm" (ngSubmit)="submitDraft()">
+        <form [formGroup]="purchaseForm" (ngSubmit)="submitDraft()" class="purchase-form-shell">
           <div class="edit-banner" *ngIf="editingPurchaseId">
             <span>Editing Draft: {{ editingPurchaseId }}</span>
             <button mat-button type="button" color="warn" (click)="resetForm()">Discard Edit</button>
@@ -217,13 +246,14 @@
           </div>
         </form>
       </div>
-    </div>
 
-    <div class="card mt-3">
-      <div class="card-header card-header-info">
-        <h4 class="card-title">Recent Purchases</h4>
-      </div>
-      <div class="card-body">
+      <div class="list-panel">
+        <div class="list-panel-header">
+          <div>
+            <div class="panel-title">Recent Purchases</div>
+            <div class="panel-sub">Browse drafts, confirmations, returns and open detailed drawers quickly.</div>
+          </div>
+        </div>
         <div class="purchase-filter-row">
           <mat-form-field appearance="outline" class="filter-field search-field">
             <mat-label>Search Invoice</mat-label>
@@ -359,95 +389,88 @@
         <div class="loading-wrap" *ngIf="loading">
           <mat-spinner color="primary" diameter="36"></mat-spinner>
         </div>
-        <div class="empty-state" *ngIf="!loading && purchases.length === 0">No purchases found.</div>
-
-        <div class="table-responsive" *ngIf="!loading && purchases.length > 0">
-          <table class="table purchase-table">
-            <thead>
-              <tr>
-                <th class="sortable" (click)="toggleSort('invoiceNo')">
-                  <span>Invoice</span>
-                  <mat-icon class="sort-icon" [ngClass]="{ active: isSortActive('invoiceNo') }">
-                    {{ getSortIcon('invoiceNo') }}
-                  </mat-icon>
-                </th>
-                <th>Distributor</th>
-                <th class="sortable" (click)="toggleSort('status')">
-                  <span>Status</span>
-                  <mat-icon class="sort-icon" [ngClass]="{ active: isSortActive('status') }">
-                    {{ getSortIcon('status') }}
-                  </mat-icon>
-                </th>
-                <th>Payment</th>
-                <th>Distributor Return</th>
-                <th class="sortable" (click)="toggleSort('grandTotal')">
-                  <span>Total</span>
-                  <mat-icon class="sort-icon" [ngClass]="{ active: isSortActive('grandTotal') }">
-                    {{ getSortIcon('grandTotal') }}
-                  </mat-icon>
-                </th>
-                <th class="sortable" (click)="toggleSort('purchaseDate')">
-                  <span>Date</span>
-                  <mat-icon class="sort-icon" [ngClass]="{ active: isSortActive('purchaseDate') }">
-                    {{ getSortIcon('purchaseDate') }}
-                  </mat-icon>
-                </th>
-                <th>Action</th>
-                <th>Details</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let p of purchases">
-                <td>{{ p.invoiceNo || p._id }}</td>
-                <td>{{ p.distributor?.name || '-' }}</td>
-                <td><span class="status-pill" [ngClass]="p.status === 'CONFIRMED' ? 'ok' : 'draft'">{{ p.status }}</span></td>
-                <td>{{ getPaymentModeLabel(p) }}</td>
-                <td>
-                  <span class="return-badge" [ngClass]="'ret-' + (p.returnStatus || 'NONE')">
-                    {{ getReturnStatusLabel(p) }}
-                  </span>
-                  <small class="return-meta" *ngIf="(p.returnedQty || 0) > 0">{{ p.returnedQty || 0 }} qty</small>
-                </td>
-                <td>₹ {{ p.grandTotal | number:'1.2-2' }}</td>
-                <td>{{ p.purchaseDate || p.createdAt | date:'mediumDate' }}</td>
-                <td class="action-col">
-                  <button mat-stroked-button color="accent" (click)="openDetails(p._id)">View</button>
-                  <ng-container *hasRole="['SUPER_ADMIN','ADMIN','MANAGER']">
-                    <button
-                      mat-stroked-button
-                      color="primary"
-                      *ngIf="p.status !== 'CONFIRMED'"
-                      [disabled]="!canMutatePurchase || confirmingIds[p._id]"
-                      (click)="confirmPurchase(p._id)"
-                    >
-                      {{ confirmingIds[p._id] ? 'Confirming...' : 'Confirm' }}
-                    </button>
-                    <button mat-stroked-button color="primary" *ngIf="p.status === 'DRAFT'" (click)="editDraft(p)">Edit</button>
-                    <button
-                      mat-stroked-button
-                      color="warn"
-                      *ngIf="p.status === 'DRAFT'"
-                      [disabled]="cancelingIds[p._id]"
-                      (click)="cancelDraft(p._id)"
-                    >
-                      {{ cancelingIds[p._id] ? 'Cancelling...' : 'Cancel' }}
-                    </button>
-                    <button
-                      mat-stroked-button
-                      color="warn"
-                      *ngIf="p.status === 'CONFIRMED'"
-                      [disabled]="(p.returnStatus || 'NONE') === 'FULL'"
-                      (click)="openReturnDialog(p._id)"
-                    >
-                      Return to Distributor
-                    </button>
-                  </ng-container>
-                </td>
-                <td>{{ p.items?.length || 0 }} items</td>
-              </tr>
-            </tbody>
-          </table>
+        <div class="empty-state-bento" *ngIf="!loading && purchases.length === 0">
+          <mat-icon>inventory_2</mat-icon>
+          <p>No purchases found.</p>
         </div>
+
+        <div class="purchase-bento-grid" *ngIf="!loading && purchases.length > 0">
+          <div class="purchase-card-v3" *ngFor="let p of purchases">
+
+            <div class="pcard-top">
+              <div class="inv-block">
+                <span class="inv-no">{{ p.invoiceNo || (p._id | slice:0:10) }}</span>
+                <span class="status-pill" [ngClass]="p.status === 'CONFIRMED' ? 'ok' : p.status === 'CANCELLED' ? 'cancelled' : 'draft'">
+                  {{ p.status }}
+                </span>
+              </div>
+              <div class="pcard-date">{{ p.purchaseDate || p.createdAt | date:'dd MMM yyyy' }}</div>
+            </div>
+
+            <div class="pcard-dist" *ngIf="p.distributor?.name">
+              <mat-icon>local_shipping</mat-icon>
+              {{ p.distributor.name }}
+            </div>
+
+            <div class="pcard-financials">
+              <div class="fin-block">
+                <div class="fin-lbl">Total</div>
+                <div class="fin-val">₹{{ p.grandTotal | number:'1.0-0' }}</div>
+              </div>
+              <div class="fin-block">
+                <div class="fin-lbl">Items</div>
+                <div class="fin-val neutral">{{ p.items?.length || 0 }}</div>
+              </div>
+              <div class="fin-block">
+                <div class="fin-lbl">Payment</div>
+                <div class="fin-val neutral">{{ getPaymentModeLabel(p) }}</div>
+              </div>
+              <div class="fin-block" *ngIf="(p.returnStatus || 'NONE') !== 'NONE'">
+                <div class="fin-lbl">Return</div>
+                <span class="return-badge" [ngClass]="'ret-' + (p.returnStatus || 'NONE')">
+                  {{ getReturnStatusLabel(p) }}
+                </span>
+              </div>
+            </div>
+
+            <div class="pcard-actions">
+              <button mat-stroked-button color="accent" (click)="openDetails(p._id)">
+                <mat-icon>visibility</mat-icon> View
+              </button>
+              <ng-container *hasRole="['SUPER_ADMIN','ADMIN','MANAGER']">
+                <button
+                  mat-stroked-button color="primary"
+                  *ngIf="p.status !== 'CONFIRMED'"
+                  [disabled]="!canMutatePurchase || confirmingIds[p._id]"
+                  (click)="confirmPurchase(p._id)"
+                >
+                  {{ confirmingIds[p._id] ? 'Confirming...' : 'Confirm' }}
+                </button>
+                <button mat-stroked-button color="primary" *ngIf="p.status === 'DRAFT'" (click)="editDraft(p)">
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button
+                  mat-stroked-button color="warn"
+                  *ngIf="p.status === 'DRAFT'"
+                  [disabled]="cancelingIds[p._id]"
+                  (click)="cancelDraft(p._id)"
+                >
+                  {{ cancelingIds[p._id] ? 'Cancelling...' : 'Cancel' }}
+                </button>
+                <button
+                  mat-stroked-button color="warn"
+                  *ngIf="p.status === 'CONFIRMED'"
+                  [disabled]="(p.returnStatus || 'NONE') === 'FULL'"
+                  (click)="openReturnDialog(p._id)"
+                >
+                  Return
+                </button>
+              </ng-container>
+            </div>
+
+          </div>
+        </div>
+
         <mat-paginator
           [length]="totalPurchases"
           [pageIndex]="page - 1"

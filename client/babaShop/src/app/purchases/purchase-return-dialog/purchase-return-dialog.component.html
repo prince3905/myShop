@@ -1,14 +1,23 @@
-<h2 mat-dialog-title>Return Items to Distributor</h2>
-
-<mat-dialog-content>
-  <div class="top-note">
-    Invoice: <strong>{{ data?.purchase?.invoiceNo || data?.purchase?._id }}</strong>
+<h2 mat-dialog-title class="dialog-title-wrap">
+  <div class="dialog-title-copy">
+    <span class="dialog-kicker">Distributor Return</span>
+    <span class="dialog-title">Return Items to Distributor</span>
   </div>
-  <div class="top-note">
-    Use this only when maal supplier/distributor ko wapas bhejna ho.
+</h2>
+
+<mat-dialog-content class="return-dialog-shell">
+  <div class="return-hero-strip">
+    <div class="hero-note">
+      <div class="hero-label">Invoice</div>
+      <div class="hero-value">{{ data?.purchase?.invoiceNo || data?.purchase?._id }}</div>
+    </div>
+    <div class="hero-note muted">
+      <div class="hero-label">Use Case</div>
+      <div class="hero-value">Maal supplier ya distributor ko wapas bhejna ho tab use karo.</div>
+    </div>
   </div>
 
-  <form [formGroup]="form">
+  <form [formGroup]="form" class="return-form-shell">
     <div formArrayName="items" class="rows">
       <div class="row-item" *ngFor="let row of itemsArray.controls; let i = index" [formGroupName]="i">
         <div class="line-head">
@@ -45,7 +54,7 @@
   </form>
 </mat-dialog-content>
 
-<mat-dialog-actions align="end">
+<mat-dialog-actions align="end" class="return-dialog-actions">
   <button mat-button type="button" mat-dialog-close>Cancel</button>
   <button mat-flat-button color="warn" type="button" (click)="submit()" [disabled]="saving">
     {{ saving ? "Saving..." : "Return to Distributor" }}
