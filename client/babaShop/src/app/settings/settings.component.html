@@ -241,6 +241,46 @@
                   </table>
                 </div>
               </div>
+
+              <div class="table-section">
+                <h4 class="section-title">Editable Override Matrix</h4>
+                <p class="table-note">STAFF, MANAGER aur ADMIN ko yahan se control karo. SUPER_ADMIN fixed full access rahega.</p>
+                <div class="table-wrapper editable" *ngIf="featureRegistry.length > 0">
+                  <table class="data-table">
+                    <thead>
+                      <tr>
+                        <th>Module</th>
+                        <th>Feature</th>
+                        <th *ngFor="let role of policyRoles">{{ role }}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <ng-container *ngFor="let group of featureRegistry">
+                        <tr *ngFor="let feature of group.features; let first = first">
+                          <td *ngIf="first" [attr.rowspan]="group.features.length" class="module-cell">{{ group.module | titlecase }}</td>
+                          <td>
+                            <span class="feature-name">{{ feature.label }}</span>
+                            <span class="feature-key">{{ feature.key }}</span>
+                          </td>
+                          <td *ngFor="let role of policyRoles" class="text-center">
+                            <ng-container *ngIf="isEditableRole(role); else fixedCell">
+                              <mat-checkbox
+                                [checked]="hasEditableFeature(role, feature.key)"
+                                (change)="toggleFeature(role, feature.key, $event.checked)"
+                                [disabled]="savingRoleAccess || profile?.role !== 'SUPER_ADMIN'">
+                              </mat-checkbox>
+                            </ng-container>
+                            <ng-template #fixedCell>
+                              <span class="access-chip yes" *ngIf="hasFeature(role, feature.key); else fixedNo">Fixed Yes</span>
+                              <ng-template #fixedNo><span class="access-chip no">Fixed No</span></ng-template>
+                            </ng-template>
+                          </td>
+                        </tr>
+                      </ng-container>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
           </div>
 
