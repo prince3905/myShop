@@ -19,10 +19,6 @@ export class SettingsComponent implements OnInit {
     "Shop Settings",
     "Role & Permissions",
     "Notification Settings",
-    "Billing & Subscription",
-    "Integrations",
-    "Data & Backup",
-    "Audit Logs",
     "Session Management",
     "App Preferences",
     "Danger Zone",
@@ -188,6 +184,24 @@ export class SettingsComponent implements OnInit {
 
   setSection(section: string) {
     this.activeSection = section;
+  }
+
+  getSectionIcon(section: string): string {
+    const icons: Record<string, string> = {
+      'Profile Settings': 'person',
+      'Account Security': 'security',
+      'Shop Settings': 'store',
+      'Role & Permissions': 'admin_panel_settings',
+      'Notification Settings': 'notifications',
+      'Billing & Subscription': 'credit_card',
+      'Integrations': 'link',
+      'Data & Backup': 'backup',
+      'Audit Logs': 'history',
+      'Session Management': 'devices',
+      'App Preferences': 'tune',
+      'Danger Zone': 'warning',
+    };
+    return icons[section] || 'settings';
   }
 
   loadApiSettings(): void {
