@@ -1,32 +1,46 @@
-<div class="main-content item-list-page">
+<div class="main-content">
   <div class="container-fluid">
-
-    <div class="expense-hero-bar">
-      <div>
-        <h2 class="hero-title">Stock Report</h2>
-        <p class="hero-sub">Live stock, valuation and low-stock tracking</p>
+    <div class="card filter-card">
+      <div class="card-header card-header-danger">
+        <h4 class="card-title">Stock Report</h4>
+        <p class="card-category">Live stock, valuation and low-stock tracking</p>
       </div>
-    </div>
-
-    <div class="expense-layout">
-
-      <div class="form-panel">
-        <div class="form-panel-header">
-          <mat-icon>filter_list</mat-icon>
-          <div>
-            <div class="panel-title">Filters</div>
-            <div class="panel-sub">{{ totalItems }} records</div>
-          </div>
+      <div class="card-body">
+        <div class="stock-context-row">
+          <div class="context-chip">Scope: {{ currentScopeLabel }}</div>
+          <div class="context-chip">Records: {{ totalItems }}</div>
+          <button mat-stroked-button color="warn" (click)="exportStockCsv()">Export Stock CSV</button>
+          <button mat-stroked-button color="primary" (click)="goToProducts()">Manage Products</button>
+          <button *ngIf="canManagePurchases" mat-stroked-button color="accent" (click)="goToPurchase()">Create Purchase</button>
         </div>
 
-        <div class="filter-form">
-          <mat-form-field appearance="outline" class="full-width">
+        <div class="filter-row" *ngIf="canCreateReorderDraft">
+          <mat-form-field appearance="outline" class="filter-field search-field">
+            <mat-label>Reorder Distributor</mat-label>
+            <mat-select [(ngModel)]="reorderDistributorId">
+              <mat-option [value]="null">Select distributor</mat-option>
+              <mat-option *ngFor="let d of distributors" [value]="d._id">
+                {{ d.name }} ({{ d.phone }})
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+          <div class="context-chip">Low stock rows can create draft directly</div>
+          <button
+            mat-raised-button
+            color="primary"
+            [disabled]="!reorderDistributorId || bulkReorderSaving || rows.length === 0"
+            (click)="createBulkReorderDrafts()">
+            {{ bulkReorderSaving ? 'Creating Bulk Drafts...' : 'Bulk Reorder Low Stock' }}
+          </button>
+        </div>
+
+        <div class="filter-row">
+          <mat-form-field appearance="outline" class="filter-field search-field">
             <mat-label>Search SKU / Product / Model</mat-label>
-            <input matInput [(ngModel)]="search" (keyup.enter)="onSearch()" placeholder="e.g. S24-256-BLK" />
-            <mat-icon matPrefix>search</mat-icon>
+            <input matInput [(ngModel)]="search" (keyup.enter)="onSearch()" placeholder="e.g. S24-256-BLK or Galaxy M24" />
           </mat-form-field>
 
-          <mat-form-field appearance="outline" class="full-width">
+          <mat-form-field appearance="outline" class="filter-field">
             <mat-label>Sort By</mat-label>
             <mat-select [(ngModel)]="sortBy">
               <mat-option value="updatedAt">Updated At</mat-option>
@@ -35,7 +49,7 @@
             </mat-select>
           </mat-form-field>
 
-          <mat-form-field appearance="outline" class="full-width">
+          <mat-form-field appearance="outline" class="filter-field">
             <mat-label>Order</mat-label>
             <mat-select [(ngModel)]="order">
               <mat-option value="desc">Descending</mat-option>
@@ -45,131 +59,444 @@
 
           <mat-checkbox [(ngModel)]="lowStockOnly" class="low-stock-toggle">Low Stock Only</mat-checkbox>
 
-          <div class="filter-actions">
-            <button mat-raised-button color="warn" (click)="onSearch()">
-              <mat-icon>search</mat-icon> Apply
-            </button>
-            <button mat-stroked-button (click)="onClear()">Reset</button>
-          </div>
-        </div>
-
-        <div class="action-buttons" *ngIf="canCreateReorderDraft">
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Reorder Distributor</mat-label>
-            <mat-select [(ngModel)]="reorderDistributorId">
-              <mat-option [value]="null">Select distributor</mat-option>
-              <mat-option *ngFor="let d of distributors" [value]="d._id">
-                {{ d.name }} ({{ d.phone }})
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-          <button mat-raised-button color="primary" [disabled]="!reorderDistributorId || bulkReorderSaving || rows.length === 0" (click)="createBulkReorderDrafts()">
-            <mat-icon>add_shopping_cart</mat-icon>
-            {{ bulkReorderSaving ? 'Creating...' : 'Bulk Reorder Low Stock' }}
-          </button>
+          <button mat-raised-button color="primary" (click)="onSearch()">Apply</button>
+          <button mat-stroked-button color="warn" (click)="onClear()">Reset</button>
         </div>
       </div>
+    </div>
 
-      <div class="list-panel">
-        <div class="summary-kpi-row" *ngIf="!loading">
-          <div class="kpi-card">
-            <div class="kpi-icon"><mat-icon>inventory</mat-icon></div>
-            <div class="kpi-body">
-              <div class="kpi-label">Total Qty</div>
-              <div class="kpi-value">{{ summary.totalQuantity }}</div>
-            </div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-icon"><mat-icon>block</mat-icon></div>
-            <div class="kpi-body">
-              <div class="kpi-label">Reserved Qty</div>
-              <div class="kpi-value">{{ summary.totalReserved }}</div>
-            </div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-icon"><mat-icon>warning</mat-icon></div>
-            <div class="kpi-body">
-              <div class="kpi-label">Low Stock SKUs</div>
-              <div class="kpi-value">{{ summary.lowStockCount }}</div>
-            </div>
-          </div>
-          <div class="kpi-card" *ngIf="canViewSensitivePricing">
-            <div class="kpi-icon"><mat-icon>attach_money</mat-icon></div>
-            <div class="kpi-body">
-              <div class="kpi-label">Valuation (Cost)</div>
-              <div class="kpi-value">₹{{ summary.totalCostValue | number:'1.0-0' }}</div>
-            </div>
-          </div>
-        </div>
+    <div class="stock-summary-grid" *ngIf="!loading">
+      <div class="summary-card">
+        <div class="label">Total Qty</div>
+        <div class="value">{{ summary.totalQuantity }}</div>
+      </div>
+      <div class="summary-card">
+        <div class="label">Reserved Qty</div>
+        <div class="value">{{ summary.totalReserved }}</div>
+      </div>
+      <div class="summary-card">
+        <div class="label">Damaged Qty</div>
+        <div class="value">{{ summary.totalDamaged }}</div>
+      </div>
+      <div class="summary-card">
+        <div class="label">Low Stock SKUs</div>
+        <div class="value">{{ summary.lowStockCount }}</div>
+      </div>
+      <div class="summary-card valuation" *ngIf="canViewSensitivePricing">
+        <div class="label">Total Stock Valuation (Cost)</div>
+        <div class="value">₹ {{ summary.totalCostValue | number:'1.2-2' }}</div>
+      </div>
+    </div>
 
-        <div class="action-row">
-          <button mat-stroked-button color="primary" (click)="exportStockCsv()">
-            <mat-icon>download</mat-icon> Export CSV
+    <div class="card mt-3" *ngIf="canManageReconciliation">
+      <div class="card-header card-header-info">
+        <h4 class="card-title">Stock Reconciliation</h4>
+        <p class="card-category">Monthly physical count, variance tracking and approval</p>
+      </div>
+      <div class="card-body">
+        <div class="filter-row">
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Month</mat-label>
+            <input
+              matInput
+              type="month"
+              [(ngModel)]="reconciliationMonthKey"
+              (change)="onReconciliationMonthChange()" />
+          </mat-form-field>
+
+          <button mat-stroked-button color="primary" (click)="loadCurrentReconciliation()" [disabled]="reconciliationLoading">
+            Reload
           </button>
-          <button mat-stroked-button (click)="goToProducts()">Manage Products</button>
-          <button *ngIf="canManagePurchases" mat-stroked-button color="accent" (click)="goToPurchase()">Create Purchase</button>
+          <button mat-raised-button color="accent" (click)="startReconciliation()" [disabled]="reconciliationSaving">
+            {{ reconciliationSaving ? 'Starting...' : 'Start / Re-open' }}
+          </button>
+
+          <div class="context-chip" *ngIf="reconciliation">Status: {{ reconciliation?.status }}</div>
+          <div class="context-chip" *ngIf="reconciliation?.summary">Mismatch: {{ reconciliation?.summary?.mismatchLines || 0 }}</div>
         </div>
 
-        <div class="loading-state" *ngIf="loading">
-          <mat-spinner diameter="32"></mat-spinner> Loading stock data...
+        <div class="loading-wrap" *ngIf="reconciliationLoading">
+          <mat-spinner color="primary" diameter="28"></mat-spinner>
         </div>
 
-        <div class="product-table" *ngIf="!loading">
-          <div class="table-header">
-            <span>Product</span>
-            <span>Model</span>
-            <span>SKU</span>
-            <span>Variant</span>
-            <span>Qty</span>
-            <span>Reserved</span>
-            <span>Available</span>
-            <span>Status</span>
-            <span *ngIf="canCreateReorderDraft">Action</span>
+        <div *ngIf="!reconciliationLoading && !reconciliation" class="empty">
+          No reconciliation found for selected month. Click <strong>Start / Re-open</strong>.
+        </div>
+
+        <div *ngIf="!reconciliationLoading && reconciliation">
+          <div class="reconciliation-audit-grid" *ngIf="reconciliationAuditEntries.length">
+            <div
+              class="reconciliation-audit-card"
+              *ngFor="let entry of reconciliationAuditEntries"
+              [ngClass]="entry.tone">
+              <div class="audit-label">{{ entry.label }}</div>
+              <div class="audit-actor">{{ entry.actor?.name || entry.actor?.email || 'System' }}</div>
+              <div class="audit-time">{{ entry.at | date:'dd/MM/yyyy hh:mm a' }}</div>
+            </div>
           </div>
-          <mat-accordion multi="true">
-            <mat-expansion-panel *ngFor="let row of rows" class="product-panel">
-              <mat-expansion-panel-header>
-                <div class="panel-row">
-                  <div class="product-name">{{ row?.product?.name || '-' }}</div>
-                  <div>{{ row?.model?.name || '-' }}</div>
-                  <div>{{ row?.sku || row?.variation?.sku || '-' }}</div>
-                  <div>{{ row?.variation?.attributes?.storage || '-' }}/{{ row?.variation?.attributes?.color || '-' }}</div>
-                  <div class="qty-cell">{{ row?.quantity || 0 }}</div>
-                  <div class="qty-cell">{{ row?.reserved || 0 }}</div>
-                  <div class="qty-cell">{{ (row?.quantity || 0) - (row?.reserved || 0) }}</div>
-                  <div>
-                    <span class="stock-badge" [ngClass]="(row?.quantity || 0) < 5 ? 'low' : 'ok'">
-                      {{ (row?.quantity || 0) < 5 ? 'Low' : 'OK' }}
+
+          <div class="stock-context-row">
+            <div class="context-chip">Lines: {{ reconciliation?.summary?.totalLines || 0 }}</div>
+            <div class="context-chip">System Qty: {{ reconciliation?.summary?.totalSystemQty || 0 }}</div>
+            <div class="context-chip">Counted Qty: {{ reconciliation?.summary?.totalCountedQty || 0 }}</div>
+            <div class="context-chip">Variance: {{ reconciliation?.summary?.totalVarianceQty || 0 }}</div>
+            <mat-form-field appearance="outline" class="filter-field search-field">
+              <mat-label>Search SKU/Product/Model</mat-label>
+              <input matInput [(ngModel)]="reconciliationSearch" />
+            </mat-form-field>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table tx-table">
+              <thead>
+                <tr>
+                  <th>SKU</th>
+                  <th>Product</th>
+                  <th>Model</th>
+                  <th>System Qty</th>
+                  <th>Counted Qty</th>
+                  <th>Variance</th>
+                  <th>Note</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  *ngFor="let line of filteredReconciliationLines"
+                  [ngClass]="(line?.varianceQty || 0) === 0 ? 'variance-match' : ((line?.varianceQty || 0) > 0 ? 'variance-positive' : 'variance-negative')">
+                  <td>{{ line?.sku || '-' }}</td>
+                  <td>{{ line?.productName || '-' }}</td>
+                  <td>{{ line?.modelName || '-' }}</td>
+                  <td>{{ line?.systemQty || 0 }}</td>
+                  <td>
+                    <input
+                      class="inline-input"
+                      type="number"
+                      min="0"
+                      [disabled]="reconciliation?.status !== 'DRAFT'"
+                      [(ngModel)]="line.countedQty"
+                      (ngModelChange)="onCountedQtyChange(line)" />
+                  </td>
+                  <td>
+                    <span class="tx-pill" [ngClass]="(line?.varianceQty || 0) === 0 ? 'tx-ADJUSTMENT' : ((line?.varianceQty || 0) > 0 ? 'tx-IN' : 'tx-OUT')">
+                      {{ line?.varianceQty || 0 }}
                     </span>
-                  </div>
-                  <div class="action-cell" *ngIf="canCreateReorderDraft">
-                    <button mat-icon-button color="primary" (click)="$event.stopPropagation()">
-                      <mat-icon>add_shopping_cart</mat-icon>
-                    </button>
-                  </div>
-                </div>
-              </mat-expansion-panel-header>
-              <div class="variation-details">
-                <div class="detail-grid">
-                  <div class="detail-item"><span class="label">Damaged</span><span class="value">{{ row?.damaged || 0 }}</span></div>
-                  <div class="detail-item"><span class="label">Reorder Level</span><span class="value">{{ row?.product?.reorderLevel || '-' }}</span></div>
-                  <div class="detail-item" *ngIf="canViewSensitivePricing"><span class="label">Cost Price</span><span class="value">₹{{ row?.costPrice || 0 }}</span></div>
-                  <div class="detail-item" *ngIf="canViewSensitivePricing"><span class="label">Stock Value</span><span class="value">₹{{ (row?.quantity || 0) * (row?.costPrice || 0) }}</span></div>
-                </div>
-              </div>
-            </mat-expansion-panel>
-          </mat-accordion>
+                  </td>
+                  <td>
+                    <input
+                      class="inline-input"
+                      type="text"
+                      [disabled]="reconciliation?.status !== 'DRAFT'"
+                      [(ngModel)]="line.note"
+                      appCapitalizeFirst
+                      placeholder="optional note" />
+                  </td>
+                </tr>
+                <tr *ngIf="filteredReconciliationLines.length === 0">
+                  <td colspan="7" class="empty">No lines found</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="filter-row mt-2">
+            <div class="action-stack">
+              <button
+                mat-stroked-button
+                color="primary"
+                (click)="saveReconciliationDraft()"
+                [disabled]="reconciliation?.status !== 'DRAFT' || reconciliationSaving">
+                {{ reconciliationSaving ? 'Saving...' : 'Save Draft' }}
+              </button>
+              <div class="action-reason" *ngIf="saveDraftDisabledReason">{{ saveDraftDisabledReason }}</div>
+            </div>
+            <div class="action-stack">
+              <button
+                mat-raised-button
+                color="warn"
+                (click)="submitReconciliation()"
+                [disabled]="reconciliation?.status !== 'DRAFT' || reconciliationSubmitting">
+                {{ reconciliationSubmitting ? 'Submitting...' : 'Submit For Approval' }}
+              </button>
+              <div class="action-reason" *ngIf="submitDisabledReason">{{ submitDisabledReason }}</div>
+            </div>
+            <div class="action-stack" *ngIf="canApproveReconciliation || approveDisabledReason">
+              <button
+                *ngIf="canApproveReconciliation"
+                mat-raised-button
+                color="primary"
+                (click)="approveReconciliation()"
+                [disabled]="reconciliation?.status !== 'SUBMITTED' || reconciliationApproving">
+                {{ reconciliationApproving ? 'Approving...' : 'Approve & Apply Variance' }}
+              </button>
+              <div class="action-reason" *ngIf="approveDisabledReason">{{ approveDisabledReason }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="loading-wrap" *ngIf="loading">
+      <mat-spinner color="primary" diameter="40"></mat-spinner>
+    </div>
+
+    <div class="card" *ngIf="!loading">
+      <div class="card-body table-wrap">
+        <div class="table-responsive">
+          <table class="table stock-table">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Model</th>
+                <th>SKU</th>
+                <th>Variant</th>
+                <th>Qty</th>
+                <th>Reserved</th>
+                <th>Damaged</th>
+                <th>Available</th>
+                <th>Reorder</th>
+                <th *ngIf="canViewSensitivePricing">Cost</th>
+                <th *ngIf="canViewSensitivePricing">Value</th>
+                <th>Status</th>
+                <th *ngIf="canCreateReorderDraft">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let row of rows">
+                <td>{{ row?.product?.name || '-' }}</td>
+                <td>{{ row?.model?.name || '-' }}</td>
+                <td>{{ row?.sku || row?.variation?.sku || '-' }}</td>
+                <td>
+                  {{ row?.variation?.attributes?.storage || '-' }}/
+                  {{ row?.variation?.attributes?.color || '-' }}/
+                  {{ row?.variation?.attributes?.size || '-' }}
+                </td>
+                <td>{{ row?.quantity || 0 }}</td>
+                <td>{{ row?.reservedQuantity || 0 }}</td>
+                <td>{{ row?.damagedQuantity || 0 }}</td>
+                <td>{{ getAvailableQty(row) }}</td>
+                <td>{{ row?.reorderLevel || 0 }}</td>
+                <td *ngIf="canViewSensitivePricing">₹ {{ row?.lastPurchasePrice || 0 | number:'1.2-2' }}</td>
+                <td *ngIf="canViewSensitivePricing">₹ {{ getStockValue(row) | number:'1.2-2' }}</td>
+                <td>
+                  <span class="stock-badge" [ngClass]="isLowStock(row) ? 'low' : 'ok'">
+                    {{ isLowStock(row) ? 'LOW' : 'OK' }}
+                  </span>
+                </td>
+                <td *ngIf="canCreateReorderDraft">
+                  <button
+                    mat-stroked-button
+                    color="primary"
+                    *ngIf="isLowStock(row)"
+                    [disabled]="!reorderDistributorId || reorderingIds[(row?._id || row?.variation?._id || '')]"
+                    (click)="createReorderDraft(row)">
+                    {{
+                      reorderingIds[(row?._id || row?.variation?._id || '')]
+                        ? 'Creating...'
+                        : ('Reorder +' + getSuggestedReorderQty(row))
+                    }}
+                  </button>
+                  <span *ngIf="!isLowStock(row)" class="muted-action">-</span>
+                </td>
+              </tr>
+              <tr *ngIf="rows.length === 0">
+                <td [attr.colspan]="(canCreateReorderDraft ? 1 : 0) + (canViewSensitivePricing ? 12 : 10)" class="empty">
+                  No stock records found.
+                  <span class="empty-help">Create/confirm purchase to auto-generate stock entries.</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <mat-paginator
+        [length]="totalItems"
+        [pageIndex]="page - 1"
+        [pageSize]="pageSize"
+        [pageSizeOptions]="pageSizeOptions"
+        (page)="onPageChange($event)">
+      </mat-paginator>
+    </div>
+
+    <div class="card mt-3">
+      <div class="card-header card-header-info">
+        <h4 class="card-title">Stock Transactions</h4>
+        <p class="card-category">Track IN/OUT/Adjustment/Return movement history</p>
+      </div>
+      <div class="card-body">
+        <div class="stock-context-row">
+          <div class="context-chip">Transaction Records: {{ txTotalItems }}</div>
+          <button mat-stroked-button color="warn" (click)="exportTransactionsCsv()">Export Transactions CSV</button>
+        </div>
+        <div class="filter-row">
+          <mat-form-field appearance="outline" class="filter-field search-field">
+            <mat-label>Search SKU</mat-label>
+            <input matInput [(ngModel)]="txFilters.search" (keyup.enter)="onTxApply()" placeholder="Enter SKU" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Type</mat-label>
+            <mat-select [(ngModel)]="txFilters.type">
+              <mat-option [value]="null">All</mat-option>
+              <mat-option value="IN">IN</mat-option>
+              <mat-option value="OUT">OUT</mat-option>
+              <mat-option value="ADJUSTMENT">ADJUSTMENT</mat-option>
+              <mat-option value="RESERVE">RESERVE</mat-option>
+              <mat-option value="RELEASE">RELEASE</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Reference</mat-label>
+            <mat-select [(ngModel)]="txFilters.referenceType">
+              <mat-option [value]="null">All</mat-option>
+              <mat-option value="PURCHASE">PURCHASE</mat-option>
+              <mat-option value="SALE">SALE</mat-option>
+              <mat-option value="RETURN">RETURN</mat-option>
+              <mat-option value="MANUAL">MANUAL</mat-option>
+              <mat-option value="RESERVATION">RESERVATION</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <button mat-raised-button color="primary" (click)="onTxApply()">Apply</button>
+          <button mat-stroked-button color="warn" (click)="onTxReset()">Reset</button>
+        </div>
+
+        <div class="loading-wrap" *ngIf="txLoading">
+          <mat-spinner color="primary" diameter="34"></mat-spinner>
+        </div>
+
+        <div class="table-responsive" *ngIf="!txLoading">
+          <table class="table tx-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>SKU</th>
+                <th>Product</th>
+                <th>Type</th>
+                <th>Ref</th>
+                <th>Damage Source</th>
+                <th>Txn Qty</th>
+                <th>Stock Effect</th>
+                <th>Prev</th>
+                <th>New</th>
+                <th>User</th>
+                <th>Note</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let tx of txRows">
+                <td>{{ tx?.createdAt | date:'dd MMM yyyy, hh:mm a' }}</td>
+                <td>{{ tx?.sku || '-' }}</td>
+                <td>{{ tx?.product?.name || '-' }}</td>
+                <td>
+                  <span class="tx-pill" [ngClass]="'tx-' + (tx?.type || 'ADJUSTMENT')">{{ tx?.type }}</span>
+                </td>
+                <td>{{ tx?.referenceType || '-' }}</td>
+                <td>
+                  <ng-container [ngSwitch]="tx?.damageSource">
+                    <span *ngSwitchCase="'PURCHASE_DAMAGE'">From Distributor</span>
+                    <span *ngSwitchCase="'INTERNAL_DAMAGE'">Internal Damage</span>
+                    <span *ngSwitchCase="'CUSTOMER_RETURN_DAMAGE'">Customer Return Damage</span>
+                    <span *ngSwitchCase="'OTHER_DAMAGE'">Other</span>
+                    <span *ngSwitchDefault>-</span>
+                  </ng-container>
+                </td>
+                <td>{{ getTransactionQty(tx) }}</td>
+                <td>{{ getTransactionEffect(tx) }}</td>
+                <td>{{ tx?.previousQuantity }}</td>
+                <td>{{ tx?.newQuantity }}</td>
+                <td>{{ tx?.createdBy?.email || '-' }}</td>
+                <td>{{ tx?.note || '-' }}</td>
+              </tr>
+              <tr *ngIf="txRows.length === 0">
+                <td colspan="12" class="empty">No transaction records found</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
 
         <mat-paginator
-          [length]="totalItems"
-          [pageSize]="pageSize"
-          [pageSizeOptions]="[10,25,50,100]"
-          [pageIndex]="page - 1"
-          (page)="onPageChange($event)">
+          [length]="txTotalItems"
+          [pageIndex]="txPage - 1"
+          [pageSize]="txPageSize"
+          [pageSizeOptions]="txPageSizeOptions"
+          (page)="onTxPageChange($event)">
         </mat-paginator>
       </div>
+    </div>
 
+    <div class="card mt-3" *ngIf="canAdjustStock">
+      <div class="card-header card-header-warning">
+        <h4 class="card-title">Manual Stock Adjustment</h4>
+        <p class="card-category">Adjust quantity by variation with secure stock transaction log</p>
+      </div>
+      <div class="card-body">
+        <div class="filter-row">
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Product</mat-label>
+            <mat-select [(ngModel)]="adjustForm.product" (selectionChange)="onAdjustProductChange()">
+              <mat-option [value]="null">Select Product</mat-option>
+              <mat-option *ngFor="let p of products" [value]="p._id">
+                {{ p.name }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Model</mat-label>
+            <mat-select [(ngModel)]="adjustForm.model" [disabled]="!adjustForm.product" (selectionChange)="onAdjustModelChange()">
+              <mat-option [value]="null">Select Model</mat-option>
+              <mat-option *ngFor="let m of adjustModelOptions" [value]="m._id">
+                {{ m.name }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="filter-field search-field">
+            <mat-label>Variation SKU</mat-label>
+            <mat-select [(ngModel)]="adjustForm.variation" [disabled]="!adjustForm.model">
+              <mat-option [value]="null">Select Variation</mat-option>
+              <mat-option *ngFor="let v of adjustVariationOptions" [value]="v._id">
+                {{ v.sku }} - {{ v.attributes?.storage || '-' }}/{{ v.attributes?.color || '-' }}/{{ v.attributes?.size || '-' }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Type</mat-label>
+            <mat-select [(ngModel)]="adjustForm.type">
+              <mat-option value="IN">IN</mat-option>
+              <mat-option value="OUT">OUT</mat-option>
+              <mat-option value="ADJUSTMENT">ADJUSTMENT</mat-option>
+              <mat-option value="DAMAGED">DAMAGED</mat-option>
+              <mat-option value="RESTORE_DAMAGE">RESTORE DAMAGE</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="filter-field" *ngIf="adjustForm.type === 'DAMAGED'">
+            <mat-label>Damage Source</mat-label>
+            <mat-select [(ngModel)]="adjustForm.damageSource">
+              <mat-option *ngFor="let source of damageSources" [value]="source.value">
+                {{ source.label }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Quantity</mat-label>
+            <input matInput type="number" [(ngModel)]="adjustForm.quantity" placeholder="e.g. 5" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="filter-field note-field">
+            <mat-label>Note</mat-label>
+            <input matInput [(ngModel)]="adjustForm.note" placeholder="Reason for adjustment" appCapitalizeFirst />
+          </mat-form-field>
+
+          <button mat-raised-button color="primary" [disabled]="adjustSaving" (click)="submitAdjustment()">
+            {{ adjustSaving ? 'Saving...' : 'Adjust Stock' }}
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </div>
