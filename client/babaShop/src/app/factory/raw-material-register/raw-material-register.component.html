@@ -1,272 +1,422 @@
-<div class="main-content raw-material-page">
+<div class="main-content material-page">
   <div class="container-fluid">
-    <div class="card page-hero-card">
-      <div class="card-header card-header-danger raw-material-hero">
-        <div>
-          <h2 class="raw-material-hero-title">Raw Material Master</h2>
-          <p class="raw-material-hero-subtitle">Factory raw material master for item list, unit and last known rate.</p>
+
+    <!-- ── Hero Header ── -->
+    <div class="material-hero-bar">
+      <div>
+        <h2 class="hero-title">Raw Material Master</h2>
+        <p class="hero-sub">Factory raw material master for item list, unit and last known rate.</p>
+      </div>
+    </div>
+
+    <!-- ── Summary KPI Cards ── -->
+    <div class="summary-kpi-row">
+      <div class="kpi-card total">
+        <div class="kpi-icon"><mat-icon>inventory_2</mat-icon></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Total Materials</div>
+          <div class="kpi-value">{{ summary.totalMaterials || 0 }}</div>
+          <div class="kpi-meta">in master</div>
+        </div>
+      </div>
+      <div class="kpi-card received">
+        <div class="kpi-icon"><mat-icon>call_received</mat-icon></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Received Qty</div>
+          <div class="kpi-value">{{ summary.totalReceivedQty || 0 | number: '1.0-0' }}</div>
+          <div class="kpi-meta">from purchases</div>
+        </div>
+      </div>
+      <div class="kpi-card used">
+        <div class="kpi-icon"><mat-icon>remove_circle</mat-icon></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Used Qty</div>
+          <div class="kpi-value">{{ summary.totalConsumedQty || 0 | number: '1.0-0' }}</div>
+          <div class="kpi-meta">in production</div>
+        </div>
+      </div>
+      <div class="kpi-card balance">
+        <div class="kpi-icon"><mat-icon>inventory</mat-icon></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Balance Qty</div>
+          <div class="kpi-value">{{ summary.currentBalanceQty || 0 | number: '1.0-0' }}</div>
+          <div class="kpi-meta">in stock</div>
+        </div>
+      </div>
+      <div class="kpi-card value">
+        <div class="kpi-icon"><mat-icon>currency_rupee</mat-icon></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Balance Value</div>
+          <div class="kpi-value">₹{{ summary.currentBalanceValue || 0 | number: '1.0-0' }}</div>
+          <div class="kpi-meta">stock worth</div>
         </div>
       </div>
     </div>
 
-    <div class="row summary-row">
-      <div class="col-lg-2 col-md-4 col-sm-6"><div class="card summary-card"><div class="card-body"><div class="summary-label">Total Materials</div><div class="summary-value">{{ summary.totalMaterials || 0 }}</div></div></div></div>
-      <div class="col-lg-3 col-md-4 col-sm-6"><div class="card summary-card"><div class="card-body"><div class="summary-label">Received Qty</div><div class="summary-value">{{ summary.totalReceivedQty || 0 | number: '1.0-2' }}</div></div></div></div>
-      <div class="col-lg-2 col-md-4 col-sm-6"><div class="card summary-card"><div class="card-body"><div class="summary-label">Used Qty</div><div class="summary-value">{{ summary.totalConsumedQty || 0 | number: '1.0-2' }}</div></div></div></div>
-      <div class="col-lg-2 col-md-4 col-sm-6"><div class="card summary-card"><div class="card-body"><div class="summary-label">Balance Qty</div><div class="summary-value">{{ summary.currentBalanceQty || 0 | number: '1.0-2' }}</div></div></div></div>
-      <div class="col-lg-2 col-md-4 col-sm-6"><div class="card summary-card"><div class="card-body"><div class="summary-label">Balance Value</div><div class="summary-value">Rs {{ summary.currentBalanceValue || 0 | number: '1.2-2' }}</div></div></div></div>
-    </div>
+    <!-- ── Main Two-Column Layout ── -->
+    <div class="material-layout">
 
-    <div class="row">
-      <div class="col-lg-4">
-        <div class="card">
-          <div class="card-header card-header-danger">
-            <h4 class="card-title">{{ getFormTitle() }}</h4>
+      <!-- ── Left: Add/Edit Form ── -->
+      <div class="form-panel">
+        <div class="form-panel-header">
+          <mat-icon>{{ editingMaterialId ? 'edit_note' : 'add_box' }}</mat-icon>
+          <div>
+            <div class="panel-title">{{ getFormTitle() }}</div>
+            <div class="panel-sub" *ngIf="editingMaterialId">Editing selected material</div>
           </div>
-          <div class="card-body">
-            <form #materialNgForm="ngForm" (ngSubmit)="submitMaterial(materialNgForm)">
-              <div class="edit-banner" *ngIf="editingMaterialId">Editing selected raw material.</div>
+        </div>
 
-              <mat-form-field class="example-full-width">
-                <mat-label>Material Name</mat-label>
-                <input matInput [(ngModel)]="materialForm.name" name="name" required>
-              </mat-form-field>
+        <form #materialNgForm="ngForm" (ngSubmit)="submitMaterial(materialNgForm)" class="material-form">
+          <div class="edit-banner" *ngIf="editingMaterialId">
+            <mat-icon>info</mat-icon>
+            Editing raw material. Changes will update master.
+          </div>
 
-              <div class="row">
-                <div class="col-md-3">
-                  <mat-form-field class="example-full-width">
-                    <mat-label>Code</mat-label>
-                    <input matInput [(ngModel)]="materialForm.code" name="code">
-                  </mat-form-field>
-                </div>
-                <div class="col-md-3">
-                  <mat-form-field class="example-full-width">
-                    <mat-label>Unit</mat-label>
-                    <mat-select [(ngModel)]="materialForm.unitLabel" name="unitLabel" required>
-                      <mat-option *ngFor="let unit of unitOptions" [value]="unit">{{ unit }}</mat-option>
-                    </mat-select>
-                  </mat-form-field>
-                </div>
-                <div class="col-md-3">
-                  <mat-form-field class="example-full-width">
-                    <mat-label>Size</mat-label>
-                    <input matInput [(ngModel)]="materialForm.sizeLabel" name="sizeLabel" [matAutocomplete]="sizeAuto">
-                  </mat-form-field>
-                </div>
-                <div class="col-md-3">
-                  <mat-form-field class="example-full-width">
-                    <mat-label>Color</mat-label>
-                    <input matInput [(ngModel)]="materialForm.colorLabel" name="colorLabel" [matAutocomplete]="colorAuto">
-                  </mat-form-field>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Material Name</mat-label>
+            <input matInput [(ngModel)]="materialForm.name" name="name" required>
+            <mat-icon matPrefix>label</mat-icon>
+          </mat-form-field>
+
+          <div class="inline-fields four-col">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Code</mat-label>
+              <input matInput [(ngModel)]="materialForm.code" name="code">
+              <mat-icon matPrefix>tag</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Unit</mat-label>
+              <mat-select [(ngModel)]="materialForm.unitLabel" name="unitLabel" required>
+                <mat-option *ngFor="let unit of unitOptions" [value]="unit">{{ unit }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Size</mat-label>
+              <input matInput [(ngModel)]="materialForm.sizeLabel" name="sizeLabel" [matAutocomplete]="sizeAuto">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Color</mat-label>
+              <input matInput [(ngModel)]="materialForm.colorLabel" name="colorLabel" [matAutocomplete]="colorAuto">
+            </mat-form-field>
+          </div>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Last Rate</mat-label>
+            <input matInput type="number" min="0" [(ngModel)]="materialForm.currentRate" name="currentRate" required>
+            <mat-icon matPrefix>currency_rupee</mat-icon>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Note</mat-label>
+            <textarea matInput rows="2" [(ngModel)]="materialForm.note" name="note"></textarea>
+            <mat-icon matPrefix>notes</mat-icon>
+          </mat-form-field>
+
+          <mat-checkbox [(ngModel)]="materialForm.active" name="active">Active material</mat-checkbox>
+
+          <div class="form-actions">
+            <button mat-raised-button color="warn" type="submit" [disabled]="savingMaterial || materialNgForm.invalid">
+              <mat-icon>{{ savingMaterial ? 'hourglass_top' : 'save' }}</mat-icon>
+              {{ getSubmitLabel() }}
+            </button>
+            <button *ngIf="editingMaterialId" type="button" mat-stroked-button (click)="cancelEdit(materialNgForm)">
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- ── Right: Material List ── -->
+      <div class="list-panel">
+        <div class="list-panel-header">
+          <div class="panel-title">Raw Material List</div>
+          <div class="filter-bar">
+            <mat-form-field appearance="outline" class="filter-field">
+              <mat-label>Search</mat-label>
+              <input matInput [(ngModel)]="filters.search" placeholder="Name, code, size or color">
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="filter-field">
+              <mat-label>Status</mat-label>
+              <mat-select [(ngModel)]="filters.active">
+                <mat-option value="">All</mat-option>
+                <mat-option value="true">Active</mat-option>
+                <mat-option value="false">Inactive</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+          <div class="filter-actions">
+            <button mat-raised-button color="warn" (click)="loadMaterials()">Apply</button>
+            <button mat-stroked-button (click)="clearFilters()">Reset</button>
+          </div>
+        </div>
+
+        <div class="state-row" *ngIf="loadingMaterials">
+          <mat-spinner diameter="24"></mat-spinner> Loading materials...
+        </div>
+
+        <div class="empty-state-bento" *ngIf="!loadingMaterials && materials.length === 0">
+          <mat-icon>inventory_2</mat-icon>
+          <p>No raw materials found.</p>
+        </div>
+
+        <div class="material-cards-grid" *ngIf="!loadingMaterials && materials.length > 0">
+          <div class="material-card-v3" *ngFor="let material of materials" [class.inactive]="!material.active" [class.selected]="selectedMaterial?._id === material._id">
+            <div class="material-card-header">
+              <div class="material-avatar">
+                {{ (material.name || 'M')[0].toUpperCase() }}
+              </div>
+              <div class="material-info">
+                <button type="button" class="material-name-btn" (click)="viewHistory(material)">
+                  {{ material.name }}
+                </button>
+                <div class="material-meta" *ngIf="material.code">
+                  <mat-icon>tag</mat-icon>
+                  #{{ material.code }}
                 </div>
               </div>
+              <div class="material-status" [class.active]="material.active" [class.inactive]="!material.active">
+                {{ material.active ? 'Active' : 'Inactive' }}
+              </div>
+            </div>
 
-              <mat-form-field class="example-full-width">
-                <mat-label>Last Rate</mat-label>
-                <input matInput type="number" min="0" [(ngModel)]="materialForm.currentRate" name="currentRate" required>
-              </mat-form-field>
+            <div class="material-chips">
+              <span class="material-chip unit">{{ material.unitLabel }}</span>
+              <span class="material-chip size" *ngIf="material.sizeLabel">{{ material.sizeLabel }}</span>
+              <span class="material-chip color" *ngIf="material.colorLabel">{{ material.colorLabel }}</span>
+            </div>
 
-              <mat-form-field class="example-full-width">
-                <mat-label>Note</mat-label>
-                <textarea matInput rows="3" [(ngModel)]="materialForm.note" name="note"></textarea>
-              </mat-form-field>
+            <div class="balance-display">
+              <div class="balance-item">
+                <div class="balance-label">Received</div>
+                <div class="balance-value received">{{ material.receivedQty | number: '1.0-0' }}</div>
+              </div>
+              <div class="balance-item">
+                <div class="balance-label">Used</div>
+                <div class="balance-value used">{{ material.consumedQty | number: '1.0-0' }}</div>
+              </div>
+              <div class="balance-item highlight">
+                <div class="balance-label">Balance</div>
+                <div class="balance-value">{{ material.currentBalanceQty | number: '1.0-0' }}</div>
+              </div>
+            </div>
 
-              <mat-checkbox [(ngModel)]="materialForm.active" name="active">Active material</mat-checkbox>
+            <div class="rate-display">
+              <div class="rate-item">
+                <span class="rate-label">Last Rate</span>
+                <strong>₹{{ material.currentRate | number: '1.2-2' }}/{{ material.unitLabel }}</strong>
+              </div>
+              <div class="rate-item highlight">
+                <span class="rate-label">Value</span>
+                <strong>₹{{ material.currentBalanceValue | number: '1.0-0' }}</strong>
+              </div>
+            </div>
 
-              <div class="form-actions">
-                <button mat-raised-button class="btn btn-danger submit-btn" [disabled]="savingMaterial || materialNgForm.invalid">
-                  {{ getSubmitLabel() }}
+            <div class="material-footer">
+              <button type="button" mat-stroked-button class="history-btn" (click)="viewHistory(material)">
+                <mat-icon>history</mat-icon>
+                View History
+              </button>
+              <div class="material-actions" *ngIf="canManage">
+                <button mat-icon-button color="primary" [disabled]="deletingId === material._id" (click)="startEdit(material)" title="Edit">
+                  <mat-icon>edit</mat-icon>
                 </button>
-                <button
-                  *ngIf="editingMaterialId"
-                  type="button"
-                  mat-stroked-button
-                  class="btn btn-outline-danger submit-btn"
-                  (click)="cancelEdit(materialNgForm)"
-                >
-                  Cancel Edit
+                <button mat-icon-button color="warn" [disabled]="deletingId === material._id" (click)="deleteMaterial(material)" title="Delete">
+                  <mat-icon>{{ deletingId === material._id ? 'hourglass_top' : 'delete' }}</mat-icon>
                 </button>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       </div>
 
-      <div class="col-lg-8">
-        <div class="card">
-          <div class="card-header card-header-danger">
-            <h4 class="card-title">Raw Material List</h4>
+    </div>
+
+    <!-- ── Material History Section ── -->
+    <div class="history-section" *ngIf="selectedMaterial">
+      <div class="history-panel">
+        <div class="history-header">
+          <div class="history-title-row">
+            <div class="history-avatar">
+              {{ (selectedMaterial.name || 'M')[0].toUpperCase() }}
+            </div>
+            <div>
+              <div class="history-title">Material History</div>
+              <div class="history-subtitle">{{ selectedMaterial.name }}</div>
+            </div>
           </div>
-          <div class="card-body">
-            <div class="filter-grid">
-              <mat-form-field class="example-full-width">
-                <mat-label>Search</mat-label>
-                <input matInput [(ngModel)]="filters.search" name="search" placeholder="Name, code, size or color">
-              </mat-form-field>
-              <mat-form-field class="example-full-width">
-                <mat-label>Status</mat-label>
-                <mat-select [(ngModel)]="filters.active" name="filterActive">
-                  <mat-option value="">All</mat-option>
-                  <mat-option value="true">Active</mat-option>
-                  <mat-option value="false">Inactive</mat-option>
-                </mat-select>
-              </mat-form-field>
+          <button type="button" mat-stroked-button (click)="clearHistory()">
+            <mat-icon>close</mat-icon>
+            Close
+          </button>
+        </div>
+
+        <!-- Purchase History Summary -->
+        <div class="history-summary-row" *ngIf="!loadingHistory && historySummary">
+          <div class="history-kpi-card">
+            <div class="hkpi-icon"><mat-icon>receipt_long</mat-icon></div>
+            <div class="hkpi-body">
+              <div class="hkpi-label">Purchases</div>
+              <div class="hkpi-value">{{ historySummary.purchaseCount || 0 }}</div>
             </div>
-
-            <div class="filter-actions">
-              <button mat-raised-button class="btn btn-danger" (click)="loadMaterials()">Apply Filters</button>
-              <button mat-stroked-button class="btn btn-outline-danger" (click)="clearFilters()">Reset</button>
+          </div>
+          <div class="history-kpi-card">
+            <div class="hkpi-icon"><mat-icon>call_received</mat-icon></div>
+            <div class="hkpi-body">
+              <div class="hkpi-label">Received</div>
+              <div class="hkpi-value">{{ historySummary.totalReceivedQty || 0 | number: '1.0-0' }}</div>
             </div>
-
-            <div *ngIf="loadingMaterials" class="table-empty">Loading raw materials...</div>
-            <div *ngIf="!loadingMaterials && materials.length === 0" class="table-empty">No raw materials found.</div>
-
-            <div class="material-table-wrap" *ngIf="!loadingMaterials && materials.length > 0">
-              <table class="table material-table">
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Size</th>
-                    <th>Color</th>
-                    <th>Unit</th>
-                    <th>Received</th>
-                    <th>Used</th>
-                    <th>Balance</th>
-                    <th>Last Rate</th>
-                    <th>Value</th>
-                    <th>Status</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let material of materials">
-                    <td>
-                      <button type="button" class="material-name-btn" (click)="viewHistory(material)">
-                        {{ material.name }}
-                      </button>
-                      <div class="table-note" *ngIf="material.code">#{{ material.code }}</div>
-                    </td>
-                    <td>{{ material.sizeLabel || '-' }}</td>
-                    <td>{{ material.colorLabel || '-' }}</td>
-                    <td>{{ material.unitLabel }}</td>
-                    <td>{{ material.receivedQty | number: '1.0-2' }}</td>
-                    <td>{{ material.consumedQty | number: '1.0-2' }}</td>
-                    <td class="amount-cell">{{ material.currentBalanceQty | number: '1.0-2' }}</td>
-                    <td class="amount-cell">Rs {{ material.currentRate | number: '1.2-2' }}</td>
-                    <td class="amount-cell">Rs {{ material.currentBalanceValue | number: '1.2-2' }}</td>
-                    <td><span class="status-chip" [class.inactive]="!material.active">{{ material.active ? 'Active' : 'Inactive' }}</span></td>
-                    <td>
-                      <div class="table-actions" *ngIf="canManage">
-                        <button mat-icon-button class="table-edit-btn" [disabled]="deletingId === material._id" (click)="startEdit(material)" aria-label="Edit raw material" title="Edit">
-                          <mat-icon>edit</mat-icon>
-                        </button>
-                        <button mat-icon-button class="table-delete-btn" [disabled]="deletingId === material._id" (click)="deleteMaterial(material)" aria-label="Delete raw material" title="Delete">
-                          <mat-icon>{{ deletingId === material._id ? 'hourglass_top' : 'delete' }}</mat-icon>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+          </div>
+          <div class="history-kpi-card">
+            <div class="hkpi-icon"><mat-icon>schedule</mat-icon></div>
+            <div class="hkpi-body">
+              <div class="hkpi-label">Last Rate</div>
+              <div class="hkpi-value">₹{{ historySummary.lastRate || 0 | number: '1.2-2' }}</div>
+            </div>
+          </div>
+          <div class="history-kpi-card">
+            <div class="hkpi-icon"><mat-icon>trending_up</mat-icon></div>
+            <div class="hkpi-body">
+              <div class="hkpi-label">Highest</div>
+              <div class="hkpi-value">₹{{ historySummary.highestRate || 0 | number: '1.2-2' }}</div>
+            </div>
+          </div>
+          <div class="history-kpi-card">
+            <div class="hkpi-icon"><mat-icon>calculate</mat-icon></div>
+            <div class="hkpi-body">
+              <div class="hkpi-label">Average</div>
+              <div class="hkpi-value">₹{{ historySummary.averageRate || 0 | number: '1.2-2' }}</div>
             </div>
           </div>
         </div>
+
+        <!-- Usage Summary -->
+        <div class="history-summary-row" *ngIf="!loadingHistory && usageSummary && usageSummary.usageCount">
+          <div class="history-kpi-card">
+            <div class="hkpi-icon"><mat-icon>build</mat-icon></div>
+            <div class="hkpi-body">
+              <div class="hkpi-label">Usage Entries</div>
+              <div class="hkpi-value">{{ usageSummary.usageCount || 0 }}</div>
+            </div>
+          </div>
+          <div class="history-kpi-card">
+            <div class="hkpi-icon"><mat-icon>remove_circle</mat-icon></div>
+            <div class="hkpi-body">
+              <div class="hkpi-label">Used Qty</div>
+              <div class="hkpi-value">{{ usageSummary.totalUsedQty || 0 | number: '1.0-0' }}</div>
+            </div>
+          </div>
+          <div class="history-kpi-card">
+            <div class="hkpi-icon"><mat-icon>currency_rupee</mat-icon></div>
+            <div class="hkpi-body">
+              <div class="hkpi-label">Used Value</div>
+              <div class="hkpi-value">₹{{ usageSummary.totalUsedValue || 0 | number: '1.0-0' }}</div>
+            </div>
+          </div>
+          <div class="history-kpi-card">
+            <div class="hkpi-icon"><mat-icon>delete_outline</mat-icon></div>
+            <div class="hkpi-body">
+              <div class="hkpi-label">Waste</div>
+              <div class="hkpi-value">{{ usageSummary.totalWasteQty || 0 | number: '1.0-0' }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Loading -->
+        <div class="state-row" *ngIf="loadingHistory">
+          <mat-spinner diameter="24"></mat-spinner> Loading material history...
+        </div>
+
+        <!-- Purchase History Cards -->
+        <div class="history-cards-section" *ngIf="!loadingHistory && historyRows.length > 0">
+          <div class="section-sub-title">Purchase History</div>
+          <div class="purchase-history-grid">
+            <div class="purchase-history-card" *ngFor="let row of historyRows">
+              <div class="phc-header">
+                <div class="phc-distributor">
+                  <mat-icon>local_shipping</mat-icon>
+                  {{ row.distributor?.name || 'Unknown' }}
+                </div>
+                <div class="phc-status" [class]="getHistoryStatusClass(row.status)">
+                  {{ row.status }}
+                </div>
+              </div>
+              <div class="phc-details">
+                <span>Invoice: {{ row.invoiceNo || '-' }}</span>
+                <span>{{ row.purchaseDate | date: 'dd MMM yyyy' }}</span>
+              </div>
+              <div class="phc-qty-row">
+                <div class="phc-qty-item">
+                  <span>Ordered</span>
+                  <strong>{{ row.orderedQty | number: '1.0-2' }} {{ row.unitLabel }}</strong>
+                </div>
+                <div class="phc-qty-item">
+                  <span>Received</span>
+                  <strong>{{ row.receivedQty | number: '1.0-2' }} {{ row.unitLabel }}</strong>
+                </div>
+                <div class="phc-qty-item">
+                  <span>Rate</span>
+                  <strong>₹{{ row.rate | number: '1.2-2' }}</strong>
+                </div>
+                <div class="phc-qty-item">
+                  <span>Total</span>
+                  <strong>₹{{ row.totalAmount | number: '1.2-2' }}</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="empty-state-bento compact" *ngIf="!loadingHistory && historyRows.length === 0 && usageRows.length === 0">
+          <mat-icon>history</mat-icon>
+          <p>No purchase or usage history found for this material.</p>
+        </div>
+
+        <!-- Usage History Cards -->
+        <div class="history-cards-section" *ngIf="!loadingHistory && usageRows.length > 0">
+          <div class="section-sub-title">Usage History</div>
+          <div class="usage-history-grid">
+            <div class="usage-history-card" *ngFor="let row of usageRows">
+              <div class="uhc-header">
+                <div class="uhc-worker">
+                  <mat-icon>person</mat-icon>
+                  {{ row.staff?.name || 'Unknown' }}
+                </div>
+                <div class="uhc-date">
+                  {{ row.entryDate | date: 'dd MMM yyyy' }}
+                </div>
+              </div>
+              <div class="uhc-product">
+                <mat-icon>build</mat-icon>
+                {{ row.factoryProductName || '-' }}
+              </div>
+              <div class="uhc-qty-row">
+                <div class="uhc-qty-item">
+                  <span>Built</span>
+                  <strong>{{ row.unitsCompleted | number: '1.0-0' }}</strong>
+                </div>
+                <div class="uhc-qty-item">
+                  <span>Used</span>
+                  <strong>{{ row.usedQty | number: '1.0-2' }} {{ row.unitLabel }}</strong>
+                </div>
+                <div class="uhc-qty-item">
+                  <span>Value</span>
+                  <strong>₹{{ row.totalValue | number: '1.2-2' }}</strong>
+                </div>
+                <div class="uhc-qty-item" *ngIf="row.wasteQty">
+                  <span>Waste</span>
+                  <strong>{{ row.wasteQty | number: '1.0-2' }} {{ row.wasteUnitLabel }}</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
 
-    <div class="card history-card" *ngIf="selectedMaterial">
-      <div class="card-header card-header-danger history-head">
-        <div>
-          <h4 class="card-title">Material History</h4>
-          <p class="card-category">{{ selectedMaterial.name }}</p>
-        </div>
-        <button type="button" mat-stroked-button class="btn btn-outline-danger" (click)="clearHistory()">Close</button>
-      </div>
-      <div class="card-body">
-        <div *ngIf="loadingHistory" class="table-empty">Loading material history...</div>
-
-        <div class="row summary-row history-summary-row" *ngIf="!loadingHistory && historySummary">
-          <div class="col-lg-2 col-md-4 col-sm-6"><div class="card summary-card"><div class="card-body"><div class="summary-label">Purchases</div><div class="summary-value">{{ historySummary.purchaseCount || 0 }}</div></div></div></div>
-          <div class="col-lg-3 col-md-4 col-sm-6"><div class="card summary-card"><div class="card-body"><div class="summary-label">Received Qty</div><div class="summary-value">{{ historySummary.totalReceivedQty || 0 | number:'1.0-2' }}</div></div></div></div>
-          <div class="col-lg-2 col-md-4 col-sm-6"><div class="card summary-card"><div class="card-body"><div class="summary-label">Last Rate</div><div class="summary-value">Rs {{ historySummary.lastRate || 0 | number:'1.2-2' }}</div></div></div></div>
-          <div class="col-lg-2 col-md-4 col-sm-6"><div class="card summary-card"><div class="card-body"><div class="summary-label">Highest</div><div class="summary-value">Rs {{ historySummary.highestRate || 0 | number:'1.2-2' }}</div></div></div></div>
-          <div class="col-lg-3 col-md-4 col-sm-6"><div class="card summary-card"><div class="card-body"><div class="summary-label">Average Rate</div><div class="summary-value">Rs {{ historySummary.averageRate || 0 | number:'1.2-2' }}</div></div></div></div>
-        </div>
-
-        <div *ngIf="!loadingHistory && historyRows.length === 0" class="table-empty">No purchase history found for this material.</div>
-
-        <div class="material-table-wrap" *ngIf="!loadingHistory && historyRows.length > 0">
-          <table class="table material-table history-table">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Distributor</th>
-                <th>Invoice</th>
-                <th>Ordered</th>
-                <th>Received</th>
-                <th>Rate</th>
-                <th>Total</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let row of historyRows">
-                <td>{{ row.purchaseDate | date:'dd/MM/yyyy' }}</td>
-                <td>
-                  <div class="table-primary">{{ row.distributor?.name || '-' }}</div>
-                  <div class="table-note" *ngIf="row.distributor?.phone">{{ row.distributor.phone }}</div>
-                </td>
-                <td>{{ row.invoiceNo || '-' }}</td>
-                <td>{{ row.orderedQty | number:'1.0-2' }} {{ row.unitLabel }}</td>
-                <td>{{ row.receivedQty | number:'1.0-2' }} {{ row.unitLabel }}</td>
-                <td class="amount-cell">Rs {{ row.rate | number:'1.2-2' }}</td>
-                <td class="amount-cell">Rs {{ row.totalAmount | number:'1.2-2' }}</td>
-                <td><span class="status-chip" [ngClass]="getHistoryStatusClass(row.status)">{{ row.status }}</span></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div class="row summary-row history-summary-row" *ngIf="!loadingHistory && usageSummary && usageSummary.usageCount">
-          <div class="col-lg-3 col-md-4 col-sm-6"><div class="card summary-card"><div class="card-body"><div class="summary-label">Usage Entries</div><div class="summary-value">{{ usageSummary.usageCount || 0 }}</div></div></div></div>
-          <div class="col-lg-3 col-md-4 col-sm-6"><div class="card summary-card"><div class="card-body"><div class="summary-label">Used Qty</div><div class="summary-value">{{ usageSummary.totalUsedQty || 0 | number:'1.0-2' }}</div></div></div></div>
-          <div class="col-lg-3 col-md-4 col-sm-6"><div class="card summary-card"><div class="card-body"><div class="summary-label">Used Value</div><div class="summary-value">Rs {{ usageSummary.totalUsedValue || 0 | number:'1.2-2' }}</div></div></div></div>
-          <div class="col-lg-3 col-md-4 col-sm-6"><div class="card summary-card"><div class="card-body"><div class="summary-label">Waste Qty</div><div class="summary-value">{{ usageSummary.totalWasteQty || 0 | number:'1.0-2' }}</div></div></div></div>
-        </div>
-
-        <div *ngIf="!loadingHistory && usageRows.length === 0" class="table-empty">No usage history found for this material.</div>
-
-        <div class="material-table-wrap" *ngIf="!loadingHistory && usageRows.length > 0">
-          <table class="table material-table history-table">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Worker</th>
-                <th>Product</th>
-                <th>Built Qty</th>
-                <th>Used Qty</th>
-                <th>Used Value</th>
-                <th>Waste</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let row of usageRows">
-                <td>{{ row.entryDate | date:'dd/MM/yyyy' }}</td>
-                <td>
-                  <div class="table-primary">{{ row.staff?.name || '-' }}</div>
-                  <div class="table-note" *ngIf="row.staff?.workType">{{ row.staff.workType }}</div>
-                </td>
-                <td>{{ row.factoryProductName || '-' }}</td>
-                <td>{{ row.unitsCompleted | number:'1.0-2' }}</td>
-                <td>{{ row.usedQty | number:'1.0-2' }} {{ row.unitLabel }}</td>
-                <td class="amount-cell">Rs {{ row.totalValue | number:'1.2-2' }}</td>
-                <td>{{ row.wasteQty | number:'1.0-2' }} {{ row.wasteUnitLabel }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
   </div>
 </div>
 
