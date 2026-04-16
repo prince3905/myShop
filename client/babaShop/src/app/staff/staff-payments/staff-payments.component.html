@@ -1,252 +1,270 @@
 <div class="main-content staff-payments-page">
   <div class="container-fluid">
-    <div class="card page-hero-card">
-      <div class="card-header card-header-danger payment-hero">
-        <div>
-          <h2 class="payment-hero-title">Staff Payment & Advance</h2>
-          <p class="payment-hero-subtitle">Track advance and payment entries separately for each staff or worker.</p>
+
+    <!-- ── Hero Header ── -->
+    <div class="payment-hero-bar">
+      <div>
+        <h2 class="hero-title">Staff Payment & Advance</h2>
+        <p class="hero-sub">Track advance and payment entries separately for each staff or worker.</p>
+      </div>
+    </div>
+
+    <!-- ── Summary KPI Cards ── -->
+    <div class="summary-kpi-row">
+      <div class="kpi-card advance">
+        <div class="kpi-icon"><mat-icon>call_received</mat-icon></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Total Advance</div>
+          <div class="kpi-value">₹{{ summary.totalAdvance || 0 | number: '1.0-0' }}</div>
+          <div class="kpi-meta">money given to staff</div>
+        </div>
+      </div>
+      <div class="kpi-card payment">
+        <div class="kpi-icon"><mat-icon>payments</mat-icon></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Total Payment</div>
+          <div class="kpi-value">₹{{ summary.totalPayment || 0 | number: '1.0-0' }}</div>
+          <div class="kpi-meta">wage settlements</div>
+        </div>
+      </div>
+      <div class="kpi-card entries">
+        <div class="kpi-icon"><mat-icon>assignment</mat-icon></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Total Entries</div>
+          <div class="kpi-value">{{ totalEntriesCount }}</div>
+          <div class="kpi-meta">advance & payment</div>
+        </div>
+      </div>
+      <div class="kpi-card today">
+        <div class="kpi-icon"><mat-icon>today</mat-icon></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Today Entries</div>
+          <div class="kpi-value">{{ summary.todayEntries || 0 }}</div>
+          <div class="kpi-meta">today's transactions</div>
         </div>
       </div>
     </div>
 
-    <div class="row summary-row">
-      <div class="col-md-3 col-sm-6">
-        <div class="card summary-card">
-          <div class="card-body">
-            <div class="summary-label">Total Advance</div>
-            <div class="summary-value">Rs {{ summary.totalAdvance || 0 | number: '1.2-2' }}</div>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-3 col-sm-6">
-        <div class="card summary-card">
-          <div class="card-body">
-            <div class="summary-label">Total Payment</div>
-            <div class="summary-value">Rs {{ summary.totalPayment || 0 | number: '1.2-2' }}</div>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-3 col-sm-6">
-        <div class="card summary-card">
-          <div class="card-body">
-            <div class="summary-label">Total Entries</div>
-            <div class="summary-value">{{ totalEntriesCount }}</div>
-            <div class="summary-meta">Advance aur payment dono milakar</div>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-3 col-sm-6">
-        <div class="card summary-card">
-          <div class="card-body">
-            <div class="summary-label">Today Entries</div>
-            <div class="summary-value">{{ summary.todayEntries || 0 }}</div>
-          </div>
-        </div>
+    <!-- ── Entry Type Breakdown ── -->
+    <div class="breakdown-row" *ngIf="!loadingSummary && summary.byType?.length > 0">
+      <div class="breakdown-card" *ngFor="let row of summary.byType; trackBy: trackBySummary" [class.advance]="row._id === 'ADVANCE'" [class.payment]="row._id === 'PAYMENT'">
+        <div class="breakdown-label">{{ row._id }}</div>
+        <div class="breakdown-count">{{ row.count }} entries</div>
+        <div class="breakdown-amount">₹{{ row.totalAmount | number: '1.2-2' }}</div>
       </div>
     </div>
 
-    <div class="row breakdown-row">
-      <div class="col-md-12">
-        <div class="card breakdown-card">
-          <div class="card-body">
-            <div class="breakdown-title">Entry Type Breakdown</div>
-            <div *ngIf="loadingSummary" class="breakdown-empty">Loading breakdown...</div>
-            <div *ngIf="!loadingSummary && summary.byType?.length === 0" class="breakdown-empty">No payment data yet.</div>
-            <div class="breakdown-grid" *ngIf="!loadingSummary && summary.byType?.length > 0">
-              <div class="breakdown-item" *ngFor="let row of summary.byType; trackBy: trackBySummary">
-                <div class="breakdown-name">{{ row._id }}</div>
-                <div class="breakdown-meta">{{ row.count }} entries</div>
-                <div class="breakdown-amount">Rs {{ row.totalAmount | number: '1.2-2' }}</div>
+    <!-- ── Main Two-Column Layout ── -->
+    <div class="payment-layout">
+
+      <!-- ── Left: Add/Edit Form ── -->
+      <div class="form-panel">
+        <div class="form-panel-header">
+          <mat-icon>{{ editingPaymentId ? 'edit_note' : 'add_card' }}</mat-icon>
+          <div>
+            <div class="panel-title">{{ getFormTitle() }}</div>
+            <div class="panel-sub" *ngIf="editingPaymentId">Editing selected entry</div>
+          </div>
+        </div>
+
+        <form #paymentNgForm="ngForm" (ngSubmit)="submitPayment(paymentNgForm)" class="payment-form">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Staff / Worker</mat-label>
+            <mat-select [(ngModel)]="paymentForm.staff" name="staff" (selectionChange)="onStaffChange()" required>
+              <mat-option *ngFor="let staff of staffOptions" [value]="staff._id">
+                {{ staff.name }} · {{ staff.workType }}
+              </mat-option>
+            </mat-select>
+            <mat-icon matPrefix>person</mat-icon>
+          </mat-form-field>
+
+          <!-- Staff Balance Preview -->
+          <div class="balance-preview-card" *ngIf="selectedStaff">
+            <div class="balance-row">
+              <div class="balance-item">
+                <span class="balance-label">Earned</span>
+                <strong class="balance-value">₹{{ selectedStaffBalance.earned || 0 | number: '1.2-2' }}</strong>
+              </div>
+              <div class="balance-item">
+                <span class="balance-label">Advance</span>
+                <strong class="balance-value">₹{{ selectedStaffBalance.advance || 0 | number: '1.2-2' }}</strong>
+              </div>
+              <div class="balance-item">
+                <span class="balance-label">Payment</span>
+                <strong class="balance-value">₹{{ selectedStaffBalance.payment || 0 | number: '1.2-2' }}</strong>
               </div>
             </div>
+            <div class="payable-row">
+              <span class="payable-label">Net Payable</span>
+              <strong class="payable-value" [class.positive]="selectedStaffBalance.payable > 0" [class.negative]="selectedStaffBalance.payable < 0">
+                ₹{{ selectedStaffBalance.payable || 0 | number: '1.2-2' }}
+              </strong>
+            </div>
+          </div>
+
+          <div class="inline-fields">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Entry Date</mat-label>
+              <input matInput type="date" [(ngModel)]="paymentForm.entryDate" name="entryDate" required>
+              <mat-icon matPrefix>calendar_today</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Entry Type</mat-label>
+              <mat-select [(ngModel)]="paymentForm.entryType" name="entryType" (selectionChange)="onEntryTypeChange()" required>
+                <mat-option *ngFor="let type of entryTypes" [value]="type">
+                  <span [class.advance-opt]="type === 'ADVANCE'" [class.payment-opt]="type === 'PAYMENT'">
+                    {{ type === 'ADVANCE' ? '📥 Advance (Staff ko diya)' : '💰 Payment (Settlement)' }}
+                  </span>
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>{{ paymentForm.entryType === 'ADVANCE' ? 'call_received' : 'payments' }}</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <div class="inline-fields">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Amount</mat-label>
+              <input matInput type="number" min="1" [(ngModel)]="paymentForm.amount" name="amount" required>
+              <mat-icon matPrefix>currency_rupee</mat-icon>
+              <mat-hint *ngIf="selectedStaff">
+                {{ paymentForm.entryType === 'PAYMENT' ? 'Pending payable' : 'Base rate' }}
+              </mat-hint>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Payment Method</mat-label>
+              <mat-select [(ngModel)]="paymentForm.paymentMethod" name="paymentMethod" required>
+                <mat-option *ngFor="let method of paymentMethods" [value]="method">{{ method }}</mat-option>
+              </mat-select>
+              <mat-icon matPrefix>account_balance_wallet</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Note</mat-label>
+            <textarea matInput rows="2" [(ngModel)]="paymentForm.note" name="note"></textarea>
+            <mat-icon matPrefix>notes</mat-icon>
+          </mat-form-field>
+
+          <div class="form-actions">
+            <button mat-raised-button color="warn" type="submit" [disabled]="savingPayment || paymentNgForm.invalid || loadingStaffs">
+              <mat-icon>{{ savingPayment ? 'hourglass_top' : 'save' }}</mat-icon>
+              {{ getSubmitLabel() }}
+            </button>
+            <button *ngIf="editingPaymentId" type="button" mat-stroked-button (click)="cancelEdit(paymentNgForm)">
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- ── Right: Payment Entries List ── -->
+      <div class="list-panel">
+        <div class="list-panel-header">
+          <div class="panel-title">Recent Entries</div>
+          <div class="filter-bar">
+            <mat-form-field appearance="outline" class="filter-field">
+              <mat-label>Search</mat-label>
+              <input matInput [(ngModel)]="filters.search" placeholder="Staff name or note">
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="filter-field">
+              <mat-label>Staff</mat-label>
+              <mat-select [(ngModel)]="filters.staff">
+                <mat-option value="">All</mat-option>
+                <mat-option *ngFor="let staff of staffOptions" [value]="staff._id">{{ staff.name }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="filter-field">
+              <mat-label>Entry Type</mat-label>
+              <mat-select [(ngModel)]="filters.entryType">
+                <mat-option value="">All</mat-option>
+                <mat-option *ngFor="let type of entryTypes" [value]="type">{{ type }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="filter-field">
+              <mat-label>Payment Method</mat-label>
+              <mat-select [(ngModel)]="filters.paymentMethod">
+                <mat-option value="">All</mat-option>
+                <mat-option *ngFor="let method of paymentMethods" [value]="method">{{ method }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="filter-field">
+              <mat-label>From</mat-label>
+              <input matInput type="date" [(ngModel)]="filters.dateFrom">
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="filter-field">
+              <mat-label>To</mat-label>
+              <input matInput type="date" [(ngModel)]="filters.dateTo">
+            </mat-form-field>
+          </div>
+          <div class="filter-actions">
+            <button mat-raised-button color="warn" (click)="loadPaymentContext()">Apply</button>
+            <button mat-stroked-button (click)="showToday()">Today</button>
+            <button mat-stroked-button (click)="clearFilters()">Reset</button>
           </div>
         </div>
-      </div>
-    </div>
 
-    <div class="row">
-      <div class="col-lg-4">
-        <div class="card">
-          <div class="card-header card-header-danger">
-            <h4 class="card-title">{{ getFormTitle() }}</h4>
-          </div>
-          <div class="card-body">
-            <form #paymentNgForm="ngForm" (ngSubmit)="submitPayment(paymentNgForm)">
-              <div class="edit-banner" *ngIf="editingPaymentId">Editing selected staff entry.</div>
+        <div class="state-row" *ngIf="loadingPayments">
+          <mat-spinner diameter="24"></mat-spinner> Loading entries...
+        </div>
 
-              <mat-form-field class="example-full-width">
-                <mat-label>Staff / Worker</mat-label>
-                <mat-select [(ngModel)]="paymentForm.staff" name="staff" (selectionChange)="onStaffChange()" required>
-                  <mat-option *ngFor="let staff of staffOptions" [value]="staff._id">
-                    {{ staff.name }} · {{ staff.workType }}
-                  </mat-option>
-                </mat-select>
-              </mat-form-field>
+        <div class="empty-state-bento" *ngIf="!loadingPayments && payments.length === 0">
+          <mat-icon>payments</mat-icon>
+          <p>No staff entries found.</p>
+        </div>
 
-              <div class="quick-info-row" *ngIf="selectedStaff">
-                <div class="quick-chip">Rate: Rs {{ selectedStaff.rate || 0 | number: '1.2-2' }}</div>
-                <div class="quick-chip muted">Earned: Rs {{ selectedStaffBalance.earned || 0 | number: '1.2-2' }}</div>
-                <div class="quick-chip muted">Payable: Rs {{ selectedStaffBalance.payable || 0 | number: '1.2-2' }}</div>
-                <div class="quick-chip muted">Suggested: Rs {{ suggestedAmount || 0 | number: '1.2-2' }}</div>
+        <div class="payment-cards-grid" *ngIf="!loadingPayments && payments.length > 0">
+          <div class="payment-card-v3" *ngFor="let payment of payments" [class.advance-card]="payment.entryType === 'ADVANCE'" [class.payment-card]="payment.entryType === 'PAYMENT'">
+            <div class="payment-card-top">
+              <div class="staff-avatar" [class.advance]="payment.entryType === 'ADVANCE'" [class.payment]="payment.entryType === 'PAYMENT'">
+                {{ (payment.staff?.name || 'S')[0].toUpperCase() }}
               </div>
-
-              <div class="row">
-                <div class="col-md-6">
-                  <mat-form-field class="example-full-width">
-                    <mat-label>Entry Date</mat-label>
-                    <input matInput type="date" [(ngModel)]="paymentForm.entryDate" name="entryDate" required>
-                  </mat-form-field>
-                </div>
-                <div class="col-md-6">
-                  <mat-form-field class="example-full-width">
-                    <mat-label>Entry Type</mat-label>
-                    <mat-select [(ngModel)]="paymentForm.entryType" name="entryType" (selectionChange)="onEntryTypeChange()" required>
-                      <mat-option *ngFor="let type of entryTypes" [value]="type">{{ type }}</mat-option>
-                    </mat-select>
-                  </mat-form-field>
-                </div>
+              <div class="staff-info">
+                <div class="staff-name">{{ payment.staff?.name || 'Unknown' }}</div>
+                <div class="staff-type">{{ payment.staff?.workType || '-' }}</div>
               </div>
-
-              <div class="row">
-                <div class="col-md-6">
-                  <mat-form-field class="example-full-width">
-                    <mat-label>Amount</mat-label>
-                    <input matInput type="number" min="1" [(ngModel)]="paymentForm.amount" name="amount" required>
-                    <mat-hint *ngIf="selectedStaff">
-                      {{ paymentForm.entryType === 'PAYMENT' ? 'Default pending payable set hua hai, aap amount change kar sakte ho.' : 'Default base rate set hua hai, aap amount change kar sakte ho.' }}
-                    </mat-hint>
-                  </mat-form-field>
-                </div>
-                <div class="col-md-6">
-                  <mat-form-field class="example-full-width">
-                    <mat-label>Payment Method</mat-label>
-                    <mat-select [(ngModel)]="paymentForm.paymentMethod" name="paymentMethod" required>
-                      <mat-option *ngFor="let method of paymentMethods" [value]="method">{{ method }}</mat-option>
-                    </mat-select>
-                  </mat-form-field>
-                </div>
+              <div class="type-badge" [class.advance]="payment.entryType === 'ADVANCE'" [class.payment]="payment.entryType === 'PAYMENT'">
+                {{ payment.entryType === 'ADVANCE' ? 'Advance' : 'Payment' }}
               </div>
+            </div>
 
-              <mat-form-field class="example-full-width">
-                <mat-label>Note</mat-label>
-                <textarea matInput rows="3" [(ngModel)]="paymentForm.note" name="note"></textarea>
-              </mat-form-field>
+            <div class="amount-display">
+              <mat-icon>{{ payment.entryType === 'ADVANCE' ? 'call_received' : 'payments' }}</mat-icon>
+              <span class="amount-value">₹{{ payment.amount | number: '1.2-2' }}</span>
+            </div>
 
-              <div class="form-actions">
-                <button mat-raised-button class="btn btn-danger submit-btn" [disabled]="savingPayment || paymentNgForm.invalid || loadingStaffs">
-                  {{ getSubmitLabel() }}
+            <div class="payment-chips">
+              <span class="payment-chip method">{{ payment.paymentMethod }}</span>
+              <span class="payment-chip date">
+                <mat-icon>calendar_today</mat-icon>
+                {{ payment.entryDate | date: 'dd MMM yyyy' }}
+              </span>
+            </div>
+
+            <div class="payment-note" *ngIf="payment.note">
+              <mat-icon>notes</mat-icon>
+              {{ payment.note }}
+            </div>
+
+            <div class="payment-footer">
+              <div class="payment-meta" *ngIf="payment.createdBy?.pFname || payment.createdBy?.email">
+                <mat-icon>person</mat-icon>
+                {{ payment.createdBy?.pFname || payment.createdBy?.email }}
+              </div>
+              <div class="payment-actions" *ngIf="canManage">
+                <button mat-icon-button color="primary" [disabled]="deletingId === payment._id" (click)="startEdit(payment)" title="Edit">
+                  <mat-icon>edit</mat-icon>
                 </button>
-                <button
-                  *ngIf="editingPaymentId"
-                  type="button"
-                  mat-stroked-button
-                  class="btn btn-outline-danger submit-btn"
-                  (click)="cancelEdit(paymentNgForm)"
-                >
-                  Cancel Edit
+                <button mat-icon-button color="warn" [disabled]="deletingId === payment._id" (click)="deletePayment(payment)" title="Delete">
+                  <mat-icon>{{ deletingId === payment._id ? 'hourglass_top' : 'delete' }}</mat-icon>
                 </button>
               </div>
-            </form>
-          </div>
-        </div>
-      </div>
-
-      <div class="col-lg-8">
-        <div class="card">
-          <div class="card-header card-header-danger">
-            <h4 class="card-title">Recent Entries</h4>
-          </div>
-          <div class="card-body">
-            <div class="filter-grid">
-              <mat-form-field class="example-full-width">
-                <mat-label>Search</mat-label>
-                <input matInput [(ngModel)]="filters.search" name="search" placeholder="Staff name or note">
-              </mat-form-field>
-              <mat-form-field class="example-full-width">
-                <mat-label>Staff</mat-label>
-                <mat-select [(ngModel)]="filters.staff" name="filterStaff">
-                  <mat-option value="">All</mat-option>
-                  <mat-option *ngFor="let staff of staffOptions" [value]="staff._id">{{ staff.name }}</mat-option>
-                </mat-select>
-              </mat-form-field>
-              <mat-form-field class="example-full-width">
-                <mat-label>Entry Type</mat-label>
-                <mat-select [(ngModel)]="filters.entryType" name="filterEntryType">
-                  <mat-option value="">All</mat-option>
-                  <mat-option *ngFor="let type of entryTypes" [value]="type">{{ type }}</mat-option>
-                </mat-select>
-              </mat-form-field>
-              <mat-form-field class="example-full-width">
-                <mat-label>Payment Method</mat-label>
-                <mat-select [(ngModel)]="filters.paymentMethod" name="filterPaymentMethod">
-                  <mat-option value="">All</mat-option>
-                  <mat-option *ngFor="let method of paymentMethods" [value]="method">{{ method }}</mat-option>
-                </mat-select>
-              </mat-form-field>
-              <mat-form-field class="example-full-width">
-                <mat-label>From Date</mat-label>
-                <input matInput type="date" [(ngModel)]="filters.dateFrom" name="dateFrom">
-              </mat-form-field>
-              <mat-form-field class="example-full-width">
-                <mat-label>To Date</mat-label>
-                <input matInput type="date" [(ngModel)]="filters.dateTo" name="dateTo">
-              </mat-form-field>
-            </div>
-
-            <div class="filter-actions">
-              <button mat-raised-button class="btn btn-danger" (click)="loadPaymentContext()">Apply Filters</button>
-              <button mat-stroked-button class="btn btn-outline-danger" (click)="showToday()">Today</button>
-              <button mat-stroked-button class="btn btn-outline-danger" (click)="viewAll()">View All</button>
-              <button mat-stroked-button class="btn btn-outline-danger" (click)="clearFilters()">Reset</button>
-            </div>
-
-            <div *ngIf="loadingPayments" class="table-empty">Loading entries...</div>
-            <div *ngIf="!loadingPayments && payments.length === 0" class="table-empty">No staff entries found.</div>
-
-            <div class="payment-table-wrap" *ngIf="!loadingPayments && payments.length > 0">
-              <table class="table payment-table">
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>Staff</th>
-                    <th>Type</th>
-                    <th>Mode</th>
-                    <th>Amount</th>
-                    <th>By</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let payment of payments">
-                    <td>{{ payment.entryDate | date: 'dd/MM/yyyy' }}</td>
-                    <td>
-                      <div class="table-primary">{{ payment.staff?.name || '-' }}</div>
-                      <div class="table-note">{{ payment.staff?.workType || '-' }}</div>
-                      <div class="table-note" *ngIf="payment.note">{{ payment.note }}</div>
-                    </td>
-                    <td>
-                      <span class="type-chip" [class.payment]="payment.entryType === 'PAYMENT'">{{ payment.entryType }}</span>
-                    </td>
-                    <td>{{ payment.paymentMethod }}</td>
-                    <td class="amount-cell">Rs {{ payment.amount | number: '1.2-2' }}</td>
-                    <td>{{ payment.createdBy?.pFname || payment.createdBy?.email || '-' }}</td>
-                    <td>
-                      <div class="table-actions" *ngIf="canManage">
-                        <button mat-icon-button class="table-edit-btn" [disabled]="deletingId === payment._id" (click)="startEdit(payment)" aria-label="Edit payment" title="Edit">
-                          <mat-icon>edit</mat-icon>
-                        </button>
-                        <button mat-icon-button class="table-delete-btn" [disabled]="deletingId === payment._id" (click)="deletePayment(payment)" aria-label="Delete payment" title="Delete">
-                          <mat-icon>{{ deletingId === payment._id ? 'hourglass_top' : 'delete' }}</mat-icon>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
             </div>
           </div>
         </div>
       </div>
+
     </div>
   </div>
 </div>
