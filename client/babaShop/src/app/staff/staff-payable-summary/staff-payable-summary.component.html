@@ -1,63 +1,150 @@
-<div class="main-content report-page staff-payable-page">
+<div class="main-content payable-page">
   <div class="container-fluid">
-    <div class="page-header-card">
+
+    <!-- ── Hero Header ── -->
+    <div class="payable-hero-bar">
       <div>
-        <h2>Staff Payable / Summary</h2>
-        <p>Earned amount, advance, payment aur net payable worker-wise.</p>
-        <p class="page-filter-note">{{ filterSummary }}</p>
+        <h2 class="hero-title">Staff Payable Summary</h2>
+        <p class="hero-sub">Earned amount, advance, payment aur net payable worker-wise.</p>
       </div>
+      <div class="filter-note" *ngIf="filterSummary">{{ filterSummary }}</div>
     </div>
 
-    <div class="card filter-card">
-      <div class="card-header card-header-danger"><h4 class="card-title">Filters</h4></div>
-      <div class="card-body">
-        <div class="filter-grid">
-          <mat-form-field class="example-full-width"><mat-label>Search</mat-label><input matInput [(ngModel)]="filters.search" name="search"></mat-form-field>
-          <mat-form-field class="example-full-width"><mat-label>Staff</mat-label><mat-select [(ngModel)]="filters.staff" name="staff"><mat-option value="">All</mat-option><mat-option *ngFor="let staff of staffOptions" [value]="staff._id">{{ staff.name }}</mat-option></mat-select></mat-form-field>
-          <mat-form-field class="example-full-width"><mat-label>From Date</mat-label><input matInput type="date" [(ngModel)]="filters.dateFrom" name="dateFrom"></mat-form-field>
-          <mat-form-field class="example-full-width"><mat-label>To Date</mat-label><input matInput type="date" [(ngModel)]="filters.dateTo" name="dateTo"></mat-form-field>
-        </div>
-        <div class="filter-actions">
-          <button mat-raised-button class="btn btn-danger" (click)="loadReport()">Apply Filters</button>
-          <button mat-stroked-button class="btn btn-outline-danger" (click)="showToday()">Today</button>
-          <button mat-stroked-button class="btn btn-outline-danger" (click)="viewAll()">View All</button>
-          <button mat-stroked-button class="btn btn-outline-danger" (click)="resetFilters()">Reset</button>
+    <!-- ── Summary KPI Cards ── -->
+    <div class="summary-kpi-row">
+      <div class="kpi-card earned">
+        <div class="kpi-icon"><mat-icon>work_history</mat-icon></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Total Earned</div>
+          <div class="kpi-value">₹{{ summary.totalEarned | number: '1.0-0' }}</div>
+          <div class="kpi-meta">wages earned</div>
         </div>
       </div>
-    </div>
-
-    <div class="summary-grid">
-      <div class="summary-card"><span class="summary-label">Total Earned</span><strong>Rs {{ summary.totalEarned | number: '1.2-2' }}</strong></div>
-      <div class="summary-card"><span class="summary-label">Total Advance</span><strong>Rs {{ summary.totalAdvance | number: '1.2-2' }}</strong></div>
-      <div class="summary-card"><span class="summary-label">Total Payment</span><strong>Rs {{ summary.totalPayment | number: '1.2-2' }}</strong></div>
-      <div class="summary-card highlight"><span class="summary-label">Net Payable</span><strong>Rs {{ summary.totalPayable | number: '1.2-2' }}</strong></div>
-    </div>
-
-    <div *ngIf="loading" class="table-empty">Loading staff summary...</div>
-
-    <div class="card" *ngIf="!loading">
-      <div class="card-header card-header-danger"><h4 class="card-title">Worker-wise Summary</h4></div>
-      <div class="card-body">
-        <div *ngIf="rows.length === 0" class="table-empty">No staff summary found.</div>
-        <div class="table-wrap" *ngIf="rows.length > 0">
-          <table class="table report-table">
-            <thead><tr><th>Staff</th><th>Work Type</th><th>Last Work</th><th>Last Payment</th><th>Work Entries</th><th>Earned</th><th>Advance</th><th>Payment</th><th>Payable</th></tr></thead>
-            <tbody>
-              <tr *ngFor="let row of rows; trackBy: trackByRow">
-                <td class="table-primary">{{ row.name }}</td>
-                <td>{{ row.workType || '-' }}</td>
-                <td>{{ row.lastWorkDate || '-' }}</td>
-                <td>{{ row.lastPaymentDate || '-' }}</td>
-                <td>{{ row.workEntries }}</td>
-                <td class="amount-cell">Rs {{ row.earned | number: '1.2-2' }}</td>
-                <td class="amount-cell">Rs {{ row.advance | number: '1.2-2' }}</td>
-                <td class="amount-cell">Rs {{ row.payment | number: '1.2-2' }}</td>
-                <td class="amount-cell" [class.negative]="row.payable < 0">Rs {{ row.payable | number: '1.2-2' }}</td>
-              </tr>
-            </tbody>
-          </table>
+      <div class="kpi-card advance">
+        <div class="kpi-icon"><mat-icon>call_received</mat-icon></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Total Advance</div>
+          <div class="kpi-value">₹{{ summary.totalAdvance | number: '1.0-0' }}</div>
+          <div class="kpi-meta">money given</div>
+        </div>
+      </div>
+      <div class="kpi-card payment">
+        <div class="kpi-icon"><mat-icon>payments</mat-icon></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Total Payment</div>
+          <div class="kpi-value">₹{{ summary.totalPayment | number: '1.0-0' }}</div>
+          <div class="kpi-meta">settlements</div>
+        </div>
+      </div>
+      <div class="kpi-card payable">
+        <div class="kpi-icon"><mat-icon>account_balance_wallet</mat-icon></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Net Payable</div>
+          <div class="kpi-value">₹{{ summary.totalPayable | number: '1.0-0' }}</div>
+          <div class="kpi-meta">to pay workers</div>
         </div>
       </div>
     </div>
+
+    <!-- ── Filters ── -->
+    <div class="filters-panel">
+      <div class="filter-bar">
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>Search</mat-label>
+          <input matInput [(ngModel)]="filters.search" placeholder="Staff name">
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>Staff</mat-label>
+          <mat-select [(ngModel)]="filters.staff">
+            <mat-option value="">All</mat-option>
+            <mat-option *ngFor="let staff of staffOptions" [value]="staff._id">{{ staff.name }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>From</mat-label>
+          <input matInput type="date" [(ngModel)]="filters.dateFrom">
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>To</mat-label>
+          <input matInput type="date" [(ngModel)]="filters.dateTo">
+        </mat-form-field>
+      </div>
+      <div class="filter-actions">
+        <button mat-raised-button color="primary" (click)="loadReport()">Apply</button>
+        <button mat-stroked-button (click)="showToday()">Today</button>
+        <button mat-stroked-button (click)="viewAll()">View All</button>
+        <button mat-stroked-button (click)="resetFilters()">Reset</button>
+      </div>
+    </div>
+
+    <!-- ── Loading State ── -->
+    <div class="state-row" *ngIf="loading">
+      <mat-spinner diameter="24"></mat-spinner> Loading staff summary...
+    </div>
+
+    <!-- ── Empty State ── -->
+    <div class="empty-state-bento" *ngIf="!loading && rows.length === 0">
+      <mat-icon>people_outline</mat-icon>
+      <p>No staff summary found.</p>
+    </div>
+
+    <!-- ── Staff Cards Grid ── -->
+    <div class="payable-cards-grid" *ngIf="!loading && rows.length > 0">
+      <div class="payable-card-v3" *ngFor="let row of rows; trackBy: trackByRow">
+        <div class="payable-card-header">
+          <div class="staff-avatar">
+            {{ (row.name || 'S')[0].toUpperCase() }}
+          </div>
+          <div class="staff-info">
+            <div class="staff-name">{{ row.name }}</div>
+            <div class="staff-type">{{ row.workType || 'Worker' }}</div>
+          </div>
+          <div class="work-entries-badge">
+            {{ row.workEntries }} works
+          </div>
+        </div>
+
+        <div class="balance-grid">
+          <div class="balance-item earned">
+            <div class="balance-icon"><mat-icon>work</mat-icon></div>
+            <div class="balance-content">
+              <div class="balance-label">Earned</div>
+              <div class="balance-value">₹{{ row.earned | number: '1.2-2' }}</div>
+            </div>
+          </div>
+          <div class="balance-item advance">
+            <div class="balance-icon"><mat-icon>call_received</mat-icon></div>
+            <div class="balance-content">
+              <div class="balance-label">Advance</div>
+              <div class="balance-value">₹{{ row.advance | number: '1.2-2' }}</div>
+            </div>
+          </div>
+          <div class="balance-item payment">
+            <div class="balance-icon"><mat-icon>payments</mat-icon></div>
+            <div class="balance-content">
+              <div class="balance-label">Payment</div>
+              <div class="balance-value">₹{{ row.payment | number: '1.2-2' }}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="payable-result" [class.positive]="row.payable > 0" [class.negative]="row.payable < 0" [class.zero]="row.payable === 0">
+          <div class="payable-label">Net Payable</div>
+          <div class="payable-value">₹{{ row.payable | number: '1.2-2' }}</div>
+        </div>
+
+        <div class="payable-meta-row">
+          <div class="meta-item" *ngIf="row.lastWorkDate">
+            <mat-icon>work_history</mat-icon>
+            Last Work: {{ row.lastWorkDate | date: 'dd MMM' }}
+          </div>
+          <div class="meta-item" *ngIf="row.lastPaymentDate">
+            <mat-icon>payment</mat-icon>
+            Last Pay: {{ row.lastPaymentDate | date: 'dd MMM' }}
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>

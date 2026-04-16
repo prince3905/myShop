@@ -1,1 +1,401 @@
-.report-page{padding-bottom:24px}.page-header-card{display:flex;align-items:center;margin-bottom:12px;padding:16px 18px;border-radius:18px;background:linear-gradient(135deg,#fff8f8 0%,#fff 100%);border:1px solid rgba(220,53,69,.12)}.page-header-card h2{margin:0;font-size:28px;font-weight:800}.page-header-card p{margin:4px 0 0;color:#6c757d}.filter-card{margin-bottom:14px}.filter-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.filter-actions{display:flex;gap:10px;margin-top:6px}.summary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:14px}.summary-card{padding:16px;border-radius:16px;background:#fff;border:1px solid #eef1f5;box-shadow:0 10px 24px rgba(15,23,42,.05);display:flex;flex-direction:column;gap:4px}.summary-card.highlight{background:linear-gradient(135deg,#fffdf5 0%,#ffffff 100%);border-color:rgba(237,201,72,.28)}.summary-label{font-size:12px;font-weight:700;color:#7a809a;text-transform:uppercase}.summary-card strong{font-size:22px;font-weight:800;color:#2d3436}.table-wrap{overflow-x:auto}.report-table{margin:0}.report-table th{font-size:12px;font-weight:700;color:#7a809a;text-transform:uppercase}.table-primary{font-weight:700;color:#2d3436}.amount-cell{font-weight:700;white-space:nowrap}.amount-cell.negative{color:#d63031}.table-empty{padding:32px 16px;text-align:center;color:#7a809a}@media (max-width:991px){.filter-grid,.summary-grid{grid-template-columns:1fr}}
+.payable-page {
+  padding-top: 12px;
+  padding-bottom: 24px;
+}
+
+/* ── Hero Bar ── */
+.payable-hero-bar {
+  background: linear-gradient(135deg, #0f766e, #14b8a6);
+  border-radius: 18px;
+  padding: 20px 24px;
+  margin-bottom: 20px;
+  color: #fff;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.hero-title {
+  font-size: 22px;
+  font-weight: 800;
+  margin: 0;
+}
+
+.hero-sub {
+  font-size: 12px;
+  opacity: 0.88;
+  margin: 4px 0 0;
+}
+
+.filter-note {
+  font-size: 12px;
+  padding: 6px 14px;
+  background: rgba(255,255,255,0.15);
+  border-radius: 8px;
+  white-space: nowrap;
+}
+
+/* ── KPI Row ── */
+.summary-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.kpi-card {
+  background: #fff;
+  border-radius: 18px;
+  padding: 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.05);
+  border: 1px solid #f1f5f9;
+}
+
+.kpi-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.kpi-icon mat-icon {
+  font-size: 26px;
+  width: 26px;
+  height: 26px;
+}
+
+.kpi-card.earned .kpi-icon { background: #f0f9ff; color: #0369a1; }
+.kpi-card.advance .kpi-icon { background: #fef3c7; color: #d97706; }
+.kpi-card.payment .kpi-icon { background: #f0fdf4; color: #059669; }
+.kpi-card.payable .kpi-icon { background: #ecfdf5; color: #0f766e; }
+
+.kpi-label {
+  font-size: 10px;
+  font-weight: 800;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.kpi-value {
+  font-size: 24px;
+  font-weight: 900;
+  color: #0f172a;
+  margin: 2px 0;
+}
+
+.kpi-meta {
+  font-size: 11px;
+  color: #64748b;
+}
+
+/* ── Filters Panel ── */
+.filters-panel {
+  background: #fff;
+  border-radius: 18px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.05);
+  border: 1px solid #f1f5f9;
+}
+
+.filter-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.filter-field {
+  margin: 0;
+}
+
+.filter-actions {
+  display: flex;
+  gap: 10px;
+}
+
+/* ── State ── */
+.state-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 30px 0;
+  color: #64748b;
+  font-size: 13px;
+  justify-content: center;
+}
+
+/* ── Staff Cards Grid ── */
+.payable-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.payable-card-v3 {
+  background: #fff;
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.05);
+  border: 1px solid #f1f5f9;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  transition: transform 0.18s, box-shadow 0.18s;
+}
+
+.payable-card-v3:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px rgba(0,0,0,0.09);
+}
+
+/* ── Card Header ── */
+.payable-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.staff-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #0f766e, #14b8a6);
+  color: #fff;
+  font-size: 22px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.staff-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.staff-name {
+  font-size: 16px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.staff-type {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.work-entries-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: #f0fdf4;
+  color: #059669;
+  white-space: nowrap;
+}
+
+/* ── Balance Grid ── */
+.balance-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.balance-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
+.balance-item.earned { background: #f0f9ff; }
+.balance-item.advance { background: #fffbeb; }
+.balance-item.payment { background: #f0fdf4; }
+
+.balance-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.balance-icon mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+.balance-item.earned .balance-icon { background: #e0f2fe; color: #0369a1; }
+.balance-item.advance .balance-icon { background: #fef3c7; color: #d97706; }
+.balance-item.payment .balance-icon { background: #dcfce7; color: #16a34a; }
+
+.balance-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.balance-label {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+}
+
+.balance-value {
+  font-size: 14px;
+  font-weight: 800;
+  color: #0f172a;
+  margin-top: 2px;
+}
+
+/* ── Payable Result ── */
+.payable-result {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: #f1f5f9;
+}
+
+.payable-result.positive {
+  background: linear-gradient(135deg, #ecfdf5, #f0fdf4);
+  border: 1px solid #86efac;
+}
+
+.payable-result.negative {
+  background: linear-gradient(135deg, #fef2f2, #fff5f5);
+  border: 1px solid #fecaca;
+}
+
+.payable-result.zero {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.payable-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.payable-result.positive .payable-label { color: #059669; }
+.payable-result.negative .payable-label { color: #dc2626; }
+
+.payable-value {
+  font-size: 24px;
+  font-weight: 900;
+  color: #0f172a;
+}
+
+.payable-result.positive .payable-value { color: #059669; }
+.payable-result.negative .payable-value { color: #dc2626; }
+
+/* ── Meta Row ── */
+.payable-meta-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.meta-item mat-icon {
+  font-size: 14px;
+  width: 14px;
+  height: 14px;
+}
+
+/* ── Empty State ── */
+.empty-state-bento {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: #94a3b8;
+  background: #f8fafc;
+  border-radius: 20px;
+}
+
+.empty-state-bento mat-icon {
+  font-size: 48px;
+  width: 48px;
+  height: 48px;
+  margin-bottom: 12px;
+  opacity: 0.5;
+}
+
+.empty-state-bento p {
+  font-size: 14px;
+  margin: 0;
+}
+
+/* ── Responsive ── */
+@media (max-width: 1200px) {
+  .summary-kpi-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 960px) {
+  .filter-bar {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .payable-hero-bar {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .filter-note {
+    align-self: flex-start;
+  }
+}
+
+@media (max-width: 640px) {
+  .summary-kpi-row {
+    grid-template-columns: 1fr;
+  }
+
+  .filter-bar {
+    grid-template-columns: 1fr;
+  }
+
+  .filter-actions {
+    flex-direction: column;
+  }
+
+  .payable-cards-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .balance-grid {
+    grid-template-columns: 1fr;
+  }
+}
