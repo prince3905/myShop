@@ -23,6 +23,7 @@ export class ItemDetailsComponent implements OnInit {
   selectedModelName: string | null = null;
   loading = false;
   errorMessage = "";
+  models: any[] = [];
 
   constructor(
     private route: ActivatedRoute,
@@ -71,6 +72,15 @@ export class ItemDetailsComponent implements OnInit {
             (sum: number, v: any) => sum + (v.quantity || 0),
             0,
           ) || 0;
+        
+        const modelMap = new Map();
+        this.item.variations?.forEach((v: any) => {
+          if (v.model?._id && !modelMap.has(v.model._id)) {
+            modelMap.set(v.model._id, v.model);
+          }
+        });
+        this.models = Array.from(modelMap.values());
+        
         this.applyVariationFilter();
 
         this.loading = false;
@@ -112,6 +122,24 @@ export class ItemDetailsComponent implements OnInit {
       queryParams: { model: null },
       queryParamsHandling: "merge",
     });
+  }
+
+  getAvgSelling(): number {
+    if (!this.item?.variations?.length) return 0;
+    const total = this.item.variations.reduce((sum: number, v: any) => sum + (v.sellingPrice || 0), 0);
+    return Math.round(total / this.item.variations.length);
+  }
+
+  filterByModel(): void {
+    if (this.selectedModelId) {
+      this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { model: this.selectedModelId },
+        queryParamsHandling: "merge",
+      });
+    } else {
+      this.clearModelFilter();
+    }
   }
 
   deleteProduct(item: any): void {

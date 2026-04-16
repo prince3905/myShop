@@ -1,280 +1,211 @@
-<div class="main-content">
+<div class="main-content item-list-page">
   <div class="container-fluid">
-    <mat-card class="mb-3">
-      <mat-card-header>
-        <mat-card-title>{{ product?.name || "Product" }} - Variation Console</mat-card-title>
-        <mat-card-subtitle>
-          {{ isEditMode ? "Edit Variation" : "Create Variation" }}
-          <span *ngIf="product?.createdAt"> | Product Created: {{ product.createdAt | date: "medium" }}</span>
-        </mat-card-subtitle>
-      </mat-card-header>
 
-      <mat-divider></mat-divider>
+    <div class="expense-hero-bar">
+      <div class="hero-flex">
+        <div>
+          <h2 class="hero-title">{{ product?.name || 'Product' }} - Variation Console</h2>
+          <p class="hero-sub">{{ isEditMode ? 'Edit Variation' : 'Create Variation' }}</p>
+        </div>
+      </div>
+    </div>
 
-      <mat-card-content class="form-container">
-        <div class="form-section">
-          <div class="section-title">Model Setup</div>
-          <div class="row">
-            <div class="col-md-6">
-              <mat-form-field appearance="outline" class="w-100">
-                <mat-label>Select Model *</mat-label>
-                <mat-select
-                  [(ngModel)]="variation.model"
-                  [ngModelOptions]="{standalone: true}"
-                  (ngModelChange)="onVariationMetaChange()">
-                  <mat-option *ngFor="let m of models" [value]="m._id">
-                    {{ m.name }}
-                  </mat-option>
-                </mat-select>
-              </mat-form-field>
-            </div>
-            <div class="col-md-6 model-add-inline">
-              <mat-form-field appearance="outline" class="w-100">
-                <mat-label>New Model Name</mat-label>
-                <input matInput [(ngModel)]="modelName" appCapitalizeFirst [ngModelOptions]="{standalone: true}" />
-              </mat-form-field>
-              <button
-                mat-stroked-button
-                color="primary"
-                type="button"
-                class="model-add-btn"
-                (click)="createModel()"
-                [disabled]="creatingModel || !canMutate">
-                {{ creatingModel ? "Creating..." : "Add Model" }}
-              </button>
-            </div>
+    <div class="expense-layout">
+
+      <div class="form-panel">
+        <div class="form-panel-header">
+          <mat-icon>add_circle</mat-icon>
+          <div>
+            <div class="panel-title">{{ isEditMode ? 'Edit Variation' : 'New Variation' }}</div>
+            <div class="panel-sub">Fill details below</div>
           </div>
         </div>
 
-        <div class="form-section">
-          <div class="section-title">Auto Codes</div>
-          <div class="row">
-            <div class="col-md-5">
-              <mat-form-field appearance="outline" class="w-100">
-                <mat-label>SKU (Auto)</mat-label>
-                <input matInput [value]="variation.sku || 'Select model + storage + color'" readonly />
-              </mat-form-field>
-            </div>
-            <div class="col-md-5">
-              <mat-form-field appearance="outline" class="w-100">
-                <mat-label>Barcode (Auto)</mat-label>
-                <input matInput [value]="variation.barcode || 'Auto from SKU'" readonly />
-              </mat-form-field>
-            </div>
-            <div class="col-md-2 regenerate-col" *ngIf="isEditMode && canMutate">
-              <button
-                mat-stroked-button
-                color="accent"
-                type="button"
-                [disabled]="!canRegenerateCodes"
-                [matTooltip]="!canRegenerateCodes ? codeLockMessage : ''"
-                (click)="regenerateCodesInEdit()">
-                Regenerate
-              </button>
-            </div>
-          </div>
-          <div class="code-lock-note" *ngIf="isEditMode && !canRegenerateCodes">
-            {{ codeLockMessage }}
-          </div>
-        </div>
+        <div class="filter-form">
+          <div class="form-section">
+            <div class="section-title">Model Setup</div>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Select Model *</mat-label>
+              <mat-select [(ngModel)]="variation.model" (ngModelChange)="onVariationMetaChange()">
+                <mat-option *ngFor="let m of models" [value]="m._id">{{ m.name }}</mat-option>
+              </mat-select>
+            </mat-form-field>
 
-        <div class="form-section">
-          <div class="section-title">Attributes</div>
-          <div class="row">
-            <div class="col-md-4">
-              <mat-form-field appearance="outline" class="w-100">
+            <mat-form-field appearance="outline" class="full-width" *ngIf="canMutate">
+              <mat-label>New Model</mat-label>
+              <input matInput [(ngModel)]="modelName" appCapitalizeFirst />
+              <button mat-icon-button matSuffix color="primary" type="button" (click)="createModel()" [disabled]="creatingModel || !modelName">
+                <mat-icon>add</mat-icon>
+              </button>
+            </mat-form-field>
+          </div>
+
+          <div class="form-section">
+            <div class="section-title">Auto Codes</div>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>SKU (Auto)</mat-label>
+              <input matInput [value]="variation.sku || 'Select model + storage + color'" readonly />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Barcode (Auto)</mat-label>
+              <input matInput [value]="variation.barcode || 'Auto from SKU'" readonly />
+              <button mat-icon-button matSuffix *ngIf="isEditMode && canMutate && canRegenerateCodes" type="button" (click)="regenerateCodesInEdit()">
+                <mat-icon>refresh</mat-icon>
+              </button>
+            </mat-form-field>
+
+            <div class="code-lock-note" *ngIf="isEditMode && !canRegenerateCodes">
+              {{ codeLockMessage }}
+            </div>
+          </div>
+
+          <div class="form-section">
+            <div class="section-title">Attributes</div>
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="full-width">
                 <mat-label>Color</mat-label>
-                <input
-                  matInput
-                  [(ngModel)]="variation.color"
-                  appCapitalizeFirst
-                  [ngModelOptions]="{standalone: true}"
-                  (ngModelChange)="onVariationMetaChange()" />
+                <input matInput [(ngModel)]="variation.color" appCapitalizeFirst (ngModelChange)="onVariationMetaChange()" />
               </mat-form-field>
-            </div>
-            <div class="col-md-4">
-              <mat-form-field appearance="outline" class="w-100">
+
+              <mat-form-field appearance="outline" class="full-width">
                 <mat-label>Size</mat-label>
-                <input matInput [(ngModel)]="variation.size" appCapitalizeFirst [ngModelOptions]="{standalone: true}" />
+                <input matInput [(ngModel)]="variation.size" appCapitalizeFirst />
               </mat-form-field>
-            </div>
-            <div class="col-md-4">
-              <mat-form-field appearance="outline" class="w-100">
+
+              <mat-form-field appearance="outline" class="full-width">
                 <mat-label>Storage</mat-label>
-                <input
-                  matInput
-                  [(ngModel)]="variation.storage"
-                  appCapitalizeFirst
-                  [ngModelOptions]="{standalone: true}"
-                  (ngModelChange)="onVariationMetaChange()" />
+                <input matInput [(ngModel)]="variation.storage" appCapitalizeFirst (ngModelChange)="onVariationMetaChange()" />
               </mat-form-field>
             </div>
           </div>
-        </div>
 
-        <div class="form-section">
-          <div class="section-title">Price Setup</div>
-          <div class="row">
-            <div class="col-md-4" *ngIf="authService.canViewSensitivePricing()">
-              <mat-form-field appearance="outline" class="w-100">
+          <div class="form-section">
+            <div class="section-title">Price Setup</div>
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="full-width" *ngIf="authService.canViewSensitivePricing()">
                 <mat-label>Cost Price</mat-label>
-                <input matInput type="number" [(ngModel)]="variation.costPrice" [ngModelOptions]="{standalone: true}" />
+                <input matInput type="number" [(ngModel)]="variation.costPrice" />
               </mat-form-field>
-            </div>
-            <div class="col-md-4">
-              <mat-form-field appearance="outline" class="w-100">
+
+              <mat-form-field appearance="outline" class="full-width">
                 <mat-label>Selling Price</mat-label>
-                <input matInput type="number" [(ngModel)]="variation.sellingPrice" [ngModelOptions]="{standalone: true}" />
+                <input matInput type="number" [(ngModel)]="variation.sellingPrice" />
               </mat-form-field>
-            </div>
-            <div class="col-md-4 active-col">
-              <mat-checkbox [(ngModel)]="variation.isActive" [ngModelOptions]="{standalone: true}">
+
+              <mat-checkbox [(ngModel)]="variation.isActive" class="active-check">
                 Active
               </mat-checkbox>
             </div>
           </div>
-          <div class="code-lock-note">
+
+          <div class="stock-note">
+            <mat-icon>info</mat-icon>
             Stock yahan se increase nahi hoga. Stock sirf Purchase ya Stock Adjustment se badhega.
           </div>
-        </div>
-      </mat-card-content>
 
-      <mat-divider></mat-divider>
-
-      <mat-card-actions align="end">
-        <button mat-stroked-button color="warn" type="button" (click)="resetForm()">
-          Reset
-        </button>
-
-        <button
-          mat-raised-button
-          color="primary"
-          type="button"
-          (click)="saveVariation()"
-          [disabled]="isLoading || !canMutate">
-          {{ isLoading ? "Saving..." : (isEditMode ? "Update Variation" : "Save Variation") }}
-        </button>
-      </mat-card-actions>
-    </mat-card>
-
-    <mat-card>
-      <mat-card-header>
-        <mat-card-title>Existing Variations</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <div class="filter-row status-filters">
-          <button
-            mat-stroked-button
-            [color]="filterStatus === 'all' ? 'primary' : ''"
-            (click)="filterStatus='all'; applyFilters()">
-            All
-          </button>
-          <button
-            mat-stroked-button
-            [color]="filterStatus === 'active' ? 'primary' : ''"
-            (click)="filterStatus='active'; applyFilters()">
-            Active
-          </button>
-          <button
-            mat-stroked-button
-            [color]="filterStatus === 'inactive' ? 'primary' : ''"
-            (click)="filterStatus='inactive'; applyFilters()">
-            Inactive
-          </button>
-        </div>
-
-        <div class="row">
-          <div class="col-md-4">
-            <mat-form-field appearance="outline" class="w-100">
-              <mat-label>Search SKU</mat-label>
-              <input matInput [(ngModel)]="searchSku" [ngModelOptions]="{standalone: true}" (keyup.enter)="applyFilters()" />
-            </mat-form-field>
+          <div class="form-actions">
+            <button mat-stroked-button color="warn" type="button" (click)="resetForm()">
+              Reset
+            </button>
+            <button mat-raised-button color="primary" type="button" (click)="saveVariation()" [disabled]="isLoading || !canMutate">
+              <mat-icon>{{ isLoading ? 'hourglass_top' : 'save' }}</mat-icon>
+              {{ isLoading ? 'Saving...' : (isEditMode ? 'Update' : 'Save') }}
+            </button>
           </div>
-          <div class="col-md-3">
-            <mat-form-field appearance="outline" class="w-100">
-              <mat-label>Filter Model</mat-label>
-              <mat-select [(ngModel)]="filterModel" [ngModelOptions]="{standalone: true}" (selectionChange)="applyFilters()">
-                <mat-option value="">All Models</mat-option>
+        </div>
+      </div>
+
+      <div class="list-panel">
+        <div class="filter-card">
+          <div class="filter-card-header">
+            <mat-icon>list</mat-icon>
+            <div>
+              <div class="panel-title">Existing Variations</div>
+              <div class="panel-sub">{{ totalVariations }} total</div>
+            </div>
+          </div>
+
+          <div class="status-filters">
+            <button mat-stroked-button [color]="filterStatus === 'all' ? 'primary' : ''" (click)="filterStatus='all'; applyFilters()">All</button>
+            <button mat-stroked-button [color]="filterStatus === 'active' ? 'primary' : ''" (click)="filterStatus='active'; applyFilters()">Active</button>
+            <button mat-stroked-button [color]="filterStatus === 'inactive' ? 'primary' : ''" (click)="filterStatus='inactive'; applyFilters()">Inactive</button>
+          </div>
+
+          <div class="filter-row-custom">
+            <mat-form-field appearance="outline">
+              <mat-label>Search SKU</mat-label>
+              <input matInput [(ngModel)]="searchSku" (keyup.enter)="applyFilters()" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Model</mat-label>
+              <mat-select [(ngModel)]="filterModel" (selectionChange)="applyFilters()">
+                <mat-option value="">All</mat-option>
                 <mat-option *ngFor="let m of models" [value]="m._id">{{ m.name }}</mat-option>
               </mat-select>
             </mat-form-field>
-          </div>
-          <div class="col-md-5 filter-actions">
             <button mat-stroked-button color="primary" (click)="applyFilters()">Search</button>
             <button mat-stroked-button color="warn" (click)="resetFilters()">Clear</button>
           </div>
         </div>
 
-        <div *ngIf="listLoading">Loading variations...</div>
-        <div class="table-responsive" *ngIf="!listLoading">
-          <table class="table table-sm table-bordered" *ngIf="variations.length; else noVar">
-            <thead>
-              <tr>
-                <th>Model</th>
-                <th>SKU</th>
-                <th>Barcode</th>
-                <th>Attributes</th>
-                <th>Qty</th>
-                <th *ngIf="authService.canViewSensitivePricing()">Cost</th>
-                <th>Selling</th>
-                <th>Created At</th>
-                <th>Status</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let v of variations">
-                <td>{{ v.model?.name || "-" }}</td>
-                <td>{{ v.sku }}</td>
-                <td>{{ v.barcode || "-" }}</td>
-                <td>
-                  {{ v.attributes?.color || "-" }} /
-                  {{ v.attributes?.size || "-" }} /
-                  {{ v.attributes?.storage || "-" }}
-                </td>
-                <td>{{ v.quantity || 0 }}</td>
-                <td *ngIf="authService.canViewSensitivePricing()">{{ v.costPrice || 0 }}</td>
-                <td>{{ v.sellingPrice || 0 }}</td>
-                <td>{{ v.createdAt ? (v.createdAt | date: "medium") : "-" }}</td>
-                <td>
-                  <span [class.text-success]="v.isActive" [class.text-danger]="!v.isActive">
-                    {{ v.isActive ? "Active" : "Inactive" }}
-                  </span>
-                </td>
-                <td>
-                  <button
-                    *hasRole="['SUPER_ADMIN','ADMIN','MANAGER']"
-                    mat-icon-button
-                    color="primary"
-                    matTooltip="Print Labels"
-                    (click)="printVariationLabelBulk(v)">
-                    <mat-icon>local_printshop</mat-icon>
-                  </button>
-                  <button mat-icon-button color="primary" (click)="editVariation(v)" [disabled]="!canMutate">
-                    <mat-icon>edit</mat-icon>
-                  </button>
-                  <button mat-icon-button color="accent" (click)="toggleStatus(v)" [disabled]="!canMutate">
-                    <mat-icon>{{ v.isActive ? "toggle_on" : "toggle_off" }}</mat-icon>
-                  </button>
-                  <button mat-icon-button color="warn" (click)="deleteVariation(v)" [disabled]="!canMutate">
-                    <mat-icon>delete</mat-icon>
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-          <ng-template #noVar>
-            <div>No variations found for this product.</div>
-          </ng-template>
+        <div class="loading-state" *ngIf="listLoading">
+          <mat-spinner diameter="32"></mat-spinner> Loading variations...
         </div>
-        <mat-paginator
-          [length]="totalVariations"
-          [pageIndex]="pageIndex"
-          [pageSize]="pageSize"
-          [pageSizeOptions]="[5,10,25,50]"
-          (page)="onPageChange($event)">
-        </mat-paginator>
-      </mat-card-content>
-    </mat-card>
+
+        <div class="product-table" *ngIf="!listLoading && variations.length">
+          <div class="table-header">
+            <span>Model</span>
+            <span>SKU</span>
+            <span>Barcode</span>
+            <span>Attributes</span>
+            <span>Qty</span>
+            <span>Selling</span>
+            <span>Status</span>
+            <span>Action</span>
+          </div>
+          <mat-accordion multi="true">
+            <mat-expansion-panel *ngFor="let v of variations" class="product-panel">
+              <mat-expansion-panel-header>
+                <div class="panel-row">
+                  <div>{{ v.model?.name || '-' }}</div>
+                  <div>{{ v.sku }}</div>
+                  <div>{{ v.barcode || '-' }}</div>
+                  <div class="attr-cell">{{ v.attributes?.color || '-' }} / {{ v.attributes?.size || '-' }} / {{ v.attributes?.storage || '-' }}</div>
+                  <div class="stock-cell">
+                    <span class="stock-badge" [ngClass]="(v.quantity || 0) < 5 ? 'low' : 'ok'">{{ v.quantity || 0 }}</span>
+                  </div>
+                  <div class="price-cell">₹{{ v.sellingPrice || 0 }}</div>
+                  <div class="status-cell">
+                    <span class="status-badge" [class.active]="v.isActive" [class.inactive]="!v.isActive">{{ v.isActive ? 'Active' : 'Inactive' }}</span>
+                  </div>
+                  <div class="action-cell">
+                    <button mat-icon-button color="primary" (click)="editVariation(v)" [disabled]="!canMutate"><mat-icon>edit</mat-icon></button>
+                    <button mat-icon-button [color]="v.isActive ? 'warn' : 'accent'" (click)="toggleStatus(v)" [disabled]="!canMutate"><mat-icon>{{ v.isActive ? 'toggle_on' : 'toggle_off' }}</mat-icon></button>
+                    <button mat-icon-button color="warn" (click)="deleteVariation(v)" [disabled]="!canMutate"><mat-icon>delete</mat-icon></button>
+                  </div>
+                </div>
+              </mat-expansion-panel-header>
+              <div class="variation-details">
+                <div class="detail-grid">
+                  <div class="detail-item"><span class="label">Cost Price</span><span class="value">₹{{ v.costPrice || 0 }}</span></div>
+                  <div class="detail-item"><span class="label">Selling Price</span><span class="value">₹{{ v.sellingPrice || 0 }}</span></div>
+                  <div class="detail-item"><span class="label">Created</span><span class="value">{{ v.createdAt | date:'dd MMM yyyy' }}</span></div>
+                  <div class="detail-item"><span class="label">Barcode</span><span class="value">{{ v.barcode || '-' }}</span></div>
+                </div>
+              </div>
+            </mat-expansion-panel>
+          </mat-accordion>
+        </div>
+
+        <div class="empty-state-bento" *ngIf="!listLoading && !variations.length">
+          <mat-icon>inventory_2</mat-icon>
+          <p>No variations found.</p>
+        </div>
+
+        <mat-paginator *ngIf="totalVariations > pageSize" [length]="totalVariations" [pageIndex]="pageIndex" [pageSize]="pageSize" [pageSizeOptions]="[5,10,25,50]" (page)="onPageChange($event)"></mat-paginator>
+      </div>
+
+    </div>
   </div>
 </div>

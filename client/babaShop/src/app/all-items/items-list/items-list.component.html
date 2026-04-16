@@ -1,38 +1,26 @@
-<div class="main-content">
+<div class="main-content item-list-page">
   <div class="container-fluid">
-    <div class="card filter-card">
-      <div class="card-header card-header-danger">
-        <h4 class="card-title">Product Console</h4>
-        <p class="card-category">Manage products, categories, brands, and variations</p>
+
+    <div class="expense-hero-bar">
+      <div>
+        <h2 class="hero-title">Product Console</h2>
+        <p class="hero-sub">Manage products, categories, brands, and variations</p>
       </div>
-      <div class="card-body">
-        <div class="top-bar">
-          <div class="context-chip">Visible Products: {{ totalItems || 0 }}</div>
-          <button
-            *hasRole="['SUPER_ADMIN','ADMIN','MANAGER']"
-            mat-stroked-button
-            color="primary"
-            (click)="openAddItemModal()">
-            Add Product
-          </button>
-          <button
-            *hasRole="['SUPER_ADMIN','ADMIN']"
-            mat-stroked-button
-            color="accent"
-            (click)="openAddCategoryModal()">
-            Add Category
-          </button>
-          <button
-            *hasRole="['SUPER_ADMIN','ADMIN']"
-            mat-stroked-button
-            color="accent"
-            (click)="openAddBrandModal()">
-            Add Brand
-          </button>
+    </div>
+
+    <div class="expense-layout">
+
+      <div class="form-panel">
+        <div class="form-panel-header">
+          <mat-icon>filter_list</mat-icon>
+          <div>
+            <div class="panel-title">Filters & Actions</div>
+            <div class="panel-sub">{{ totalItems || 0 }} products found</div>
+          </div>
         </div>
 
-        <div class="filter-row">
-          <mat-form-field appearance="outline" class="filter-field mode-field">
+        <div class="filter-form">
+          <mat-form-field appearance="outline" class="full-width">
             <mat-label>Filter by</mat-label>
             <mat-select [(ngModel)]="selectedOption" (ngModelChange)="onFilterModeChange()">
               <mat-option [value]="null">All</mat-option>
@@ -42,111 +30,112 @@
             </mat-select>
           </mat-form-field>
 
-          <ng-container *ngIf="selectedOption === 'name'">
-            <mat-form-field appearance="outline" class="filter-field search-field">
-              <mat-label>Product Name</mat-label>
-              <input matInput [(ngModel)]="itemName" (ngModelChange)="onFilterInputChange()" />
-            </mat-form-field>
-          </ng-container>
+          <mat-form-field appearance="outline" class="full-width" *ngIf="selectedOption === 'name'">
+            <mat-label>Product Name</mat-label>
+            <input matInput [(ngModel)]="itemName" (ngModelChange)="onFilterInputChange()" />
+            <mat-icon matPrefix>search</mat-icon>
+          </mat-form-field>
 
-          <ng-container *ngIf="selectedOption === 'name' || selectedOption === 'category'">
-            <mat-form-field appearance="outline" class="filter-field">
-              <mat-label>Category</mat-label>
-              <mat-select [(ngModel)]="selectedCategory" (ngModelChange)="onFilterInputChange()">
-                <mat-option [value]="null">All Categories</mat-option>
-                <mat-option *ngFor="let category of Category" [value]="category._id">
-                  {{ category.name }}
-                </mat-option>
-              </mat-select>
-            </mat-form-field>
-          </ng-container>
+          <mat-form-field appearance="outline" class="full-width" *ngIf="selectedOption === 'name' || selectedOption === 'category'">
+            <mat-label>Category</mat-label>
+            <mat-select [(ngModel)]="selectedCategory" (ngModelChange)="onFilterInputChange()">
+              <mat-option [value]="null">All Categories</mat-option>
+              <mat-option *ngFor="let category of Category" [value]="category._id">
+                {{ category.name }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
 
-          <ng-container *ngIf="selectedOption === 'name' || selectedOption === 'category' || selectedOption === 'brand'">
-            <mat-form-field appearance="outline" class="filter-field">
-              <mat-label>Brand</mat-label>
-              <mat-select [(ngModel)]="selectedBrand" (ngModelChange)="onFilterInputChange()" [disabled]="(selectedOption === 'name' || selectedOption === 'category') && !selectedCategory">
-                <mat-option [value]="null">All Brands</mat-option>
-                <mat-option *ngFor="let brand of filteredBrands" [value]="brand._id">
-                  {{ brand.name }}
-                </mat-option>
-              </mat-select>
-              <mat-hint *ngIf="(selectedOption === 'name' || selectedOption === 'category') && selectedCategory && !filteredBrands.length">
-                No brands mapped to this category
-              </mat-hint>
-            </mat-form-field>
-          </ng-container>
+          <mat-form-field appearance="outline" class="full-width" *ngIf="selectedOption === 'name' || selectedOption === 'category' || selectedOption === 'brand'">
+            <mat-label>Brand</mat-label>
+            <mat-select [(ngModel)]="selectedBrand" (ngModelChange)="onFilterInputChange()" [disabled]="(selectedOption === 'name' || selectedOption === 'category') && !selectedCategory">
+              <mat-option [value]="null">All Brands</mat-option>
+              <mat-option *ngFor="let brand of filteredBrands" [value]="brand._id">
+                {{ brand.name }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
 
-          <button
-            mat-raised-button
-            color="primary"
-            *ngIf="selectedOption === 'name' || selectedOption === 'category' || selectedOption === 'brand'"
-            (click)="onSearch((paginator?.pageIndex || 0) + 1, paginator?.pageSize || pageSize)"
-          >
-            Apply
-          </button>
-          <button
-            mat-stroked-button
-            color="warn"
-            *ngIf="selectedOption === 'name' || selectedOption === 'category' || selectedOption === 'brand'"
-            (click)="onClear()"
-          >
-            Reset
-          </button>
+          <div class="filter-actions">
+            <button mat-raised-button color="warn" *ngIf="selectedOption" (click)="onSearch((paginator?.pageIndex || 0) + 1, paginator?.pageSize || pageSize)">
+              <mat-icon>search</mat-icon> Apply
+            </button>
+            <button mat-stroked-button *ngIf="selectedOption" (click)="onClear()">
+              Reset
+            </button>
+          </div>
+
+          <div class="action-buttons">
+            <button mat-raised-button color="primary" *hasRole="['SUPER_ADMIN','ADMIN','MANAGER']" (click)="openAddItemModal()">
+              <mat-icon>add</mat-icon> Add Product
+            </button>
+            <button mat-stroked-button *hasRole="['SUPER_ADMIN','ADMIN']" (click)="openAddCategoryModal()">
+              <mat-icon>add</mat-icon> Category
+            </button>
+            <button mat-stroked-button *hasRole="['SUPER_ADMIN','ADMIN']" (click)="openAddBrandModal()">
+              <mat-icon>add</mat-icon> Brand
+            </button>
+          </div>
         </div>
       </div>
-    </div>
 
-    <div class="summary-grid">
-      <div class="summary-card clickable" role="button" tabindex="0" (click)="onSummaryProductsClick()">
-        <div class="label">All Products</div>
-        <div class="value">{{ summaryCounts.products }}</div>
-      </div>
-      <div class="summary-card">
-        <div class="label">All Categories</div>
-        <div class="value">{{ summaryCounts.categories }}</div>
-        <button mat-icon-button type="button" matTooltip="Filter categories" (click)="onSummaryCategoryFilter()">
-          <mat-icon>filter_list</mat-icon>
-        </button>
-      </div>
-      <div class="summary-card">
-        <div class="label">All Brands</div>
-        <div class="value">{{ summaryCounts.brands }}</div>
-        <button mat-icon-button type="button" matTooltip="Filter brands" (click)="onSummaryBrandFilter()">
-          <mat-icon>filter_list</mat-icon>
-        </button>
-      </div>
-    </div>
-
-    <div class="loading-wrap" *ngIf="loading">
-      <mat-spinner color="primary" diameter="40"></mat-spinner>
-    </div>
-
-    <div class="card table-card" *ngIf="!loading">
-      <div class="card-body">
-        <div class="list-header-grid">
-          <span>Name</span>
-          <span>Brand</span>
-          <span>Category</span>
-          <span class="text-right">Stock</span>
+      <div class="list-panel">
+        <div class="summary-kpi-row">
+          <div class="kpi-card">
+            <div class="kpi-icon"><mat-icon>inventory_2</mat-icon></div>
+            <div class="kpi-body">
+              <div class="kpi-label">All Products</div>
+              <div class="kpi-value">{{ summaryCounts.products }}</div>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon"><mat-icon>category</mat-icon></div>
+            <div class="kpi-body">
+              <div class="kpi-label">Categories</div>
+              <div class="kpi-value">{{ summaryCounts.categories }}</div>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon"><mat-icon>branding_watermark</mat-icon></div>
+            <div class="kpi-body">
+              <div class="kpi-label">Brands</div>
+              <div class="kpi-value">{{ summaryCounts.brands }}</div>
+            </div>
+          </div>
         </div>
-        <div class="table-responsive">
+
+        <div class="loading-wrap" *ngIf="loading">
+          <mat-spinner diameter="32"></mat-spinner> Loading products...
+        </div>
+
+        <div class="empty-state-bento" *ngIf="!loading && paginatedItems.length === 0">
+          <mat-icon>inventory_2</mat-icon>
+          <p>No products found</p>
+        </div>
+
+        <div class="product-table" *ngIf="!loading && paginatedItems.length > 0">
+          <div class="table-header">
+            <span>Name</span>
+            <span>Brand</span>
+            <span>Category</span>
+            <span>Stock</span>
+          </div>
           <mat-accordion multi="true">
             <mat-expansion-panel *ngFor="let item of paginatedItems" class="product-panel">
               <mat-expansion-panel-header>
-                <div class="panel-grid">
-                  <div class="name">{{ item.name }}</div>
+                <div class="panel-row">
+                  <div class="product-name">{{ item.name }}</div>
                   <div>{{ item.brand?.name || '-' }}</div>
                   <div>{{ item.category?.name || '-' }}</div>
-                  <div class="stock">
+                  <div class="stock-cell">
                     <span class="stock-badge" [ngClass]="item.totalStock < 5 ? 'low' : 'ok'">
                       {{ item.totalStock }}
                     </span>
                   </div>
                 </div>
               </mat-expansion-panel-header>
-
-              <div class="table-responsive variation-table-wrap">
-                <table class="table table-sm table-bordered variation-table">
+              <div class="variation-details">
+                <table class="variation-table">
                   <thead>
                     <tr>
                       <th>Model</th>
@@ -155,65 +144,42 @@
                       <th>Color</th>
                       <th>Size</th>
                       <th>Qty</th>
-                      <th *ngIf="authService.canViewSensitivePricing()">Cost</th>
                       <th>Selling</th>
                       <th>Action</th>
                     </tr>
                   </thead>
                   <tbody>
-                    <ng-container *ngIf="item.variations?.length; else noVariationRow">
-                      <tr *ngFor="let v of item.variations">
-                        <td>{{ v.model?.name || '-' }}</td>
-                        <td>{{ v.sku }}</td>
-                        <td>{{ v.barcode || '-' }}</td>
-                        <td>{{ v.attributes?.color || '-' }}</td>
-                        <td>{{ v.attributes?.size || '-' }}</td>
-                        <td>{{ v.quantity ?? 0 }}</td>
-                        <td *ngIf="authService.canViewSensitivePricing()">₹ {{ v.costPrice || 0 }}</td>
-                        <td>₹ {{ v.sellingPrice || 0 }}</td>
-                        <td (click)="$event.stopPropagation()" class="action-col">
-                          <button
-                            mat-icon-button
-                            color="primary"
-                            matTooltip="View"
-                            (click)="viewItemModelDetails(item._id, v); $event.stopPropagation()"
-                          >
-                            <mat-icon>visibility</mat-icon>
-                          </button>
-                        </td>
-                      </tr>
-                    </ng-container>
-                    <ng-template #noVariationRow>
-                      <tr>
-                        <td [attr.colspan]="authService.canViewSensitivePricing() ? 8 : 7" class="text-muted no-variation-msg">No variations added yet.</td>
-                        <td (click)="$event.stopPropagation()" class="action-col">
-                          <button
-                            mat-icon-button
-                            color="primary"
-                            matTooltip="View"
-                            (click)="viewItemDetails(item._id); $event.stopPropagation()"
-                          >
-                            <mat-icon>visibility</mat-icon>
-                          </button>
-                        </td>
-                      </tr>
-                    </ng-template>
+                    <tr *ngFor="let v of item.variations">
+                      <td>{{ v.model?.name || '-' }}</td>
+                      <td>{{ v.sku }}</td>
+                      <td>{{ v.barcode || '-' }}</td>
+                      <td>{{ v.attributes?.color || '-' }}</td>
+                      <td>{{ v.attributes?.size || '-' }}</td>
+                      <td>{{ v.quantity ?? 0 }}</td>
+                      <td>₹ {{ v.sellingPrice || 0 }}</td>
+                      <td>
+                        <button mat-icon-button color="primary" (click)="viewItemModelDetails(item._id, v)">
+                          <mat-icon>visibility</mat-icon>
+                        </button>
+                      </td>
+                    </tr>
                   </tbody>
                 </table>
               </div>
             </mat-expansion-panel>
           </mat-accordion>
         </div>
+
+        <mat-paginator
+          #paginator
+          [length]="totalItems"
+          [pageSize]="pageSize"
+          [pageSizeOptions]="pageSizeOptions"
+          (page)="onPageChange($event)"
+        >
+        </mat-paginator>
       </div>
 
-      <mat-paginator
-        #paginator
-        [length]="totalItems"
-        [pageSize]="pageSize"
-        [pageSizeOptions]="pageSizeOptions"
-        (page)="onPageChange($event)"
-      >
-      </mat-paginator>
     </div>
   </div>
 </div>
