@@ -1,300 +1,351 @@
-<div class="main-content page-shell">
+<div class="main-content factory-report-page">
   <div class="container-fluid">
-    <div class="page-header-card">
+
+    <!-- ── Hero Header ── -->
+    <div class="report-hero-bar">
       <div>
-        <h2>Factory Report</h2>
-        <p>Daily work se auto banne wala production, material use aur waste ka consolidated view.</p>
+        <h2 class="hero-title">Factory Report</h2>
+        <p class="hero-sub">Daily work se auto banne wala production, material use aur waste ka consolidated view.</p>
       </div>
     </div>
 
-    <div class="card filter-card">
-      <div class="card-header card-header-danger">
-        <h4 class="card-title">Filters</h4>
+    <!-- ── Filters ── -->
+    <div class="filters-panel">
+      <div class="filter-bar">
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>Search</mat-label>
+          <input matInput [(ngModel)]="filters.search" placeholder="Item, material, source">
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>From</mat-label>
+          <input matInput type="date" [(ngModel)]="filters.dateFrom">
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>To</mat-label>
+          <input matInput type="date" [(ngModel)]="filters.dateTo">
+        </mat-form-field>
       </div>
-      <div class="card-body">
-        <div class="filter-grid">
-          <mat-form-field class="example-full-width">
-            <mat-label>Search</mat-label>
-            <input matInput [(ngModel)]="filters.search" name="search" placeholder="Item, material, source">
-          </mat-form-field>
-          <mat-form-field class="example-full-width">
-            <mat-label>From Date</mat-label>
-            <input matInput type="date" [(ngModel)]="filters.dateFrom" name="dateFrom">
-          </mat-form-field>
-          <mat-form-field class="example-full-width">
-            <mat-label>To Date</mat-label>
-            <input matInput type="date" [(ngModel)]="filters.dateTo" name="dateTo">
-          </mat-form-field>
-        </div>
-
-        <div class="filter-actions">
-          <button mat-raised-button class="btn btn-danger" (click)="loadReport()">Apply Filters</button>
-          <button mat-stroked-button class="btn btn-outline-danger" (click)="resetFilters()">Reset</button>
-        </div>
+      <div class="filter-actions">
+        <button mat-raised-button color="primary" (click)="loadReport()">Apply</button>
+        <button mat-stroked-button (click)="resetFilters()">Reset</button>
       </div>
     </div>
 
-    <div class="summary-grid compact-summary-grid">
-      <div class="summary-card">
-        <span class="summary-label">Daily Production</span>
-        <strong>{{ report.productionEntries }}</strong>
-        <small>{{ report.productionQty | number: "1.0-2" }} total finished qty</small>
-      </div>
-      <div class="summary-card">
-        <span class="summary-label">Production Cost</span>
-        <strong>Rs {{ report.productionCost | number: "1.2-2" }}</strong>
-        <small>Filtered range total</small>
-      </div>
-      <div class="summary-card">
-        <span class="summary-label">Auto Waste</span>
-        <strong>{{ report.scrapEntries }}</strong>
-        <small>{{ report.scrapQty | number: "1.0-2" }} total qty</small>
-      </div>
-      <div class="summary-card">
-        <span class="summary-label">Scrap Value</span>
-        <strong>Rs {{ report.scrapValue | number: "1.2-2" }}</strong>
-        <small>Estimated total value</small>
-      </div>
-      <div class="summary-card">
-        <span class="summary-label">Raw Materials</span>
-        <strong>{{ report.materialCount }}</strong>
-        <small>Registered materials</small>
-      </div>
-      <div class="summary-card">
-        <span class="summary-label">Used Qty</span>
-        <strong>{{ report.materialUsedQty | number: "1.0-2" }}</strong>
-        <small>Total material used</small>
-      </div>
-      <div class="summary-card">
-        <span class="summary-label">Material Value</span>
-        <strong>Rs {{ report.materialValue | number: "1.2-2" }}</strong>
-        <small>Current balance value</small>
-      </div>
+    <!-- ── Loading State ── -->
+    <div class="state-row" *ngIf="loading">
+      <mat-spinner diameter="24"></mat-spinner> Loading factory report...
     </div>
 
-    <div *ngIf="loading" class="table-empty">Loading factory report...</div>
+    <ng-container *ngIf="!loading">
 
-    <div class="row" *ngIf="!loading">
-      <div class="col-lg-6">
-        <div class="card">
-          <div class="card-header card-header-danger">
-            <h4 class="card-title">Top Produced Items</h4>
+      <!-- ── Production KPI Row ── -->
+      <div class="section-title-row">
+        <mat-icon>analytics</mat-icon>
+        <span>Production Overview</span>
+      </div>
+
+      <div class="summary-kpi-row">
+        <div class="kpi-card production">
+          <div class="kpi-icon"><mat-icon>inventory</mat-icon></div>
+          <div class="kpi-body">
+            <div class="kpi-label">Production Entries</div>
+            <div class="kpi-value">{{ report.productionEntries || 0 }}</div>
+            <div class="kpi-meta">{{ report.productionQty | number: '1.0-0' }} total qty</div>
           </div>
-          <div class="card-body">
-            <div *ngIf="report.topProducedItems.length === 0" class="table-empty">No production data found.</div>
-            <div class="breakdown-list" *ngIf="report.topProducedItems.length > 0">
-              <div class="breakdown-row" *ngFor="let item of report.topProducedItems; trackBy: trackByLabel">
-                <div>
-                  <div class="breakdown-title">{{ item.label }}</div>
-                  <div class="breakdown-subtitle">Rs {{ item.value | number: "1.2-2" }}</div>
+        </div>
+        <div class="kpi-card cost">
+          <div class="kpi-icon"><mat-icon>payments</mat-icon></div>
+          <div class="kpi-body">
+            <div class="kpi-label">Production Cost</div>
+            <div class="kpi-value">₹{{ report.productionCost | number: '1.0-0' }}</div>
+            <div class="kpi-meta">filtered range</div>
+          </div>
+        </div>
+        <div class="kpi-card scrap">
+          <div class="kpi-icon"><mat-icon>delete_outline</mat-icon></div>
+          <div class="kpi-body">
+            <div class="kpi-label">Scrap Entries</div>
+            <div class="kpi-value">{{ report.scrapEntries || 0 }}</div>
+            <div class="kpi-meta">{{ report.scrapQty | number: '1.0-0' }} total qty</div>
+          </div>
+        </div>
+        <div class="kpi-card scrap-value">
+          <div class="kpi-icon"><mat-icon>monetization_on</mat-icon></div>
+          <div class="kpi-body">
+            <div class="kpi-label">Scrap Value</div>
+            <div class="kpi-value">₹{{ report.scrapValue | number: '1.0-0' }}</div>
+            <div class="kpi-meta">estimated</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Material KPI Row ── -->
+      <div class="summary-kpi-row secondary">
+        <div class="kpi-card material">
+          <div class="kpi-icon"><mat-icon>category</mat-icon></div>
+          <div class="kpi-body">
+            <div class="kpi-label">Raw Materials</div>
+            <div class="kpi-value">{{ report.materialCount || 0 }}</div>
+            <div class="kpi-meta">registered</div>
+          </div>
+        </div>
+        <div class="kpi-card used">
+          <div class="kpi-icon"><mat-icon>remove_circle</mat-icon></div>
+          <div class="kpi-body">
+            <div class="kpi-label">Material Used</div>
+            <div class="kpi-value">{{ report.materialUsedQty | number: '1.0-0' }}</div>
+            <div class="kpi-meta">total consumed</div>
+          </div>
+        </div>
+        <div class="kpi-card value">
+          <div class="kpi-icon"><mat-icon>currency_rupee</mat-icon></div>
+          <div class="kpi-body">
+            <div class="kpi-label">Material Value</div>
+            <div class="kpi-value">₹{{ report.materialValue | number: '1.0-0' }}</div>
+            <div class="kpi-meta">balance worth</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Top Items + Worker Production ── -->
+      <div class="report-grid-2">
+        <!-- Top Produced Items -->
+        <div class="report-card">
+          <div class="report-card-header">
+            <mat-icon>star</mat-icon>
+            <span>Top Produced Items</span>
+          </div>
+          <div class="report-card-body">
+            <div class="empty-state-bento compact" *ngIf="report.topProducedItems.length === 0">
+              <mat-icon>inventory_2</mat-icon>
+              <p>No production data found</p>
+            </div>
+            <div class="rank-list" *ngIf="report.topProducedItems.length > 0">
+              <div class="rank-item" *ngFor="let item of report.topProducedItems; let i = index; trackBy: trackByLabel">
+                <div class="rank-badge" [class]="'rank-' + (i + 1)">{{ i + 1 }}</div>
+                <div class="rank-info">
+                  <div class="rank-name">{{ item.label }}</div>
+                  <div class="rank-meta">₹{{ item.value | number: '1.2-2' }}</div>
                 </div>
-                <strong>{{ item.qty | number: "1.0-2" }}</strong>
+                <div class="rank-qty">{{ item.qty | number: '1.0-0' }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Worker Production Summary -->
+        <div class="report-card">
+          <div class="report-card-header">
+            <mat-icon>groups</mat-icon>
+            <span>Worker Production Summary</span>
+          </div>
+          <div class="report-card-body">
+            <div class="empty-state-bento compact" *ngIf="report.workerProduction.length === 0">
+              <mat-icon>person_off</mat-icon>
+              <p>No worker production data</p>
+            </div>
+            <div class="rank-list" *ngIf="report.workerProduction.length > 0">
+              <div class="rank-item" *ngFor="let item of report.workerProduction; trackBy: trackByLabel">
+                <div class="worker-avatar-sm">
+                  {{ (item.label || 'W')[0].toUpperCase() }}
+                </div>
+                <div class="rank-info">
+                  <div class="rank-name">{{ item.label }}</div>
+                  <div class="rank-meta">{{ item.count }} entries · ₹{{ item.earned | number: '1.2-2' }}</div>
+                </div>
+                <div class="rank-qty">{{ item.qty | number: '1.0-0' }}</div>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="col-lg-6">
-        <div class="card">
-          <div class="card-header card-header-danger">
-            <h4 class="card-title">Worker Production Summary</h4>
+      <!-- ── Recent Production + Waste ── -->
+      <div class="report-grid-2">
+        <!-- Recent Production -->
+        <div class="report-card">
+          <div class="report-card-header">
+            <mat-icon>history</mat-icon>
+            <span>Recent Production</span>
+            <button mat-stroked-button class="view-all-btn">View All</button>
           </div>
-          <div class="card-body">
-            <div *ngIf="report.workerProduction.length === 0" class="table-empty">No worker production data found.</div>
-            <div class="breakdown-list" *ngIf="report.workerProduction.length > 0">
-              <div class="breakdown-row" *ngFor="let item of report.workerProduction; trackBy: trackByLabel">
-                <div>
-                  <div class="breakdown-title">{{ item.label }}</div>
-                  <div class="breakdown-subtitle">{{ item.count }} entries · Rs {{ item.earned | number: "1.2-2" }}</div>
+          <div class="report-card-body">
+            <div class="empty-state-bento compact" *ngIf="recentProductions.length === 0">
+              <mat-icon>event_busy</mat-icon>
+              <p>No production in selected range</p>
+            </div>
+            <div class="production-cards" *ngIf="recentProductions.length > 0">
+              <div class="production-card" *ngFor="let item of recentProductions" [class.selected]="selectedProduction?.sourceId === item.sourceId" (click)="selectProduction(item)">
+                <div class="pc-header">
+                  <div class="pc-product">{{ item.itemName }}</div>
+                  <div class="pc-date">{{ item.entryDate | date: 'dd MMM' }}</div>
                 </div>
-                <strong>{{ item.qty | number: "1.0-2" }}</strong>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="row" *ngIf="!loading">
-      <div class="col-lg-6">
-        <div class="card">
-          <div class="card-header card-header-danger">
-            <h4 class="card-title">Recent Production</h4>
-          </div>
-          <div class="card-body">
-            <div *ngIf="recentProductions.length === 0" class="table-empty">No auto production found in selected range.</div>
-            <div class="table-wrap" *ngIf="recentProductions.length > 0">
-              <table class="table report-table production-table">
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>Item</th>
-                    <th>Qty</th>
-                    <th>Cost</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let item of recentProductions">
-                    <td class="cell-date">{{ item.entryDate | date: "dd/MM/yyyy" }}</td>
-                    <td class="clickable-cell cell-item" (click)="selectProduction(item)">
-                      <div class="table-primary">{{ item.itemName }}</div>
-                      <div class="table-note" *ngIf="item.serialNo">{{ item.serialNo }}</div>
-                      <div class="table-note" *ngIf="item.materialLines?.length">
-                        <span *ngFor="let line of item.materialLines; let last = last">
-                          {{ line.label }} {{ line.qty | number: "1.0-2" }} {{ line.unit }}<span *ngIf="!last"> | </span>
-                        </span>
-                      </div>
-                      <div class="table-note" *ngIf="item.wasteQty > 0">
-                        Waste {{ item.wasteQty | number: "1.0-2" }} {{ item.wasteUnitLabel }} · Rs {{ item.wasteValue | number: "1.2-2" }}
-                      </div>
-                    </td>
-                    <td class="cell-qty">{{ item.qtyProduced | number: "1.0-2" }} {{ item.unitLabel }}</td>
-                    <td class="amount-cell cell-cost">
-                      <div>Rs {{ item.actualBatchCost | number: "1.2-2" }}</div>
-                      <div class="table-note">1 box cost Rs {{ item.actualCostPerUnit | number: "1.2-2" }}</div>
-                      <div class="table-note">M {{ item.materialCost | number: "1.2-2" }} · W {{ item.workerCost | number: "1.2-2" }} · O {{ item.otherCost | number: "1.2-2" }}</div>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            <div class="production-detail-card" *ngIf="selectedProduction">
-              <div class="production-detail-header">
-                <div>
-                  <div class="detail-title">{{ selectedProduction.itemName }}</div>
-                  <div class="detail-subtitle">
-                    {{ selectedProduction.entryDate | date: "dd/MM/yyyy" }}
-                    <span *ngIf="selectedProduction.workerName"> · {{ selectedProduction.workerName }}</span>
-                    <span> · {{ selectedProduction.qtyProduced | number: "1.0-2" }} {{ selectedProduction.unitLabel }}</span>
+                <div class="pc-worker" *ngIf="item.workerName">
+                  <mat-icon>person</mat-icon>
+                  {{ item.workerName }}
+                </div>
+                <div class="pc-stats">
+                  <div class="pc-stat">
+                    <span class="stat-label">Qty</span>
+                    <span class="stat-value">{{ item.qtyProduced | number: '1.0-0' }}</span>
+                  </div>
+                  <div class="pc-stat">
+                    <span class="stat-label">Cost</span>
+                    <span class="stat-value">₹{{ item.actualBatchCost | number: '1.2-2' }}</span>
+                  </div>
+                  <div class="pc-stat" *ngIf="item.wasteQty > 0">
+                    <span class="stat-label">Waste</span>
+                    <span class="stat-value warn">{{ item.wasteQty | number: '1.0-0' }}</span>
                   </div>
                 </div>
-                <div class="detail-cost">Rs {{ selectedProduction.totalCost | number: "1.2-2" }}</div>
+                <div class="pc-materials" *ngIf="item.materialLines?.length">
+                  <mat-icon>list_alt</mat-icon>
+                  <span>{{ item.materialLines.length }} materials</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Selected Production Detail -->
+            <div class="detail-panel" *ngIf="selectedProduction">
+              <div class="detail-header">
+                <div class="detail-title">{{ selectedProduction.itemName }}</div>
+                <div class="detail-total">₹{{ selectedProduction.totalCost | number: '1.2-2' }}</div>
               </div>
 
-              <div class="detail-grid">
+              <div class="detail-pills-grid">
                 <div class="detail-pill">
                   <span>Material Cost</span>
-                  <strong>Rs {{ selectedProduction.materialCost | number: "1.2-2" }}</strong>
+                  <strong>₹{{ selectedProduction.materialCost | number: '1.2-2' }}</strong>
                 </div>
                 <div class="detail-pill">
                   <span>Worker Cost</span>
-                  <strong>Rs {{ selectedProduction.workerCost | number: "1.2-2" }}</strong>
+                  <strong>₹{{ selectedProduction.workerCost | number: '1.2-2' }}</strong>
                 </div>
                 <div class="detail-pill">
-                  <span>Labour Cost</span>
-                  <strong>Rs {{ selectedProduction.labourCost | number: "1.2-2" }}</strong>
+                  <span>Labour</span>
+                  <strong>₹{{ selectedProduction.labourCost | number: '1.2-2' }}</strong>
                 </div>
                 <div class="detail-pill">
-                  <span>Other Cost</span>
-                  <strong>Rs {{ selectedProduction.otherCost | number: "1.2-2" }}</strong>
+                  <span>Other</span>
+                  <strong>₹{{ selectedProduction.otherCost | number: '1.2-2' }}</strong>
                 </div>
                 <div class="detail-pill">
                   <span>Worker Earned</span>
-                  <strong>Rs {{ selectedProduction.earnedAmount | number: "1.2-2" }}</strong>
+                  <strong>₹{{ selectedProduction.earnedAmount | number: '1.2-2' }}</strong>
                 </div>
                 <div class="detail-pill">
-                  <span>Worker Rate / Box</span>
-                  <strong>Rs {{ selectedProduction.workerRatePerUnit | number: "1.2-2" }}</strong>
+                  <span>Rate/Unit</span>
+                  <strong>₹{{ selectedProduction.workerRatePerUnit | number: '1.2-2' }}</strong>
                 </div>
                 <div class="detail-pill" *ngIf="canViewSensitivePricing">
-                  <span>Cost / Box</span>
-                  <strong>Rs {{ selectedProduction.costPerUnit | number: "1.2-2" }}</strong>
-                </div>
-                <div class="detail-pill" *ngIf="canViewSensitivePricing">
-                  <span>Actual Box Cost</span>
-                  <strong>Rs {{ selectedProduction.actualCostPerUnit | number: "1.2-2" }}</strong>
+                  <span>Cost/Unit</span>
+                  <strong>₹{{ selectedProduction.costPerUnit | number: '1.2-2' }}</strong>
                 </div>
                 <div class="detail-pill" *ngIf="selectedProduction.wasteQty > 0">
                   <span>Waste</span>
-                  <strong>{{ selectedProduction.wasteQty | number: "1.0-2" }} {{ selectedProduction.wasteUnitLabel }}</strong>
-                </div>
-                <div class="detail-pill" *ngIf="selectedProduction.wasteValue > 0">
-                  <span>Waste Value</span>
-                  <strong>Rs {{ selectedProduction.wasteValue | number: "1.2-2" }}</strong>
+                  <strong>{{ selectedProduction.wasteQty | number: '1.0-0' }} {{ selectedProduction.wasteUnitLabel }}</strong>
                 </div>
               </div>
 
-              <div class="detail-section">
+              <div class="detail-section" *ngIf="selectedProduction.materialLines?.length">
                 <div class="detail-section-title">Material Used</div>
-                <div *ngIf="!selectedProduction.materialLines?.length" class="table-empty compact-empty">No material template linked.</div>
-                <div class="detail-lines" *ngIf="selectedProduction.materialLines?.length">
-                  <div class="detail-line" *ngFor="let line of selectedProduction.materialLines">
-                    <div>
-                      <div class="table-primary">{{ line.label }}</div>
-                      <div class="table-note">{{ line.qty | number: "1.0-2" }} {{ line.unit }} × Rs {{ line.rate | number: "1.2-2" }}</div>
-                    </div>
-                    <strong>Rs {{ line.cost | number: "1.2-2" }}</strong>
+                <div class="material-detail-list">
+                  <div class="material-detail-row" *ngFor="let line of selectedProduction.materialLines">
+                    <span class="mat-name">{{ line.label }}</span>
+                    <span class="mat-qty">{{ line.qty | number: '1.0-2' }} {{ line.unit }}</span>
+                    <span class="mat-rate">× ₹{{ line.rate | number: '1.2-2' }}</span>
+                    <span class="mat-cost">₹{{ line.cost | number: '1.2-2' }}</span>
                   </div>
                 </div>
               </div>
 
-              <div class="detail-notes" *ngIf="selectedProduction.workDetails || selectedProduction.linkedJob || selectedProduction.note">
+              <div class="detail-notes" *ngIf="selectedProduction.workDetails || selectedProduction.linkedJob">
                 <div class="detail-section-title">Extra Details</div>
-                <div class="table-note" *ngIf="selectedProduction.workDetails">Work: {{ selectedProduction.workDetails }}</div>
-                <div class="table-note" *ngIf="selectedProduction.linkedJob">Job Ref: {{ selectedProduction.linkedJob }}</div>
-                <div class="table-note" *ngIf="selectedProduction.note">Note: {{ selectedProduction.note }}</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="col-lg-6">
-        <div class="card">
-          <div class="card-header card-header-danger">
-            <h4 class="card-title">Waste By Worker</h4>
-          </div>
-          <div class="card-body">
-            <div *ngIf="report.wasteByWorker.length === 0" class="table-empty">No waste data found.</div>
-            <div class="breakdown-list" *ngIf="report.wasteByWorker.length > 0">
-              <div class="breakdown-row" *ngFor="let item of report.wasteByWorker; trackBy: trackByLabel">
-                <div>
-                  <div class="breakdown-title">{{ item.label }}</div>
-                  <div class="breakdown-subtitle">{{ item.count }} entries · Rs {{ item.value | number: "1.2-2" }}</div>
+                <div class="note-item" *ngIf="selectedProduction.workDetails">
+                  <mat-icon>work</mat-icon>
+                  {{ selectedProduction.workDetails }}
                 </div>
-                <strong>{{ item.qty | number: "1.0-2" }}</strong>
+                <div class="note-item" *ngIf="selectedProduction.linkedJob">
+                  <mat-icon>link</mat-icon>
+                  {{ selectedProduction.linkedJob }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Waste By Worker -->
+        <div class="report-card">
+          <div class="report-card-header">
+            <mat-icon>delete_sweep</mat-icon>
+            <span>Waste By Worker</span>
+          </div>
+          <div class="report-card-body">
+            <div class="empty-state-bento compact" *ngIf="report.wasteByWorker.length === 0">
+              <mat-icon>check_circle</mat-icon>
+              <p>No waste data found</p>
+            </div>
+            <div class="rank-list" *ngIf="report.wasteByWorker.length > 0">
+              <div class="rank-item waste" *ngFor="let item of report.wasteByWorker; trackBy: trackByLabel">
+                <div class="worker-avatar-sm waste">
+                  {{ (item.label || 'W')[0].toUpperCase() }}
+                </div>
+                <div class="rank-info">
+                  <div class="rank-name">{{ item.label }}</div>
+                  <div class="rank-meta">{{ item.count }} entries · ₹{{ item.value | number: '1.2-2' }}</div>
+                </div>
+                <div class="rank-qty waste-qty">{{ item.qty | number: '1.0-0' }}</div>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <div class="card" *ngIf="!loading">
-      <div class="card-header card-header-danger">
-        <h4 class="card-title">Raw Material Snapshot</h4>
-      </div>
-      <div class="card-body">
-        <div *ngIf="rawMaterialSnapshot.length === 0" class="table-empty">No raw materials found.</div>
-        <div class="table-wrap" *ngIf="rawMaterialSnapshot.length > 0">
-          <table class="table report-table material-snapshot-table">
-            <thead>
-              <tr>
-                <th>Material</th>
-                <th>Code</th>
-                <th>Used Qty</th>
-                <th>Balance Qty</th>
-                <th>Last Rate</th>
-                <th>Balance Value</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let item of rawMaterialSnapshot">
-                <td class="cell-material">
-                  <div class="table-primary">{{ item.name }}</div>
-                </td>
-                <td>{{ item.code || "-" }}</td>
-                <td>{{ item.consumedQty | number: "1.0-2" }} {{ item.unitLabel }}</td>
-                <td>{{ item.currentBalanceQty | number: "1.0-2" }} {{ item.unitLabel }}</td>
-                <td>Rs {{ item.currentRate | number: "1.2-2" }}</td>
-                <td class="amount-cell">Rs {{ item.currentBalanceValue | number: "1.2-2" }}</td>
-              </tr>
-            </tbody>
-          </table>
+      <!-- ── Raw Material Snapshot ── -->
+      <div class="report-card full-width">
+        <div class="report-card-header">
+          <mat-icon>inventory</mat-icon>
+          <span>Raw Material Snapshot</span>
+        </div>
+        <div class="report-card-body">
+          <div class="empty-state-bento compact" *ngIf="rawMaterialSnapshot.length === 0">
+            <mat-icon>inventory_2</mat-icon>
+            <p>No raw materials found</p>
+          </div>
+          <div class="material-snapshot-grid" *ngIf="rawMaterialSnapshot.length > 0">
+            <div class="snapshot-card" *ngFor="let item of rawMaterialSnapshot">
+              <div class="snapshot-header">
+                <div class="snapshot-avatar">
+                  {{ (item.name || 'M')[0].toUpperCase() }}
+                </div>
+                <div class="snapshot-info">
+                  <div class="snapshot-name">{{ item.name }}</div>
+                  <div class="snapshot-code" *ngIf="item.code">#{{ item.code }}</div>
+                </div>
+              </div>
+              <div class="snapshot-stats">
+                <div class="snapshot-stat">
+                  <span class="sstat-label">Used</span>
+                  <span class="sstat-value">{{ item.consumedQty | number: '1.0-0' }}</span>
+                </div>
+                <div class="snapshot-stat">
+                  <span class="sstat-label">Balance</span>
+                  <span class="sstat-value">{{ item.currentBalanceQty | number: '1.0-0' }}</span>
+                </div>
+                <div class="snapshot-stat">
+                  <span class="sstat-label">Rate</span>
+                  <span class="sstat-value">₹{{ item.currentRate | number: '1.2-2' }}</span>
+                </div>
+              </div>
+              <div class="snapshot-value">
+                <span>Balance Value</span>
+                <strong>₹{{ item.currentBalanceValue | number: '1.0-0' }}</strong>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+
+    </ng-container>
   </div>
 </div>

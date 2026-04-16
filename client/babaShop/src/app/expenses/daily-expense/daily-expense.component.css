@@ -22,9 +22,16 @@
 /* ── KPI Row ── */
 .summary-kpi-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(4, 1fr);
   gap: 16px;
   margin-bottom: 20px;
+}
+
+.kpi-card.category .kpi-icon { background: #f0fdf4; color: #15803d; }
+.kpi-card.dept .kpi-icon { background: #eff6ff; color: #1d4ed8; }
+
+.kpi-value.small {
+  font-size: 16px;
 }
 
 .kpi-card {
@@ -151,6 +158,20 @@
   margin-bottom: 16px;
 }
 
+.list-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.panel-count {
+  font-size: 12px;
+  color: #64748b;
+  background: #f1f5f9;
+  padding: 4px 12px;
+  border-radius: 20px;
+}
+
 .filter-bar {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -215,6 +236,33 @@
   border-radius: 8px;
 }
 
+.exp-status-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  margin-left: auto;
+}
+
+.exp-status-badge.active {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.exp-status-badge.cancelled {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.expense-card-v3.cancelled {
+  opacity: 0.65;
+  background: #fef2f2;
+}
+
+.expense-card-v3.cancelled .exp-cat-badge {
+  background: #fecaca;
+}
+
 .exp-amount {
   font-size: 20px;
   font-weight: 900;
@@ -274,6 +322,20 @@
   gap: 2px;
 }
 
+/* ── Pagination ── */
+.pagination-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 16px 0;
+}
+
+.page-info {
+  font-size: 13px;
+  color: #64748b;
+}
+
 /* ── Empty State ── */
 .empty-state-bento {
   display: flex;
@@ -300,6 +362,12 @@
 }
 
 /* ── Responsive ── */
+@media (max-width: 1200px) {
+  .summary-kpi-row {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 @media (max-width: 960px) {
   .expense-layout {
     grid-template-columns: 1fr;

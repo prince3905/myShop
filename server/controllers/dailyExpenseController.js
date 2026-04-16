@@ -116,13 +116,25 @@ exports.getExpenses = async (req, res) => {
       ];
     }
 
-    const expenses = await DailyExpense.find(filter)
-      .sort({ expenseDate: -1, createdAt: -1 })
-      .populate("createdBy", "email role pFname pLname");
+    const page = parseInt(req.query.page || "1", 10);
+    const limit = parseInt(req.query.limit || "50", 10);
+    const skip = (page - 1) * limit;
+
+    const [expenses, totalCount] = await Promise.all([
+      DailyExpense.find(filter)
+        .sort({ expenseDate: -1, createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .populate("createdBy", "email role pFname pLname"),
+      DailyExpense.countDocuments(filter),
+    ]);
 
     return res.json({
       success: true,
       expenses,
+      totalCount,
+      page,
+      totalPages: Math.ceil(totalCount / limit),
     });
   } catch (error) {
     logger.error("Get Daily Expenses Error:", error);
