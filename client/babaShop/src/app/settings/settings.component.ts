@@ -19,6 +19,10 @@ export class SettingsComponent implements OnInit {
     "Shop Settings",
     "Role & Permissions",
     "Notification Settings",
+    "Billing & Subscription",
+    "Integrations",
+    "Data & Backup",
+    "Audit Logs",
     "Session Management",
     "App Preferences",
     "Danger Zone",
@@ -202,6 +206,16 @@ export class SettingsComponent implements OnInit {
       'Danger Zone': 'warning',
     };
     return icons[section] || 'settings';
+  }
+
+  getAuditIcon(action: string): string {
+    const actionLower = (action || '').toLowerCase();
+    if (actionLower.includes('login') || actionLower.includes('auth')) return 'login';
+    if (actionLower.includes('update') || actionLower.includes('edit')) return 'edit';
+    if (actionLower.includes('delete') || actionLower.includes('remove')) return 'delete';
+    if (actionLower.includes('create') || actionLower.includes('add')) return 'add_circle';
+    if (actionLower.includes('password') || actionLower.includes('auth')) return 'lock';
+    return 'info';
   }
 
   loadApiSettings(): void {

@@ -436,6 +436,156 @@
             </div>
           </div>
 
+          <!-- Billing & Subscription -->
+          <div class="content-card" *ngIf="activeSection === 'Billing & Subscription'">
+            <div class="card-header-row">
+              <div class="card-icon"><mat-icon>credit_card</mat-icon></div>
+              <div>
+                <h3 class="card-title">Billing & Subscription</h3>
+                <p class="card-sub">Your current plan and subscription details</p>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="billing-grid">
+                <div class="billing-card">
+                  <mat-icon>workspace_premium</mat-icon>
+                  <div class="billing-info">
+                    <span class="billing-label">Plan</span>
+                    <span class="billing-value">{{ billing?.subscriptionPlan || 'N/A' }}</span>
+                  </div>
+                </div>
+                <div class="billing-card">
+                  <mat-icon>event</mat-icon>
+                  <div class="billing-info">
+                    <span class="billing-label">Expiry</span>
+                    <span class="billing-value">{{ billing?.subscriptionExpiry ? (billing.subscriptionExpiry | date:'dd/MM/yyyy') : 'N/A' }}</span>
+                  </div>
+                </div>
+                <div class="billing-card">
+                  <mat-icon>check_circle</mat-icon>
+                  <div class="billing-info">
+                    <span class="billing-label">Shop Status</span>
+                    <span class="billing-value" [class.active]="billing?.isActive">{{ billing?.isActive ? 'Active' : 'Inactive' }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Integrations -->
+          <div class="content-card" *ngIf="activeSection === 'Integrations'">
+            <div class="card-header-row">
+              <div class="card-icon"><mat-icon>link</mat-icon></div>
+              <div>
+                <h3 class="card-title">Integrations</h3>
+                <p class="card-sub">Connect third-party services</p>
+              </div>
+            </div>
+            <div class="card-body">
+              <form [formGroup]="integrationForm" (ngSubmit)="saveIntegrations()">
+                <div class="checkbox-grid">
+                  <label class="checkbox-card">
+                    <mat-checkbox formControlName="gstEnabled">GST Integration</mat-checkbox>
+                  </label>
+                  <label class="checkbox-card">
+                    <mat-checkbox formControlName="whatsappEnabled">WhatsApp</mat-checkbox>
+                  </label>
+                  <label class="checkbox-card">
+                    <mat-checkbox formControlName="smsEnabled">SMS</mat-checkbox>
+                  </label>
+                  <label class="checkbox-card">
+                    <mat-checkbox formControlName="emailEnabled">Email</mat-checkbox>
+                  </label>
+                </div>
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Payment Gateway</mat-label>
+                  <mat-select formControlName="paymentGateway">
+                    <mat-option value="NONE">None</mat-option>
+                    <mat-option value="RAZORPAY">Razorpay</mat-option>
+                    <mat-option value="STRIPE">Stripe</mat-option>
+                    <mat-option value="PAYU">PayU</mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <div class="form-actions">
+                  <button mat-raised-button color="primary" [disabled]="savingIntegrations">
+                    {{ savingIntegrations ? 'Saving...' : 'Save Integrations' }}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- Data & Backup -->
+          <div class="content-card" *ngIf="activeSection === 'Data & Backup'">
+            <div class="card-header-row">
+              <div class="card-icon"><mat-icon>backup</mat-icon></div>
+              <div>
+                <h3 class="card-title">Data & Backup</h3>
+                <p class="card-sub">Manage backup settings</p>
+              </div>
+            </div>
+            <div class="card-body">
+              <form [formGroup]="backupForm" (ngSubmit)="saveBackupSettings()">
+                <div class="checkbox-grid single">
+                  <label class="checkbox-card">
+                    <mat-checkbox formControlName="autoBackup">Enable Auto Backup</mat-checkbox>
+                  </label>
+                </div>
+                <div class="form-grid-2">
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Frequency</mat-label>
+                    <mat-select formControlName="frequency">
+                      <mat-option value="DAILY">Daily</mat-option>
+                      <mat-option value="WEEKLY">Weekly</mat-option>
+                      <mat-option value="MONTHLY">Monthly</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Last Backup</mat-label>
+                    <input matInput formControlName="lastBackupAt" readonly>
+                  </mat-form-field>
+                </div>
+                <div class="form-actions">
+                  <button mat-raised-button color="primary" [disabled]="savingBackup">
+                    {{ savingBackup ? 'Saving...' : 'Save Backup Settings' }}
+                  </button>
+                  <button type="button" mat-stroked-button color="warn" [disabled]="runningBackup" (click)="runBackupNowAction()">
+                    {{ runningBackup ? 'Running...' : 'Run Backup Now' }}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- Audit Logs -->
+          <div class="content-card" *ngIf="activeSection === 'Audit Logs'">
+            <div class="card-header-row">
+              <div class="card-icon"><mat-icon>history</mat-icon></div>
+              <div>
+                <h3 class="card-title">Audit Logs</h3>
+                <p class="card-sub">Track account changes and activity</p>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="loading-state" *ngIf="loadingAudit">
+                <mat-spinner diameter="24"></mat-spinner>
+              </div>
+              <div class="empty-state" *ngIf="!loadingAudit && auditLogs.length === 0">No audit logs found</div>
+              <div class="audit-list" *ngIf="!loadingAudit && auditLogs.length > 0">
+                <div class="audit-card" *ngFor="let log of auditLogs">
+                  <div class="audit-icon">
+                    <mat-icon>{{ getAuditIcon(log.action) }}</mat-icon>
+                  </div>
+                  <div class="audit-info">
+                    <span class="audit-action">{{ log.action }}</span>
+                    <span class="audit-meta">{{ log.details || '-' }}</span>
+                    <span class="audit-date">{{ log.createdAt | date:'medium' }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Danger Zone -->
           <div class="content-card danger" *ngIf="activeSection === 'Danger Zone'">
             <div class="card-header-row">

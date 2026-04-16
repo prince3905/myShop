@@ -560,6 +560,112 @@ input:checked + .slider:before {
   color: #64748b;
 }
 
+/* ── Billing Cards ── */
+.billing-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.billing-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.billing-card mat-icon {
+  font-size: 28px;
+  width: 28px;
+  height: 28px;
+  color: #6366f1;
+}
+
+.billing-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.billing-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.billing-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.billing-value.active {
+  color: #10b981;
+}
+
+/* ── Audit List ── */
+.audit-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.audit-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.audit-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.audit-icon mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  color: #64748b;
+}
+
+.audit-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.audit-action {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 14px;
+}
+
+.audit-meta {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.audit-date {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
 /* ── Danger Zone ── */
 .danger-actions {
   display: flex;
@@ -601,6 +707,12 @@ input:checked + .slider:before {
 }
 
 /* ── Responsive ── */
+@media (max-width: 768px) {
+  .billing-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 1024px) {
   .settings-layout {
     grid-template-columns: 200px 1fr;
