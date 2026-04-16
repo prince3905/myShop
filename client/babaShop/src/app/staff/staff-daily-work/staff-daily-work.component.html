@@ -1,325 +1,348 @@
 <div class="main-content staff-daily-work-page">
   <div class="container-fluid">
-    <div class="card page-hero-card">
-      <div class="card-header card-header-danger daily-work-hero">
-        <div>
-          <h2 class="daily-work-hero-title">Daily Work & Attendance</h2>
-          <p class="daily-work-hero-subtitle">Kis worker ne kis din kya kaam kiya, attendance kya thi aur kitna earn hua.</p>
+
+    <!-- ── Hero Header ── -->
+    <div class="work-hero-bar">
+      <div>
+        <h2 class="hero-title">Daily Work & Attendance</h2>
+        <p class="hero-sub">Kis worker ne kis din kya kaam kiya, attendance kya thi aur kitna earn hua.</p>
+      </div>
+    </div>
+
+    <!-- ── Summary KPI Cards ── -->
+    <div class="summary-kpi-row">
+      <div class="kpi-card entries">
+        <div class="kpi-icon"><mat-icon>assignment</mat-icon></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Total Entries</div>
+          <div class="kpi-value">{{ summary.totalEntries || 0 }}</div>
+          <div class="kpi-meta">work records</div>
+        </div>
+      </div>
+      <div class="kpi-card present">
+        <div class="kpi-icon"><mat-icon>check_circle</mat-icon></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Present</div>
+          <div class="kpi-value">{{ summary.presentCount || 0 }}</div>
+          <div class="kpi-meta">full day</div>
+        </div>
+      </div>
+      <div class="kpi-card half-day">
+        <div class="kpi-icon"><mat-icon>schedule</mat-icon></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Half Day</div>
+          <div class="kpi-value">{{ summary.halfDayCount || 0 }}</div>
+          <div class="kpi-meta">half shift</div>
+        </div>
+      </div>
+      <div class="kpi-card absent">
+        <div class="kpi-icon"><mat-icon>cancel</mat-icon></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Absent</div>
+          <div class="kpi-value">{{ summary.absentCount || 0 }}</div>
+          <div class="kpi-meta">no work</div>
+        </div>
+      </div>
+      <div class="kpi-card units">
+        <div class="kpi-icon"><mat-icon>inventory_2</mat-icon></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Units Done</div>
+          <div class="kpi-value">{{ summary.totalUnitsCompleted || 0 | number: '1.0-0' }}</div>
+          <div class="kpi-meta">completed</div>
+        </div>
+      </div>
+      <div class="kpi-card earned">
+        <div class="kpi-icon"><mat-icon>payments</mat-icon></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Total Earned</div>
+          <div class="kpi-value">₹{{ summary.totalEarned || 0 | number: '1.0-0' }}</div>
+          <div class="kpi-meta">wages paid</div>
         </div>
       </div>
     </div>
 
-    <div class="row summary-row">
-      <div class="col-md-2 col-sm-6"><div class="card summary-card"><div class="card-body"><div class="summary-label">Entries</div><div class="summary-value">{{ summary.totalEntries || 0 }}</div></div></div></div>
-      <div class="col-md-2 col-sm-6"><div class="card summary-card"><div class="card-body"><div class="summary-label">Present</div><div class="summary-value">{{ summary.presentCount || 0 }}</div></div></div></div>
-      <div class="col-md-2 col-sm-6"><div class="card summary-card"><div class="card-body"><div class="summary-label">Half Day</div><div class="summary-value">{{ summary.halfDayCount || 0 }}</div></div></div></div>
-      <div class="col-md-2 col-sm-6"><div class="card summary-card"><div class="card-body"><div class="summary-label">Absent</div><div class="summary-value">{{ summary.absentCount || 0 }}</div></div></div></div>
-      <div class="col-md-2 col-sm-6"><div class="card summary-card"><div class="card-body"><div class="summary-label">Units Done</div><div class="summary-value">{{ summary.totalUnitsCompleted || 0 | number: '1.0-2' }}</div></div></div></div>
-      <div class="col-md-2 col-sm-6"><div class="card summary-card"><div class="card-body"><div class="summary-label">Earned</div><div class="summary-value">Rs {{ summary.totalEarned || 0 | number: '1.2-2' }}</div></div></div></div>
-    </div>
-
-    <div class="row breakdown-row">
-      <div class="col-md-12">
-        <div class="card breakdown-card">
-          <div class="card-body">
-            <div class="breakdown-title">Attendance Breakdown</div>
-            <div *ngIf="loadingSummary" class="breakdown-empty">Loading breakdown...</div>
-            <div *ngIf="!loadingSummary && summary.byAttendance?.length === 0" class="breakdown-empty">No daily work data yet.</div>
-            <div class="breakdown-grid" *ngIf="!loadingSummary && summary.byAttendance?.length > 0">
-              <div class="breakdown-item" *ngFor="let row of summary.byAttendance; trackBy: trackBySummary">
-                <div class="breakdown-name">{{ row._id }}</div>
-                <div class="breakdown-meta">{{ row.count }} entries</div>
-                <div class="breakdown-amount">Rs {{ row.totalEarned | number: '1.2-2' }}</div>
-              </div>
-            </div>
-          </div>
-        </div>
+    <!-- ── Attendance Breakdown ── -->
+    <div class="attendance-breakdown-row" *ngIf="!loadingSummary && summary.byAttendance?.length > 0">
+      <div class="breakdown-card" *ngFor="let row of summary.byAttendance; trackBy: trackBySummary">
+        <div class="breakdown-label">{{ row._id }}</div>
+        <div class="breakdown-count">{{ row.count }} entries</div>
+        <div class="breakdown-amount">₹{{ row.totalEarned | number: '1.2-2' }}</div>
       </div>
     </div>
 
-    <div class="row">
-      <div class="col-lg-4">
-        <div class="card">
-          <div class="card-header card-header-danger">
-            <div class="quick-header">
-              <h4 class="card-title">{{ getFormTitle() }}</h4>
-              <button
-                type="button"
-                mat-stroked-button
-                class="quick-toggle-btn"
-                (click)="showAdvanced = !showAdvanced"
-              >
-                {{ showAdvanced ? 'Hide Details' : 'More Details' }}
-              </button>
+    <!-- ── Main Two-Column Layout ── -->
+    <div class="work-layout">
+
+      <!-- ── Left: Add/Edit Form ── -->
+      <div class="form-panel">
+        <div class="form-panel-header">
+          <mat-icon>{{ editingDailyWorkId ? 'edit_note' : 'add_task' }}</mat-icon>
+          <div>
+            <div class="panel-title">{{ getFormTitle() }}</div>
+            <div class="panel-sub" *ngIf="editingDailyWorkId">Editing selected entry</div>
+          </div>
+          <button type="button" mat-stroked-button class="more-toggle-btn" (click)="showAdvanced = !showAdvanced">
+            {{ showAdvanced ? 'Less' : 'More' }}
+          </button>
+        </div>
+
+        <form #dailyWorkNgForm="ngForm" (ngSubmit)="submitDailyWork(dailyWorkNgForm)" class="work-form">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Staff / Worker</mat-label>
+            <mat-select [(ngModel)]="dailyWorkForm.staff" name="staff" (selectionChange)="onStaffChange()" required>
+              <mat-option *ngFor="let staff of staffOptions" [value]="staff._id">
+                {{ staff.name }} · {{ staff.staffType || 'Worker' }} · {{ staff.workType }}
+              </mat-option>
+            </mat-select>
+            <mat-icon matPrefix>person</mat-icon>
+          </mat-form-field>
+
+          <div class="quick-info-row" *ngIf="selectedStaff">
+            <span class="quick-chip role">{{ selectedStaff.staffType || 'Worker' }}</span>
+            <span class="quick-chip work">{{ selectedStaff.workType }}</span>
+            <span class="quick-chip pay">{{ selectedStaff.rateType }}</span>
+          </div>
+
+          <div class="inline-fields">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Entry Date</mat-label>
+              <input matInput type="date" [(ngModel)]="dailyWorkForm.entryDate" name="entryDate" required>
+              <mat-icon matPrefix>calendar_today</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Attendance</mat-label>
+              <mat-select [(ngModel)]="dailyWorkForm.attendanceStatus" name="attendanceStatus" (selectionChange)="onAttendanceChange()" required>
+                <mat-option *ngFor="let status of attendanceOptions" [value]="status">{{ status }}</mat-option>
+              </mat-select>
+              <mat-icon matPrefix>how_to_reg</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <div class="inline-fields">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Factory Product</mat-label>
+              <mat-select [(ngModel)]="dailyWorkForm.factoryProduct" name="factoryProduct" (selectionChange)="onFactoryProductChange()">
+                <mat-option value="">None</mat-option>
+                <mat-option *ngFor="let item of factoryProductOptions" [value]="item._id">
+                  {{ item.name }} · ₹{{ item.workerPieceRate | number: '1.0-2' }}/{{ item.unitLabel }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>inventory</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>{{ isPieceRateStaff ? 'Quantity' : 'Units' }}</mat-label>
+              <input matInput type="number" min="0" [(ngModel)]="dailyWorkForm.unitsCompleted" name="unitsCompleted" (ngModelChange)="onUnitsChange()">
+              <mat-icon matPrefix>numbers</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <!-- Earned Preview -->
+          <div class="earned-preview-card">
+            <div class="earned-preview-row">
+              <div class="earned-preview-item">
+                <span class="earned-preview-label">Item Rate</span>
+                <strong>
+                  {{ selectedFactoryProduct ? ('₹' + (selectedFactoryProduct.workerPieceRate | number: '1.0-2') + '/' + selectedFactoryProduct.unitLabel) : (isPieceRateStaff ? 'Select product' : 'Auto') }}
+                </strong>
+              </div>
+              <div class="earned-preview-item highlight">
+                <span class="earned-preview-label">Earned Amount</span>
+                <strong>₹{{ earnedAmountPreview | number: '1.2-2' }}</strong>
+              </div>
             </div>
           </div>
-          <div class="card-body">
-            <form #dailyWorkNgForm="ngForm" (ngSubmit)="submitDailyWork(dailyWorkNgForm)">
-              <div class="edit-banner" *ngIf="editingDailyWorkId">Editing selected daily work entry.</div>
 
-              <div class="quick-entry-shell">
-                <mat-form-field class="example-full-width">
-                  <mat-label>Staff / Worker</mat-label>
-                  <mat-select [(ngModel)]="dailyWorkForm.staff" name="staff" (selectionChange)="onStaffChange()" required>
-                    <mat-option *ngFor="let staff of staffOptions" [value]="staff._id">
-                      {{ staff.name }} · {{ staff.staffType || 'Worker' }} · {{ staff.workType }}
-                    </mat-option>
-                  </mat-select>
-                </mat-form-field>
-
-                <div class="quick-info-row" *ngIf="selectedStaff">
-                  <div class="quick-chip">{{ selectedStaff.staffType || 'Worker' }}</div>
-                  <div class="quick-chip muted">{{ selectedStaff.workType }}</div>
-                  <div class="quick-chip muted">{{ selectedStaff.rateType }}</div>
-                </div>
-
-                <div class="row quick-main-row">
-                  <div class="col-md-8">
-                    <mat-form-field class="example-full-width">
-                      <mat-label>{{ isPieceRateStaff ? 'Factory Product' : 'Factory Product' }}</mat-label>
-                      <mat-select
-                        [(ngModel)]="dailyWorkForm.factoryProduct"
-                        name="factoryProduct"
-                        (selectionChange)="onFactoryProductChange()"
-                        [required]="isPieceRateStaff"
-                      >
-                        <mat-option value="" *ngIf="!isPieceRateStaff">None</mat-option>
-                        <mat-option *ngFor="let item of factoryProductOptions" [value]="item._id">
-                          {{ item.name }} · Rs {{ item.workerPieceRate | number: '1.0-2' }}/{{ item.unitLabel }}
-                        </mat-option>
-                      </mat-select>
-                      <mat-hint *ngIf="isPieceRateStaff">Piece worker ke liye factory product select karna zaroori hai.</mat-hint>
-                    </mat-form-field>
-                  </div>
-                  <div class="col-md-4">
-                    <mat-form-field class="example-full-width">
-                      <mat-label>{{ isPieceRateStaff ? 'Qty' : 'Units' }}</mat-label>
-                      <input matInput type="number" min="0" [(ngModel)]="dailyWorkForm.unitsCompleted" name="unitsCompleted" (ngModelChange)="onUnitsChange()">
-                    </mat-form-field>
-                  </div>
-                </div>
-
-                <div class="quick-preview-grid">
-                  <div class="value-preview-card compact">
-                    <span>Item Rate</span>
-                    <strong>
-                      {{ selectedFactoryProduct ? ('Rs ' + (selectedFactoryProduct.workerPieceRate | number: '1.0-2') + '/' + selectedFactoryProduct.unitLabel) : (isPieceRateStaff ? 'Select product' : 'Auto') }}
-                    </strong>
-                  </div>
-                  <div class="value-preview-card compact">
-                    <span>Earned Amount</span>
-                    <strong>Rs {{ earnedAmountPreview | number: '1.2-2' }}</strong>
-                  </div>
-                </div>
-
-                <div class="material-preview-card" *ngIf="materialRequirementPreview.length > 0">
-                  <div class="material-preview-header">
-                    <div class="table-primary">Material Requirement</div>
-                    <div class="table-note" *ngIf="hasMaterialShortage">Stock shortage detected</div>
-                    <div class="table-note" *ngIf="!hasMaterialShortage">Available stock looks sufficient</div>
-                  </div>
-
-                  <div class="material-preview-list">
-                    <div class="material-preview-row" *ngFor="let row of materialRequirementPreview" [class.shortage]="row.hasShortage">
-                      <div>
-                        <div class="table-primary">{{ row.materialName }}</div>
-                        <div class="table-note">
-                          Required {{ row.requiredQty | number: '1.0-2' }} {{ row.unitLabel }}
-                          · Available {{ row.availableQty | number: '1.0-2' }} {{ row.unitLabel }}
-                        </div>
-                      </div>
-                      <strong *ngIf="!row.hasShortage">OK</strong>
-                      <strong *ngIf="row.hasShortage">Short {{ row.shortageQty | number: '1.0-2' }}</strong>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="edit-banner stock-warning-banner" *ngIf="hasMaterialShortage">
-                  Selected product ke liye raw material stock kam hai. Save backend se block ho jayega jab tak stock available na ho.
-                </div>
+          <!-- Material Requirement Preview -->
+          <div class="material-preview-card" *ngIf="materialRequirementPreview.length > 0">
+            <div class="material-preview-header">
+              <mat-icon>inventory</mat-icon>
+              <span>Material Requirement</span>
+              <span class="shortage-tag" *ngIf="hasMaterialShortage">Stock Shortage</span>
+            </div>
+            <div class="material-preview-list">
+              <div class="material-preview-row" *ngFor="let row of materialRequirementPreview" [class.shortage]="row.hasShortage">
+                <div class="mat-name">{{ row.materialName }}</div>
+                <div class="mat-qty">Req: {{ row.requiredQty | number: '1.0-2' }} · Avl: {{ row.availableQty | number: '1.0-2' }}</div>
+                <strong class="mat-status" [class.ok]="!row.hasShortage" [class.warn]="row.hasShortage">
+                  {{ row.hasShortage ? 'Short ' + (row.shortageQty | number: '1.0-2') : 'OK' }}
+                </strong>
               </div>
+            </div>
+          </div>
 
-              <div class="advanced-panel" *ngIf="showAdvanced">
-                <div class="advanced-title">More Details</div>
+          <div class="edit-banner" *ngIf="hasMaterialShortage">
+            Stock kam hai. Save backend se block ho jayega jab tak stock available na ho.
+          </div>
 
-                <div class="row">
-                  <div class="col-md-6">
-                    <mat-form-field class="example-full-width">
-                      <mat-label>Entry Date</mat-label>
-                      <input matInput type="date" [(ngModel)]="dailyWorkForm.entryDate" name="entryDate" required>
-                    </mat-form-field>
-                  </div>
-                  <div class="col-md-6">
-                    <mat-form-field class="example-full-width">
-                      <mat-label>Attendance</mat-label>
-                      <mat-select [(ngModel)]="dailyWorkForm.attendanceStatus" name="attendanceStatus" (selectionChange)="onAttendanceChange()" required>
-                        <mat-option *ngFor="let status of attendanceOptions" [value]="status">{{ status }}</mat-option>
-                      </mat-select>
-                    </mat-form-field>
-                  </div>
-                </div>
+          <!-- Advanced Panel -->
+          <div class="advanced-panel" *ngIf="showAdvanced">
+            <div class="advanced-divider">
+              <span>More Details</span>
+            </div>
 
-                <mat-form-field class="example-full-width">
-                  <mat-label>Work Type</mat-label>
-                  <input matInput [(ngModel)]="dailyWorkForm.workType" name="workType" required>
-                </mat-form-field>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Work Type</mat-label>
+              <input matInput [(ngModel)]="dailyWorkForm.workType" name="workType">
+              <mat-icon matPrefix>work</mat-icon>
+            </mat-form-field>
 
-                <mat-form-field class="example-full-width">
-                  <mat-label>Work Details</mat-label>
-                  <textarea matInput rows="3" [(ngModel)]="dailyWorkForm.workDetails" name="workDetails"></textarea>
-                </mat-form-field>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Work Details</mat-label>
+              <textarea matInput rows="2" [(ngModel)]="dailyWorkForm.workDetails" name="workDetails"></textarea>
+              <mat-icon matPrefix>description</mat-icon>
+            </mat-form-field>
 
-                <mat-form-field class="example-full-width">
-                  <mat-label>Linked Job / Production Ref</mat-label>
-                  <input matInput [(ngModel)]="dailyWorkForm.linkedJob" name="linkedJob">
-                </mat-form-field>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Linked Job / Production Ref</mat-label>
+              <input matInput [(ngModel)]="dailyWorkForm.linkedJob" name="linkedJob">
+              <mat-icon matPrefix>link</mat-icon>
+            </mat-form-field>
 
-                <mat-form-field class="example-full-width">
-                  <mat-label>Note</mat-label>
-                  <textarea matInput rows="2" [(ngModel)]="dailyWorkForm.note" name="note"></textarea>
-                </mat-form-field>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Note</mat-label>
+              <textarea matInput rows="2" [(ngModel)]="dailyWorkForm.note" name="note"></textarea>
+              <mat-icon matPrefix>notes</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <div class="form-actions">
+            <button mat-raised-button color="primary" type="submit" [disabled]="savingDailyWork || dailyWorkNgForm.invalid || loadingStaffs || hasMaterialShortage">
+              <mat-icon>{{ savingDailyWork ? 'hourglass_top' : 'save' }}</mat-icon>
+              {{ getSubmitLabel() }}
+            </button>
+            <button *ngIf="editingDailyWorkId" type="button" mat-stroked-button (click)="cancelEdit(dailyWorkNgForm)">
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- ── Right: Work Entries List ── -->
+      <div class="list-panel">
+        <div class="list-panel-header">
+          <div class="panel-title">Daily Work Entries</div>
+          <div class="filter-bar">
+            <mat-form-field appearance="outline" class="filter-field">
+              <mat-label>Search</mat-label>
+              <input matInput [(ngModel)]="filters.search" placeholder="Staff, work details">
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="filter-field">
+              <mat-label>Staff</mat-label>
+              <mat-select [(ngModel)]="filters.staff">
+                <mat-option value="">All</mat-option>
+                <mat-option *ngFor="let staff of staffOptions" [value]="staff._id">{{ staff.name }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="filter-field">
+              <mat-label>Attendance</mat-label>
+              <mat-select [(ngModel)]="filters.attendanceStatus">
+                <mat-option value="">All</mat-option>
+                <mat-option *ngFor="let status of attendanceOptions" [value]="status">{{ status }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="filter-field">
+              <mat-label>Verify</mat-label>
+              <mat-select [(ngModel)]="filters.verificationStatus">
+                <mat-option value="">All</mat-option>
+                <mat-option value="PENDING">Pending</mat-option>
+                <mat-option value="APPROVED">Approved</mat-option>
+                <mat-option value="PARTIAL">Partial</mat-option>
+                <mat-option value="REJECTED">Rejected</mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="filter-field">
+              <mat-label>From</mat-label>
+              <input matInput type="date" [(ngModel)]="filters.dateFrom">
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="filter-field">
+              <mat-label>To</mat-label>
+              <input matInput type="date" [(ngModel)]="filters.dateTo">
+            </mat-form-field>
+          </div>
+          <div class="filter-actions">
+            <button mat-raised-button color="primary" (click)="loadDailyWorks()">Apply</button>
+            <button mat-stroked-button (click)="showToday()">Today</button>
+            <button mat-stroked-button (click)="clearFilters()">Reset</button>
+          </div>
+          <div class="shop-context-chip" *ngIf="currentShopLabel">
+            Shop: {{ currentShopLabel }}
+          </div>
+        </div>
+
+        <div class="state-row" *ngIf="loadingDailyWorks">
+          <mat-spinner diameter="24"></mat-spinner> Loading entries...
+        </div>
+
+        <div class="empty-state-bento" *ngIf="!loadingDailyWorks && dailyWorks.length === 0">
+          <mat-icon>event_note</mat-icon>
+          <p>No daily work entries found.</p>
+        </div>
+
+        <div class="work-cards-grid" *ngIf="!loadingDailyWorks && dailyWorks.length > 0">
+          <div class="work-card-v3" *ngFor="let item of dailyWorks">
+            <div class="work-card-top">
+              <div class="worker-avatar">
+                {{ (item.staff?.name || 'S')[0].toUpperCase() }}
               </div>
+              <div class="worker-info">
+                <div class="worker-name">{{ item.staff?.name || 'Unknown' }}</div>
+                <div class="worker-type">{{ item.staff?.workType || item.workType || '-' }}</div>
+              </div>
+              <div class="attendance-badge" [class.present]="item.attendanceStatus === 'PRESENT'" [class.half-day]="item.attendanceStatus === 'HALF_DAY'" [class.absent]="item.attendanceStatus === 'ABSENT'">
+                {{ item.attendanceStatus === 'HALF_DAY' ? 'Half Day' : item.attendanceStatus === 'ABSENT' ? 'Absent' : 'Present' }}
+              </div>
+            </div>
 
-              <div class="form-actions">
-                <button mat-raised-button class="btn btn-danger submit-btn" [disabled]="savingDailyWork || dailyWorkNgForm.invalid || loadingStaffs || hasMaterialShortage">
-                  {{ getSubmitLabel() }}
+            <div class="work-details-row">
+              <div class="work-date">
+                <mat-icon>calendar_today</mat-icon>
+                {{ item.entryDate | date: 'dd MMM yyyy' }}
+              </div>
+              <div class="work-verification" *ngIf="item.verificationStatus">
+                <span class="verify-chip" [class.pending]="item.verificationStatus === 'PENDING'" [class.approved]="item.verificationStatus === 'APPROVED'" [class.rejected]="item.verificationStatus === 'REJECTED'">
+                  {{ item.verificationStatus }}
+                </span>
+              </div>
+            </div>
+
+            <div class="work-chips">
+              <span class="work-chip product" *ngIf="item.factoryProductName">
+                {{ item.factoryProductName }} · {{ item.unitsCompleted || 0 }} {{ item.unit || 'PCS' }}
+              </span>
+              <span class="work-chip details" *ngIf="item.workDetails">{{ item.workDetails }}</span>
+              <span class="work-chip job" *ngIf="item.linkedJob">{{ item.linkedJob }}</span>
+            </div>
+
+            <div class="material-info" *ngIf="getMaterialUsagePreview(item)">
+              <mat-icon>inventory_2</mat-icon>
+              {{ getMaterialUsagePreview(item) }}
+            </div>
+
+            <div class="work-footer">
+              <div class="earned-amount">
+                <mat-icon>payments</mat-icon>
+                ₹{{ item.earnedAmount | number: '1.2-2' }}
+              </div>
+              <div class="work-meta">
+                <span *ngIf="item.createdBy?.pFname || item.createdBy?.email">
+                  {{ item.createdBy?.pFname || item.createdBy?.email }}
+                </span>
+              </div>
+              <div class="work-actions" *ngIf="canEditRow(item) || canDeleteRow(item)">
+                <button mat-icon-button color="primary" [disabled]="deletingId === item._id" (click)="startEdit(item)" title="Edit">
+                  <mat-icon>edit</mat-icon>
                 </button>
-                <button
-                  *ngIf="editingDailyWorkId"
-                  type="button"
-                  mat-stroked-button
-                  class="btn btn-outline-danger submit-btn"
-                  (click)="cancelEdit(dailyWorkNgForm)"
-                >
-                  Cancel Edit
+                <button *ngIf="canDeleteRow(item)" mat-icon-button color="warn" [disabled]="deletingId === item._id" (click)="deleteDailyWork(item)" title="Delete">
+                  <mat-icon>{{ deletingId === item._id ? 'hourglass_top' : 'delete' }}</mat-icon>
                 </button>
               </div>
-            </form>
-          </div>
-        </div>
-      </div>
-
-      <div class="col-lg-8">
-        <div class="card">
-          <div class="card-header card-header-danger">
-            <h4 class="card-title">Daily Work Entries</h4>
-          </div>
-          <div class="card-body">
-            <div class="quick-info-row page-context-row">
-              <div class="quick-chip">Current Shop: {{ currentShopLabel }}</div>
-              <div class="quick-chip muted" *ngIf="activeFilterSummary">Filters: {{ activeFilterSummary }}</div>
-              <div class="quick-chip muted" *ngIf="!activeFilterSummary">Filters: View All</div>
-            </div>
-
-            <div class="filter-grid">
-              <mat-form-field class="example-full-width">
-                <mat-label>Search</mat-label>
-                <input matInput [(ngModel)]="filters.search" name="search" placeholder="Staff, work details, job ref">
-              </mat-form-field>
-              <mat-form-field class="example-full-width">
-                <mat-label>Staff</mat-label>
-                <mat-select [(ngModel)]="filters.staff" name="filterStaff">
-                  <mat-option value="">All</mat-option>
-                  <mat-option *ngFor="let staff of staffOptions" [value]="staff._id">{{ staff.name }}</mat-option>
-                </mat-select>
-              </mat-form-field>
-              <mat-form-field class="example-full-width">
-                <mat-label>Attendance</mat-label>
-                <mat-select [(ngModel)]="filters.attendanceStatus" name="filterAttendance">
-                  <mat-option value="">All</mat-option>
-                  <mat-option *ngFor="let status of attendanceOptions" [value]="status">{{ status }}</mat-option>
-                </mat-select>
-              </mat-form-field>
-              <mat-form-field class="example-full-width">
-                <mat-label>Verification</mat-label>
-                <mat-select [(ngModel)]="filters.verificationStatus" name="filterVerification">
-                  <mat-option value="">All</mat-option>
-                  <mat-option value="PENDING">Pending</mat-option>
-                  <mat-option value="APPROVED">Approved</mat-option>
-                  <mat-option value="PARTIAL">Partial</mat-option>
-                  <mat-option value="REJECTED">Rejected</mat-option>
-                </mat-select>
-              </mat-form-field>
-              <mat-form-field class="example-full-width">
-                <mat-label>From Date</mat-label>
-                <input matInput type="date" [(ngModel)]="filters.dateFrom" name="dateFrom">
-              </mat-form-field>
-              <mat-form-field class="example-full-width">
-                <mat-label>To Date</mat-label>
-                <input matInput type="date" [(ngModel)]="filters.dateTo" name="dateTo">
-              </mat-form-field>
-            </div>
-
-            <div class="filter-actions">
-              <button mat-raised-button class="btn btn-danger" (click)="loadDailyWorks()">Apply Filters</button>
-              <button mat-stroked-button class="btn btn-outline-danger" (click)="showToday()">Today</button>
-              <button mat-stroked-button class="btn btn-outline-danger" (click)="viewAll()">View All</button>
-              <button mat-stroked-button class="btn btn-outline-danger" (click)="clearFilters()">Reset</button>
-            </div>
-
-            <div *ngIf="loadingDailyWorks" class="table-empty">Loading daily work entries...</div>
-            <div *ngIf="!loadingDailyWorks && dailyWorks.length === 0" class="table-empty">No daily work entries found.</div>
-
-            <div class="daily-work-table-wrap" *ngIf="!loadingDailyWorks && dailyWorks.length > 0">
-              <table class="table daily-work-table compact-work-table">
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>Staff</th>
-                    <th>Attendance</th>
-                    <th>Work</th>
-                    <th>Earned</th>
-                    <th>By</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let item of dailyWorks">
-                    <td class="cell-date">{{ item.entryDate | date: 'dd/MM/yyyy' }}</td>
-                    <td class="cell-staff">
-                      <div class="table-primary">{{ item.staff?.name || '-' }}</div>
-                      <div class="table-note">{{ item.staff?.workType || '-' }}</div>
-                    </td>
-                    <td class="cell-status">
-                      <span class="type-chip" [class.half-day]="item.attendanceStatus === 'HALF_DAY'" [class.absent]="item.attendanceStatus === 'ABSENT'">
-                        {{ item.attendanceStatus }}
-                      </span>
-                      <div class="table-note">{{ item.verificationStatus || 'PENDING' }}</div>
-                    </td>
-                    <td class="cell-work">
-                      <div class="table-primary">{{ item.workType || '-' }}</div>
-                      <div class="table-note" *ngIf="item.factoryProductName">{{ item.factoryProductName }} · {{ item.unitsCompleted || 0 }} {{ item.unit || 'PCS' }}</div>
-                      <div class="table-note" *ngIf="!item.factoryProductName && item.workItemName">{{ item.workItemName }} · {{ item.unitsCompleted || 0 }} {{ item.unit || 'PCS' }}</div>
-                      <div class="table-note" *ngIf="getWorkerRatePreview(item)">Worker Rate {{ getWorkerRatePreview(item) }}</div>
-                      <div class="table-note" *ngIf="getMaterialUsagePreview(item)">{{ getMaterialUsagePreview(item) }}</div>
-                      <div class="table-note" *ngIf="getWastePreview(item)">{{ getWastePreview(item) }}</div>
-                      <div class="table-note" *ngIf="item.workDetails">{{ item.workDetails }}</div>
-                      <div class="table-note" *ngIf="item.linkedJob">{{ item.linkedJob }}</div>
-                    </td>
-                    <td class="amount-cell cell-earned">
-                      <div>Rs {{ item.earnedAmount | number: '1.2-2' }}</div>
-                      <div class="table-note" *ngIf="canViewSensitivePricing && getActualBoxCostPreview(item) > 0">
-                        Actual Box Cost Rs {{ getActualBoxCostPreview(item) | number: '1.2-2' }}
-                      </div>
-                    </td>
-                    <td class="cell-by">{{ item.createdBy?.pFname || item.createdBy?.email || '-' }}</td>
-                    <td class="cell-action">
-                      <div class="table-actions" *ngIf="canEditRow(item) || canDeleteRow(item)">
-                        <button mat-icon-button class="table-edit-btn" [disabled]="deletingId === item._id" (click)="startEdit(item)" aria-label="Edit daily work" title="Edit">
-                          <mat-icon>edit</mat-icon>
-                        </button>
-                        <button *ngIf="canDeleteRow(item)" mat-icon-button class="table-delete-btn" [disabled]="deletingId === item._id" (click)="deleteDailyWork(item)" aria-label="Delete daily work" title="Delete">
-                          <mat-icon>{{ deletingId === item._id ? 'hourglass_top' : 'delete' }}</mat-icon>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
             </div>
           </div>
         </div>
       </div>
+
     </div>
   </div>
 </div>
