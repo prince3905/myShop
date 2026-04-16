@@ -1,290 +1,284 @@
-<div class="main-content page-shell">
+<div class="main-content verification-page">
   <div class="container-fluid">
-    <div class="page-header-card">
+
+    <!-- ── Hero Header ── -->
+    <div class="verify-hero-bar">
       <div>
-        <h2>Factory Verification</h2>
-        <p>Daily work se bana maal verify karo. Approve hone ke baad hi aage shop push flow chalega.</p>
+        <h2 class="hero-title">Factory Verification</h2>
+        <p class="hero-sub">Daily work se bana maal verify karo. Approve hone ke baad hi aage shop push flow chalega.</p>
       </div>
     </div>
 
-    <div class="summary-grid">
-      <div class="summary-card">
-        <span class="summary-label">Pending</span>
-        <strong>{{ summary.pending }}</strong>
-      </div>
-      <div class="summary-card">
-        <span class="summary-label">Approved</span>
-        <strong>{{ summary.approved }}</strong>
-      </div>
-      <div class="summary-card">
-        <span class="summary-label">Partial</span>
-        <strong>{{ summary.partial }}</strong>
-      </div>
-      <div class="summary-card">
-        <span class="summary-label">Rejected</span>
-        <strong>{{ summary.rejected }}</strong>
-      </div>
-    </div>
-
-    <div class="summary-grid">
-      <div class="summary-card">
-        <span class="summary-label">Factory Pending Qty</span>
-        <strong>{{ factoryPendingQty || 0 }}</strong>
-      </div>
-      <div class="summary-card">
-        <span class="summary-label">Ready To Push</span>
-        <strong>{{ readyToPushCount || 0 }}</strong>
-      </div>
-      <div class="summary-card">
-        <span class="summary-label">Pending Products</span>
-        <strong>{{ productWiseFactoryPending.length || 0 }}</strong>
-      </div>
-      <div class="summary-card">
-        <span class="summary-label">Meaning</span>
-        <strong>Factory Me Hai</strong>
-        <div class="table-note">Verified hai, abhi kisi shop me push nahi hua.</div>
-      </div>
-    </div>
-
-    <div class="filter-actions status-shortcuts">
-      <button mat-stroked-button class="btn btn-outline-danger" [class.active-status]="!filters.verificationStatus" (click)="showAll()">All</button>
-      <button mat-stroked-button class="btn btn-outline-danger" [class.active-status]="filters.verificationStatus === 'PENDING'" (click)="showStatus('PENDING')">Pending</button>
-      <button mat-stroked-button class="btn btn-outline-danger" [class.active-status]="filters.verificationStatus === 'APPROVED'" (click)="showStatus('APPROVED')">Approved</button>
-      <button mat-stroked-button class="btn btn-outline-danger" [class.active-status]="filters.verificationStatus === 'PARTIAL'" (click)="showStatus('PARTIAL')">Partial</button>
-      <button mat-stroked-button class="btn btn-outline-danger" [class.active-status]="filters.verificationStatus === 'REJECTED'" (click)="showStatus('REJECTED')">Rejected</button>
-    </div>
-
-    <div class="card filter-card">
-      <div class="card-header card-header-danger">
-        <h4 class="card-title">Verification Filters</h4>
-      </div>
-      <div class="card-body">
-        <div class="filter-grid">
-          <mat-form-field class="example-full-width">
-            <mat-label>Search</mat-label>
-            <input matInput [(ngModel)]="filters.search" name="search" placeholder="Worker, product, note">
-          </mat-form-field>
-          <mat-form-field class="example-full-width">
-            <mat-label>Status</mat-label>
-            <mat-select [(ngModel)]="filters.verificationStatus" name="verificationStatus">
-              <mat-option value="">All</mat-option>
-              <mat-option value="PENDING">Pending</mat-option>
-              <mat-option value="APPROVED">Approved</mat-option>
-              <mat-option value="PARTIAL">Partial</mat-option>
-              <mat-option value="REJECTED">Rejected</mat-option>
-            </mat-select>
-          </mat-form-field>
-          <mat-form-field class="example-full-width">
-            <mat-label>From Date</mat-label>
-            <input matInput type="date" [(ngModel)]="filters.dateFrom" name="dateFrom">
-          </mat-form-field>
-          <mat-form-field class="example-full-width">
-            <mat-label>To Date</mat-label>
-            <input matInput type="date" [(ngModel)]="filters.dateTo" name="dateTo">
-          </mat-form-field>
+    <!-- ── Status Summary KPI Cards ── -->
+    <div class="summary-kpi-row">
+      <div class="kpi-card pending" [class.active]="filters.verificationStatus === 'PENDING'" (click)="showStatus('PENDING')">
+        <div class="kpi-icon"><mat-icon>hourglass_top</mat-icon></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Pending</div>
+          <div class="kpi-value">{{ summary.pending || 0 }}</div>
         </div>
-
-        <div class="filter-actions">
-          <button mat-raised-button class="btn btn-danger" (click)="loadRows()">Apply Filters</button>
-          <button mat-stroked-button class="btn btn-outline-danger" (click)="resetFilters()">Reset</button>
+      </div>
+      <div class="kpi-card approved" [class.active]="filters.verificationStatus === 'APPROVED'" (click)="showStatus('APPROVED')">
+        <div class="kpi-icon"><mat-icon>check_circle</mat-icon></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Approved</div>
+          <div class="kpi-value">{{ summary.approved || 0 }}</div>
+        </div>
+      </div>
+      <div class="kpi-card partial" [class.active]="filters.verificationStatus === 'PARTIAL'" (click)="showStatus('PARTIAL')">
+        <div class="kpi-icon"><mat-icon>adjust</mat-icon></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Partial</div>
+          <div class="kpi-value">{{ summary.partial || 0 }}</div>
+        </div>
+      </div>
+      <div class="kpi-card rejected" [class.active]="filters.verificationStatus === 'REJECTED'" (click)="showStatus('REJECTED')">
+        <div class="kpi-icon"><mat-icon>cancel</mat-icon></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Rejected</div>
+          <div class="kpi-value">{{ summary.rejected || 0 }}</div>
         </div>
       </div>
     </div>
 
-    <div *ngIf="loading" class="table-empty">Loading verification list...</div>
-
-    <div class="card" *ngIf="!loading">
-      <div class="card-header card-header-danger">
-        <h4 class="card-title">Factory Verification Entries</h4>
+    <!-- ── Factory Status Cards ── -->
+    <div class="factory-status-row">
+      <div class="factory-status-card">
+        <div class="fs-icon"><mat-icon>inventory</mat-icon></div>
+        <div class="fs-content">
+          <div class="fs-label">Factory Pending Qty</div>
+          <div class="fs-value">{{ factoryPendingQty || 0 }}</div>
+        </div>
       </div>
-      <div class="card-body">
-        <div *ngIf="rows.length === 0" class="table-empty">No factory verification entries found.</div>
-        <div class="table-wrap" *ngIf="rows.length > 0">
-          <table class="table report-table verification-table">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Worker</th>
-                <th>Product</th>
-                <th>Qty</th>
-                <th>Cost / Box</th>
-                <th>Pricing</th>
-                <th>Status</th>
-                <th>Shop Push</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let row of rows">
-                <td class="cell-date">{{ row.entryDate | date: "dd/MM/yyyy" }}</td>
-                <td class="cell-worker">
-                  <div class="table-primary">{{ row.staff?.name || '-' }}</div>
-                  <div class="table-note">{{ row.workType || '-' }}</div>
-                </td>
-                <td class="cell-product">
-                  <div class="table-primary">{{ row.factoryProductName || row.factoryProduct?.name || '-' }}</div>
-                  <div class="table-note material-preview">{{ getMaterialPreview(row) }}</div>
-                  <div class="table-note" *ngIf="row.verificationNote">{{ row.verificationNote }}</div>
-                </td>
-                <td class="cell-qty">
-                  <div>{{ row.unitsCompleted || 0 }} {{ row.unit || 'PCS' }}</div>
-                  <div class="table-note" *ngIf="row.verifiedQty">Verified {{ row.verifiedQty }} {{ row.unit || 'PCS' }}</div>
-                </td>
-                <td class="amount-cell cell-cost">
-                  <ng-container *ngIf="canViewSensitivePricing; else hiddenCostBlock">
-                    <div>Rs {{ getActualBoxCost(row) | number: "1.2-2" }}</div>
-                    <div class="table-note">
-                      M {{ getMaterialCost(row) | number: "1.2-2" }} · W {{ row.earnedAmount | number: "1.2-2" }}
-                    </div>
-                  </ng-container>
-                  <ng-template #hiddenCostBlock>
-                    <div class="table-note">Cost hidden</div>
-                  </ng-template>
-                </td>
-                <td class="amount-cell cell-pricing">
-                  <div>Sell Rs {{ getShopSellingPrice(row) | number: "1.2-2" }}</div>
-                  <div class="table-note" *ngIf="canViewSensitivePricing && row.stockPushStatus === 'PUSHED'">
-                    Shop Cost Rs {{ getDisplayedCostPrice(row) | number: "1.2-2" }}
-                  </div>
-                  <div class="table-note" *ngIf="canViewSensitivePricing && row.stockPushStatus !== 'PUSHED'">
-                    Will Push Cost Rs {{ getActualBoxCost(row) | number: "1.2-2" }}
-                  </div>
-                </td>
-                <td class="cell-status">
-                  <span class="status-chip" [class.inactive]="row.verificationStatus === 'REJECTED'">
-                    {{ row.verificationStatus || 'PENDING' }}
-                  </span>
-                </td>
-                <td class="cell-push">
-                  <div class="table-note" *ngIf="row.stockPushStatus === 'PUSHED'">
-                    Pushed {{ row.pushedQty || 0 }} {{ row.unit || 'PCS' }}
-                  </div>
-                  <div class="table-note" *ngIf="row.stockPushStatus === 'PUSHED' && row.pushedToShop?.name">
-                    To {{ getShopLabel(row.pushedToShop) }}
-                  </div>
-                  <div class="table-note" *ngIf="row.stockPushStatus === 'PUSHED' && row.pushedAt">
-                    {{ row.pushedAt | date: "dd/MM/yyyy hh:mm a" }}
-                  </div>
-                  <mat-form-field
-                    class="example-full-width compact-push-select"
-                    *ngIf="row.stockPushStatus !== 'PUSHED' && (row.verificationStatus === 'APPROVED' || row.verificationStatus === 'PARTIAL')"
-                  >
-                    <mat-label>Target Shop</mat-label>
-                    <mat-select [(ngModel)]="selectedTargetShopByRow[row._id]" name="targetShop_{{ row._id }}">
-                      <mat-option *ngFor="let shop of filteredTargetShopOptions" [value]="shop._id">
-                        {{ getShopLabel(shop) }}
-                      </mat-option>
-                    </mat-select>
-                  </mat-form-field>
-                  <button
-                    *ngIf="row.stockPushStatus !== 'PUSHED' && (row.verificationStatus === 'APPROVED' || row.verificationStatus === 'PARTIAL')"
-                    mat-stroked-button
-                    class="btn btn-outline-danger btn-sm"
-                    [disabled]="actingId === row._id"
-                    (click)="pushToShop(row)"
-                  >
-                    Push To Shop
-                  </button>
-                  <div class="table-note" *ngIf="row.stockPushStatus !== 'PUSHED' && row.verificationStatus !== 'APPROVED' && row.verificationStatus !== 'PARTIAL'">
-                    Verify first
-                  </div>
-                </td>
-                <td class="cell-actions">
-                  <div class="table-actions">
-                    <button mat-stroked-button class="btn btn-outline-danger btn-sm" [disabled]="actingId === row._id || row.stockPushStatus === 'PUSHED'" (click)="approve(row)">Approve</button>
-                    <button mat-stroked-button class="btn btn-outline-danger btn-sm" [disabled]="actingId === row._id || row.stockPushStatus === 'PUSHED'" (click)="partialApprove(row)">Partial</button>
-                    <button mat-stroked-button class="btn btn-outline-danger btn-sm" [disabled]="actingId === row._id || row.stockPushStatus === 'PUSHED'" (click)="reject(row)">Reject</button>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+      <div class="factory-status-card ready">
+        <div class="fs-icon"><mat-icon>local_shipping</mat-icon></div>
+        <div class="fs-content">
+          <div class="fs-label">Ready To Push</div>
+          <div class="fs-value">{{ readyToPushCount || 0 }}</div>
+        </div>
+      </div>
+      <div class="factory-status-card products">
+        <div class="fs-icon"><mat-icon>category</mat-icon></div>
+        <div class="fs-content">
+          <div class="fs-label">Pending Products</div>
+          <div class="fs-value">{{ productWiseFactoryPending.length || 0 }}</div>
         </div>
       </div>
     </div>
 
-    <div class="card" *ngIf="!loading">
-      <div class="card-header card-header-danger">
-        <h4 class="card-title">Factory Push History</h4>
+    <!-- ── Status Filter Tabs ── -->
+    <div class="status-tabs">
+      <button mat-stroked-button [class.active]="!filters.verificationStatus" (click)="showAll()">
+        All
+      </button>
+      <button mat-stroked-button [class.active]="filters.verificationStatus === 'PENDING'" (click)="showStatus('PENDING')">
+        Pending
+      </button>
+      <button mat-stroked-button [class.active]="filters.verificationStatus === 'APPROVED'" (click)="showStatus('APPROVED')">
+        Approved
+      </button>
+      <button mat-stroked-button [class.active]="filters.verificationStatus === 'PARTIAL'" (click)="showStatus('PARTIAL')">
+        Partial
+      </button>
+      <button mat-stroked-button [class.active]="filters.verificationStatus === 'REJECTED'" (click)="showStatus('REJECTED')">
+        Rejected
+      </button>
+    </div>
+
+    <!-- ── Filters ── -->
+    <div class="filters-panel">
+      <div class="filter-bar">
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>Search</mat-label>
+          <input matInput [(ngModel)]="filters.search" placeholder="Worker, product, note">
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>From</mat-label>
+          <input matInput type="date" [(ngModel)]="filters.dateFrom">
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>To</mat-label>
+          <input matInput type="date" [(ngModel)]="filters.dateTo">
+        </mat-form-field>
       </div>
-      <div class="card-body">
-        <div *ngIf="pushHistoryRows.length === 0" class="table-empty">No factory push history yet.</div>
-        <div class="table-wrap" *ngIf="pushHistoryRows.length > 0">
-          <table class="table report-table verification-table">
-            <thead>
-              <tr>
-                <th>Pushed At</th>
-                <th>Production Date</th>
-                <th>Worker</th>
-                <th>Product</th>
-                <th>Qty</th>
-                <th>From Factory</th>
-                <th>To Shop</th>
-                <th>SKU</th>
-                <th *ngIf="canViewSensitivePricing">Cost</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let row of pushHistoryRows">
-                <td>{{ row.pushedAt | date: "dd/MM/yyyy hh:mm a" }}</td>
-                <td>{{ row.productionDate | date: "dd/MM/yyyy" }}</td>
-                <td>
-                  <div class="table-primary">{{ row.staff?.name || "-" }}</div>
-                  <div class="table-note">{{ row.staff?.workType || "-" }}</div>
-                </td>
-                <td>{{ row.factoryProduct?.name || "-" }}</td>
-                <td>{{ row.quantity || 0 }} {{ row.unit || "PCS" }}</td>
-                <td>
-                  <div class="table-primary">{{ getShopLabel(row.sourceShop) }}</div>
-                </td>
-                <td>
-                  <div class="table-primary">{{ getShopLabel(row.targetShop) }}</div>
-                  <div class="table-note" *ngIf="isSameShopPush(row)">Same Shop Push</div>
-                </td>
-                <td>{{ row.sku || row.targetVariation?.sku || "-" }}</td>
-                <td *ngIf="canViewSensitivePricing">
-                  <div>Rs {{ row.costPerUnit | number: "1.2-2" }}/{{ row.unit || "PCS" }}</div>
-                  <div class="table-note">Total Rs {{ row.totalCost | number: "1.2-2" }}</div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+      <div class="filter-actions">
+        <button mat-raised-button color="primary" (click)="loadRows()">Apply</button>
+        <button mat-stroked-button (click)="resetFilters()">Reset</button>
+      </div>
+    </div>
+
+    <!-- ── Loading State ── -->
+    <div class="state-row" *ngIf="loading">
+      <mat-spinner diameter="24"></mat-spinner> Loading verification entries...
+    </div>
+
+    <!-- ── Empty State ── -->
+    <div class="empty-state-bento" *ngIf="!loading && rows.length === 0">
+      <mat-icon>fact_check</mat-icon>
+      <p>No factory verification entries found.</p>
+    </div>
+
+    <!-- ── Verification Cards Grid ── -->
+    <div class="verify-cards-grid" *ngIf="!loading && rows.length > 0">
+      <div class="verify-card-v3" *ngFor="let row of rows" [class]="'status-' + (row.verificationStatus || 'PENDING').toLowerCase()">
+        <div class="verify-card-header">
+          <div class="worker-avatar">
+            {{ (row.staff?.name || 'W')[0].toUpperCase() }}
+          </div>
+          <div class="worker-info">
+            <div class="worker-name">{{ row.staff?.name || 'Unknown' }}</div>
+            <div class="worker-type">{{ row.workType || row.staff?.workType || '-' }}</div>
+          </div>
+          <div class="status-badge" [class]="'badge-' + (row.verificationStatus || 'PENDING').toLowerCase()">
+            {{ row.verificationStatus || 'PENDING' }}
+          </div>
+        </div>
+
+        <div class="product-info-section">
+          <div class="product-name">{{ row.factoryProductName || row.factoryProduct?.name || '-' }}</div>
+          <div class="product-date">
+            <mat-icon>calendar_today</mat-icon>
+            {{ row.entryDate | date: 'dd MMM yyyy' }}
+          </div>
+        </div>
+
+        <div class="qty-display">
+          <div class="qty-item">
+            <span class="qty-label">Completed</span>
+            <span class="qty-value">{{ row.unitsCompleted || 0 }} {{ row.unit || 'PCS' }}</span>
+          </div>
+          <div class="qty-item" *ngIf="row.verifiedQty">
+            <span class="qty-label">Verified</span>
+            <span class="qty-value highlight">{{ row.verifiedQty }} {{ row.unit || 'PCS' }}</span>
+          </div>
+        </div>
+
+        <div class="material-preview" *ngIf="getMaterialPreview(row)">
+          <mat-icon>list_alt</mat-icon>
+          {{ getMaterialPreview(row) }}
+        </div>
+
+        <div class="cost-section" *ngIf="canViewSensitivePricing">
+          <div class="cost-row">
+            <span>Box Cost</span>
+            <strong>₹{{ getActualBoxCost(row) | number: '1.2-2' }}</strong>
+          </div>
+          <div class="cost-row">
+            <span>Sell Price</span>
+            <strong>₹{{ getShopSellingPrice(row) | number: '1.2-2' }}</strong>
+          </div>
+        </div>
+
+        <div class="verification-note" *ngIf="row.verificationNote">
+          <mat-icon>notes</mat-icon>
+          {{ row.verificationNote }}
+        </div>
+
+        <!-- Push Section -->
+        <div class="push-section" *ngIf="row.stockPushStatus !== 'PUSHED'">
+          <ng-container *ngIf="row.verificationStatus === 'APPROVED' || row.verificationStatus === 'PARTIAL'">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Target Shop</mat-label>
+              <mat-select [(ngModel)]="selectedTargetShopByRow[row._id]">
+                <mat-option *ngFor="let shop of filteredTargetShopOptions" [value]="shop._id">
+                  {{ getShopLabel(shop) }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+            <button mat-raised-button color="warn" class="push-btn" [disabled]="actingId === row._id" (click)="pushToShop(row)">
+              <mat-icon>{{ actingId === row._id ? 'hourglass_top' : 'local_shipping' }}</mat-icon>
+              Push To Shop
+            </button>
+          </ng-container>
+          <div class="verify-hint" *ngIf="row.verificationStatus !== 'APPROVED' && row.verificationStatus !== 'PARTIAL'">
+            <mat-icon>info</mat-icon>
+            Verify first to push
+          </div>
+        </div>
+
+        <div class="pushed-info" *ngIf="row.stockPushStatus === 'PUSHED'">
+          <mat-icon>check_circle</mat-icon>
+          <div>
+            <div>Pushed {{ row.pushedQty || 0 }} {{ row.unit || 'PCS' }}</div>
+            <div class="pushed-detail" *ngIf="row.pushedToShop?.name">To {{ getShopLabel(row.pushedToShop) }}</div>
+            <div class="pushed-detail" *ngIf="row.pushedAt">{{ row.pushedAt | date: 'dd MMM hh:mm a' }}</div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons" *ngIf="row.stockPushStatus !== 'PUSHED'">
+          <button mat-stroked-button class="action-btn approve" [disabled]="actingId === row._id" (click)="approve(row)">
+            <mat-icon>check</mat-icon> Approve
+          </button>
+          <button mat-stroked-button class="action-btn partial" [disabled]="actingId === row._id" (click)="partialApprove(row)">
+            <mat-icon>adjust</mat-icon> Partial
+          </button>
+          <button mat-stroked-button class="action-btn reject" [disabled]="actingId === row._id" (click)="reject(row)">
+            <mat-icon>close</mat-icon> Reject
+          </button>
         </div>
       </div>
     </div>
 
-    <div class="card" *ngIf="!loading">
-      <div class="card-header card-header-danger">
-        <h4 class="card-title">Factory Pending Stock</h4>
+    <!-- ── Push History Section ── -->
+    <div class="section-card" *ngIf="!loading && pushHistoryRows.length > 0">
+      <div class="section-header">
+        <mat-icon>history</mat-icon>
+        <span>Factory Push History</span>
       </div>
-      <div class="card-body">
-        <div *ngIf="productWiseFactoryPending.length === 0" class="table-empty">
-          Abhi koi verified-but-not-pushed maal factory me pending nahi hai.
-        </div>
-        <div class="table-wrap" *ngIf="productWiseFactoryPending.length > 0">
-          <table class="table report-table verification-table">
-            <thead>
-              <tr>
-                <th>Product</th>
-                <th>Pending Qty</th>
-                <th>Open Entries</th>
-                <th>Last Production</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let row of productWiseFactoryPending">
-                <td>
-                  <div class="table-primary">{{ row.productName }}</div>
-                  <div class="table-note">Abhi factory me pada hai, shop push pending hai.</div>
-                </td>
-                <td>{{ row.qty || 0 }} {{ row.unit || "PCS" }}</td>
-                <td>{{ row.entries || 0 }}</td>
-                <td>{{ row.lastProductionDate | date: "dd/MM/yyyy" }}</td>
-              </tr>
-            </tbody>
-          </table>
+
+      <div class="push-history-grid">
+        <div class="push-history-card" *ngFor="let row of pushHistoryRows">
+          <div class="ph-worker">
+            <div class="ph-avatar">{{ (row.staff?.name || 'W')[0].toUpperCase() }}</div>
+            <div class="ph-worker-info">
+              <div class="ph-name">{{ row.staff?.name || '-' }}</div>
+              <div class="ph-type">{{ row.staff?.workType || '-' }}</div>
+            </div>
+          </div>
+          <div class="ph-product">{{ row.factoryProduct?.name || '-' }}</div>
+          <div class="ph-qty">{{ row.quantity || 0 }} {{ row.unit || 'PCS' }}</div>
+          <div class="ph-route">
+            <span>{{ getShopLabel(row.sourceShop) }}</span>
+            <mat-icon>arrow_forward</mat-icon>
+            <span>{{ getShopLabel(row.targetShop) }}</span>
+          </div>
+          <div class="ph-time">
+            <mat-icon>schedule</mat-icon>
+            {{ row.pushedAt | date: 'dd MMM hh:mm a' }}
+          </div>
+          <div class="ph-sku" *ngIf="row.sku || row.targetVariation?.sku">
+            SKU: {{ row.sku || row.targetVariation?.sku }}
+          </div>
+          <div class="ph-cost" *ngIf="canViewSensitivePricing && row.costPerUnit">
+            ₹{{ row.costPerUnit | number: '1.2-2' }}/{{ row.unit || 'PCS' }}
+          </div>
         </div>
       </div>
     </div>
+
+    <!-- ── Factory Pending Stock ── -->
+    <div class="section-card" *ngIf="!loading && productWiseFactoryPending.length > 0">
+      <div class="section-header">
+        <mat-icon>inventory_2</mat-icon>
+        <span>Factory Pending Stock</span>
+        <span class="pending-count">{{ productWiseFactoryPending.length }} products</span>
+      </div>
+
+      <div class="pending-stock-grid">
+        <div class="pending-stock-card" *ngFor="let row of productWiseFactoryPending">
+          <div class="ps-product">{{ row.productName }}</div>
+          <div class="ps-qty">
+            <strong>{{ row.qty || 0 }}</strong>
+            <span>{{ row.unit || 'PCS' }}</span>
+          </div>
+          <div class="ps-meta">
+            <span>{{ row.entries || 0 }} entries</span>
+            <span *ngIf="row.lastProductionDate">Last: {{ row.lastProductionDate | date: 'dd MMM' }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
