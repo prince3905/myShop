@@ -1,283 +1,370 @@
 <div class="main-content raw-material-purchase-page">
   <div class="container-fluid">
-    <div class="card page-hero-card">
-      <div class="card-header card-header-danger">
-        <h2 class="page-title">Raw Material Purchase</h2>
-        <p class="page-subtitle">Distributor se material kharido, receipt verify karo, phir raw material balance me count lo.</p>
-        <p class="page-subtitle" *ngIf="currentShopId">Current Shop: {{ currentShopId }}</p>
+
+    <!-- ── Hero Header ── -->
+    <div class="purchase-hero-bar">
+      <div>
+        <h2 class="hero-title">Raw Material Purchase</h2>
+        <p class="hero-sub">Distributor se material kharido, receipt verify karo, phir raw material balance me count lo.</p>
+      </div>
+      <div class="shop-chip" *ngIf="currentShopId">
+        <mat-icon>store</mat-icon>
+        {{ currentShopId }}
       </div>
     </div>
 
-    <div class="row summary-row">
-      <div class="col-lg-2 col-md-4 col-sm-6"><div class="card summary-card"><div class="card-body"><div class="summary-label">Total Purchases</div><div class="summary-value">{{ summary.totalPurchases || 0 }}</div></div></div></div>
-      <div class="col-lg-2 col-md-4 col-sm-6"><div class="card summary-card"><div class="card-body"><div class="summary-label">Pending</div><div class="summary-value">{{ summary.pendingCount || 0 }}</div></div></div></div>
-      <div class="col-lg-2 col-md-4 col-sm-6"><div class="card summary-card"><div class="card-body"><div class="summary-label">Approved</div><div class="summary-value">{{ summary.approvedCount || 0 }}</div></div></div></div>
-      <div class="col-lg-3 col-md-6 col-sm-6"><div class="card summary-card"><div class="card-body"><div class="summary-label">Received Qty</div><div class="summary-value">{{ summary.totalReceivedQty || 0 | number:'1.0-2' }}</div></div></div></div>
-      <div class="col-lg-3 col-md-6 col-sm-6"><div class="card summary-card"><div class="card-body"><div class="summary-label">Purchase Value</div><div class="summary-value">Rs {{ summary.totalValue || 0 | number:'1.2-2' }}</div></div></div></div>
-      <div class="col-lg-3 col-md-6 col-sm-6"><div class="card summary-card"><div class="card-body"><div class="summary-label">Paid</div><div class="summary-value">Rs {{ summary.totalPaid || 0 | number:'1.2-2' }}</div></div></div></div>
-      <div class="col-lg-2 col-md-4 col-sm-6"><div class="card summary-card"><div class="card-body"><div class="summary-label">Due</div><div class="summary-value">Rs {{ summary.totalDue || 0 | number:'1.2-2' }}</div></div></div></div>
+    <!-- ── Summary KPI Cards ── -->
+    <div class="summary-kpi-row">
+      <div class="kpi-card total">
+        <div class="kpi-icon"><mat-icon>receipt_long</mat-icon></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Total Purchases</div>
+          <div class="kpi-value">{{ summary.totalPurchases || 0 }}</div>
+        </div>
+      </div>
+      <div class="kpi-card pending">
+        <div class="kpi-icon"><mat-icon>hourglass_top</mat-icon></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Pending</div>
+          <div class="kpi-value">{{ summary.pendingCount || 0 }}</div>
+        </div>
+      </div>
+      <div class="kpi-card approved">
+        <div class="kpi-icon"><mat-icon>check_circle</mat-icon></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Approved</div>
+          <div class="kpi-value">{{ summary.approvedCount || 0 }}</div>
+        </div>
+      </div>
+      <div class="kpi-card received">
+        <div class="kpi-icon"><mat-icon>inventory</mat-icon></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Received Qty</div>
+          <div class="kpi-value">{{ summary.totalReceivedQty || 0 | number: '1.0-0' }}</div>
+        </div>
+      </div>
+      <div class="kpi-card value">
+        <div class="kpi-icon"><mat-icon>currency_rupee</mat-icon></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Purchase Value</div>
+          <div class="kpi-value">₹{{ summary.totalValue || 0 | number: '1.0-0' }}</div>
+        </div>
+      </div>
+      <div class="kpi-card paid">
+        <div class="kpi-icon"><mat-icon>payments</mat-icon></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Paid</div>
+          <div class="kpi-value">₹{{ summary.totalPaid || 0 | number: '1.0-0' }}</div>
+        </div>
+      </div>
+      <div class="kpi-card due">
+        <div class="kpi-icon"><mat-icon>account_balance_wallet</mat-icon></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Due</div>
+          <div class="kpi-value">₹{{ summary.totalDue || 0 | number: '1.0-0' }}</div>
+        </div>
+      </div>
     </div>
 
-    <div class="row">
-      <div class="col-lg-5">
-        <div class="card">
-          <div class="card-header card-header-danger">
-            <h4 class="card-title">{{ editingPurchaseId ? 'Edit Pending Receipt' : 'Add Raw Material Purchase' }}</h4>
+    <!-- ── Main Two-Column Layout ── -->
+    <div class="purchase-layout">
+
+      <!-- ── Left: Add/Edit Form ── -->
+      <div class="form-panel">
+        <div class="form-panel-header">
+          <mat-icon>{{ editingPurchaseId ? 'edit_note' : 'add_shopping_cart' }}</mat-icon>
+          <div>
+            <div class="panel-title">{{ editingPurchaseId ? 'Edit Pending Receipt' : 'Add Purchase' }}</div>
+            <div class="panel-sub" *ngIf="editingPurchaseId">Editing pending receipt</div>
           </div>
-          <div class="card-body">
-            <form #purchaseNgForm="ngForm" (ngSubmit)="submit(purchaseNgForm)">
-              <div class="edit-banner" *ngIf="editingPurchaseId">Editing pending receipt. Approve after verifying qty and rate.</div>
+        </div>
 
-              <div class="row">
-                <div class="col-md-6">
-                  <mat-form-field class="example-full-width">
-                    <mat-label>Distributor</mat-label>
-                    <mat-select [(ngModel)]="purchaseForm.distributor" name="distributor" required>
-                      <mat-option *ngFor="let distributor of distributors" [value]="distributor._id">
-                        {{ distributor.name }}
-                      </mat-option>
-                    </mat-select>
-                  </mat-form-field>
-                </div>
-                <div class="col-md-6">
-                  <mat-form-field class="example-full-width">
-                    <mat-label>Purchase Date</mat-label>
-                    <input matInput [matDatepicker]="purchasePicker" [(ngModel)]="purchaseForm.purchaseDate" name="purchaseDate" required>
-                    <mat-datepicker-toggle matSuffix [for]="purchasePicker"></mat-datepicker-toggle>
-                    <mat-datepicker #purchasePicker></mat-datepicker>
-                  </mat-form-field>
-                </div>
-              </div>
+        <form #purchaseNgForm="ngForm" (ngSubmit)="submit(purchaseNgForm)" class="purchase-form">
+          <div class="edit-banner" *ngIf="editingPurchaseId">
+            <mat-icon>info</mat-icon>
+            Editing pending receipt. Approve after verifying qty and rate.
+          </div>
 
-              <div class="row">
-                <div class="col-md-6">
-                  <mat-form-field class="example-full-width">
-                    <mat-label>Invoice No (Auto)</mat-label>
-                    <input matInput [(ngModel)]="purchaseForm.invoiceNo" name="invoiceNo" placeholder="Auto if blank">
-                  </mat-form-field>
+          <div class="inline-fields">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Distributor</mat-label>
+              <mat-select [(ngModel)]="purchaseForm.distributor" name="distributor" required>
+                <mat-option *ngFor="let distributor of distributors" [value]="distributor._id">
+                  {{ distributor.name }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>local_shipping</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Purchase Date</mat-label>
+              <input matInput [matDatepicker]="purchasePicker" [(ngModel)]="purchaseForm.purchaseDate" name="purchaseDate" required>
+              <mat-datepicker-toggle matSuffix [for]="purchasePicker"></mat-datepicker-toggle>
+              <mat-datepicker #purchasePicker></mat-datepicker>
+            </mat-form-field>
+          </div>
+
+          <div class="inline-fields">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Invoice No (Auto)</mat-label>
+              <input matInput [(ngModel)]="purchaseForm.invoiceNo" name="invoiceNo" placeholder="Auto if blank">
+              <mat-icon matPrefix>tag</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Payment Method</mat-label>
+              <mat-select [(ngModel)]="purchaseForm.paymentMethod" name="paymentMethod">
+                <mat-option *ngFor="let method of paymentMethodOptions" [value]="method">{{ method }}</mat-option>
+              </mat-select>
+              <mat-icon matPrefix>payment</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <div class="inline-fields">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Paid Amount</mat-label>
+              <input matInput type="number" min="0" [(ngModel)]="purchaseForm.paidAmount" name="paidAmount">
+              <mat-icon matPrefix>currency_rupee</mat-icon>
+            </mat-form-field>
+
+            <div class="subtotal-preview">
+              <div class="subtotal-label">Subtotal</div>
+              <div class="subtotal-value">₹{{ subtotalPreview | number: '1.2-2' }}</div>
+            </div>
+          </div>
+
+          <!-- Material Lines -->
+          <div class="lines-section">
+            <div class="lines-header">
+              <span>Material Lines</span>
+              <button type="button" mat-stroked-button class="add-line-btn" (click)="addItem()">
+                <mat-icon>add</mat-icon> Add Line
+              </button>
+            </div>
+
+            <div class="material-lines">
+              <div class="material-line" *ngFor="let item of purchaseForm.items; let i = index">
+                <div class="line-header">
+                  <span>Item {{ i + 1 }}</span>
+                  <button *ngIf="purchaseForm.items.length > 1" type="button" mat-icon-button class="remove-btn" (click)="removeItem(i)">
+                    <mat-icon>close</mat-icon>
+                  </button>
                 </div>
-                <div class="col-md-6">
-                  <div class="value-preview-card compact-preview">
-                    <span>Subtotal</span>
-                    <strong>Rs {{ subtotalPreview | number:'1.2-2' }}</strong>
+
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Raw Material</mat-label>
+                  <mat-select [(ngModel)]="item.rawMaterial" [name]="'rawMaterial' + i" (selectionChange)="onMaterialChange(i)" required>
+                    <mat-option *ngFor="let material of rawMaterials" [value]="material._id">
+                      {{ material.name }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+
+                <div class="inline-fields three-col">
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Qty</mat-label>
+                    <input matInput type="number" min="0.01" [(ngModel)]="item.quantity" [name]="'quantity' + i" required>
+                  </mat-form-field>
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Rate</mat-label>
+                    <input matInput type="number" min="0" [(ngModel)]="item.rate" [name]="'rate' + i" required>
+                  </mat-form-field>
+                  <div class="line-total-preview">
+                    <div class="line-total-label">Total</div>
+                    <div class="line-total-value">₹{{ ((item.quantity || 0) * (item.rate || 0)) | number: '1.2-2' }}</div>
                   </div>
                 </div>
+
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Line Note</mat-label>
+                  <input matInput [(ngModel)]="item.note" [name]="'note' + i">
+                </mat-form-field>
               </div>
+            </div>
+          </div>
 
-              <div class="row">
-                <div class="col-md-6">
-                  <mat-form-field class="example-full-width">
-                    <mat-label>Paid Amount</mat-label>
-                    <input matInput type="number" min="0" [(ngModel)]="purchaseForm.paidAmount" name="paidAmount">
-                  </mat-form-field>
-                </div>
-                <div class="col-md-6">
-                  <mat-form-field class="example-full-width">
-                    <mat-label>Payment Method</mat-label>
-                    <mat-select [(ngModel)]="purchaseForm.paymentMethod" name="paymentMethod">
-                      <mat-option *ngFor="let method of paymentMethodOptions" [value]="method">{{ method }}</mat-option>
-                    </mat-select>
-                  </mat-form-field>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Note</mat-label>
+            <textarea matInput rows="2" [(ngModel)]="purchaseForm.note" name="note"></textarea>
+            <mat-icon matPrefix>notes</mat-icon>
+          </mat-form-field>
+
+          <div class="form-actions">
+            <button mat-raised-button color="warn" type="submit" [disabled]="saving || purchaseNgForm.invalid || !canManage">
+              <mat-icon>{{ saving ? 'hourglass_top' : 'save' }}</mat-icon>
+              {{ saving ? (editingPurchaseId ? 'Updating...' : 'Saving...') : (editingPurchaseId ? 'Update Receipt' : 'Save Purchase') }}
+            </button>
+            <button *ngIf="editingPurchaseId" type="button" mat-stroked-button (click)="resetForm(purchaseNgForm)">
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- ── Right: Purchase List ── -->
+      <div class="list-panel">
+        <div class="list-panel-header">
+          <div class="panel-title">Pending / Approved Receipts</div>
+          <div class="filter-bar">
+            <mat-form-field appearance="outline" class="filter-field">
+              <mat-label>Search</mat-label>
+              <input matInput [(ngModel)]="filters.search" placeholder="Invoice or material">
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="filter-field">
+              <mat-label>Status</mat-label>
+              <mat-select [(ngModel)]="filters.status">
+                <mat-option value="">All</mat-option>
+                <mat-option value="PENDING_RECEIPT">Pending</mat-option>
+                <mat-option value="APPROVED">Approved</mat-option>
+                <mat-option value="CANCELLED">Cancelled</mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="filter-field">
+              <mat-label>Distributor</mat-label>
+              <mat-select [(ngModel)]="filters.distributor">
+                <mat-option value="">All</mat-option>
+                <mat-option *ngFor="let distributor of distributors" [value]="distributor._id">{{ distributor.name }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+          <div class="filter-bar">
+            <mat-form-field appearance="outline" class="filter-field">
+              <mat-label>From</mat-label>
+              <input matInput [matDatepicker]="fromPicker" [(ngModel)]="filters.dateFrom">
+              <mat-datepicker-toggle matSuffix [for]="fromPicker"></mat-datepicker-toggle>
+              <mat-datepicker #fromPicker></mat-datepicker>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="filter-field">
+              <mat-label>To</mat-label>
+              <input matInput [matDatepicker]="toPicker" [(ngModel)]="filters.dateTo">
+              <mat-datepicker-toggle matSuffix [for]="toPicker"></mat-datepicker-toggle>
+              <mat-datepicker #toPicker></mat-datepicker>
+            </mat-form-field>
+          </div>
+          <div class="filter-actions">
+            <button mat-raised-button color="warn" (click)="loadPurchases()">Apply</button>
+            <button mat-stroked-button (click)="resetFilters()">View All</button>
+          </div>
+        </div>
+
+        <div class="state-row" *ngIf="loading">
+          <mat-spinner diameter="24"></mat-spinner> Loading purchases...
+        </div>
+
+        <div class="empty-state-bento" *ngIf="!loading && purchases.length === 0">
+          <mat-icon>shopping_cart</mat-icon>
+          <p>No raw material purchases found.</p>
+        </div>
+
+        <div class="purchase-cards-grid" *ngIf="!loading && purchases.length > 0">
+          <div class="purchase-card-v3" *ngFor="let purchase of purchases" [class]="'status-' + getStatusClass(purchase.status)">
+            <div class="purchase-card-header">
+              <div class="distributor-avatar">
+                {{ (purchase.distributor?.name || 'D')[0].toUpperCase() }}
+              </div>
+              <div class="distributor-info">
+                <div class="distributor-name">{{ purchase.distributor?.name || 'Unknown' }}</div>
+                <div class="purchase-date">
+                  <mat-icon>calendar_today</mat-icon>
+                  {{ purchase.purchaseDate | date: 'dd MMM yyyy' }}
                 </div>
               </div>
+              <div class="status-badge" [class]="'badge-' + getStatusClass(purchase.status)">
+                {{ purchase.status }}
+              </div>
+            </div>
 
-              <div class="line-items-card">
-                <div class="line-items-head">
-                  <strong>Material Lines</strong>
-                  <button type="button" mat-stroked-button class="btn btn-outline-danger btn-sm" (click)="addItem()">+ Add Line</button>
-                </div>
+            <div class="invoice-row">
+              <span class="invoice-label">Invoice:</span>
+              <span class="invoice-value">{{ purchase.invoiceNo || ('RM-' + (purchase._id | slice:-6)) }}</span>
+            </div>
 
-                <div class="line-item-row" *ngFor="let item of purchaseForm.items; let i = index">
-                  <mat-form-field class="example-full-width">
-                    <mat-label>Raw Material</mat-label>
-                    <mat-select [(ngModel)]="item.rawMaterial" [name]="'rawMaterial' + i" (selectionChange)="onMaterialChange(i)" required>
-                      <mat-option *ngFor="let material of rawMaterials" [value]="material._id">
-                        {{ material.name }}
-                      </mat-option>
-                    </mat-select>
-                  </mat-form-field>
+            <div class="amount-grid">
+              <div class="amount-item">
+                <span class="amount-label">Value</span>
+                <span class="amount-value">₹{{ purchase.subtotal || 0 | number: '1.2-2' }}</span>
+              </div>
+              <div class="amount-item">
+                <span class="amount-label">Paid</span>
+                <span class="amount-value">₹{{ purchase.paidAmount || 0 | number: '1.2-2' }}</span>
+              </div>
+              <div class="amount-item due">
+                <span class="amount-label">Due</span>
+                <span class="amount-value">₹{{ purchase.dueAmount || 0 | number: '1.2-2' }}</span>
+              </div>
+              <div class="amount-item">
+                <span class="amount-label">Received</span>
+                <span class="amount-value">{{ getPurchaseReceivedQty(purchase) | number: '1.0-2' }}</span>
+              </div>
+            </div>
 
-                  <div class="row">
-                    <div class="col-md-6">
-                      <mat-form-field class="example-full-width">
-                        <mat-label>Qty</mat-label>
-                        <input matInput type="number" min="0.01" [(ngModel)]="item.quantity" [name]="'quantity' + i" required>
-                      </mat-form-field>
-                    </div>
-                    <div class="col-md-6">
-                      <mat-form-field class="example-full-width">
-                        <mat-label>Rate</mat-label>
-                        <input matInput type="number" min="0" [(ngModel)]="item.rate" [name]="'rate' + i" required>
-                      </mat-form-field>
-                    </div>
-                  </div>
-
-                  <mat-form-field class="example-full-width">
-                    <mat-label>Line Note</mat-label>
-                    <input matInput [(ngModel)]="item.note" [name]="'note' + i">
-                  </mat-form-field>
-
-                  <div class="line-row-footer">
-                    <span class="line-total">Line Total: Rs {{ (item.quantity || 0) * (item.rate || 0) | number:'1.2-2' }}</span>
-                    <button *ngIf="purchaseForm.items.length > 1" type="button" mat-icon-button class="table-delete-btn" (click)="removeItem(i)">
-                      <mat-icon>delete</mat-icon>
-                    </button>
-                  </div>
+            <div class="items-preview">
+              <div class="items-header">
+                <mat-icon>list</mat-icon>
+                <span>{{ purchase.items?.length || 0 }} Items</span>
+              </div>
+              <div class="items-list">
+                <div class="item-row" *ngFor="let item of purchase.items">
+                  <span class="item-name">{{ item.materialName }}</span>
+                  <span class="item-qty">{{ item.orderedQty | number: '1.0-2' }} {{ item.unitLabel }}</span>
+                  <span class="item-rate">× ₹{{ item.rate | number: '1.2-2' }}</span>
                 </div>
               </div>
+            </div>
 
-              <mat-form-field class="example-full-width">
+            <!-- Payment Editor -->
+            <div class="payment-editor" *ngIf="paymentEditorId === purchase._id">
+              <div class="payment-editor-header">
+                <mat-icon>payment</mat-icon>
+                <span>Add Payment</span>
+              </div>
+              <div class="inline-fields">
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Amount</mat-label>
+                  <input matInput type="number" min="0.01" [(ngModel))="paymentDraft.amount">
+                  <mat-icon matPrefix>currency_rupee</mat-icon>
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Method</mat-label>
+                  <mat-select [(ngModel)]="paymentDraft.paymentMethod">
+                    <mat-option *ngFor="let method of paymentMethodOptions" [value]="method">{{ method }}</mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+              <mat-form-field appearance="outline" class="full-width">
                 <mat-label>Note</mat-label>
-                <textarea matInput rows="3" [(ngModel)]="purchaseForm.note" name="note"></textarea>
+                <input matInput [(ngModel)]="paymentDraft.note">
               </mat-form-field>
-
-              <div class="form-actions">
-                <button mat-raised-button class="btn btn-danger submit-btn" [disabled]="saving || purchaseNgForm.invalid || !canManage">
-                  {{ saving ? (editingPurchaseId ? 'Updating...' : 'Saving...') : (editingPurchaseId ? 'Update Pending Receipt' : 'Save Purchase') }}
+              <div class="payment-actions">
+                <button mat-raised-button color="warn" [disabled]="payingId === purchase._id" (click)="submitPayment(purchase)">
+                  <mat-icon>{{ payingId === purchase._id ? 'hourglass_top' : 'save' }}</mat-icon>
+                  Save Payment
                 </button>
-                <button *ngIf="editingPurchaseId" type="button" mat-stroked-button class="btn btn-outline-danger submit-btn" (click)="resetForm(purchaseNgForm)">Cancel Edit</button>
+                <button mat-stroked-button (click)="closePaymentEditor()">Cancel</button>
               </div>
-            </form>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="purchase-actions" *ngIf="canManage">
+              <button *ngIf="purchase.status === 'PENDING_RECEIPT'" mat-stroked-button class="action-btn edit" (click)="startEdit(purchase)">
+                <mat-icon>edit</mat-icon> Edit
+              </button>
+              <button *ngIf="purchase.status === 'PENDING_RECEIPT'" mat-raised-button class="action-btn approve" [disabled]="approvingId === purchase._id" (click)="approve(purchase)">
+                <mat-icon>{{ approvingId === purchase._id ? 'hourglass_top' : 'check' }}</mat-icon>
+                {{ approvingId === purchase._id ? 'Approving...' : 'Approve' }}
+              </button>
+              <button *ngIf="purchase.status === 'APPROVED' && (purchase.dueAmount || 0) > 0" mat-stroked-button class="action-btn pay" (click)="openPaymentEditor(purchase)">
+                <mat-icon>payment</mat-icon> Add Payment
+              </button>
+              <button *ngIf="purchase.status === 'PENDING_RECEIPT'" mat-stroked-button class="action-btn cancel" [disabled]="cancellingId === purchase._id" (click)="cancelPurchase(purchase)">
+                <mat-icon>{{ cancellingId === purchase._id ? 'hourglass_top' : 'close' }}</mat-icon>
+                {{ cancellingId === purchase._id ? 'Cancelling...' : 'Cancel' }}
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      <div class="col-lg-7">
-        <div class="card">
-          <div class="card-header card-header-danger">
-            <h4 class="card-title">Pending / Approved Receipts</h4>
-          </div>
-          <div class="card-body">
-            <div class="filter-grid">
-              <mat-form-field class="example-full-width">
-                <mat-label>Search</mat-label>
-                <input matInput [(ngModel)]="filters.search" name="search" placeholder="Invoice or material name">
-              </mat-form-field>
-              <mat-form-field class="example-full-width">
-                <mat-label>Status</mat-label>
-                <mat-select [(ngModel)]="filters.status" name="status">
-                  <mat-option value="">All</mat-option>
-                  <mat-option value="PENDING_RECEIPT">Pending</mat-option>
-                  <mat-option value="APPROVED">Approved</mat-option>
-                  <mat-option value="CANCELLED">Cancelled</mat-option>
-                </mat-select>
-              </mat-form-field>
-              <mat-form-field class="example-full-width">
-                <mat-label>Distributor</mat-label>
-                <mat-select [(ngModel)]="filters.distributor" name="filterDistributor">
-                  <mat-option value="">All</mat-option>
-                  <mat-option *ngFor="let distributor of distributors" [value]="distributor._id">{{ distributor.name }}</mat-option>
-                </mat-select>
-              </mat-form-field>
-            </div>
-
-            <div class="filter-grid two-date-grid">
-              <mat-form-field class="example-full-width">
-                <mat-label>From</mat-label>
-                <input matInput [matDatepicker]="fromPicker" [(ngModel)]="filters.dateFrom" name="dateFrom">
-                <mat-datepicker-toggle matSuffix [for]="fromPicker"></mat-datepicker-toggle>
-                <mat-datepicker #fromPicker></mat-datepicker>
-              </mat-form-field>
-              <mat-form-field class="example-full-width">
-                <mat-label>To</mat-label>
-                <input matInput [matDatepicker]="toPicker" [(ngModel)]="filters.dateTo" name="dateTo">
-                <mat-datepicker-toggle matSuffix [for]="toPicker"></mat-datepicker-toggle>
-                <mat-datepicker #toPicker></mat-datepicker>
-              </mat-form-field>
-            </div>
-
-            <div class="filter-actions">
-              <button mat-raised-button class="btn btn-danger" (click)="loadPurchases()">Apply Filters</button>
-              <button mat-stroked-button class="btn btn-outline-danger" (click)="resetFilters()">View All</button>
-            </div>
-
-            <div *ngIf="loading" class="table-empty">Loading raw material purchases...</div>
-            <div *ngIf="!loading && purchases.length === 0" class="table-empty">No raw material purchases found.</div>
-
-            <div class="purchase-list" *ngIf="!loading && purchases.length > 0">
-              <div class="purchase-card" *ngFor="let purchase of purchases">
-                <div class="purchase-card-head">
-                  <div>
-                    <div class="invoice-line">{{ purchase.invoiceNo || ('RM-' + (purchase._id | slice:-6)) }}</div>
-                    <div class="table-note">{{ purchase.distributor?.name || '-' }} · {{ purchase.purchaseDate | date:'dd/MM/yyyy' }}</div>
-                  </div>
-                  <span class="status-chip" [ngClass]="getStatusClass(purchase.status)">{{ purchase.status }}</span>
-                </div>
-
-                <div class="purchase-meta-row">
-                  <span><strong>Value:</strong> Rs {{ purchase.subtotal || 0 | number:'1.2-2' }}</span>
-                  <span><strong>Paid:</strong> Rs {{ purchase.paidAmount || 0 | number:'1.2-2' }}</span>
-                  <span><strong>Due:</strong> Rs {{ purchase.dueAmount || 0 | number:'1.2-2' }}</span>
-                  <span><strong>Received Qty:</strong> {{ getPurchaseReceivedQty(purchase) | number:'1.0-2' }}</span>
-                </div>
-
-                <div class="purchase-items-table-wrap">
-                  <table class="table material-table compact-table">
-                    <thead>
-                      <tr>
-                        <th>Material</th>
-                        <th>Qty</th>
-                        <th>Rate</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr *ngFor="let item of purchase.items">
-                        <td>{{ item.materialName }}</td>
-                        <td>{{ item.orderedQty | number:'1.0-2' }} {{ item.unitLabel }}</td>
-                        <td>Rs {{ item.rate | number:'1.2-2' }}</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-
-                <div class="purchase-actions" *ngIf="canManage">
-                  <button *ngIf="purchase.status === 'PENDING_RECEIPT'" mat-stroked-button class="btn btn-outline-danger" (click)="startEdit(purchase)">Edit</button>
-                  <button *ngIf="purchase.status === 'PENDING_RECEIPT'" mat-raised-button class="btn btn-danger" [disabled]="approvingId === purchase._id" (click)="approve(purchase)">
-                    {{ approvingId === purchase._id ? 'Approving...' : 'Approve Receipt' }}
-                  </button>
-                  <button *ngIf="purchase.status === 'APPROVED' && (purchase.dueAmount || 0) > 0" mat-stroked-button class="btn btn-outline-danger" (click)="openPaymentEditor(purchase)">
-                    Add Payment
-                  </button>
-                  <button *ngIf="purchase.status === 'PENDING_RECEIPT'" mat-stroked-button class="btn btn-outline-danger" [disabled]="cancellingId === purchase._id" (click)="cancelPurchase(purchase)">
-                    {{ cancellingId === purchase._id ? 'Cancelling...' : 'Cancel' }}
-                  </button>
-                </div>
-
-                <div class="payment-editor" *ngIf="paymentEditorId === purchase._id">
-                  <div class="row">
-                    <div class="col-md-4">
-                      <mat-form-field class="example-full-width">
-                        <mat-label>Payment Amount</mat-label>
-                        <input matInput type="number" min="0.01" [(ngModel)]="paymentDraft.amount" [name]="'paymentAmount' + purchase._id">
-                      </mat-form-field>
-                    </div>
-                    <div class="col-md-4">
-                      <mat-form-field class="example-full-width">
-                        <mat-label>Payment Method</mat-label>
-                        <mat-select [(ngModel)]="paymentDraft.paymentMethod" [name]="'paymentMethod' + purchase._id">
-                          <mat-option *ngFor="let method of paymentMethodOptions" [value]="method">{{ method }}</mat-option>
-                        </mat-select>
-                      </mat-form-field>
-                    </div>
-                    <div class="col-md-4">
-                      <mat-form-field class="example-full-width">
-                        <mat-label>Note</mat-label>
-                        <input matInput [(ngModel)]="paymentDraft.note" [name]="'paymentNote' + purchase._id">
-                      </mat-form-field>
-                    </div>
-                  </div>
-                  <div class="purchase-actions">
-                    <button mat-raised-button class="btn btn-danger" [disabled]="payingId === purchase._id" (click)="submitPayment(purchase)">
-                      {{ payingId === purchase._id ? 'Saving...' : 'Save Payment' }}
-                    </button>
-                    <button mat-stroked-button class="btn btn-outline-danger" (click)="closePaymentEditor()">Cancel</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   </div>
 </div>
