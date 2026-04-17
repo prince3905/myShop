@@ -150,12 +150,16 @@
       <div class="date-filter">
         <mat-form-field appearance="outline" class="date-field">
           <mat-label>From Date</mat-label>
-          <input matInput type="date" [(ngModel)]="fromDate" (change)="applyDateFilter()">
+          <input matInput [matDatepicker]="fromPicker" [(ngModel)]="fromDate" (dateChange)="applyDateFilter()">
+          <mat-datepicker-toggle matSuffix [for]="fromPicker"></mat-datepicker-toggle>
+          <mat-datepicker #fromPicker></mat-datepicker>
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="date-field">
           <mat-label>To Date</mat-label>
-          <input matInput type="date" [(ngModel)]="toDate" (change)="applyDateFilter()">
+          <input matInput [matDatepicker]="toPicker" [(ngModel)]="toDate" (dateChange)="applyDateFilter()">
+          <mat-datepicker-toggle matSuffix [for]="toPicker"></mat-datepicker-toggle>
+          <mat-datepicker #toPicker></mat-datepicker>
         </mat-form-field>
 
         <div class="date-actions">
