@@ -368,6 +368,10 @@ export class ViewDistributorComponent implements OnInit {
       .sort((a, b) => new Date(b.lastDate || 0).getTime() - new Date(a.lastDate || 0).getTime());
   }
 
+  editDistributor(): void {
+    this.dialogRef.close({ edit: true, distributor: this.data });
+  }
+
   close() {
     this.dialogRef.close();
   }
