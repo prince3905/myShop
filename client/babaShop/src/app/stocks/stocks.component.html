@@ -1,17 +1,54 @@
-<div class="main-content">
+<div class="main-content stocks-page">
   <div class="container-fluid">
-    <div class="card filter-card">
-      <div class="card-header card-header-danger">
-        <h4 class="card-title">Stock Report</h4>
-        <p class="card-category">Live stock, valuation and low-stock tracking</p>
+
+    <!-- ── Hero Header ── -->
+    <div class="stock-hero-bar">
+      <div class="hero-left">
+        <h2 class="hero-title">Stock Report</h2>
+        <p class="hero-sub">Live stock, valuation and low-stock tracking</p>
       </div>
+      <div class="hero-actions">
+        <button mat-stroked-button class="hero-btn" (click)="exportStockCsv()">
+          <mat-icon>download</mat-icon> Export
+        </button>
+        <button mat-stroked-button class="hero-btn" (click)="goToProducts()">
+          <mat-icon>inventory</mat-icon> Products
+        </button>
+        <button *ngIf="canManagePurchases" mat-raised-button color="warn" class="hero-btn" (click)="goToPurchase()">
+          <mat-icon>add</mat-icon> Purchase
+        </button>
+      </div>
+    </div>
+
+    <!-- ── KPI Cards ── -->
+    <div class="summary-kpi-row">
+      <div class="kpi-card">
+        <div class="kpi-icon"><mat-icon>inventory</mat-icon></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Total Records</div>
+          <div class="kpi-value">{{ totalItems }}</div>
+        </div>
+      </div>
+      <div class="kpi-card low-stock">
+        <div class="kpi-icon"><mat-icon>warning</mat-icon></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Low Stock</div>
+          <div class="kpi-value">{{ getLowStockCount() }}</div>
+        </div>
+      </div>
+      <div class="kpi-card out-stock">
+        <div class="kpi-icon"><mat-icon>block</mat-icon></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Out of Stock</div>
+          <div class="kpi-value">{{ getOutOfStockCount() }}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card filter-card">
       <div class="card-body">
         <div class="stock-context-row">
           <div class="context-chip">Scope: {{ currentScopeLabel }}</div>
-          <div class="context-chip">Records: {{ totalItems }}</div>
-          <button mat-stroked-button color="warn" (click)="exportStockCsv()">Export Stock CSV</button>
-          <button mat-stroked-button color="primary" (click)="goToProducts()">Manage Products</button>
-          <button *ngIf="canManagePurchases" mat-stroked-button color="accent" (click)="goToPurchase()">Create Purchase</button>
         </div>
 
         <div class="filter-row" *ngIf="canCreateReorderDraft">
@@ -135,7 +172,8 @@
             </div>
           </div>
 
-          <div class="stock-context-row">
+        <div class="stock-context-row">
+          <div class="context-chip">Scope: {{ currentScopeLabel }}</div>
             <div class="context-chip">Lines: {{ reconciliation?.summary?.totalLines || 0 }}</div>
             <div class="context-chip">System Qty: {{ reconciliation?.summary?.totalSystemQty || 0 }}</div>
             <div class="context-chip">Counted Qty: {{ reconciliation?.summary?.totalCountedQty || 0 }}</div>

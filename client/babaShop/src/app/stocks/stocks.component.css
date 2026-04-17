@@ -1,24 +1,113 @@
-.filter-card {
-  margin-top: 0;
-  border-radius: 16px;
+/* ── Hero Bar ── */
+.stock-hero-bar {
+  background: linear-gradient(135deg, #ef4444, #f97316);
+  border-radius: 18px;
+  padding: 20px 24px;
+  margin-bottom: 20px;
+  color: #fff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.hero-title {
+  font-size: 22px;
+  font-weight: 800;
+  margin: 0;
+}
+
+.hero-sub {
+  font-size: 12px;
+  opacity: 0.88;
+  margin: 4px 0 0;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.hero-btn {
+  color: #fff !important;
+  border-color: rgba(255,255,255,0.5) !important;
+}
+
+.hero-btn:hover {
+  background: rgba(255,255,255,0.15) !important;
+}
+
+/* ── KPI Row ── */
+.summary-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.kpi-card {
+  background: #fff;
+  border-radius: 18px;
+  padding: 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
   box-shadow: 0 4px 16px rgba(0,0,0,0.05);
   border: 1px solid #f1f5f9;
 }
 
-.filter-card .card-header {
-  background: linear-gradient(135deg, #ef4444, #f97316);
-  border-radius: 16px 16px 0 0;
-  padding: 16px 20px;
+.kpi-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: #fff7ed;
+  color: #f97316;
 }
 
-.filter-card .card-title {
-  font-size: 20px;
-  font-weight: 700;
+.kpi-icon mat-icon {
+  font-size: 26px;
+  width: 26px;
+  height: 26px;
 }
 
-.filter-card .card-category {
-  font-size: 12px;
-  opacity: 0.9;
+.kpi-card.low-stock .kpi-icon {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.kpi-card.out-stock .kpi-icon {
+  background: #fef2f2;
+  color: #ef4444;
+}
+
+.kpi-body {
+  flex: 1;
+}
+
+.kpi-label {
+  font-size: 10px;
+  font-weight: 800;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.kpi-value {
+  font-size: 24px;
+  font-weight: 900;
+  color: #0f172a;
+  margin: 2px 0;
+}
+
+/* ── Filter Card ── */
+.filter-card {
+  border-radius: 20px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.05);
+  border: 1px solid #f1f5f9;
+  margin-bottom: 20px;
 }
 
 .filter-card .card-body {

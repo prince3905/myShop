@@ -888,4 +888,12 @@ export class StocksComponent implements OnInit {
     const d = new Date();
     return `${d.getFullYear()}-${`${d.getMonth() + 1}`.padStart(2, "0")}`;
   }
+
+  getLowStockCount(): number {
+    return this.summary?.lowStockCount || 0;
+  }
+
+  getOutOfStockCount(): number {
+    return this.rows.filter(row => (row?.quantity || 0) === 0).length;
+  }
 }
