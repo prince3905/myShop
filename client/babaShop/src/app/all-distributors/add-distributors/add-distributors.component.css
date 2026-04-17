@@ -34,8 +34,17 @@
   padding: 24px;
   box-shadow: 0 4px 16px rgba(0,0,0,0.05);
   border: 1px solid #f1f5f9;
-  max-width: 600px;
+  max-width: 100%;
   margin: 0 auto;
+  overflow-y: auto;
+  max-height: calc(90vh - 100px);
+  overflow-y: auto;
+}
+
+.main-content {
+  padding: 20px;
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
 .form-section {
