@@ -56,9 +56,43 @@ exports.allDistributors = async (req, res) => {
       .limit(limit)
       .sort({ createdAt: -1 });
 
+    // Get ledger totals for each distributor
+    const DistributorLedger = require("../models/DistributorLedger");
+    const distributorIds = distributors.map(d => d._id);
+    const ledgerAgg = await DistributorLedger.aggregate([
+      { $match: { distributor: { $in: distributorIds }, isDeleted: { $ne: true } } },
+      {
+        $group: {
+          _id: "$distributor",
+          totalPurchase: { $sum: { $cond: [{ $eq: ["$type", "purchase"] }, "$amount", 0] } },
+          totalPaid: { $sum: { $cond: [{ $eq: ["$type", "payment"] }, "$amount", 0] } },
+          totalDue: { $last: "$balanceAfterTransaction" },
+          openingBalance: { $sum: { $cond: [{ $eq: ["$type", "opening"] }, "$amount", 0] } },
+        }
+      }
+    ]);
+
+    const ledgerMap = new Map(ledgerAgg.map(l => [l._id.toString(), l]));
+
+    // Add calculated fields to each distributor
+    const enrichedDistributors = distributors.map(d => {
+      const ledger = ledgerMap.get(d._id.toString()) || {};
+      const totalPurchase = Number(ledger.totalPurchase || 0) + Number(d.openingBalance || 0);
+      const totalPaid = Number(ledger.totalPaid || 0);
+      const totalDue = Math.max(0, totalPurchase - totalPaid);
+      return {
+        ...d.toObject(),
+        totalPurchase,
+        totalPaid,
+        totalDue,
+        walletBalance: 0,
+        purchaseCount: ledgerAgg.filter(l => l._id.toString() === d._id.toString()).length,
+      };
+    });
+
     res.status(200).json({
       success: true,
-      distributors,
+      distributors: enrichedDistributors,
       totalItems,
     });
   } catch (err) {
