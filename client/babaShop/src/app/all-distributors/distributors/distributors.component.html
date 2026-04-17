@@ -1,122 +1,111 @@
 <div class="main-content">
   <div class="container-fluid">
-    <div class="card">
-      <div class="card-header card-header-danger">
-        <div class="header-main">
+    <div class="card card-plain">
+      <div class="card-header customer-header">
+        <div>
           <h4 class="card-title">Distributors</h4>
+          <p class="card-category">Distributor list with balance summary and quick detail view</p>
         </div>
 
-        <div class="header-filters">
-          <mat-form-field appearance="outline" class="header-field filter-by">
-            <mat-label>Filter By</mat-label>
-            <mat-select [(ngModel)]="selectedOption">
-              <mat-option value="name">By Name</mat-option>
-              <mat-option value="phone">By Phone</mat-option>
-            </mat-select>
+        <div class="toolbar">
+          <mat-form-field appearance="outline" class="search-field">
+            <mat-label>Search distributor</mat-label>
+            <input
+              matInput
+              [(ngModel)]="name"
+              name="distributorSearch"
+              placeholder="Search by distributor name"
+              (keyup.enter)="onSearch(1, pageSize)">
           </mat-form-field>
 
-          <mat-form-field appearance="outline" class="header-field search-field">
-            <mat-label>Search Name</mat-label>
-            <input matInput [(ngModel)]="name" (input)="fetchSuggestionsName()" [matAutocomplete]="autoName" />
-            <mat-autocomplete #autoName="matAutocomplete" (optionSelected)="selectSuggestion($event.option.value)">
-              <mat-option *ngFor="let suggestion of suggestions" [value]="suggestion">
-                {{ suggestion }}
-              </mat-option>
-            </mat-autocomplete>
-          </mat-form-field>
+          <button mat-stroked-button class="search-btn" type="button" (click)="onSearch(1, pageSize)">
+            <mat-icon>search</mat-icon> Search
+          </button>
 
-          <mat-form-field appearance="outline" class="header-field phone-field">
-            <mat-label>Phone</mat-label>
-            <input matInput [(ngModel)]="phone" (input)="selectedOption === 'phone' ? fetchSuggestionsPhone() : null" [matAutocomplete]="autoPhone" />
-            <mat-autocomplete #autoPhone="matAutocomplete" (optionSelected)="selectSuggestion($event.option.value)">
-              <mat-option *ngFor="let suggestion of suggestions" [value]="suggestion">
-                {{ suggestion }}
-              </mat-option>
-            </mat-autocomplete>
-          </mat-form-field>
+          <button mat-stroked-button class="clear-btn" type="button" (click)="onClear()">
+            <mat-icon>refresh</mat-icon> Clear
+          </button>
 
-          <div class="filter-actions">
-            <button mat-raised-button color="primary" (click)="onSearch(1, pageSize)">
-              <mat-icon>search</mat-icon>
-            </button>
-            <button mat-stroked-button color="primary" (click)="onClear()">
-              <mat-icon>clear</mat-icon>
-            </button>
-            <button mat-raised-button color="accent" (click)="openAddDistributor()" *ngIf="!isGlobalSuperAdmin">
-              <mat-icon>add</mat-icon>
-            </button>
-          </div>
+          <button mat-raised-button color="primary" type="button" (click)="openAddDistributor()">
+            <mat-icon>person_add</mat-icon> Add Distributor
+          </button>
         </div>
-      </div>
-
-      <div class="card-body">
-        <div class="chip-row" *ngIf="activeFilterChips.length > 0">
-          <mat-chip-set>
-            <mat-chip *ngFor="let chip of activeFilterChips" [removable]="chip.key !== 'mode'" (removed)="clearFilterChip(chip.key)">
-              {{ chip.label }}: {{ chip.value }}
-              <button matChipRemove *ngIf="chip.key !== 'mode'">
-                <mat-icon>cancel</mat-icon>
-              </button>
-            </mat-chip>
-          </mat-chip-set>
-        </div>
-
-        <div class="loading-wrap" *ngIf="loading">
-          <mat-spinner diameter="36"></mat-spinner>
-        </div>
-
-        <div class="table-responsive" *ngIf="!loading">
-          <table class="table mat-elevation-z1 distributor-table">
-            <thead class="text-danger">
-              <tr>
-                <th>ID</th>
-                <th>Name</th>
-                <th>Phone</th>
-                <th>Email</th>
-                <th>Status</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let item of Distributors" (click)="openViewDistributor(item, $event)">
-                <td>{{ item._id }}</td>
-                <td>{{ item.name }}</td>
-                <td>{{ item.phone }}</td>
-                <td>{{ item.email || "-" }}</td>
-                <td>
-                  <span class="status-badge" [ngClass]="item.status === 'active' ? 'active' : 'disabled'">
-                    {{ item.status | titlecase }}
-                  </span>
-                </td>
-                <td (click)="$event.stopPropagation()" class="action-col">
-                  <button mat-icon-button color="primary" matTooltip="View" (click)="openViewDistributor(item, $event)">
-                    <mat-icon>visibility</mat-icon>
-                  </button>
-                  <button mat-icon-button color="accent" matTooltip="Edit Distributor" (click)="openEditDistributor(item)" *ngIf="!isGlobalSuperAdmin">
-                    <mat-icon>edit</mat-icon>
-                  </button>
-                  <button mat-stroked-button class="status-btn" [ngClass]="item.status === 'active' ? 'active' : 'disabled'" (click)="toggleStatus(item)" *ngIf="!isGlobalSuperAdmin">
-                    <mat-icon>{{ item.status === 'active' ? 'toggle_on' : 'toggle_off' }}</mat-icon>
-                    {{ item.status === 'active' ? 'Disable' : 'Enable' }}
-                  </button>
-                </td>
-              </tr>
-              <tr *ngIf="Distributors.length === 0">
-                <td colspan="6" class="empty-row">No distributors found</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <mat-paginator
-          #paginator
-          [length]="totalItems"
-          [pageIndex]="currentPageIndex"
-          [pageSize]="pageSize"
-          [pageSizeOptions]="pageSizeOptions"
-          (page)="onPageChange($event)">
-        </mat-paginator>
       </div>
     </div>
+
+    <div class="loading" *ngIf="loading">
+      <mat-spinner color="primary" mode="indeterminate"></mat-spinner>
+    </div>
+
+    <div class="customers-bento-grid" *ngIf="!loading && paginatedItems.length > 0">
+      <div class="customer-card-v3" *ngFor="let item of paginatedItems" (click)="openViewDistributor(item, $event)">
+
+        <div class="card-top-row">
+          <div class="avatar-circle">{{ (item.name || 'D')[0].toUpperCase() }}</div>
+          <div class="customer-name-block">
+            <div class="cust-name">{{ item.name }}</div>
+            <div class="cust-phone" *ngIf="item.phone">
+              <mat-icon>phone</mat-icon> {{ item.phone }}
+            </div>
+          </div>
+          <button
+            mat-icon-button
+            color="primary"
+            matTooltip="Edit Distributor"
+            (click)="editDistributor(item); $event.stopPropagation()"
+          >
+            <mat-icon>edit</mat-icon>
+          </button>
+        </div>
+
+        <div class="shop-tag" *ngIf="item.shop?.shopName || item.shop?.shopCode">
+          <mat-icon>store</mat-icon>
+          <span>{{ item.shop?.shopName || item.shop?.shopCode }}</span>
+        </div>
+
+        <div class="financials-grid">
+          <div class="fin-cell">
+            <div class="fin-label">Purchase</div>
+            <div class="fin-value">₹{{ (item.totalPurchase || 0) | number:'1.0-0' }}</div>
+          </div>
+          <div class="fin-cell">
+            <div class="fin-label">Paid</div>
+            <div class="fin-value paid">₹{{ (item.totalPaid || 0) | number:'1.0-0' }}</div>
+          </div>
+          <div class="fin-cell">
+            <div class="fin-label">Due</div>
+            <div class="fin-value due">₹{{ (item.totalDue || 0) | number:'1.0-0' }}</div>
+          </div>
+          <div class="fin-cell">
+            <div class="fin-label">Wallet</div>
+            <div class="fin-value wallet">₹{{ (item.walletBalance || 0) | number:'1.0-0' }}</div>
+          </div>
+        </div>
+
+        <div class="card-footer-meta">
+          <div class="purchases-badge">
+            <mat-icon>shopping_bag</mat-icon>
+            {{ item.purchaseCount || 0 }} orders
+          </div>
+          <div class="joined-date">
+            {{ item.createdAt | date:'MMM d, yyyy' }}
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="empty-state-bento" *ngIf="!loading && paginatedItems.length === 0">
+      <mat-icon>group_off</mat-icon>
+      <p>No distributors found</p>
+    </div>
+
+    <mat-paginator
+      [length]="totalItems"
+      [pageIndex]="currentPageIndex"
+      [pageSize]="pageSize"
+      [pageSizeOptions]="pageSizeOptions"
+      (page)="onPageChange($event)">
+    </mat-paginator>
   </div>
 </div>

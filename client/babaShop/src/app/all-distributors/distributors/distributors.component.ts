@@ -275,6 +275,10 @@ export class DistributorsComponent implements OnInit, OnDestroy {
       });
   }
 
+  editDistributor(item: any) {
+    this.openEditDistributor(item);
+  }
+
   openDistributorModal() {
     throw new Error("Method not implemented.");
   }
