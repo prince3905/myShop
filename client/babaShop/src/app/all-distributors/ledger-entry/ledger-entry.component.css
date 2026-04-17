@@ -71,10 +71,14 @@ mat-form-field mat-icon[matPrefix] {
 mat-dialog-actions {
   padding: 16px 0 0;
   gap: 12px;
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
 }
 
 .cancel-btn {
   height: 44px;
+  min-width: 100px;
   border-radius: 10px;
   font-weight: 600;
 }
