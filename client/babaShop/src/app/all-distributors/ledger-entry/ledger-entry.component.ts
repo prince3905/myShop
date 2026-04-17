@@ -171,4 +171,20 @@ export class LedgerEntryComponent implements OnInit {
     this.form?.patchValue({ amount: safeAmount || null }, { emitEvent: false });
   }
 
+  getTypeIcon(): string {
+    return this.type === 'payment' ? 'payments' : (this.type === 'purchase' ? 'shopping_cart' : (this.type === 'purchase_return' ? 'assignment_return' : 'tune'));
+  }
+
+  getTypeLabel(): string {
+    return this.type === 'payment' ? 'Payment' : (this.type === 'purchase' ? 'Purchase' : (this.type === 'purchase_return' ? 'Purchase Return' : 'Adjustment'));
+  }
+
+  getSubmitColor(): string {
+    return this.type === 'payment' ? 'primary' : (this.type === 'purchase' ? 'accent' : 'warn');
+  }
+
+  getSubmitIcon(): string {
+    return this.type === 'payment' ? 'payments' : (this.type === 'purchase' ? 'shopping_cart' : (this.type === 'purchase_return' ? 'assignment_return' : 'save'));
+  }
+
 }
