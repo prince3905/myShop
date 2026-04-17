@@ -94,11 +94,15 @@
         </mat-form-field>
         <mat-form-field appearance="outline" class="filter-field">
           <mat-label>From</mat-label>
-          <input matInput type="date" [(ngModel)]="filters.dateFrom">
+          <input matInput [matDatepicker]="fromVerifPicker" [(ngModel)]="filters.dateFrom">
+          <mat-datepicker-toggle matSuffix [for]="fromVerifPicker"></mat-datepicker-toggle>
+          <mat-datepicker #fromVerifPicker></mat-datepicker>
         </mat-form-field>
         <mat-form-field appearance="outline" class="filter-field">
           <mat-label>To</mat-label>
-          <input matInput type="date" [(ngModel)]="filters.dateTo">
+          <input matInput [matDatepicker]="toVerifPicker" [(ngModel)]="filters.dateTo">
+          <mat-datepicker-toggle matSuffix [for]="toVerifPicker"></mat-datepicker-toggle>
+          <mat-datepicker #toVerifPicker></mat-datepicker>
         </mat-form-field>
       </div>
       <div class="filter-actions">

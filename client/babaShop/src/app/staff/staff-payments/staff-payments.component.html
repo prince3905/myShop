@@ -105,8 +105,9 @@
           <div class="inline-fields">
             <mat-form-field appearance="outline" class="full-width">
               <mat-label>Entry Date</mat-label>
-              <input matInput type="date" [(ngModel)]="paymentForm.entryDate" name="entryDate" required>
-              <mat-icon matPrefix>calendar_today</mat-icon>
+              <input matInput [matDatepicker]="entryDatePicker" [(ngModel)]="paymentForm.entryDate" name="entryDate" required>
+              <mat-datepicker-toggle matSuffix [for]="entryDatePicker"></mat-datepicker-toggle>
+              <mat-datepicker #entryDatePicker></mat-datepicker>
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="full-width">
@@ -191,11 +192,15 @@
             </mat-form-field>
             <mat-form-field appearance="outline" class="filter-field">
               <mat-label>From</mat-label>
-              <input matInput type="date" [(ngModel)]="filters.dateFrom">
+              <input matInput [matDatepicker]="fromPayPicker" [(ngModel)]="filters.dateFrom">
+              <mat-datepicker-toggle matSuffix [for]="fromPayPicker"></mat-datepicker-toggle>
+              <mat-datepicker #fromPayPicker></mat-datepicker>
             </mat-form-field>
             <mat-form-field appearance="outline" class="filter-field">
               <mat-label>To</mat-label>
-              <input matInput type="date" [(ngModel)]="filters.dateTo">
+              <input matInput [matDatepicker]="toPayPicker" [(ngModel)]="filters.dateTo">
+              <mat-datepicker-toggle matSuffix [for]="toPayPicker"></mat-datepicker-toggle>
+              <mat-datepicker #toPayPicker></mat-datepicker>
             </mat-form-field>
           </div>
           <div class="filter-actions">

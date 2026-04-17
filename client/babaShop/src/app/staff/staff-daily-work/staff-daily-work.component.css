@@ -181,6 +181,11 @@
 
 .full-width { width: 100%; }
 
+.work-form .mat-datepicker-toggle,
+.filter-field .mat-datepicker-toggle {
+  color: #7c3aed;
+}
+
 .inline-fields {
   display: grid;
   grid-template-columns: 1fr 1fr;

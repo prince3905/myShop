@@ -195,6 +195,10 @@
   margin: 0;
 }
 
+.filter-field .mat-datepicker-toggle {
+  color: #7c3aed;
+}
+
 .filter-actions {
   display: flex;
   gap: 10px;

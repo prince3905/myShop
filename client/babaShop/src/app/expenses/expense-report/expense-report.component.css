@@ -125,6 +125,10 @@
   gap: 10px;
 }
 
+.filter-grid .mat-datepicker-toggle {
+  color: #7c3aed;
+}
+
 /* ── Breakdown Grid ── */
 .breakdown-grid {
   display: grid;
