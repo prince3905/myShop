@@ -91,15 +91,27 @@
               <span>Shop Product Mapping</span>
             </div>
 
-            <div class="readonly-fields">
-              <div class="readonly-item">
-                <span class="readonly-label">Category</span>
-                <span class="readonly-value">{{ currentCategoryName }}</span>
-              </div>
-              <div class="readonly-item">
-                <span class="readonly-label">Brand</span>
-                <span class="readonly-value">{{ currentBrandName }}</span>
-              </div>
+            <div class="inline-fields">
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Category</mat-label>
+                <mat-select [(ngModel)]="productForm.shopCategory" name="shopCategory" (selectionChange)="onCategoryChange()">
+                  <mat-option value="">Auto from product</mat-option>
+                  <mat-option *ngFor="let cat of categoryOptions" [value]="cat._id">
+                    {{ cat.name }}
+                  </mat-option>
+                </mat-select>
+                <mat-icon matPrefix>category</mat-icon>
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Brand</mat-label>
+                <mat-select [(ngModel)]="productForm.shopBrand" name="shopBrand">
+                  <mat-option value="">Auto from product</mat-option>
+                  <mat-option *ngFor="let brand of filteredBrandOptions" [value]="brand._id">
+                    {{ brand.name }}
+                  </mat-option>
+                </mat-select>
+                <mat-icon matPrefix>branding_watermark</mat-icon>
+              </mat-form-field>
             </div>
 
             <mat-form-field appearance="outline" class="full-width">
@@ -110,6 +122,7 @@
                   {{ model.name }}
                 </mat-option>
               </mat-select>
+              <mat-icon matPrefix>layers</mat-icon>
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="full-width">

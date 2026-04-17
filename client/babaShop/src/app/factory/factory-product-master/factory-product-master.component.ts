@@ -367,6 +367,34 @@ export class FactoryProductMasterComponent implements OnInit {
     return this.brandOptions.find((row) => row?._id === this.productForm.shopBrand)?.name || "Auto from product";
   }
 
+  get filteredBrandOptions(): any[] {
+    const categoryId = `${this.productForm.shopCategory || ""}`.trim();
+    if (!categoryId) {
+      return this.brandOptions;
+    }
+    const category = this.categoryOptions.find((row) => row?._id === categoryId);
+    if (!category) {
+      return this.brandOptions;
+    }
+    const categoryBrandIds = Array.isArray(category?.brands)
+      ? category.brands.map((b: any) => `${typeof b === "string" ? b : b?._id || ""}`)
+      : [];
+    return this.brandOptions.filter((brand) => categoryBrandIds.includes(`${brand?._id || ""}`));
+  }
+
+  onCategoryChange(): void {
+    const categoryId = `${this.productForm.shopCategory || ""}`.trim();
+    if (categoryId) {
+      const category = this.categoryOptions.find((row) => row?._id === categoryId);
+      const categoryBrandIds = Array.isArray(category?.brands)
+        ? category.brands.map((b: any) => `${typeof b === "string" ? b : b?._id || ""}`)
+        : [];
+      if (categoryBrandIds.length > 0 && !categoryBrandIds.includes(this.productForm.shopBrand)) {
+        this.productForm.shopBrand = "";
+      }
+    }
+  }
+
   addMaterialLine(): void {
     this.productForm.standardMaterialLines.push({
       rawMaterial: "",
@@ -406,8 +434,8 @@ export class FactoryProductMasterComponent implements OnInit {
       return;
     }
     this.productForm.name = product.name || "";
-    this.productForm.shopCategory = product.category?._id || product.category || this.productForm.shopCategory;
-    this.productForm.shopBrand = product.brand?._id || product.brand || this.productForm.shopBrand;
+    this.productForm.shopCategory = product.category?._id || product.category || "";
+    this.productForm.shopBrand = product.brand?._id || product.brand || "";
     if (this.productForm.shopModel && !this.filteredShopModelOptions.some((row) => row?._id === this.productForm.shopModel)) {
       this.productForm.shopModel = "";
     }
