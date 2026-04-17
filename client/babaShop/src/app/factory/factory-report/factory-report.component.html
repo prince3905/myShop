@@ -18,11 +18,15 @@
         </mat-form-field>
         <mat-form-field appearance="outline" class="filter-field">
           <mat-label>From</mat-label>
-          <input matInput type="date" [(ngModel)]="filters.dateFrom">
+          <input matInput [matDatepicker]="fromFactPicker" [(ngModel)]="filters.dateFrom">
+          <mat-datepicker-toggle matSuffix [for]="fromFactPicker"></mat-datepicker-toggle>
+          <mat-datepicker #fromFactPicker></mat-datepicker>
         </mat-form-field>
         <mat-form-field appearance="outline" class="filter-field">
           <mat-label>To</mat-label>
-          <input matInput type="date" [(ngModel)]="filters.dateTo">
+          <input matInput [matDatepicker]="toFactPicker" [(ngModel)]="filters.dateTo">
+          <mat-datepicker-toggle matSuffix [for]="toFactPicker"></mat-datepicker-toggle>
+          <mat-datepicker #toFactPicker></mat-datepicker>
         </mat-form-field>
       </div>
       <div class="filter-actions">

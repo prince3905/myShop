@@ -18,12 +18,12 @@
               (keyup.enter)="onSearch()">
           </mat-form-field>
 
-          <button mat-stroked-button color="primary" type="button" (click)="onSearch()">
+          <button mat-stroked-button class="search-btn" type="button" (click)="onSearch()">
             <mat-icon>search</mat-icon> Search
           </button>
 
-          <button mat-stroked-button type="button" (click)="onClear()">
-            <mat-icon>clear</mat-icon> Clear
+          <button mat-stroked-button class="clear-btn" type="button" (click)="onClear()">
+            <mat-icon>refresh</mat-icon> Clear
           </button>
 
           <button mat-raised-button color="primary" type="button" (click)="openAddCustomerDialog()" *ngIf="canManageCustomers">

@@ -1,57 +1,60 @@
-<div class="main-content">
+<div class="main-content distributors-page">
   <div class="container-fluid">
-    <div class="card">
-      <div class="card-header card-header-danger">
-        <div class="header-top">
-          <div>
-            <h4 class="card-title">Distributors</h4>
-            <p class="card-category">Manage your supplier & distributor network</p>
-          </div>
-          <button mat-raised-button color="accent" (click)="openAddDistributor()" *ngIf="!isGlobalSuperAdmin">
-            <mat-icon>add</mat-icon> Add Distributor
-          </button>
-        </div>
 
-        <div class="header-filters">
-          <mat-form-field appearance="outline" class="header-field filter-by">
-            <mat-label>Filter By</mat-label>
-            <mat-select [(ngModel)]="selectedOption">
-              <mat-option value="name">By Name</mat-option>
-              <mat-option value="phone">By Phone</mat-option>
-            </mat-select>
-          </mat-form-field>
+    <!-- Hero Header -->
+    <div class="distributors-hero-bar">
+      <div class="hero-left">
+        <h2 class="hero-title">Distributors</h2>
+        <p class="hero-sub">Manage your supplier & distributor network</p>
+      </div>
+      <button mat-raised-button class="add-btn" (click)="openAddDistributor()" *ngIf="!isGlobalSuperAdmin">
+        <mat-icon>add</mat-icon> Add Distributor
+      </button>
+    </div>
 
-          <mat-form-field appearance="outline" class="header-field search-field">
-            <mat-label>Search Name</mat-label>
-            <input matInput [(ngModel)]="name" (input)="fetchSuggestionsName()" [matAutocomplete]="autoName" />
-            <mat-autocomplete #autoName="matAutocomplete" (optionSelected)="selectSuggestion($event.option.value)">
-              <mat-option *ngFor="let suggestion of suggestions" [value]="suggestion">
-                {{ suggestion }}
-              </mat-option>
-            </mat-autocomplete>
-          </mat-form-field>
+    <!-- Search Bar -->
+    <div class="search-bar">
+      <div class="search-fields">
+        <mat-form-field appearance="outline" class="header-field filter-by">
+          <mat-label>Filter By</mat-label>
+          <mat-select [(ngModel)]="selectedOption">
+            <mat-option value="name">By Name</mat-option>
+            <mat-option value="phone">By Phone</mat-option>
+          </mat-select>
+        </mat-form-field>
 
-          <mat-form-field appearance="outline" class="header-field phone-field">
-            <mat-label>Phone</mat-label>
-            <input matInput [(ngModel)]="phone" (input)="selectedOption === 'phone' ? fetchSuggestionsPhone() : null" [matAutocomplete]="autoPhone" />
-            <mat-autocomplete #autoPhone="matAutocomplete" (optionSelected)="selectSuggestion($event.option.value)">
-              <mat-option *ngFor="let suggestion of suggestions" [value]="suggestion">
-                {{ suggestion }}
-              </mat-option>
-            </mat-autocomplete>
-          </mat-form-field>
+        <mat-form-field appearance="outline" class="header-field search-field">
+          <mat-label>Search Name</mat-label>
+          <input matInput [(ngModel)]="name" (input)="fetchSuggestionsName()" [matAutocomplete]="autoName" />
+          <mat-autocomplete #autoName="matAutocomplete" (optionSelected)="selectSuggestion($event.option.value)">
+            <mat-option *ngFor="let suggestion of suggestions" [value]="suggestion">
+              {{ suggestion }}
+            </mat-option>
+          </mat-autocomplete>
+        </mat-form-field>
 
-          <div class="filter-actions">
-            <button mat-raised-button color="primary" (click)="onSearch(1, pageSize)">
-              <mat-icon>search</mat-icon>
-            </button>
-            <button mat-stroked-button color="primary" (click)="onClear()">
-              <mat-icon>clear</mat-icon>
-            </button>
-          </div>
-        </div>
+        <mat-form-field appearance="outline" class="header-field phone-field">
+          <mat-label>Phone</mat-label>
+          <input matInput [(ngModel)]="phone" (input)="selectedOption === 'phone' ? fetchSuggestionsPhone() : null" [matAutocomplete]="autoPhone" />
+          <mat-autocomplete #autoPhone="matAutocomplete" (optionSelected)="selectSuggestion($event.option.value)">
+            <mat-option *ngFor="let suggestion of suggestions" [value]="suggestion">
+              {{ suggestion }}
+            </mat-option>
+          </mat-autocomplete>
+        </mat-form-field>
       </div>
 
+      <div class="filter-actions">
+        <button mat-stroked-button class="search-btn" (click)="onSearch(1, pageSize)">
+          <mat-icon>search</mat-icon> Search
+        </button>
+        <button mat-stroked-button class="clear-btn" (click)="onClear()">
+          <mat-icon>refresh</mat-icon> Clear
+        </button>
+      </div>
+    </div>
+
+    <div class="card">
       <div class="card-body">
         <div class="chip-row" *ngIf="activeFilterChips.length > 0">
           <mat-chip-set>
@@ -65,61 +68,48 @@
         </div>
 
         <div class="loading-wrap" *ngIf="loading">
-          <mat-spinner diameter="36"></mat-spinner>
+          <mat-spinner color="primary" mode="indeterminate"></mat-spinner>
         </div>
 
-        <div class="distributors-bento-grid" *ngIf="!loading && Distributors.length > 0">
-          <div class="dist-card-v3" *ngFor="let item of Distributors" (click)="openViewDistributor(item, $event)">
-
+        <div class="distributors-bento-grid" *ngIf="!loading && paginatedItems.length > 0">
+          <div class="dist-card-v3" *ngFor="let item of paginatedItems" (click)="viewItemDetails(item._id)">
             <div class="dist-card-top">
               <div class="dist-avatar">{{ (item.name || 'D')[0].toUpperCase() }}</div>
               <div class="dist-info">
                 <div class="dist-name">{{ item.name }}</div>
-                <div class="dist-meta" *ngIf="item.phone">
-                  <mat-icon>phone</mat-icon> {{ item.phone }}
-                </div>
-                <div class="dist-meta" *ngIf="item.email">
-                  <mat-icon>email</mat-icon> {{ item.email }}
-                </div>
+                <div class="dist-phone">{{ item.phone }}</div>
               </div>
-              <span class="status-badge" [ngClass]="item.status === 'active' ? 'active' : 'disabled'">
-                {{ item.status | titlecase }}
+              <button mat-icon-button *ngIf="!isGlobalSuperAdmin" (click)="editItem(item); $event.stopPropagation()">
+                <mat-icon color="primary">edit</mat-icon>
+              </button>
+            </div>
+
+            <div class="dist-meta">
+              <span class="dist-meta-item" *ngIf="item.shop?.shopName || item.shop?.shopCode">
+                <mat-icon>store</mat-icon> {{ item.shop?.shopName || item.shop?.shopCode }}
+              </span>
+              <span class="dist-meta-item" *ngIf="item.gstNumber">
+                <mat-icon>receipt</mat-icon> {{ item.gstNumber }}
               </span>
             </div>
 
-            <div class="dist-card-footer" (click)="$event.stopPropagation()">
-              <button mat-icon-button color="primary" matTooltip="View" (click)="openViewDistributor(item, $event)">
-                <mat-icon>visibility</mat-icon>
-              </button>
-              <button mat-icon-button color="accent" matTooltip="Edit" (click)="openEditDistributor(item)" *ngIf="!isGlobalSuperAdmin">
-                <mat-icon>edit</mat-icon>
-              </button>
-              <button
-                mat-stroked-button
-                class="toggle-btn"
-                [ngClass]="item.status === 'active' ? 'disable-btn' : 'enable-btn'"
-                (click)="toggleStatus(item)"
-                *ngIf="!isGlobalSuperAdmin"
-              >
-                <mat-icon>{{ item.status === 'active' ? 'toggle_on' : 'toggle_off' }}</mat-icon>
-                {{ item.status === 'active' ? 'Disable' : 'Enable' }}
-              </button>
+            <div class="dist-balance" [class.has-balance]="item.balanceDue > 0">
+              <span class="balance-label">Balance Due</span>
+              <span class="balance-amount">Rs {{ (item.balanceDue || 0) | number:'1.0-0' }}</span>
             </div>
-
           </div>
         </div>
 
-        <div class="empty-state-bento" *ngIf="!loading && Distributors.length === 0">
-          <mat-icon>local_shipping</mat-icon>
+        <div class="empty-state-bento" *ngIf="!loading && paginatedItems.length === 0">
+          <mat-icon>person_off</mat-icon>
           <p>No distributors found</p>
         </div>
 
-        <mat-paginator
-          #paginator
+        <mat-paginator *ngIf="!loading && totalItems > 0"
           [length]="totalItems"
-          [pageIndex]="currentPageIndex"
           [pageSize]="pageSize"
-          [pageSizeOptions]="pageSizeOptions"
+          [pageSizeOptions]="[10, 25, 50, 100]"
+          [pageIndex]="currentPageIndex"
           (page)="onPageChange($event)">
         </mat-paginator>
       </div>

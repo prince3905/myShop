@@ -1,39 +1,114 @@
-.header-top {
+/* ── Hero Bar ── */
+.distributors-hero-bar {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 14px;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.card-header .card-title,
-.card-header .card-category {
-  color: #fff;
-  margin: 0;
-}
-
-.card-header .card-category {
-  font-size: 11px;
-  opacity: 0.88;
-  margin-top: 3px;
-}
-
-.header-filters {
-  display: grid;
-  grid-template-columns: 180px minmax(200px, 1fr) minmax(160px, 220px) auto;
-  gap: 10px;
   align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  background: linear-gradient(135deg, #ef4444, #f97316);
+  border-radius: 18px;
+  padding: 20px 24px;
+  margin-bottom: 20px;
+  color: #fff;
+}
+
+.hero-left {
+  display: flex;
+  flex-direction: column;
+}
+
+.hero-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.hero-sub {
+  margin: 4px 0 0;
+  font-size: 12px;
+  opacity: 0.9;
+  color: rgba(255,255,255,0.9);
+}
+
+.add-btn {
+  background: #fff !important;
+  color: #ef4444 !important;
+  height: 44px;
+  border-radius: 10px;
+  font-weight: 700;
+}
+
+.add-btn .mat-icon {
+  color: #ef4444;
+}
+
+/* ── Search Bar ── */
+.search-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: #fff;
+  border-radius: 16px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  border: 1px solid #f1f5f9;
+  flex-wrap: wrap;
+}
+
+.search-fields {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  flex: 1;
 }
 
 .header-field {
   margin: 0;
+  min-width: 150px;
+}
+
+.header-field .mat-mdc-form-field-subscript-wrapper {
+  display: none;
 }
 
 .filter-actions {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   align-items: center;
+}
+
+.search-btn,
+.clear-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 42px;
+  padding: 0 18px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.search-btn {
+  background: rgba(124, 58, 237, 0.1) !important;
+  border: 1px solid rgba(124, 58, 237, 0.2) !important;
+  color: #7c3aed !important;
+}
+
+.search-btn:hover {
+  background: rgba(124, 58, 237, 0.2) !important;
+}
+
+.clear-btn {
+  background: rgba(0, 0, 0, 0.05) !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  color: #64748b !important;
+}
+
+.clear-btn:hover {
+  background: rgba(0, 0, 0, 0.1) !important;
 }
 
 .chip-row {
@@ -77,21 +152,21 @@
 /* ── Card Top ── */
 .dist-card-top {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 12px;
 }
 
 .dist-avatar {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #ef4444, #f97316);
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #f97316, #ef4444);
   color: #fff;
-  font-size: 18px;
-  font-weight: 800;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-weight: 800;
+  font-size: 20px;
   flex-shrink: 0;
 }
 
@@ -109,70 +184,65 @@
   text-overflow: ellipsis;
 }
 
-.dist-meta {
-  display: flex;
-  align-items: center;
-  gap: 4px;
+.dist-phone {
   font-size: 12px;
   color: #64748b;
-  margin-top: 3px;
+  margin-top: 2px;
 }
 
-.dist-meta mat-icon {
-  font-size: 13px;
-  width: 13px;
-  height: 13px;
-}
-
-/* ── Status Badge ── */
-.status-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 3px 10px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 700;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.status-badge.active {
-  background: #dcfce7;
-  color: #15803d;
-}
-
-.status-badge.disabled {
-  background: #fee2e2;
-  color: #b91c1c;
-}
-
-/* ── Footer ── */
-.dist-card-footer {
+.dist-meta {
   display: flex;
-  align-items: center;
-  gap: 6px;
-  padding-top: 10px;
-  border-top: 1px dashed #e2e8f0;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
-.toggle-btn {
-  margin-left: auto;
-  font-size: 12px;
-  font-weight: 700;
+.dist-meta-item {
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  font-size: 11px;
+  color: #64748b;
+  background: #f8fafc;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.dist-meta-item mat-icon {
+  font-size: 14px;
+  width: 14px;
+  height: 14px;
+  color: #94a3b8;
+}
+
+.dist-balance {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  background: #f0fdf4;
   border-radius: 10px;
+  border: 1px solid #bbf7d0;
 }
 
-.toggle-btn.disable-btn {
-  color: #b91c1c;
-  border-color: #fca5a5;
+.dist-balance.has-balance {
+  background: #fef2f2;
+  border-color: #fecaca;
 }
 
-.toggle-btn.enable-btn {
-  color: #15803d;
-  border-color: #86efac;
+.balance-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.balance-amount {
+  font-size: 15px;
+  font-weight: 800;
+  color: #059669;
+}
+
+.dist-balance.has-balance .balance-amount {
+  color: #dc2626;
 }
 
 /* ── Empty State ── */
@@ -181,18 +251,17 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 60px 20px;
+  padding: 50px 20px;
   color: #94a3b8;
   background: #f8fafc;
-  border-radius: 20px;
-  margin: 16px 0;
+  border-radius: 16px;
 }
 
 .empty-state-bento mat-icon {
-  font-size: 48px;
-  width: 48px;
-  height: 48px;
-  margin-bottom: 12px;
+  font-size: 44px;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 10px;
   opacity: 0.5;
 }
 
@@ -202,27 +271,47 @@
 }
 
 /* ── Responsive ── */
-@media (max-width: 768px) {
-  .header-top {
+@media (max-width: 960px) {
+  .search-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search-fields {
     flex-direction: column;
   }
 
-  .header-filters {
-    grid-template-columns: 1fr 1fr;
+  .header-field {
+    width: 100%;
   }
 
-  .distributors-bento-grid {
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
+  .filter-actions {
+    justify-content: flex-end;
   }
 }
 
-@media (max-width: 480px) {
-  .header-filters {
-    grid-template-columns: 1fr;
+@media (max-width: 640px) {
+  .distributors-hero-bar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .add-btn {
+    width: 100%;
   }
 
   .distributors-bento-grid {
     grid-template-columns: 1fr;
+  }
+
+  .filter-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .search-btn,
+  .clear-btn {
+    flex: 1;
+    justify-content: center;
   }
 }

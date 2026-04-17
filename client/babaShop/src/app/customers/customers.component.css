@@ -1,31 +1,36 @@
 .card-plain {
   margin-top: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .customer-header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 20px;
   flex-wrap: wrap;
-  padding: 14px 18px;
-  background-color: #f44336;
+  padding: 20px 24px;
+  background: linear-gradient(135deg, #ef4444, #f97316);
   color: #fff;
-  border-radius: 15px;
+  border-radius: 18px;
+  margin-bottom: 20px;
 }
 
 .card-title {
   margin: 0;
-  font-size: 18px;
-  font-weight: 600;
+  font-size: 22px;
+  font-weight: 800;
   line-height: 1.2;
+  color: #fff;
 }
 
 .card-category {
-  margin: 4px 0 0;
-  opacity: 0.9;
-  font-size: 11px;
+  margin: 6px 0 0;
+  font-size: 12px;
   line-height: 1.4;
+  color: rgba(255,255,255,0.9) !important;
+  opacity: 1;
 }
 
 .toolbar {
@@ -33,38 +38,106 @@
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
+  vertical-align: middle;
+  line-height: 1;
 }
 
 .search-field {
-  width: 250px;
+  min-width: 280px;
+  flex-shrink: 0;
+}
+
+.search-field .mat-mdc-form-field-subscript-wrapper {
+  display: none;
 }
 
 .toolbar .mat-mdc-form-field {
-  --mdc-outlined-text-field-container-shape: 12px;
+  --mdc-outlined-text-field-container-shape: 10px;
+  vertical-align: middle;
 }
 
 .toolbar .mat-mdc-text-field-wrapper {
   min-height: 42px !important;
   background: #fff !important;
+  border-radius: 10px;
+  vertical-align: middle !important;
 }
 
 .toolbar .mat-mdc-form-field-infix {
   min-height: 42px !important;
   padding-top: 10px !important;
   padding-bottom: 10px !important;
+  vertical-align: middle !important;
 }
 
 .toolbar .mat-mdc-form-field .mat-mdc-input-element,
 .toolbar .mat-mdc-form-field .mdc-floating-label {
-  font-size: 12.5px !important;
+  font-size: 13px !important;
+  color: #333 !important;
+}
+
+.toolbar .mat-mdc-form-field .mdc-floating-label {
+  color: #64748b !important;
 }
 
 .toolbar button[mat-stroked-button],
 .toolbar button[mat-raised-button] {
-  min-height: 40px;
-  border-radius: 11px;
-  font-size: 12px;
+  min-height: 42px !important;
+  height: 42px;
+  border-radius: 10px;
+  font-size: 13px;
   font-weight: 700;
+  vertical-align: middle;
+  line-height: 1;
+}
+
+.toolbar button[mat-stroked-button] {
+  background: rgba(255,255,255,0.15) !important;
+  border-color: rgba(255,255,255,0.3) !important;
+  color: #fff !important;
+}
+
+.toolbar button[mat-raised-button] {
+  background: #fff !important;
+  color: #ef4444 !important;
+}
+
+.toolbar .search-btn,
+.toolbar .clear-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 18px;
+  min-height: 42px;
+  height: 42px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  vertical-align: middle;
+  border: none;
+}
+
+.toolbar .search-btn {
+  background: rgba(255,255,255,0.25) !important;
+  border: 1px solid rgba(255,255,255,0.4) !important;
+  color: #fff !important;
+}
+
+.toolbar .clear-btn {
+  background: rgba(0,0,0,0.2) !important;
+  border: 1px solid rgba(0,0,0,0.3) !important;
+  color: #fff !important;
+}
+
+.toolbar .clear-btn:hover {
+  background: rgba(0,0,0,0.35) !important;
+}
+
+.toolbar .clear-btn .mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
 }
 
 .loading {

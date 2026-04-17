@@ -97,7 +97,7 @@
 .form-panel {
   background: #fff;
   border-radius: 20px;
-  padding: 20px;
+  padding: 24px;
   box-shadow: 0 4px 16px rgba(0,0,0,0.05);
   border: 1px solid #f1f5f9;
   position: sticky;
@@ -109,9 +109,9 @@
 .form-panel-header {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
-  padding-bottom: 14px;
+  gap: 14px;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
   border-bottom: 1px solid #f1f5f9;
 }
 
@@ -145,11 +145,30 @@
 .inline-fields {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  gap: 16px;
 }
 
 .inline-fields.four-col {
-  grid-template-columns: 1fr 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.material-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.material-form .full-width {
+  margin-bottom: 4px;
+}
+
+.material-form .mat-mdc-form-field {
+  width: 100%;
+}
+
+.material-form .mat-mdc-text-field-wrapper {
+  padding-bottom: 8px !important;
 }
 
 /* ── Edit Banner ── */
