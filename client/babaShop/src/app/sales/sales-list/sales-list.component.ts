@@ -306,6 +306,14 @@ export class SalesListComponent implements OnInit {
     return this.getReturnBadge(row) === "full";
   }
 
+  hasDue(): boolean {
+    return this.salesRows.some(row => (row?.dueAmount || 0) > 0);
+  }
+
+  getDueCount(): number {
+    return this.salesRows.filter(row => (row?.dueAmount || 0) > 0).length;
+  }
+
   shareOnWhatsApp(row: any): void {
     // Agar details load nahi hui hain toh pehle load karein
     if (!this.shopUpiId || this.shopUpiId === "N/A") {
