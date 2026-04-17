@@ -1,35 +1,33 @@
-<nav class="navbar navbar-expand-lg navbar-transparent  navbar-absolute fixed-top">
+<nav class="navbar navbar-expand-lg navbar-transparent navbar-absolute fixed-top">
     <div class="container-fluid">
         <div class="navbar-wrapper">
-            <div class="navbar-title-wrap">
-                <button
-                    *ngIf="showBackButton()"
-                    mat-icon-button
-                    type="button"
-                    class="title-back-btn"
-                    (click)="goBack()"
-                    aria-label="Go back">
-                    <i class="material-icons">arrow_back</i>
-                </button>
-                <a
-                    class="corner-dashboard-link"
-                    href="javascript:void(0)"
-                    (click)="onBreadcrumbClick('/dashboard')">
-                    <i class="material-icons">dashboard</i>
-                    <span>DASHBOARD</span>
-                </a>
-                <div class="navbar-breadcrumb">
-                    <ng-container *ngFor="let crumb of getBreadcrumbs().slice(1); let last = last">
-                        <a
-                            class="breadcrumb-link"
-                            [class.active]="crumb.active"
-                            href="javascript:void(0)"
-                            (click)="onBreadcrumbClick(crumb.path)">
-                            {{ crumb.label }}
-                        </a>
-                        <span *ngIf="!last" class="breadcrumb-sep">/</span>
-                    </ng-container>
-                </div>
+            <button
+                *ngIf="showBackButton()"
+                mat-icon-button
+                type="button"
+                class="title-back-btn"
+                (click)="goBack()"
+                aria-label="Go back">
+                <i class="material-icons">arrow_back</i>
+            </button>
+            <a
+                class="corner-dashboard-link"
+                href="javascript:void(0)"
+                (click)="onBreadcrumbClick('/dashboard')">
+                <i class="material-icons">dashboard</i>
+                <span>DASHBOARD</span>
+            </a>
+            <div class="navbar-breadcrumb">
+                <ng-container *ngFor="let crumb of getBreadcrumbs().slice(1); let last = last">
+                    <span *ngIf="!last" class="breadcrumb-sep">/</span>
+                    <a
+                        class="breadcrumb-link"
+                        [class.active]="crumb.active"
+                        href="javascript:void(0)"
+                        (click)="onBreadcrumbClick(crumb.path)">
+                        {{ crumb.label }}
+                    </a>
+                </ng-container>
             </div>
         </div>
         <button mat-raised-button class="navbar-toggler" type="button" (click)="sidebarToggle()">
@@ -49,7 +47,7 @@
             </div>
 
             <div class="shop-chip">
-                <span class="shop-chip-label">Current Shop:</span>
+                <span class="shop-chip-label">Shop:</span>
                 <span class="shop-chip-value">{{ getCurrentShopLabel() }}</span>
             </div>
 
@@ -90,59 +88,3 @@
         </div>
     </div>
 </nav>
-
-<!--
-
-<nav class="navbar navbar-transparent navbar-absolute">
-    <div class="container-fluid">
-        <div class="navbar-header">
-            <button mat-raised-button type="button" class="navbar-toggle" data-toggle="collapse" (click)="sidebarToggle()">
-                <span class="sr-only">Toggle navigation</span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-            </button>
-            <a class="navbar-brand" href="javascript:void(0)">{{getTitle()}}</a>
-        </div>
-        <div class="collapse navbar-collapse">
-            <ul class="nav navbar-nav navbar-right">
-                <li>
-                    <a href="javascript:void(0)" class="dropdown-toggle" data-toggle="dropdown">
-                        <i class="material-icons">dashboard</i>
-                        <p class="hidden-lg hidden-md">Dashboard</p>
-                    </a>
-                </li>
-                <li class="dropdown">
-                    <a href="javascript:void(0)" class="dropdown-toggle" data-toggle="dropdown">
-                        <i class="material-icons">notifications</i>
-                        <span class="notification">5</span>
-                        <p class="hidden-lg hidden-md">Notifications</p>
-                    </a>
-                    <ul class="dropdown-menu">
-                        <li><a href="javascript:void(0)">Mike John responded to your email</a></li>
-                        <li><a href="javascript:void(0)">You have 5 new tasks</a></li>
-                        <li><a href="javascript:void(0)">You're now friend with Andrew</a></li>
-                        <li><a href="javascript:void(0)">Another Notification</a></li>
-                        <li><a href="javascript:void(0)">Another One</a></li>
-                    </ul>
-                </li>
-                <li>
-                    <a href="javascript:void(0)" class="dropdown-toggle" data-toggle="dropdown">
-                       <i class="material-icons">person</i>
-                       <p class="hidden-lg hidden-md">Profile</p>
-                    </a>
-                </li>
-            </ul>
-
-            <form class="navbar-form navbar-right" role="search">
-                <div class="form-group form-black is-empty">
-                    <input type="text" class="form-control" placeholder="Search">
-                    <span class="material-input"></span>
-                </div>
-                <button mat-raised-button type="submit" class="btn btn-white btn-round btn-just-icon">
-                    <i class="material-icons">search</i><div class="ripple-container"></div>
-                </button>
-            </form>
-        </div>
-    </div>
-</nav> -->
