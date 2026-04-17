@@ -61,8 +61,9 @@
         <form #expenseNgForm="ngForm" (ngSubmit)="submitExpense(expenseNgForm)" class="expense-form">
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Expense Date</mat-label>
-            <input matInput type="date" [(ngModel)]="expenseForm.expenseDate" name="expenseDate" required>
-            <mat-icon matPrefix>calendar_today</mat-icon>
+            <input matInput [matDatepicker]="expenseDatePicker" [(ngModel)]="expenseForm.expenseDate" name="expenseDate" required>
+            <mat-datepicker-toggle matSuffix [for]="expenseDatePicker"></mat-datepicker-toggle>
+            <mat-datepicker #expenseDatePicker></mat-datepicker>
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="full-width">
@@ -157,11 +158,15 @@
             </mat-form-field>
             <mat-form-field appearance="outline" class="filter-field">
               <mat-label>From</mat-label>
-              <input matInput type="date" [(ngModel)]="filters.dateFrom">
+              <input matInput [matDatepicker]="fromExpensePicker" [(ngModel)]="filters.dateFrom">
+              <mat-datepicker-toggle matSuffix [for]="fromExpensePicker"></mat-datepicker-toggle>
+              <mat-datepicker #fromExpensePicker></mat-datepicker>
             </mat-form-field>
             <mat-form-field appearance="outline" class="filter-field">
               <mat-label>To</mat-label>
-              <input matInput type="date" [(ngModel)]="filters.dateTo">
+              <input matInput [matDatepicker]="toExpensePicker" [(ngModel)]="filters.dateTo">
+              <mat-datepicker-toggle matSuffix [for]="toExpensePicker"></mat-datepicker-toggle>
+              <mat-datepicker #toExpensePicker></mat-datepicker>
             </mat-form-field>
             <mat-form-field appearance="outline" class="filter-field">
               <mat-label>Payment</mat-label>
