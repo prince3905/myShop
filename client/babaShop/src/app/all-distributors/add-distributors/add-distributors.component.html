@@ -1,161 +1,182 @@
-<div class="main-content distributor-page">
-  <div class="container-fluid">
+<div class="main-content">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header card-header-danger">
+                    <h4 class="card-title">{{ isEditMode ? 'Edit Distributor' : 'Add Distributor' }}</h4>
+                </div>
+                <div class="card-body">
 
-    <!-- ── Hero Header ── -->
-    <div class="distributor-hero-bar">
-      <div class="hero-left">
-        <h2 class="hero-title">{{ isEditMode ? 'Edit Distributor' : 'Add Distributor' }}</h2>
-        <p class="hero-sub">Manage distributor details, contact info and payment terms</p>
-      </div>
-      <div class="hero-actions">
-        <button mat-stroked-button class="hero-btn" routerLink="/distributors">
-          <mat-icon>list</mat-icon> View All
-        </button>
-      </div>
-    </div>
+                    <form [formGroup]="distributorForm" (ngSubmit)="onSubmit()">
+                        <!-- Shop (Super Admin Only) -->
+                        <div class="row" *ngIf="isSuperAdmin">
+                            <div class="col-md-12">
+                                <mat-form-field class="example-full-width">
+                                    <mat-label>Select Shop</mat-label>
+                                    <mat-select formControlName="shop">
+                                        <mat-option *ngFor="let shop of shops" [value]="shop._id">
+                                            {{ shop.name }} ({{ shop.shopCode }})
+                                        </mat-option>
+                                    </mat-select>
+                                </mat-form-field>
+                            </div>
+                        </div>
 
-    <!-- ── Form Panel ── -->
-    <div class="distributor-form-panel">
-      <form [formGroup]="distributorForm" (ngSubmit)="onSubmit()">
+                        <!-- Distributor Name -->
+                        <div class="row">
+                            <div class="col-md-12">
+                                <mat-form-field class="example-full-width">
+                                    <input matInput placeholder="Distributor Name" name="name" formControlName="name"
+                                        appCapitalizeFirst required>
+                                </mat-form-field>
+                            </div>
+                        </div>
 
-        <!-- Shop (Super Admin Only) -->
-        <div class="form-section" *ngIf="isSuperAdmin">
-          <div class="form-section-title">
-            <mat-icon>store</mat-icon>
-            Shop Assignment
-          </div>
-          <div class="form-row-single">
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Select Shop</mat-label>
-              <mat-select formControlName="shop">
-                <mat-option *ngFor="let shop of shops" [value]="shop._id">
-                  {{ shop.name }} ({{ shop.shopCode }})
-                </mat-option>
-              </mat-select>
-            </mat-form-field>
-          </div>
-        </div>
 
-        <!-- Basic Info -->
-        <div class="form-section">
-          <div class="form-section-title">
-            <mat-icon>person</mat-icon>
-            Basic Information
-          </div>
-          <div class="form-row-2">
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Distributor Name</mat-label>
-              <input matInput formControlName="name" appCapitalizeFirst required>
-            </mat-form-field>
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Email</mat-label>
-              <input matInput formControlName="email" type="email" required>
-            </mat-form-field>
-          </div>
-        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <mat-form-field class="example-full-width">
+                                    <input matInput placeholder="Email" name="email" formControlName="email"
+                                        type="email" required>
+                                </mat-form-field>
+                            </div>
+                        </div>
 
-        <!-- Contact Info -->
-        <div class="form-section">
-          <div class="form-section-title">
-            <mat-icon>contact_phone</mat-icon>
-            Contact Information
-          </div>
-          <div class="form-row-2">
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Phone Number</mat-label>
-              <input matInput formControlName="phone" type="tel" pattern="[6-9][0-9]{9}" required>
-            </mat-form-field>
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Telephone Number</mat-label>
-              <input matInput formControlName="telephone" type="tel" pattern="[6-9][0-9]{9}">
-            </mat-form-field>
-          </div>
-        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <mat-form-field class="example-full-width">
+                                    <input matInput placeholder="Phone Numbers" name="phone" pattern="[6-9][0-9]{9}"
+                                        formControlName="phone" required>
+                                </mat-form-field>
+                            </div>
+                        </div>
 
-        <!-- Address -->
-        <div class="form-section">
-          <div class="form-section-title">
-            <mat-icon>location_on</mat-icon>
-            Address Details
-          </div>
-          <div class="form-row-single">
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Address Line 1</mat-label>
-              <input matInput formControlName="addressLine1" appCapitalizeFirst>
-            </mat-form-field>
-          </div>
-          <div class="form-row-single">
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Address Line 2</mat-label>
-              <input matInput formControlName="addressLine2" appCapitalizeFirst>
-            </mat-form-field>
-          </div>
-          <div class="form-row-4">
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>City</mat-label>
-              <input matInput formControlName="city" appCapitalizeFirst>
-            </mat-form-field>
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>District</mat-label>
-              <input matInput formControlName="district" appCapitalizeFirst>
-            </mat-form-field>
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>State</mat-label>
-              <input matInput formControlName="state" appCapitalizeFirst>
-            </mat-form-field>
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Pincode</mat-label>
-              <input matInput formControlName="pincode">
-            </mat-form-field>
-          </div>
-        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <mat-form-field class="example-full-width">
+                                    <input matInput placeholder="Telephone Numbers" name="telephone"
+                                        pattern="[6-9][0-9]{9}" formControlName="telephone">
+                                </mat-form-field>
+                            </div>
+                        </div>
 
-        <!-- Business Details -->
-        <div class="form-section">
-          <div class="form-section-title">
-            <mat-icon>business</mat-icon>
-            Business Details
-          </div>
-          <div class="form-row-3">
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>GST Number</mat-label>
-              <input matInput formControlName="gstNumber">
-            </mat-form-field>
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Credit Limit</mat-label>
-              <input matInput formControlName="creditLimit" type="number">
-            </mat-form-field>
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Payment Terms (Days)</mat-label>
-              <input matInput formControlName="paymentTerms" type="number">
-            </mat-form-field>
-          </div>
-          <div class="form-row-2" *ngIf="!isEditMode">
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Opening Balance</mat-label>
-              <input matInput formControlName="openingBalance" type="number">
-            </mat-form-field>
-            <div class="balance-info">
-              <span class="info-label">Opening Balance</span>
-              <span class="info-hint">Amount receivable from distributor at the time of registration</span>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <mat-form-field class="example-full-width">
+                                    <input matInput placeholder="Address" name="address" formControlName="addressLine1" appCapitalizeFirst>
+                                </mat-form-field>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12">
+                                <mat-form-field class="example-full-width">
+                                    <input matInput placeholder="Address Line 2" name="addressLine2"
+                                        formControlName="addressLine2" appCapitalizeFirst>
+                                </mat-form-field>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12">
+                                <mat-form-field class="example-full-width">
+                                    <input matInput placeholder="City" name="city" formControlName="city" appCapitalizeFirst>
+                                </mat-form-field>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12">
+                                <mat-form-field class="example-full-width">
+                                    <input matInput placeholder="State" name="state" formControlName="state" appCapitalizeFirst>
+                                </mat-form-field>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12">
+                                <mat-form-field class="example-full-width">
+                                    <input matInput placeholder="District" name="district" formControlName="district" appCapitalizeFirst>
+                                </mat-form-field>
+                            </div>
+                        </div>
+
+
+                        <div class="row">
+                            <div class="col-md-12">
+                                <mat-form-field class="example-full-width">
+                                    <input matInput placeholder="Pincode" name="pincode" formControlName="pincode">
+                                </mat-form-field>
+                            </div>
+                        </div>
+
+
+
+                        <div class="row">
+                            <div class="col-md-12">
+                                <mat-form-field>
+                                    <input matInput placeholder="Distributor GST" name="gstNumber"
+                                        formControlName="gstNumber">
+                                </mat-form-field>
+                            </div>
+                        </div>
+
+                        <div class="row" *ngIf="!isEditMode">
+                            <div class="col-md-12">
+                                <mat-form-field>
+                                    <input matInput placeholder="Opening Balance" name="openingBalance" type="number"
+                                        formControlName="openingBalance">
+                                </mat-form-field>
+                            </div>
+                        </div>
+
+
+                        <div class="row">
+                            <div class="col-md-12">
+                                <mat-form-field>
+                                    <input matInput placeholder="Credit Limit" name="creditLimit" type="number"
+                                        formControlName="creditLimit">
+                                </mat-form-field>
+                            </div>
+                        </div>
+
+
+                        <div class="row">
+                            <div class="col-md-12">
+                                <mat-form-field>
+                                    <input matInput placeholder="Payment Terms (Days)" name="paymentTerms" type="number"
+                                        formControlName="paymentTerms">
+                                </mat-form-field>
+                            </div>
+                        </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                        <!-- Submit Button -->
+                        <button mat-raised-button type="submit" class="btn btn-danger pull-right"
+                            [disabled]="distributorForm.invalid || isSubmitting">
+
+                            {{ isEditMode ? 'Update Distributor' : 'Add Distributor' }}
+                        </button>
+
+                        <div class="clearfix"></div>
+                    </form>
+
+                </div>
             </div>
-          </div>
         </div>
-
-        <!-- Actions -->
-        <div class="form-actions">
-          <button mat-stroked-button type="button" class="cancel-btn" routerLink="/distributors">
-            Cancel
-          </button>
-          <button mat-raised-button color="warn" type="submit" class="submit-btn"
-              [disabled]="distributorForm.invalid || isSubmitting">
-            <mat-icon>{{ isSubmitting ? 'hourglass_top' : 'save' }}</mat-icon>
-            {{ isEditMode ? 'Update Distributor' : 'Add Distributor' }}
-          </button>
-        </div>
-
-      </form>
     </div>
-
-  </div>
 </div>
