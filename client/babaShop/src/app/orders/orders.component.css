@@ -54,10 +54,31 @@
 
 .filters {
   display: grid;
-  grid-template-columns: minmax(220px, 2fr) repeat(4, minmax(160px, 1fr)) auto;
+  grid-template-columns: minmax(200px, 2fr) minmax(150px, 1fr) minmax(150px, 1fr) repeat(2, minmax(130px, 1fr)) auto;
   gap: 16px;
   align-items: start;
   margin-bottom: 20px;
+}
+
+.filters mat-form-field {
+  width: 100%;
+  min-width: 130px;
+}
+
+.filters .date-field {
+  min-width: 150px;
+}
+
+.filters .date-field .mat-mdc-form-field-subscript-wrapper {
+  display: none;
+}
+
+.filters .date-field .mat-datepicker-toggle {
+  color: #7c3aed;
+}
+
+::ng-deep .filters .mat-mdc-form-field-subscript-wrapper {
+  display: none;
 }
 
 .filter-actions {
@@ -315,7 +336,13 @@ mat-paginator {
   }
 
   .filters {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .filters mat-form-field,
+  .filters .date-field {
+    min-width: 100%;
   }
 
   .orders-overview-grid {

@@ -92,14 +92,18 @@
             </mat-select>
           </mat-form-field>
 
-          <mat-form-field appearance="outline">
+          <mat-form-field appearance="outline" class="date-field">
             <mat-label>From</mat-label>
-            <input matInput type="date" [(ngModel)]="dateFrom" />
+            <input matInput [matDatepicker]="fromPicker" [(ngModel)]="dateFrom" />
+            <mat-datepicker-toggle matSuffix [for]="fromPicker"></mat-datepicker-toggle>
+            <mat-datepicker #fromPicker></mat-datepicker>
           </mat-form-field>
 
-          <mat-form-field appearance="outline">
+          <mat-form-field appearance="outline" class="date-field">
             <mat-label>To</mat-label>
-            <input matInput type="date" [(ngModel)]="dateTo" />
+            <input matInput [matDatepicker]="toPicker" [(ngModel)]="dateTo" />
+            <mat-datepicker-toggle matSuffix [for]="toPicker"></mat-datepicker-toggle>
+            <mat-datepicker #toPicker></mat-datepicker>
           </mat-form-field>
 
           <div class="filter-actions">
