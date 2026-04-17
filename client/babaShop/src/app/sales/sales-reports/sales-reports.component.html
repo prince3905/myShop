@@ -84,12 +84,13 @@
         </div>
 
         <div class="quick-dates">
-          <button mat-button color="accent" (click)="setQuickDate('today')">Today</button>
-          <button mat-button color="accent" (click)="setQuickDate('week')">This Week</button>
-          <button mat-button color="accent" (click)="setQuickDate('month')">This Month</button>
-          <button mat-button color="accent" (click)="setQuickDate('year')">This Year</button>
-          <button mat-button color="accent" (click)="setQuickDate('all')">All Time</button>
-          <button mat-raised-button color="primary" (click)="loadPaymentSummary()">Refresh Collection</button>
+          <span class="quick-dates-label">Quick Range:</span>
+          <span class="quick-date-btn" (click)="setQuickDate('today')">Today</span>
+          <span class="quick-date-btn" (click)="setQuickDate('week')">This Week</span>
+          <span class="quick-date-btn" (click)="setQuickDate('month')">This Month</span>
+          <span class="quick-date-btn" (click)="setQuickDate('year')">This Year</span>
+          <span class="quick-date-btn" (click)="setQuickDate('all')">All Time</span>
+          <button mat-stroked-button color="primary" (click)="loadPaymentSummary()">Refresh</button>
         </div>
     </div>
 
@@ -124,42 +125,44 @@
       </div>
     </div>
 
-    <div class="kpi-grid" *ngIf="!loading">
-      <div class="kpi">
-        <div class="label">Sales Amount</div>
-        <div class="val">Rs {{ overview?.sales?.totalAmount | number:'1.2-2' }}</div>
-      </div>
-      <div class="kpi profit-kpi" *ngIf="canViewSensitivePricing">
-        <div class="label">Cost Amount</div>
-        <div class="val">Rs {{ overview?.sales?.totalCostAmount | number:'1.2-2' }}</div>
-      </div>
-      <div class="kpi profit-kpi" *ngIf="canViewSensitivePricing">
-        <div class="label">Gross Profit</div>
-        <div class="val">Rs {{ overview?.sales?.grossProfit | number:'1.2-2' }}</div>
-      </div>
-      <div class="kpi profit-kpi" *ngIf="canViewSensitivePricing">
-        <div class="label">Gross Margin</div>
-        <div class="val">{{ overview?.sales?.grossMarginPercent | number:'1.2-2' }}%</div>
-      </div>
-      <div class="kpi">
-        <div class="label">Collected</div>
-        <div class="val">Rs {{ overview?.sales?.totalPaid | number:'1.2-2' }}</div>
-      </div>
-      <div class="kpi">
-        <div class="label">Outstanding</div>
-        <div class="val">Rs {{ overview?.sales?.totalDue | number:'1.2-2' }}</div>
-      </div>
-      <div class="kpi">
-        <div class="label">Customer Return Amount</div>
-        <div class="val">Rs {{ overview?.returns?.totalAmount | number:'1.2-2' }}</div>
-      </div>
-      <div class="kpi">
-        <div class="label">Refunded to Customer</div>
-        <div class="val">Rs {{ overview?.returns?.totalRefund | number:'1.2-2' }}</div>
-      </div>
-      <div class="kpi">
-        <div class="label">Customer Credit Notes</div>
-        <div class="val">Rs {{ overview?.returns?.totalCredit | number:'1.2-2' }}</div>
+    <div class="kpi-grid-wrapper" *ngIf="!loading">
+      <div class="kpi-grid">
+        <div class="kpi">
+          <div class="label">Sales Amount</div>
+          <div class="val">Rs {{ overview?.sales?.totalAmount | number:'1.2-2' }}</div>
+        </div>
+        <div class="kpi profit-kpi" *ngIf="canViewSensitivePricing">
+          <div class="label">Cost Amount</div>
+          <div class="val">Rs {{ overview?.sales?.totalCostAmount | number:'1.2-2' }}</div>
+        </div>
+        <div class="kpi profit-kpi" *ngIf="canViewSensitivePricing">
+          <div class="label">Gross Profit</div>
+          <div class="val">Rs {{ overview?.sales?.grossProfit | number:'1.2-2' }}</div>
+        </div>
+        <div class="kpi profit-kpi" *ngIf="canViewSensitivePricing">
+          <div class="label">Gross Margin</div>
+          <div class="val">{{ overview?.sales?.grossMarginPercent | number:'1.2-2' }}%</div>
+        </div>
+        <div class="kpi">
+          <div class="label">Collected</div>
+          <div class="val">Rs {{ overview?.sales?.totalPaid | number:'1.2-2' }}</div>
+        </div>
+        <div class="kpi">
+          <div class="label">Outstanding</div>
+          <div class="val">Rs {{ overview?.sales?.totalDue | number:'1.2-2' }}</div>
+        </div>
+        <div class="kpi">
+          <div class="label">Customer Return Amount</div>
+          <div class="val">Rs {{ overview?.returns?.totalAmount | number:'1.2-2' }}</div>
+        </div>
+        <div class="kpi">
+          <div class="label">Refunded to Customer</div>
+          <div class="val">Rs {{ overview?.returns?.totalRefund | number:'1.2-2' }}</div>
+        </div>
+        <div class="kpi">
+          <div class="label">Customer Credit Notes</div>
+          <div class="val">Rs {{ overview?.returns?.totalCredit | number:'1.2-2' }}</div>
+        </div>
       </div>
     </div>
 
