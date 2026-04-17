@@ -175,8 +175,9 @@ export class DistributorsComponent implements OnInit, OnDestroy {
     }
     this.dialog
       .open(AddDistributorsComponent, {
-        width: "40%",
-        height: "80%",
+        width: "90%",
+        maxWidth: "800px",
+        maxHeight: "90vh",
         data: null,
       })
       .afterClosed()
@@ -261,7 +262,8 @@ export class DistributorsComponent implements OnInit, OnDestroy {
     }
     this.dialog
       .open(AddDistributorsComponent, {
-        width: "650px",
+        width: "90%",
+        maxWidth: "800px",
         data: row,
       })
       .afterClosed()
