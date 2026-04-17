@@ -141,8 +141,8 @@
                     </div>
                     <div class="price-cell">₹{{ v.sellingPrice || 0 }}</div>
                     <div class="action-cell">
-                      <button mat-icon-button color="primary" (click)="openVariationConsole(item, v); $event.stopPropagation()">
-                        <mat-icon>edit</mat-icon>
+                      <button mat-stroked-button color="primary" class="view-btn" (click)="openVariationConsole(item, v); $event.stopPropagation()">
+                        <mat-icon>visibility</mat-icon> View
                       </button>
                     </div>
                   </div>
