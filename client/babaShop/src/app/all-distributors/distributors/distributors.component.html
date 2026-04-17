@@ -63,6 +63,11 @@
           <span>{{ item.shop?.shopName || item.shop?.shopCode }}</span>
         </div>
 
+        <div class="gst-tag" *ngIf="item.gstNumber">
+          <mat-icon>badge</mat-icon>
+          <span>{{ item.gstNumber }}</span>
+        </div>
+
         <div class="financials-grid">
           <div class="fin-cell">
             <div class="fin-label">Purchase</div>
