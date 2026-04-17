@@ -3,20 +3,9 @@
 
     <!-- ── Hero Header ── -->
     <div class="stock-hero-bar">
-      <div class="hero-left">
+      <div>
         <h2 class="hero-title">Stock Report</h2>
         <p class="hero-sub">Live stock, valuation and low-stock tracking</p>
-      </div>
-      <div class="hero-actions">
-        <button mat-stroked-button class="hero-btn" (click)="exportStockCsv()">
-          <mat-icon>download</mat-icon> Export
-        </button>
-        <button mat-stroked-button class="hero-btn" (click)="goToProducts()">
-          <mat-icon>inventory</mat-icon> Products
-        </button>
-        <button *ngIf="canManagePurchases" mat-raised-button color="warn" class="hero-btn" (click)="goToPurchase()">
-          <mat-icon>add</mat-icon> Purchase
-        </button>
       </div>
     </div>
 

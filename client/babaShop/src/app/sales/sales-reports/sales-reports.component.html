@@ -1,12 +1,15 @@
-<div class="main-content">
+<div class="main-content sales-reports-page">
   <div class="container-fluid">
-    <div class="card report-card">
-      <div class="card-header card-header-danger">
-        <h4 class="card-title">Sales Reports</h4>
-        <p class="card-category">Sales, customer returns, collections and dues summary</p>
+
+    <!-- ── Hero Header ── -->
+    <div class="sales-report-hero-bar">
+      <div>
+        <h2 class="hero-title">Sales Reports</h2>
+        <p class="hero-sub">Sales, customer returns, collections and dues summary</p>
       </div>
-      <div class="card-body">
-        <div class="filter-row">
+    </div>
+
+    <div class="filter-row">
           <mat-form-field appearance="outline" class="f">
             <mat-label>From</mat-label>
             <input matInput [matDatepicker]="fromPicker" [(ngModel)]="filters.dateFrom" />
@@ -88,7 +91,6 @@
           <button mat-button color="accent" (click)="setQuickDate('all')">All Time</button>
           <button mat-raised-button color="primary" (click)="loadPaymentSummary()">Refresh Collection</button>
         </div>
-      </div>
     </div>
 
     <div class="loading-wrap" *ngIf="loading">
@@ -437,4 +439,3 @@
       </div>
     </div>
   </div>
-</div>

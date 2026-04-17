@@ -1,17 +1,17 @@
-<div class="main-content">
+<div class="main-content orders-page">
   <div class="container-fluid">
-    <div class="card card-plain">
-      <div class="card-header card-header-danger orders-header">
-        <div>
-          <h4 class="card-title">Orders</h4>
-          <p class="card-category">Track online and POS-origin orders with live status control</p>
-        </div>
-        <button mat-raised-button color="primary" routerLink="/order/create" *ngIf="canManageOrders()">Create Order</button>
-      </div>
 
-      <div class="card-body">
-        <div class="orders-overview-grid">
-          <div class="overview-card">
+    <!-- ── Hero Header ── -->
+    <div class="orders-hero-bar">
+      <div>
+        <h2 class="hero-title">Orders</h2>
+        <p class="hero-sub">Track online and POS-origin orders with live status control</p>
+      </div>
+    </div>
+
+    <!-- ── KPI Cards ── -->
+    <div class="orders-overview-grid">
+      <div class="overview-card">
             <div class="overview-label">Total Orders</div>
             <div class="overview-value">{{ overview.totalOrders || 0 }}</div>
           </div>
@@ -220,7 +220,5 @@
           (page)="onPageChange($event)"
         >
         </mat-paginator>
-      </div>
-    </div>
   </div>
 </div>

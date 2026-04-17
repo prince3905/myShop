@@ -1,11 +1,55 @@
-.card-plain {
-  margin-top: 0;
+/* ── Hero Bar ── */
+.orders-hero-bar {
+  background: linear-gradient(135deg, #ef4444, #f97316);
+  border-radius: 18px;
+  padding: 20px 24px;
+  margin-bottom: 20px;
+  color: #fff;
 }
 
-.orders-header {
+.hero-title {
+  font-size: 22px;
+  font-weight: 800;
+  margin: 0;
+}
+
+.hero-sub {
+  font-size: 12px;
+  opacity: 0.88;
+  margin: 4px 0 0;
+}
+
+.orders-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.overview-card {
+  background: #fff;
+  border-radius: 18px;
+  padding: 16px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.05);
+  border: 1px solid #f1f5f9;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.overview-label {
+  font-size: 10px;
+  font-weight: 800;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.overview-value {
+  font-size: 20px;
+  font-weight: 900;
+  color: #0f172a;
+  margin-top: 4px;
 }
 
 .filters {
@@ -14,55 +58,6 @@
   gap: 16px;
   align-items: start;
   margin-bottom: 20px;
-}
-
-.orders-overview-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 12px;
-  margin-bottom: 16px;
-}
-
-.overview-card {
-  position: relative;
-  overflow: hidden;
-  border: 1px solid #dde7f2;
-  border-radius: 16px;
-  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
-  padding: 12px 13px;
-  min-height: 92px;
-  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.05);
-}
-
-.overview-card::before {
-  content: "";
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 4px;
-  background: linear-gradient(180deg, #ef4444 0%, #f97316 100%);
-  opacity: 0.92;
-}
-
-.overview-label {
-  position: relative;
-  z-index: 1;
-  font-size: 10px;
-  font-weight: 800;
-  color: #6b7280;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  line-height: 1.25;
-}
-
-.overview-value {
-  position: relative;
-  z-index: 1;
-  margin-top: 10px;
-  font-size: 20px;
-  font-weight: 900;
-  color: #0f172a;
-  line-height: 1.05;
-  word-break: break-word;
 }
 
 .filter-actions {
@@ -284,19 +279,25 @@
   opacity: 0.5;
 }
 
+mat-paginator {
+  margin-top: 20px;
+  background: transparent;
+  border-radius: 12px;
+}
+
+@media (max-width: 1200px) {
+  .orders-overview-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
 @media (max-width: 960px) {
-  .orders-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
+  .orders-overview-grid {
+    grid-template-columns: repeat(3, 1fr);
   }
 
   .filters {
     grid-template-columns: 1fr 1fr;
-  }
-
-  .orders-overview-grid {
-    grid-template-columns: repeat(2, 1fr);
   }
 
   .filter-actions {
@@ -318,13 +319,12 @@
   }
 
   .orders-overview-grid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, 1fr);
     gap: 10px;
   }
 
   .overview-card {
-    min-height: 80px;
-    padding: 10px 12px;
+    padding: 12px;
   }
 
   .overview-value {
