@@ -262,6 +262,7 @@ exports.confirmPurchase = async (req, res) => {
         sku: item.sku,
         type: "IN",
         quantity: qty,
+        purchasePrice: item.purchasePrice,
         referenceType: "PURCHASE",
         referenceId: purchase._id,
         note: `Purchase confirm ${purchase.invoiceNo || purchase._id}`,
