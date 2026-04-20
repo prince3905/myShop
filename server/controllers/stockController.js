@@ -154,7 +154,7 @@ exports.getStockReport = async (req, res) => {
         .populate("shop", "name shopCode")
         .populate("product", "name")
         .populate("model", "name")
-        .populate("variation", "sku attributes")
+        .populate("variation", "sku attributes costPrice")
         .lean(),
       Stock.countDocuments(query),
     ]);
@@ -163,9 +163,14 @@ exports.getStockReport = async (req, res) => {
       const qty = Number(row?.quantity || 0);
       const reserved = Number(row?.reservedQuantity || 0);
       const damaged = Number(row?.damagedQuantity || 0);
+      const stockCost = Number(row?.lastPurchasePrice || 0);
+      const variationCost = Number(row?.variation?.costPrice || 0);
+      const effectiveCost = stockCost > 0 ? stockCost : variationCost;
       return {
         ...row,
         availableQuantity: Math.max(0, qty - reserved - damaged),
+        lastPurchasePrice: effectiveCost,
+        effectiveCostPrice: effectiveCost,
       };
     });
 
@@ -177,7 +182,6 @@ exports.getStockReport = async (req, res) => {
           totalQuantity: { $sum: "$quantity" },
           totalReserved: { $sum: "$reservedQuantity" },
           totalDamaged: { $sum: "$damagedQuantity" },
-          totalCostValue: { $sum: { $multiply: ["$quantity", "$lastPurchasePrice"] } },
           lowStockCount: {
             $sum: {
               $cond: [{ $lte: ["$quantity", "$reorderLevel"] }, 1, 0],
@@ -187,6 +191,9 @@ exports.getStockReport = async (req, res) => {
       },
     ]);
     const summary = summaryRows[0] || {};
+    summary.totalCostValue = rowsWithAvailable.reduce((acc, row) => {
+      return acc + (Number(row.quantity || 0) * Number(row.lastPurchasePrice || 0));
+    }, 0);
 
     return res.status(200).json({
       success: true,
