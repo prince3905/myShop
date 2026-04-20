@@ -154,9 +154,20 @@ exports.getStockReport = async (req, res) => {
         .populate("shop", "name shopCode")
         .populate("product", "name")
         .populate("model", "name")
-        .populate("variation", "sku attributes"),
+        .populate("variation", "sku attributes")
+        .lean(),
       Stock.countDocuments(query),
     ]);
+
+    const rowsWithAvailable = rows.map((row) => {
+      const qty = Number(row?.quantity || 0);
+      const reserved = Number(row?.reservedQuantity || 0);
+      const damaged = Number(row?.damagedQuantity || 0);
+      return {
+        ...row,
+        availableQuantity: Math.max(0, qty - reserved - damaged),
+      };
+    });
 
     const summaryRows = await Stock.aggregate([
       { $match: query },
@@ -182,7 +193,7 @@ exports.getStockReport = async (req, res) => {
       page: safePage,
       limit: safeLimit,
       total,
-      stockReport: rows.map((row) => sanitizeStockRow(row, req)),
+      stockReport: rowsWithAvailable.map((row) => sanitizeStockRow(row, req)),
       summary: {
         totalQuantity: Number(summary.totalQuantity || 0),
         totalReserved: Number(summary.totalReserved || 0),
