@@ -69,7 +69,7 @@
             </div>
           </div>
 
-          <div class="action-buttons" *hasRole="['SUPER_ADMIN','ADMIN']">
+          <div class="action-buttons">
             <button mat-raised-button color="primary" (click)="openVariationConsole(item)">
               <mat-icon>add</mat-icon> Add Variation
             </button>
@@ -175,7 +175,7 @@
             <div class="empty-state-bento">
               <mat-icon>inventory_2</mat-icon>
               <p>No variations added yet</p>
-              <button mat-raised-button color="primary" *hasRole="['SUPER_ADMIN','ADMIN']" (click)="openVariationConsole(item)">
+              <button mat-raised-button color="primary" (click)="openVariationConsole(item)">
                 <mat-icon>add</mat-icon> Add Variation
               </button>
             </div>

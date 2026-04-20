@@ -260,6 +260,9 @@ export class AuthService {
 
   canViewSensitivePricing(): boolean {
     const role = this.getUserRole() || "";
+    if (role === "SUPER_ADMIN") {
+      return true;
+    }
     if (!["SUPER_ADMIN", "ADMIN"].includes(role)) {
       return false;
     }
