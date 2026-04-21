@@ -44,6 +44,43 @@
   margin-bottom: 20px;
 }
 
+.today-summary-row {
+  background: #fff;
+  border-radius: 18px;
+  padding: 20px 24px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.05);
+  border: 1px solid #e2e8f0;
+}
+
+.today-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #475569;
+  margin-bottom: 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.today-header mat-icon {
+  font-size: 20px;
+  color: #16a34a;
+}
+
+.today-kpis {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 1200px) {
+  .today-kpis {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
 .kpi-card {
   background: #fff;
   border-radius: 18px;

@@ -17,7 +17,65 @@
       </div>
     </div>
 
-    <!-- ── Summary KPI Cards ── -->
+    <!-- ── Today's Summary KPI Cards ── -->
+    <div class="summary-kpi-row today-summary-row">
+      <div class="today-header">
+        <mat-icon>calendar_today</mat-icon>
+        <span>Today's Summary</span>
+      </div>
+      <div class="today-kpis">
+        <div class="kpi-card total-sales">
+          <div class="kpi-icon"><mat-icon>receipt_long</mat-icon></div>
+          <div class="kpi-body">
+            <div class="kpi-label">Sales Count</div>
+            <div class="kpi-value">{{ todaySummary.transactionCount || 0 }}</div>
+            <div class="kpi-meta">Transactions</div>
+          </div>
+        </div>
+        <div class="kpi-card revenue">
+          <div class="kpi-icon"><mat-icon>payments</mat-icon></div>
+          <div class="kpi-body">
+            <div class="kpi-label">Total Sales</div>
+            <div class="kpi-value">₹{{ todaySummary.netSales | number:'1.0-0' }}</div>
+            <div class="kpi-meta">Gross Sales</div>
+          </div>
+        </div>
+        <div class="kpi-card qty">
+          <div class="kpi-icon"><mat-icon>account_balance_wallet</mat-icon></div>
+          <div class="kpi-body">
+            <div class="kpi-label">Cash</div>
+            <div class="kpi-value">₹{{ todaySummary.cash | number:'1.0-0' }}</div>
+            <div class="kpi-meta">Expected</div>
+          </div>
+        </div>
+        <div class="kpi-card qty">
+          <div class="kpi-icon"><mat-icon>credit_card</mat-icon></div>
+          <div class="kpi-body">
+            <div class="kpi-label">Card</div>
+            <div class="kpi-value">₹{{ todaySummary.card | number:'1.0-0' }}</div>
+            <div class="kpi-meta">+ UPI</div>
+          </div>
+        </div>
+        <div class="kpi-card due" *ngIf="todaySummary.due > 0">
+          <div class="kpi-icon"><mat-icon>warning</mat-icon></div>
+          <div class="kpi-body">
+            <div class="kpi-label">Due</div>
+            <div class="kpi-value">₹{{ todaySummary.due | number:'1.0-0' }}</div>
+            <div class="kpi-meta">To collect</div>
+          </div>
+        </div>
+        <div class="kpi-card qty" *ngIf="todaySummary.returns > 0">
+          <div class="kpi-icon"><mat-icon>undo</mat-icon></div>
+          <div class="kpi-body">
+            <div class="kpi-label">Returns</div>
+            <div class="kpi-value">₹{{ todaySummary.returns | number:'1.0-0' }}</div>
+            <div class="kpi-meta">Refunds</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Page Summary KPI Cards ── -->
     <div class="summary-kpi-row">
       <div class="kpi-card total-sales">
         <div class="kpi-icon"><mat-icon>receipt_long</mat-icon></div>

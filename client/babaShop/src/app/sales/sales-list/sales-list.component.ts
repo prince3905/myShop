@@ -55,6 +55,17 @@ export class SalesListComponent implements OnInit {
     totalQty: 0,
   };
 
+  todaySummary: any = {
+    transactionCount: 0,
+    grossSales: 0,
+    netSales: 0,
+    cash: 0,
+    card: 0,
+    digital: 0,
+    due: 0,
+    returns: 0,
+  };
+
   constructor(
     public dialog: MatDialog,
     private salesService: SalesService,
@@ -68,6 +79,32 @@ export class SalesListComponent implements OnInit {
   ngOnInit(): void {
     this.loadSales();
     this.loadShopDetails();
+    this.loadTodaySummary();
+  }
+
+  loadTodaySummary(): void {
+    this.salesService.getZReport().subscribe({
+      next: (res: any) => {
+        if (res?.success) {
+          const data = res.data || {};
+          const salesSummary = data.salesSummary || {};
+          const payment = data.paymentBreakdown || {};
+          this.todaySummary = {
+            transactionCount: data.transactionCount || 0,
+            grossSales: salesSummary.grossSales || 0,
+            netSales: salesSummary.netSales || 0,
+            cash: payment.cash || 0,
+            card: payment.card || 0,
+            digital: payment.digital || 0,
+            due: salesSummary.totalDue || 0,
+            returns: salesSummary.totalReturns || 0,
+          };
+        }
+      },
+      error: () => {
+        console.error("Failed to load today's summary");
+      }
+    });
   }
 
   loadShopDetails(): void {
