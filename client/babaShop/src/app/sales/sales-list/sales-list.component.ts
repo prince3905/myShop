@@ -129,6 +129,15 @@ export class SalesListComponent implements OnInit {
     return this.authService.can("sales.pos") && !this.authService.isGlobalReadOnlyMode();
   }
 
+  canEditSale(): boolean {
+    return this.authService.can("sales.pos") && !this.authService.isGlobalReadOnlyMode();
+  }
+
+  editSale(row: any): void {
+    if (!row?._id) return;
+    this.router.navigate(["/sales/edit", row._id]);
+  }
+
   loadSales(): void {
     this.loading = true;
 
@@ -552,5 +561,23 @@ export class SalesListComponent implements OnInit {
     const mm = `${dt.getMonth() + 1}`.padStart(2, "0");
     const dd = `${dt.getDate()}`.padStart(2, "0");
     return `${yyyy}-${mm}-${dd}`;
+  }
+
+  getRowTooltip(row: any): string {
+    if (!row) return "";
+    
+    const items = row.items || [];
+    if (!items.length) return "No items";
+    
+    const itemSummaries = items.slice(0, 5).map((item: any, idx: number) => {
+      return `${idx + 1}. ${item.itemName || 'Item'} (${item.quantity})`;
+    }).join('\n');
+    
+    const more = items.length > 5 ? `\n+ ${items.length - 5} more items` : "";
+    const total = row.totalPurchasePrice || 0;
+    const paid = row.paidAmount || 0;
+    const due = row.dueAmount || 0;
+    
+    return `${itemSummaries}${more}\n\nTotal: ₹${total} | Paid: ₹${paid} | Due: ₹${due}`;
   }
 }

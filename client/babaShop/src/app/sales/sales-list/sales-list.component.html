@@ -51,9 +51,9 @@
         <div class="kpi-card qty">
           <div class="kpi-icon"><mat-icon>credit_card</mat-icon></div>
           <div class="kpi-body">
-            <div class="kpi-label">Card</div>
-            <div class="kpi-value">₹{{ todaySummary.card | number:'1.0-0' }}</div>
-            <div class="kpi-meta">+ UPI</div>
+            <div class="kpi-label">Online</div>
+            <div class="kpi-value">₹{{ (todaySummary.card + todaySummary.digital) | number:'1.0-0' }}</div>
+            <div class="kpi-meta">Card + UPI</div>
           </div>
         </div>
         <div class="kpi-card due" *ngIf="todaySummary.due > 0">
@@ -211,7 +211,8 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let row of salesRows" [class.has-due]="(row?.dueAmount || 0) > 0">
+            <tr *ngFor="let row of salesRows" [class.has-due]="(row?.dueAmount || 0) > 0" 
+                [matTooltip]="getRowTooltip(row)" matTooltipPosition="above" matTooltipShowDelay="300">
               <td class="invoice-cell">{{ row?.invoiceNo || row?._id }}</td>
               <td class="customer-cell">{{ row?.customerName || 'Walk-in' }}</td>
               <td class="amount-cell">₹{{ row?.totalPurchasePrice | number:'1.0-0' }}</td>
@@ -248,6 +249,10 @@
                 <div class="action-btns">
                   <button mat-stroked-button class="action-btn details-btn" (click)="showDetails(row)">
                     <mat-icon>visibility</mat-icon> View
+                  </button>
+                  <button mat-stroked-button class="action-btn edit-btn" (click)="editSale(row)"
+                          *ngIf="canEditSale()">
+                    <mat-icon>edit</mat-icon> Edit
                   </button>
                   <button mat-stroked-button class="action-btn collect-btn" [disabled]="(row?.dueAmount || 0) <= 0"
                           (click)="openCollectPayment(row)">
