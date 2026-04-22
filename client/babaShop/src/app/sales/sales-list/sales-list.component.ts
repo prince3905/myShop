@@ -23,6 +23,7 @@ export class SalesListComponent implements OnInit {
   pageSizeOptions: number[] = [5, 10, 25, 50, 100];
 
   selectedSale: any = null;
+  saleAuditLogs: any[] = [];
   @ViewChild("saleDetailsCard") saleDetailsCard?: ElementRef<HTMLElement>;
   
   // Shop Details for Payment
@@ -130,12 +131,39 @@ export class SalesListComponent implements OnInit {
   }
 
   canEditSale(): boolean {
-    return this.authService.can("sales.pos") && !this.authService.isGlobalReadOnlyMode();
+    return this.authService.can("sales.edit") && !this.authService.isGlobalReadOnlyMode();
+  }
+
+  canDeleteSale(): boolean {
+    return this.authService.can("sales.delete") && !this.authService.isGlobalReadOnlyMode();
   }
 
   editSale(row: any): void {
     if (!row?._id) return;
-    this.router.navigate(["/sales/edit", row._id]);
+    this.router.navigate(["/sale/edit", row._id]);
+  }
+
+  deleteSale(row: any): void {
+    if (!row?._id) {
+      alert("No sale ID");
+      return;
+    }
+    if (!confirm(`Delete this sale? Invoice: ${row.invoiceNo}`)) return;
+    
+    this.loading = true;
+    console.log("Deleting sale:", row._id);
+    this.salesService.deleteSale(row._id).subscribe({
+      next: (res) => {
+        console.log("Delete response:", res);
+        this.snackBar.open("Sale deleted", "Close", { duration: 3000 });
+        this.loadSales();
+      },
+      error: (err) => {
+        this.loading = false;
+        console.error("Delete error:", err);
+        this.snackBar.open(err?.error?.message || "Failed to delete", "Close", { duration: 3000 });
+      },
+    });
   }
 
   loadSales(): void {
@@ -307,7 +335,29 @@ export class SalesListComponent implements OnInit {
   }
 
   showDetails(row: any): void {
-    this.selectedSale = row;
+    this.saleAuditLogs = [];
+    if (row?._id) {
+      // Fetch fresh data from server
+      this.salesService.getSaleById(row._id).subscribe({
+        next: (res: any) => {
+          this.selectedSale = res?.data || res;
+          this.saleAuditLogs = [];
+          this.salesService.getSaleAudit(row._id).subscribe({
+            next: (auditRes: any) => {
+              this.saleAuditLogs = auditRes?.auditLogs || [];
+            },
+            error: () => {
+              this.saleAuditLogs = [];
+            },
+          });
+        },
+        error: () => {
+          this.selectedSale = row;
+        },
+      });
+    } else {
+      this.selectedSale = row;
+    }
     setTimeout(() => {
       this.saleDetailsCard?.nativeElement?.scrollIntoView({
         behavior: "smooth",
@@ -316,8 +366,32 @@ export class SalesListComponent implements OnInit {
     }, 0);
   }
 
+  showAudit(row: any): void {
+    if (!row?._id) return;
+    this.loading = true;
+    this.salesService.getSaleAudit(row._id).subscribe({
+      next: (res: any) => {
+        this.loading = false;
+        const logs = res?.auditLogs || [];
+        if (logs.length === 0) {
+          this.snackBar.open("No audit logs found", "Close", { duration: 3000 });
+          return;
+        }
+        const msg = logs.map((l: any) =>
+          `${l.action} by ${l.actor?.name || l.actor?.pFname || "Unknown"} on ${new Date(l.createdAt).toLocaleString()}`
+        ).join("\n");
+        alert(`Audit Logs:\n${msg}`);
+      },
+      error: (err) => {
+        this.loading = false;
+        this.snackBar.open("Failed to load audit logs", "Close", { duration: 3000 });
+      },
+    });
+  }
+
   closeDetails(): void {
     this.selectedSale = null;
+    this.saleAuditLogs = [];
   }
 
   openReturn(row: any): void {

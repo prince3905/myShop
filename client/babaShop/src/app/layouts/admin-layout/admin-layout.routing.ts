@@ -68,6 +68,7 @@ export const AdminLayoutRoutes: Routes = [
   { path: "order", component: OrdersComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: MANAGER_AND_ABOVE, requireShop: true, allowGlobalRead: true, feature: "sales.orders" } },
   { path: "order/create", component: CreateOrderComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ALL_ROLES, requireShop: true, feature: "sales.orders.manage" } },
   { path: "order/edit/:id", component: CreateOrderComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ALL_ROLES, requireShop: true, feature: "sales.orders.manage" } },
+  { path: "sale/edit/:id", component: AddSalesComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ADMIN_AND_ABOVE, requireShop: true, feature: "sales.edit" } },
   { path: "order/:id", component: OrderDetailsComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: MANAGER_AND_ABOVE, requireShop: true, allowGlobalRead: true, feature: "sales.orders" } },
   { path: "customer", component: CustomersComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ALL_ROLES, requireShop: true, allowGlobalRead: true, feature: "people.customers" } },
   { path: "customer/:id", component: CustomerDetailsComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ALL_ROLES, requireShop: true, allowGlobalRead: true, feature: "people.customers" } },

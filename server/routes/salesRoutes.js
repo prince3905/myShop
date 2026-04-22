@@ -94,10 +94,38 @@ router.get(
 );
 
 router.get(
+  "/:id/audit",
+  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER"),
+  authorizeFeature("sales.list"),
+  salesController.getSaleAuditLogs,
+);
+
+router.get(
+  "/audit/all",
+  authorizeRoles("SUPER_ADMIN", "ADMIN"),
+  authorizeFeature("sales.list"),
+  salesController.getAllSaleAuditLogs,
+);
+
+router.get(
   "/:id",
   authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"),
   authorizeFeature("sales.list"),
   salesController.getSaleById,
+);
+
+router.put(
+  "/:id",
+  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER"),
+  authorizeFeature("sales.edit"),
+  salesController.updateSale,
+);
+
+router.delete(
+  "/:id",
+  authorizeRoles("SUPER_ADMIN", "ADMIN"),
+  authorizeFeature("sales.delete"),
+  salesController.deleteSale,
 );
 
 module.exports = router;

@@ -4,7 +4,7 @@
     <!-- ── Hero Header ── -->
     <div class="sales-hero-bar">
       <div class="hero-left">
-        <h2 class="hero-title">Sales Console</h2>
+        <h2 class="hero-title">POS Sales</h2>
         <p class="hero-sub">POS sales list, filters and printable invoice</p>
       </div>
       <div class="hero-actions">
@@ -251,9 +251,16 @@
                   <button mat-stroked-button class="action-btn details-btn" (click)="showDetails(row)">
                     <mat-icon>visibility</mat-icon> View
                   </button>
+                  <button mat-stroked-button class="action-btn audit-btn" (click)="showAudit(row)">
+                    <mat-icon>history</mat-icon> Audit
+                  </button>
                   <button mat-stroked-button class="action-btn edit-btn" (click)="editSale(row)"
                           *ngIf="canEditSale()">
                     <mat-icon>edit</mat-icon> Edit
+                  </button>
+                  <button mat-stroked-button color="warn" class="action-btn" (click)="deleteSale(row)"
+                          *ngIf="canDeleteSale()">
+                    <mat-icon>delete</mat-icon> Delete
                   </button>
                   <button mat-stroked-button class="action-btn collect-btn" [disabled]="(row?.dueAmount || 0) <= 0"
                           (click)="openCollectPayment(row)">
@@ -392,6 +399,39 @@
                 <td>{{ it?.quantity || 0 }}</td>
                 <td>₹{{ it?.sellingPrice || 0 | number:'1.2-2' }}</td>
                 <td>₹{{ ((it?.quantity || 0) * (it?.sellingPrice || 0)) | number:'1.2-2' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="items-section" *ngIf="saleAuditLogs?.length">
+          <div class="section-title">Edit History</div>
+          <table class="detail-table">
+            <thead>
+              <tr>
+                <th>Action</th>
+                <th>By</th>
+                <th>Date</th>
+                <th>Details</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let log of saleAuditLogs">
+                <td>
+                  <span class="badge" [ngClass]="{'badge-edit': log.action === 'UPDATE', 'badge-delete': log.action === 'DELETE'}">
+                    {{ log.action }}
+                  </span>
+                </td>
+                <td>{{ log.actor?.name || log.actor?.pFname || 'Unknown' }}</td>
+                <td>{{ log.createdAt | date:'medium' }}</td>
+                <td>
+                  <span *ngIf="log.action === 'UPDATE'">
+                    ₹{{ log.meta?.previousAmount | number:'1.0-0' }} → ₹{{ log.meta?.newAmount | number:'1.0-0' }}
+                  </span>
+                  <span *ngIf="log.action === 'DELETE'">
+                    {{ log.meta?.invoiceNo }}
+                  </span>
+                </td>
               </tr>
             </tbody>
           </table>

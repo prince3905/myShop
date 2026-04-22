@@ -12,6 +12,8 @@ const FEATURE_REGISTRY = [
     features: [
       { key: "sales.list", label: "Sales List" },
       { key: "sales.create", label: "Create Sale" },
+      { key: "sales.edit", label: "Edit Sale" },
+      { key: "sales.delete", label: "Delete Sale" },
       { key: "sales.return", label: "Sale Return" },
       { key: "sales.payment", label: "Sale Payment" },
       { key: "sales.reports", label: "Sales Reports" },

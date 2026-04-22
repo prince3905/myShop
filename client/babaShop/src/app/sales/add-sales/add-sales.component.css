@@ -74,11 +74,39 @@
 }
 
 .pos-page-header-copy {
-  min-width: 0;
   display: flex;
-  flex-direction: column;
-  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
 }
+
+.header-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.date-btn {
+  background: rgba(255,255,255,0.15);
+  color: white;
+  border: 1px solid rgba(255,255,255,0.3);
+  font-size: 12px;
+  padding: 0 12px;
+}
+
+.date-btn:hover {
+  background: rgba(255,255,255,0.25);
+}
+
+.date-btn mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  margin-right: 4px;
+}
+
+
 
 .pos-page-title {
   font-size: 18px;
@@ -814,6 +842,91 @@
   width: 92px;
   min-width: 0;
   margin-bottom: -1.25em;
+}
+
+.summary-input.date-input {
+  width: 130px;
+}
+
+.date-btn {
+  height: 32px;
+  font-size: 12px;
+  padding: 0 8px;
+}
+
+.date-btn mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+}
+
+.summary-input.date-input {
+  width: 80px;
+  font-size: 11px;
+  margin-bottom: -1.25em;
+}
+
+.pos-header-date {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.header-date-input {
+  width: 110px;
+  background: rgba(255,255,255,0.95);
+  border-radius: 8px;
+}
+
+.header-date-input ::ng-deep .mat-form-field-wrapper {
+  padding: 0;
+}
+
+.header-date-input ::ng-deep .mat-form-field-flex {
+  min-height: 32px;
+  height: 32px;
+}
+
+.header-date-input ::ng-deep .mat-form-field-infix {
+  padding: 4px 0;
+  font-size: 12px;
+}
+
+.header-date-input ::ng-deep .mat-input-element {
+  font-size: 12px;
+}
+
+.header-date-input ::ng-deep .mat-datepicker-toggle {
+  width: 20px;
+  height: 20px;
+}
+
+.header-date-input ::ng-deep .mat-datepicker-toggle-default-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.summary-input.date-input ::ng-deep .mat-form-field-wrapper {
+  padding-bottom: 0;
+}
+
+.summary-input.date-input ::ng-deep .mat-form-field-infix {
+  padding: 2px 0;
+}
+
+.summary-input.date-input ::ng-deep .mat-form-field-label {
+  font-size: 10px;
+}
+
+.summary-input.date-input ::ng-deep .mat-input-element {
+  font-size: 11px;
+}
+
+.date-btn mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
 }
 
 .summary-input ::ng-deep .mat-form-field-wrapper {

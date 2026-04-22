@@ -28,6 +28,7 @@ exports.createSaleLedgerEntry = async ({
   note = "",
   createdBy = null,
   session = null,
+  createdAt = null,
 }) => {
   const safeAmount = Math.max(0, Number(amount || 0));
   if (safeAmount <= 0) return null;
@@ -41,7 +42,7 @@ exports.createSaleLedgerEntry = async ({
   // Count existing entries of same type for this sale to determine sequence
   const sameTypeCount = await SaleLedger.countDocuments({ shop, sale, type }, { session });
 
-  const ledger = await SaleLedger.create([{
+  const ledgerCreateData = {
     shop,
     sale,
     customer: customer || undefined,
@@ -54,7 +55,13 @@ exports.createSaleLedgerEntry = async ({
     note,
     createdBy: createdBy || undefined,
     sequenceNo: sameTypeCount,
-  }], { session });
+  };
+  
+  if (createdAt) {
+    ledgerCreateData.createdAt = createdAt;
+  }
+  
+  const ledger = await SaleLedger.create([ledgerCreateData], { session });
 
   return ledger[0];
 };

@@ -10,10 +10,25 @@
           >
             <span aria-hidden="true">←</span>
           </button>
-          <div class="pos-page-header-copy">
-            <div class="pos-page-title">Billing Console</div>
-            <div class="pos-page-subtitle">Search, scan and complete billing</div>
-          </div>
+<div class="pos-page-header-copy">
+              <div>
+                <div class="pos-page-title">{{ editMode ? 'Edit Sale' : 'Billing Console' }}</div>
+                <div class="pos-page-subtitle">{{ editMode ? 'Update sale details' : 'Search, scan and complete billing' }}</div>
+              </div>
+              <div class="header-actions" *ngIf="canBackdateSale">
+                <button mat-stroked-button class="date-btn" [matMenuTriggerFor]="dateMenu">
+                  <mat-icon>calendar_today</mat-icon>
+                  {{ saleDate ? (saleDate | date:'dd MMM') : (today | date:'dd MMM') }}
+                </button>
+                <mat-menu #dateMenu="matMenu" class="date-menu">
+                  <button mat-menu-item (click)="saleDate = null">Today</button>
+                  <mat-divider></mat-divider>
+                  <button mat-menu-item *ngFor="let d of [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30]" (click)="setBackDate(d)">
+                    {{ d }} day{{d>1?'s':''}} ago
+                  </button>
+                </mat-menu>
+              </div>
+            </div>
         </div>
 
         <div class="catalog-panel">
@@ -312,6 +327,8 @@
               <span>Sub Total:</span>
               <strong>{{ totalPurchasePrice || 0 | currency:'INR':'symbol':'1.2-2' }}</strong>
             </div>
+
+            
 
             <div class="summary-row">
               <span>Due:</span>

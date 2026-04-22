@@ -9,7 +9,7 @@ const entityAuditLogSchema = new mongoose.Schema(
     },
     entityType: {
       type: String,
-      enum: ["PRODUCT", "CUSTOMER", "DISTRIBUTOR"],
+      enum: ["PRODUCT", "CUSTOMER", "DISTRIBUTOR", "SALE"],
       required: true,
       index: true,
     },
@@ -20,7 +20,7 @@ const entityAuditLogSchema = new mongoose.Schema(
     },
     action: {
       type: String,
-      enum: ["CREATE", "UPDATE", "ARCHIVE", "RESTORE", "STATUS_CHANGE"],
+      enum: ["CREATE", "UPDATE", "DELETE", "ARCHIVE", "RESTORE", "STATUS_CHANGE"],
       required: true,
       index: true,
     },
