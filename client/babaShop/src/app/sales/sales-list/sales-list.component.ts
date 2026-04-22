@@ -82,8 +82,8 @@ export class SalesListComponent implements OnInit {
     this.loadTodaySummary();
   }
 
-  loadTodaySummary(): void {
-    this.salesService.getZReport().subscribe({
+  loadTodaySummary(dateStr?: string): void {
+    this.salesService.getZReport(dateStr).subscribe({
       next: (res: any) => {
         if (res?.success) {
           const data = res.data || {};
@@ -184,6 +184,13 @@ export class SalesListComponent implements OnInit {
   applyFilters(): void {
     this.page = 1;
     this.loadSales();
+    const startDate = this.filters.startDate ? this.formatDateForApi(this.filters.startDate) : undefined;
+    const endDate = this.filters.endDate ? this.formatDateForApi(this.filters.endDate) : undefined;
+    if (startDate || endDate) {
+      this.loadTodaySummary(startDate || endDate);
+    } else {
+      this.loadTodaySummary();
+    }
   }
 
   clearFilters(): void {
@@ -199,6 +206,7 @@ export class SalesListComponent implements OnInit {
     };
     this.page = 1;
     this.loadSales();
+    this.loadTodaySummary();
   }
 
   onPageChange(event: PageEvent): void {

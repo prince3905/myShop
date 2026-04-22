@@ -21,7 +21,8 @@
     <div class="summary-kpi-row today-summary-row">
       <div class="today-header">
         <mat-icon>calendar_today</mat-icon>
-        <span>Today's Summary</span>
+        <span *ngIf="filters.startDate || filters.endDate">Summary ({{ filters.startDate | date:'dd MMM' }} - {{ filters.endDate | date:'dd MMM yyyy' }})</span>
+        <span *ngIf="!filters.startDate && !filters.endDate">Today's Summary</span>
       </div>
       <div class="today-kpis">
         <div class="kpi-card total-sales">
