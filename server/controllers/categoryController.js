@@ -3,6 +3,12 @@ const Product = require("../models/Product");
 const Brand = require("../models/Brand");
 const mongoose = require("mongoose");
 
+const generateAutoDescription = (name) => {
+  const adj = ["wide range of", "premium", "quality", "durable", "popular"];
+  const randomAdj = adj[Math.floor(Math.random() * adj.length)];
+  return `${randomAdj.charAt(0).toUpperCase() + randomAdj.slice(1)} ${name} collection for every need. Browse our best selection.`;
+};
+
 const isSuperAdminGlobal = (req) =>
   req.user?.role === "SUPER_ADMIN" && !req.shopId;
 
@@ -24,12 +30,8 @@ exports.createCategory = async (req, res) => {
   try {
     const { name, description, image, brands = [] } = req.body;
 
-    if (!req.shopId) {
-      return res.status(400).json({
-        success: false,
-        message: "Please select a shop first",
-      });
-    }
+    // Allow global category for SUPER_ADMIN or local for others
+    const shopId = req.shopId || null;
 
     const cleanName = normalizeName(name);
     if (!cleanName) {
@@ -39,15 +41,15 @@ exports.createCategory = async (req, res) => {
       });
     }
 
+    // Check duplicate globally
     const duplicate = await Category.findOne({
-      shop: req.shopId,
       name: { $regex: `^${cleanName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, $options: "i" },
     });
 
     if (duplicate) {
       return res.status(400).json({
         success: false,
-        message: "Category already exists for this shop",
+        message: "Category already exists",
       });
     }
 
@@ -56,9 +58,10 @@ exports.createCategory = async (req, res) => {
       : [];
 
     if (normalizedBrandIds.length) {
+      // Allow shop-specific + global brands
       const validBrands = await Brand.countDocuments({
         _id: { $in: normalizedBrandIds },
-        shop: req.shopId,
+        $or: [{ shop: req.shopId }, { shop: null }]
       });
 
       if (validBrands !== normalizedBrandIds.length) {
@@ -71,10 +74,10 @@ exports.createCategory = async (req, res) => {
 
     const category = await Category.create({
       name: cleanName,
-      description,
+      description: description || generateAutoDescription(cleanName),
       image,
       brands: normalizedBrandIds,
-      shop: req.shopId,
+      shop: shopId,
     });
 
     res.status(201).json({
@@ -87,7 +90,7 @@ exports.createCategory = async (req, res) => {
     if (error.code === 11000) {
       return res.status(400).json({
         success: false,
-        message: "Category already exists for this shop"
+        message: "Category already exists"
       });
     }
 
@@ -101,12 +104,17 @@ exports.createCategory = async (req, res) => {
 
 /* =========================
    GET ALL CATEGORIES
-========================= */
+======================== */
 exports.getCategories = async (req, res) => {
   try {
     const { sort = "-createdAt", search, isActive } = req.query;
     const { limit, skip } = parsePagination(req.query);
-    const query = isSuperAdminGlobal(req) ? {} : { shop: req.shopId };
+    
+    // Allow both global (shop: null) and shop-specific
+    const shopId = req.shopId;
+    const query = shopId 
+      ? { $or: [{ shop: shopId }, { shop: null }] }
+      : {};
 
     if (search) {
       query.name = { $regex: search, $options: "i" };
@@ -188,14 +196,13 @@ exports.updateCategory = async (req, res) => {
 
       const duplicate = await Category.findOne({
         _id: { $ne: id },
-        shop: req.shopId,
         name: { $regex: `^${cleanName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, $options: "i" },
       });
 
       if (duplicate) {
         return res.status(400).json({
           success: false,
-          message: "Category already exists for this shop",
+          message: "Category already exists",
         });
       }
     }
@@ -205,19 +212,20 @@ exports.updateCategory = async (req, res) => {
         ? [...new Set(updateData.brands.map((brandId) => `${brandId || ""}`.trim()).filter(Boolean))]
         : [];
 
-      if (normalizedBrandIds.length) {
-        const validBrands = await Brand.countDocuments({
-          _id: { $in: normalizedBrandIds },
-          shop: req.shopId,
-        });
+if (normalizedBrandIds.length) {
+      // Allow shop-specific + global brands
+      const validBrands = await Brand.countDocuments({
+        _id: { $in: normalizedBrandIds },
+        $or: [{ shop: req.shopId }, { shop: null }]
+      });
 
-        if (validBrands !== normalizedBrandIds.length) {
-          return res.status(400).json({
-            success: false,
-            message: "One or more selected brands are invalid for this shop",
-          });
-        }
+      if (validBrands !== normalizedBrandIds.length) {
+        return res.status(400).json({
+          success: false,
+          message: "One or more selected brands are invalid for this shop",
+        });
       }
+    }
 
       updateData.brands = normalizedBrandIds;
     }

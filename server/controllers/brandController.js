@@ -3,6 +3,12 @@ const Product = require("../models/Product");
 const Category = require("../models/Category");
 const mongoose = require("mongoose");
 
+const generateAutoDescription = (name) => {
+  const adj = ["trusted", "popular", "premium", "leading", "quality"];
+  const randomAdj = adj[Math.floor(Math.random() * adj.length)];
+  return `${randomAdj.charAt(0).toUpperCase() + randomAdj.slice(1)} ${name} brand known for quality and reliability.`;
+};
+
 const isSuperAdminGlobal = (req) =>
   req.user?.role === "SUPER_ADMIN" && !req.shopId;
 
@@ -24,12 +30,8 @@ exports.createBrand = async (req, res) => {
   try {
     const { name, description, logo } = req.body;
 
-    if (!req.shopId) {
-      return res.status(400).json({
-        success: false,
-        message: "Please select a shop first",
-      });
-    }
+    // Allow global brand or shop-specific
+    const shopId = req.shopId || null;
 
     const cleanName = normalizeName(name);
     if (!cleanName) {
@@ -40,22 +42,21 @@ exports.createBrand = async (req, res) => {
     }
 
     const duplicate = await Brand.findOne({
-      shop: req.shopId,
       name: { $regex: `^${cleanName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, $options: "i" },
     });
 
     if (duplicate) {
       return res.status(400).json({
         success: false,
-        message: "Brand already exists for this shop",
+        message: "Brand already exists",
       });
     }
 
     const brand = await Brand.create({
       name: cleanName,
-      description,
+      description: description || generateAutoDescription(cleanName),
       logo,
-      shop: req.shopId,
+      shop: shopId,
     });
 
     res.status(201).json({
@@ -68,7 +69,7 @@ exports.createBrand = async (req, res) => {
     if (error.code === 11000) {
       return res.status(400).json({
         success: false,
-        message: "Brand already exists for this shop"
+        message: "Brand already exists"
       });
     }
 
@@ -83,12 +84,17 @@ exports.createBrand = async (req, res) => {
 
 /* =========================
    GET ALL BRANDS (SHOP WISE)
-========================= */
+======================== */
 exports.getBrands = async (req, res) => {
   try {
     const { sort = "-createdAt", search, isActive } = req.query;
     const { limit, skip } = parsePagination(req.query);
-    const query = isSuperAdminGlobal(req) ? {} : { shop: req.shopId };
+    
+    // Allow both global (shop: null) and shop-specific
+    const shopId = req.shopId;
+    const query = shopId 
+      ? { $or: [{ shop: shopId }, { shop: null }] }
+      : {};
 
     if (search) {
       query.name = { $regex: search, $options: "i" };
@@ -170,14 +176,13 @@ exports.updateBrand = async (req, res) => {
 
       const duplicate = await Brand.findOne({
         _id: { $ne: id },
-        shop: req.shopId,
         name: { $regex: `^${cleanName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, $options: "i" },
       });
 
       if (duplicate) {
         return res.status(400).json({
           success: false,
-          message: "Brand already exists for this shop",
+          message: "Brand already exists",
         });
       }
     }

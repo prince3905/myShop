@@ -28,6 +28,9 @@
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Brand Description</mat-label>
             <textarea matInput name="description" [(ngModel)]="description" appCapitalizeFirst rows="3"></textarea>
+            <button mat-icon-button matSuffix type="button" (click)="generateDescription()" [disabled]="generating" matTooltip="Generate AI Description">
+              <mat-icon>{{ generating ? 'hourglass_top' : 'auto_awesome' }}</mat-icon>
+            </button>
           </mat-form-field>
 
           <div class="form-actions">

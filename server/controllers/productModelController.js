@@ -1,6 +1,10 @@
 const ProductModel = require("../models/ProductModel");
 const Product = require("../models/Product");
 
+const generateAutoDescription = (name) => {
+  return `Best selling ${name} with premium finish and excellent quality.`;
+};
+
 const isSuperAdminGlobal = (req) =>
   req.user?.role === "SUPER_ADMIN" && !req.shopId;
 
@@ -26,7 +30,7 @@ exports.createProductModel = async (req, res) => {
     const productModel = await ProductModel.create({
       product,
       name,
-      description,
+      description: description || generateAutoDescription(name),
       images,
       isActive,
       shop: req.shopId,

@@ -11,6 +11,21 @@ const Category = require("../models/Category");
 const Brand = require("../models/Brand");
 const { logEntityAudit } = require("../utils/entityAudit.service");
 
+const generateAutoDescription = (name, category = "", brand = "") => {
+  const templates = [
+    `Premium quality ${name} - perfect for home and office use. Durable and reliable.`,
+    `High-quality ${name} designed for maximum comfort and longevity.`,
+    `${name} - Best in class product with excellent finish and durability.`,
+    `Upgrade your space with our premium ${name}. Quality guaranteed.`,
+    `Top-rated ${name} with modern design and superior performance.`,
+  ];
+
+  const adjectives = ["premium", "high-quality", "durable", "reliable", "best-in-class"];
+  const randomAdj = adjectives[Math.floor(Math.random() * adjectives.length)];
+
+  return `${randomAdj.charAt(0).toUpperCase() + randomAdj.slice(1)} ${name} with excellent build quality. Perfect for everyday use.`;
+};
+
 const isSuperAdminGlobal = (req) =>
   req.user?.role === "SUPER_ADMIN" && !req.shopId;
 
@@ -87,8 +102,8 @@ const validateCategoryBrandMapping = async ({ shopId, categoryId, brandId }) => 
   }
 
   const [category, brand] = await Promise.all([
-    Category.findOne({ _id: categoryId, shop: shopId }).select("_id name brands").lean(),
-    Brand.findOne({ _id: brandId, shop: shopId }).select("_id name").lean(),
+    Category.findOne({ _id: categoryId, $or: [{ shop: shopId }, { shop: null }] }).select("_id name brands").lean(),
+    Brand.findOne({ _id: brandId, $or: [{ shop: shopId }, { shop: null }] }).select("_id name").lean(),
   ]);
 
   if (!category) {
@@ -164,6 +179,9 @@ exports.createProduct = async (req, res) => {
   try {
     const { name, category, brand, description, images } = req.body;
 
+    // Auto-generate description if not provided
+    const autoDescription = description || generateAutoDescription(name);
+
     if (!req.shopId) {
       return res.status(400).json({
         success: false,
@@ -191,7 +209,7 @@ exports.createProduct = async (req, res) => {
       slug,
       category,
       brand,
-      description,
+      description: autoDescription,
       images,
       shop: req.shopId,
     });

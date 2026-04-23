@@ -19,6 +19,7 @@ export class AddBrandComponent {
   isEditMode = false;
   brandId: string = "";
   isGlobalSuperAdmin = false;
+  generating = false;
 
   brands: any[] = [];
   loadingList = false;
@@ -60,6 +61,26 @@ export class AddBrandComponent {
         this.allCategories = [];
       },
     });
+  }
+
+  generateDescription(): void {
+    if (!this.name?.trim()) {
+      this.snackBar.open("Please enter brand name first", "Close", { duration: 2500 });
+      return;
+    }
+
+    this.generating = true;
+    const adj = ["trusted", "popular", "premium", "leading", "quality"];
+    const randomAdj = adj[Math.floor(Math.random() * adj.length)];
+    const generated = randomAdj.charAt(0).toUpperCase() + randomAdj.slice(1) + " " + this.name.trim() + " brand known for quality and reliability.";
+    
+    if (this.description) {
+      this.description = this.description + " " + generated;
+    } else {
+      this.description = generated;
+    }
+    this.generating = false;
+    this.snackBar.open("Description added", "Close", { duration: 2000 });
   }
 
   loadBrands(): void {
