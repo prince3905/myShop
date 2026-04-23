@@ -25,7 +25,6 @@ const {
 const { protect, authorizeRoles } = require("../middleware/authMiddleware");
 const { validateLogin, validateRegister, validate } = require("../middleware/authValidation");
 
-router.post("/register", protect, validateRegister, validate, authorizeRoles("SUPER_ADMIN"), register);
 router.post("/login", validateLogin, validate, login);
 router.get("/authenticated", protect, authenticated);
 router.put("/profile", protect, updateProfile);

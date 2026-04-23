@@ -196,6 +196,33 @@ export class UserComponent implements OnInit, OnDestroy {
     this.syncShopValidatorsWithRole();
   }
 
+  canDeleteUser(row: any): boolean {
+    if (this.actorRole === "SUPER_ADMIN" && row?.role !== "SUPER_ADMIN") return true;
+    if (this.actorRole === "ADMIN" && row?.role === "STAFF") return true;
+    return false;
+  }
+
+  onDelete(row: any) {
+    if (!this.canDeleteUser(row)) return;
+
+    if (!confirm(`Delete user ${row?.email || row?.phoneNo}? This action cannot be undone.`)) {
+      return;
+    }
+
+    this.loading = true;
+    this.userService.deleteUser(row._id).subscribe({
+      next: (res: any) => {
+        this.loading = false;
+        this.snackBar.open(res?.message || "User deleted successfully", "Close", { duration: 2500 });
+        this.loadUsers();
+      },
+      error: (err) => {
+        this.loading = false;
+        this.snackBar.open(err?.error?.message || "Delete failed", "Close", { duration: 3000 });
+      },
+    });
+  }
+
   cancelEdit() {
     this.editingUserId = null;
     this.userForm.reset({

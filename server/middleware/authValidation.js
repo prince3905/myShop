@@ -16,8 +16,7 @@ exports.validate = (req, res, next) => {
 exports.validateLogin = [
   body("email")
     .isEmail()
-    .withMessage("Valid email is required")
-    .normalizeEmail(),
+    .withMessage("Valid email is required"),
   body("password")
     .isString()
     .isLength({ min: 6 })
@@ -28,8 +27,7 @@ exports.validateLogin = [
 exports.validateRegister = [
   body("email")
     .isEmail()
-    .withMessage("Valid email is required")
-    .normalizeEmail(),
+    .withMessage("Valid email is required"),
   body("password")
     .isString()
     .isLength({ min: 6 })

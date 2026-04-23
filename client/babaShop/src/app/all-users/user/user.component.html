@@ -124,6 +124,9 @@
             <button mat-stroked-button color="primary" (click)="onEdit(user)">
               <mat-icon>edit</mat-icon> Edit
             </button>
+            <button mat-stroked-button color="warn" (click)="onDelete(user)" *ngIf="canDeleteUser(user)">
+              <mat-icon>delete</mat-icon> Delete
+            </button>
           </div>
         </div>
       </div>
