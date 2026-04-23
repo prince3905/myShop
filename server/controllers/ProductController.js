@@ -92,6 +92,7 @@ const mapProductForPosSearch = (productDoc, matchedBy = [], req = null) => ({
   productId: productDoc?._id,
   name: productDoc?.name || "",
   label: productDoc?.name || "",
+  icon: productDoc?.icon || "chair",
   matchedBy,
   models: groupVariationsByModel(Array.isArray(productDoc?.variations) ? productDoc.variations : [], req),
 });
@@ -177,10 +178,11 @@ const getProductUsageSummary = async ({ productId, shopId, variationIds = [] }) 
 ========================= */
 exports.createProduct = async (req, res) => {
   try {
-    const { name, category, brand, description, images } = req.body;
+    const { name, category, brand, description, icon, images } = req.body;
 
     // Auto-generate description if not provided
     const autoDescription = description || generateAutoDescription(name);
+    const productIcon = icon || "chair";
 
     if (!req.shopId) {
       return res.status(400).json({
@@ -210,6 +212,7 @@ exports.createProduct = async (req, res) => {
       category,
       brand,
       description: autoDescription,
+      icon: productIcon,
       images,
       shop: req.shopId,
     });
@@ -295,7 +298,7 @@ exports.getProducts = async (req, res) => {
     const totalItems = await Product.countDocuments(query);
 
     let productQuery = Product.find(query)
-      .select("name brand category createdAt")
+      .select("name icon brand category createdAt")
       .sort(sort)
       .populate("brand", "name")
       .populate("category", "name")
@@ -356,7 +359,7 @@ exports.searchProductsForPos = async (req, res) => {
       Product.find({
         ...productFilter,
         name: { $regex: regex },
-      }).select("_id name").limit(12),
+      }).select("_id name icon").limit(12),
       ProductModel.find({
         ...shopScopedFilter,
         name: { $regex: regex },
@@ -411,7 +414,7 @@ exports.searchProductsForPos = async (req, res) => {
           select: "name",
         },
       })
-      .select("_id name variations");
+      .select("_id name icon variations");
 
     const orderMap = new Map(productIds.map((id, index) => [String(id), index]));
     const rows = products
@@ -441,7 +444,7 @@ exports.getProductById = async (req, res) => {
       : { _id: req.params.id, shop: req.shopId, isDeleted: { $ne: true } };
 
     const product = await Product.findOne(filter)
-      .select("name slug description images category brand createdAt updatedAt shop")
+      .select("name slug description icon images category brand createdAt updatedAt shop")
       .populate("category", "name")
       .populate("brand", "name")
       .populate({
@@ -486,7 +489,7 @@ exports.updateProduct = async (req, res) => {
       });
     }
 
-    const allowedFields = ["name", "category", "brand", "description", "images", "isActive"];
+    const allowedFields = ["name", "category", "brand", "description", "icon", "images", "isActive"];
     const updateData = {};
 
     for (const field of allowedFields) {

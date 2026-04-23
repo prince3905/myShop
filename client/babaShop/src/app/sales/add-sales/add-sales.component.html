@@ -173,7 +173,7 @@
               (click)="selectSuggestion(suggestion)"
             >
               <div class="product-image">
-                <mat-icon>inventory_2</mat-icon>
+                <i class="ph" [class]="'ph-' + (suggestion?.icon || 'chair')"></i>
               </div>
               <div class="product-card-body">
                 <div class="product-name">{{ suggestion?.label || suggestion?.name }}</div>

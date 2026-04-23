@@ -181,7 +181,7 @@
 
 .panel-row {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 0.6fr;
+  grid-template-columns: 50px 2fr 1fr 1fr 0.6fr;
   gap: 10px;
   width: 100%;
   align-items: center;
@@ -192,6 +192,22 @@
 
 .product-name {
   font-weight: 700;
+}
+
+.product-icon {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f1f5f9;
+  border-radius: 8px;
+  margin-right: 8px;
+}
+
+.product-icon i {
+  font-size: 18px;
+  color: #64748b;
 }
 
 .stock-cell {
@@ -297,11 +313,11 @@
 
   .table-header,
   .panel-row {
-    grid-template-columns: 1fr 1fr 0.6fr;
+    grid-template-columns: 50px 1fr 1fr 0.6fr;
   }
 
-  .table-header span:nth-child(2),
-  .panel-row div:nth-child(2) {
+  .table-header span:nth-child(3),
+  .panel-row div:nth-child(3) {
     display: none;
   }
 }
@@ -309,13 +325,13 @@
 @media (max-width: 640px) {
   .table-header,
   .panel-row {
-    grid-template-columns: 1fr 0.6fr;
+    grid-template-columns: 50px 1fr 0.6fr;
   }
 
-  .table-header span:nth-child(2),
   .table-header span:nth-child(3),
-  .panel-row div:nth-child(2),
-  .panel-row div:nth-child(3) {
+  .table-header span:nth-child(4),
+  .panel-row div:nth-child(3),
+  .panel-row div:nth-child(4) {
     display: none;
   }
 }

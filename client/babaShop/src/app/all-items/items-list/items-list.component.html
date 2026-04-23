@@ -124,6 +124,9 @@
             <mat-expansion-panel *ngFor="let item of paginatedItems" class="product-panel">
               <mat-expansion-panel-header>
                 <div class="panel-row">
+                  <div class="product-icon">
+                    <i class="ph" [class]="'ph-' + (item.icon || 'chair')"></i>
+                  </div>
                   <div class="product-name">{{ item.name }}</div>
                   <div>{{ item.brand?.name || '-' }}</div>
                   <div>{{ item.category?.name || '-' }}</div>

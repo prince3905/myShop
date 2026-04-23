@@ -43,6 +43,12 @@ const productSchema = new mongoose.Schema({
 
   description: String,
 
+  icon: {
+    type: String,
+    default: "chair",
+    trim: true
+  },
+
   images: [imageSchema],
 
   isActive: {

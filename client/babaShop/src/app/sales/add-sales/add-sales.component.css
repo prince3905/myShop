@@ -498,11 +498,9 @@
   border: 1px solid #edf2f7;
 }
 
-.product-image mat-icon {
-  font-size: 28px;
-  width: 28px;
-  height: 28px;
-  color: #6b7280;
+.product-image i.ph {
+  font-size: 32px;
+  color: #64748b;
 }
 
 .product-name {
@@ -1505,10 +1503,8 @@
     margin-bottom: 10px;
   }
 
-  .product-image mat-icon {
+  .product-image i.ph {
     font-size: 42px;
-    width: 42px;
-    height: 42px;
   }
 
   .product-name {

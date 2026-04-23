@@ -77,3 +77,12 @@
     grid-column: span 1;
   }
 }
+
+.icon-preview {
+  padding-right: 8px;
+  color: #64748b;
+}
+
+.icon-preview i {
+  font-size: 20px;
+}
