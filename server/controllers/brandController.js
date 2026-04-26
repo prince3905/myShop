@@ -90,15 +90,15 @@ exports.createBrand = async (req, res) => {
 
 
 /* =========================
-   GET ALL BRANDS (SHOP WISE)
+   GET ALL BRANDS (ALL)
 ======================= */
 exports.getBrands = async (req, res) => {
   try {
     const { sort = "-createdAt", search, isActive } = req.query;
     const { limit, skip } = parsePagination(req.query);
     
-    // Brand dikhe jo is shop ko access hai
-    const query = { shops: { $in: [req.shopId] } };
+    // Show ALL brands - global + all shops
+    const query = {};
 
     if (search) {
       query.name = { $regex: search, $options: "i" };

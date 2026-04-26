@@ -106,14 +106,15 @@ exports.createCategory = async (req, res) => {
 
 
 /* =========================
-   GET ALL CATEGORIES
+   GET ALL CATEGORIES (ALL)
 ======================= */
 exports.getCategories = async (req, res) => {
   try {
     const { sort = "-createdAt", search, isActive } = req.query;
     const { limit, skip } = parsePagination(req.query);
     
-    const query = { shops: { $in: [req.shopId] } };
+    // Show ALL categories - global + all shops
+    const query = {};
 
     if (search) {
       query.name = { $regex: search, $options: "i" };
