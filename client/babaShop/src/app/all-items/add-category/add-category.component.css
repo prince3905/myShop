@@ -66,7 +66,11 @@
 .filter-form {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 0;
+}
+
+.filter-form > mat-form-field {
+  margin-bottom: 16px;
 }
 
 .filter-form mat-form-field {
@@ -76,7 +80,17 @@
 .filter-form mat-hint {
   font-size: 10px;
   color: #94a3b8;
-  margin-top: 2px;
+  line-height: 1.4;
+  display: block;
+  margin-top: 4px;
+}
+
+.filter-form .icon-preview-box {
+  margin-bottom: 16px;
+}
+
+.form-actions {
+  margin-top: 8px;
 }
 
 .form-actions {
