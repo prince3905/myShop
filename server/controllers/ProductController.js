@@ -342,84 +342,96 @@ exports.getProducts = async (req, res) => {
 exports.searchProductsForPos = async (req, res) => {
   try {
     const term = `${req.query.term || ""}`.trim();
-    if (!term) {
-      return res.json({
-        success: true,
-        data: [],
-      });
-    }
-
-    const regex = new RegExp(term, "i");
-    const productFilter = isSuperAdminGlobal(req)
+    const isSuperAdmin = isSuperAdminGlobal(req);
+    const productFilter = isSuperAdmin
       ? { isDeleted: { $ne: true } }
       : { shop: req.shopId, isDeleted: { $ne: true } };
-    const shopScopedFilter = isSuperAdminGlobal(req) ? {} : { shop: req.shopId };
+    const shopScopedFilter = isSuperAdmin ? {} : { shop: req.shopId };
 
-    const [productMatches, modelMatches, variationMatches] = await Promise.all([
-      Product.find({
-        ...productFilter,
-        name: { $regex: regex },
-      }).select("_id name icon").limit(12),
-      ProductModel.find({
-        ...shopScopedFilter,
-        name: { $regex: regex },
-      }).select("_id product name").limit(12),
-      ProductVariation.find({
-        ...shopScopedFilter,
-        $or: [{ sku: { $regex: regex } }, { barcode: { $regex: regex } }],
-      })
-        .select("_id product model sku barcode")
-        .populate("model", "name")
-        .limit(12),
-    ]);
+    let products;
 
-    const matchMeta = new Map();
-    const addMatch = (productId, label) => {
-      const key = `${productId || ""}`;
-      if (!key) return;
-      if (!matchMeta.has(key)) {
-        matchMeta.set(key, new Set());
-      }
-      matchMeta.get(key).add(label);
-    };
+    if (!term) {
+      products = await Product.find(productFilter)
+        .populate({
+          path: "variations",
+          populate: {
+            path: "model",
+            select: "name",
+          },
+        })
+        .select("_id name icon variations")
+        .limit(50)
+        .sort({ name: 1 });
+    } else {
+      const regex = new RegExp(term, "i");
 
-    productMatches.forEach((row) => addMatch(row._id, "Name"));
-    modelMatches.forEach((row) => addMatch(row.product, `Model: ${row.name}`));
-    variationMatches.forEach((row) => {
-      addMatch(row.product, `SKU: ${row.sku}`);
-      if (row.barcode && regex.test(row.barcode)) {
-        addMatch(row.product, `Barcode: ${row.barcode}`);
-      }
-      if (row.model?.name && regex.test(row.model.name)) {
-        addMatch(row.product, `Model: ${row.model.name}`);
-      }
-    });
+      const [productMatches, modelMatches, variationMatches] = await Promise.all([
+        Product.find({
+          ...productFilter,
+          name: { $regex: regex },
+        }).select("_id name icon").limit(12),
+        ProductModel.find({
+          ...shopScopedFilter,
+          name: { $regex: regex },
+        }).select("_id product name").limit(12),
+        ProductVariation.find({
+          ...shopScopedFilter,
+          $or: [{ sku: { $regex: regex } }, { barcode: { $regex: regex } }],
+        })
+          .select("_id product model sku barcode")
+          .populate("model", "name")
+          .limit(12),
+      ]);
 
-    const productIds = Array.from(matchMeta.keys()).slice(0, 20);
-    if (!productIds.length) {
-      return res.json({
-        success: true,
-        data: [],
+      const matchMeta = new Map();
+      const addMatch = (productId, label) => {
+        const key = `${productId || ""}`;
+        if (!key) return;
+        if (!matchMeta.has(key)) {
+          matchMeta.set(key, new Set());
+        }
+        matchMeta.get(key).add(label);
+      };
+
+      productMatches.forEach((row) => addMatch(row._id, "Name"));
+      modelMatches.forEach((row) => addMatch(row.product, `Model: ${row.name}`));
+      variationMatches.forEach((row) => {
+        addMatch(row.product, `SKU: ${row.sku}`);
+        if (row.barcode && regex.test(row.barcode)) {
+          addMatch(row.product, `Barcode: ${row.barcode}`);
+        }
+        if (row.model?.name && regex.test(row.model.name)) {
+          addMatch(row.product, `Model: ${row.model.name}`);
+        }
       });
+
+      const productIds = Array.from(matchMeta.keys()).slice(0, 20);
+      if (!productIds.length) {
+        return res.json({
+          success: true,
+          data: [],
+        });
+      }
+
+      products = await Product.find({
+        ...productFilter,
+        _id: { $in: productIds },
+      })
+        .populate({
+          path: "variations",
+          populate: {
+            path: "model",
+            select: "name",
+          },
+        })
+        .select("_id name icon variations");
+
+      const orderMap = new Map(productIds.map((id, index) => [String(id), index]));
+      products = products
+        .sort((a, b) => (orderMap.get(String(a._id)) ?? 999) - (orderMap.get(String(b._id)) ?? 999));
     }
 
-    const products = await Product.find({
-      ...productFilter,
-      _id: { $in: productIds },
-    })
-      .populate({
-        path: "variations",
-        populate: {
-          path: "model",
-          select: "name",
-        },
-      })
-      .select("_id name icon variations");
-
-    const orderMap = new Map(productIds.map((id, index) => [String(id), index]));
-    const rows = products
-      .sort((a, b) => (orderMap.get(String(a._id)) ?? 999) - (orderMap.get(String(b._id)) ?? 999))
-      .map((product) => mapProductForPosSearch(product, Array.from(matchMeta.get(String(product._id)) || []), req));
+    const rows = products.map((product) => mapProductForPosSearch(product, [], req));
 
     return res.json({
       success: true,

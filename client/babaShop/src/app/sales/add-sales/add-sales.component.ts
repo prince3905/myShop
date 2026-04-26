@@ -151,6 +151,7 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
     window.addEventListener("offline", this.onlineStatusHandler);
     window.addEventListener("online", this.onlineStatusHandler);
     this.setupSuggestionStreams();
+    this.itemSearch$.next("");
   }
 
   ngAfterViewInit(): void {
@@ -1645,10 +1646,6 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
         debounceTime(240),
         distinctUntilChanged(),
         switchMap((term) => {
-          if (!term) {
-            this.itemSearchLoading = false;
-            return of([]);
-          }
           this.itemSearchLoading = true;
           return this.item.searchProductsForPos(term);
         }),
