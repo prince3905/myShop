@@ -20,9 +20,13 @@
         </div>
 
         <form (ngSubmit)="onSubmit()" #categoryForm="ngForm" class="filter-form">
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Category Name</mat-label>
-            <input matInput name="name" [(ngModel)]="name" appCapitalizeFirst required />
+<mat-form-field appearance="outline">
+            <mat-label>Icon Name (Phosphor)</mat-label>
+            <input matInput name="icon" [(ngModel)]="icon" placeholder="folder" />
+            <mat-hint>例: chair, sofa, table, bed</mat-hint>
+            <span matSuffix class="icon-preview" *ngIf="icon">
+              <i class="ph" [class]="'ph-' + icon"></i>
+            </span>
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="full-width">
