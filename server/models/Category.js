@@ -1,4 +1,3 @@
-
 const mongoose = require('mongoose');
 
 const categorySchema = new mongoose.Schema({
@@ -18,10 +17,16 @@ const categorySchema = new mongoose.Schema({
     ref: "Brand",
   }],
 
-  shop: {
+  shops: {
+    type: [mongoose.Schema.Types.ObjectId],
+    ref: "Shop",
+    required: true,
+  },
+
+  ownerShop: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Shop",
-    required: true
+    required: true,
   },
 
   isActive: {
@@ -31,7 +36,8 @@ const categorySchema = new mongoose.Schema({
 
 }, { timestamps: true });
 
-categorySchema.index({ shop: 1, name: 1 }, { unique: true });
-categorySchema.index({ shop: 1 });
+categorySchema.index({ name: 1 });
+categorySchema.index({ ownerShop: 1 });
+categorySchema.index({ shops: 1 });
 
 module.exports = mongoose.model('Category', categorySchema);

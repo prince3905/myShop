@@ -9,9 +9,6 @@ const generateAutoDescription = (name) => {
   return `${randomAdj.charAt(0).toUpperCase() + randomAdj.slice(1)} ${name} collection for every need. Browse our best selection.`;
 };
 
-const isSuperAdminGlobal = (req) =>
-  req.user?.role === "SUPER_ADMIN" && !req.shopId;
-
 const normalizeName = (name = "") => name.trim().replace(/\s+/g, " ");
 
 const parsePagination = (query) => {
@@ -28,10 +25,14 @@ const parsePagination = (query) => {
 ========================= */
 exports.createCategory = async (req, res) => {
   try {
-    const { name, description, image, brands = [] } = req.body;
+    const { name, description, image, brands = [], shops } = req.body;
 
-    // Allow global category for SUPER_ADMIN or local for others
-    const shopId = req.shopId || null;
+    if (!req.shopId) {
+      return res.status(400).json({
+        success: false,
+        message: "Please select a shop first",
+      });
+    }
 
     const cleanName = normalizeName(name);
     if (!cleanName) {
@@ -41,15 +42,17 @@ exports.createCategory = async (req, res) => {
       });
     }
 
-    // Check duplicate globally
+    const categoryShops = shops && shops.length > 0 ? shops : [req.shopId];
+
     const duplicate = await Category.findOne({
       name: { $regex: `^${cleanName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, $options: "i" },
+      ownerShop: req.shopId,
     });
 
     if (duplicate) {
       return res.status(400).json({
         success: false,
-        message: "Category already exists",
+        message: "Category already exists in your shop",
       });
     }
 
@@ -58,16 +61,15 @@ exports.createCategory = async (req, res) => {
       : [];
 
     if (normalizedBrandIds.length) {
-      // Allow shop-specific + global brands
       const validBrands = await Brand.countDocuments({
         _id: { $in: normalizedBrandIds },
-        $or: [{ shop: req.shopId }, { shop: null }]
+        shops: { $in: categoryShops }
       });
 
       if (validBrands !== normalizedBrandIds.length) {
         return res.status(400).json({
           success: false,
-          message: "One or more selected brands are invalid for this shop",
+          message: "One or more selected brands are invalid for selected shops",
         });
       }
     }
@@ -77,7 +79,8 @@ exports.createCategory = async (req, res) => {
       description: description || generateAutoDescription(cleanName),
       image,
       brands: normalizedBrandIds,
-      shop: shopId,
+      shops: categoryShops,
+      ownerShop: req.shopId,
     });
 
     res.status(201).json({
@@ -104,17 +107,13 @@ exports.createCategory = async (req, res) => {
 
 /* =========================
    GET ALL CATEGORIES
-======================== */
+======================= */
 exports.getCategories = async (req, res) => {
   try {
     const { sort = "-createdAt", search, isActive } = req.query;
     const { limit, skip } = parsePagination(req.query);
     
-    // Allow both global (shop: null) and shop-specific
-    const shopId = req.shopId;
-    const query = shopId 
-      ? { $or: [{ shop: shopId }, { shop: null }] }
-      : {};
+    const query = { shops: { $in: [req.shopId] } };
 
     if (search) {
       query.name = { $regex: search, $options: "i" };
@@ -161,17 +160,23 @@ exports.getCategories = async (req, res) => {
 exports.updateCategory = async (req, res) => {
   try {
     const { id } = req.params;
-    if (!req.shopId) {
-      return res.status(400).json({
-        success: false,
-        message: "Please select a shop first",
-      });
-    }
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
         success: false,
         message: "Invalid category id",
+      });
+    }
+
+    const category = await Category.findOne({
+      _id: id,
+      ownerShop: req.shopId,
+    });
+
+    if (!category) {
+      return res.status(404).json({
+        success: false,
+        message: "Category not found or you don't have permission to edit",
       });
     }
 
@@ -197,12 +202,13 @@ exports.updateCategory = async (req, res) => {
       const duplicate = await Category.findOne({
         _id: { $ne: id },
         name: { $regex: `^${cleanName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, $options: "i" },
+        ownerShop: req.shopId,
       });
 
       if (duplicate) {
         return res.status(400).json({
           success: false,
-          message: "Category already exists",
+          message: "Category already exists in your shop",
         });
       }
     }
@@ -212,41 +218,33 @@ exports.updateCategory = async (req, res) => {
         ? [...new Set(updateData.brands.map((brandId) => `${brandId || ""}`.trim()).filter(Boolean))]
         : [];
 
-if (normalizedBrandIds.length) {
-      // Allow shop-specific + global brands
-      const validBrands = await Brand.countDocuments({
-        _id: { $in: normalizedBrandIds },
-        $or: [{ shop: req.shopId }, { shop: null }]
-      });
-
-      if (validBrands !== normalizedBrandIds.length) {
-        return res.status(400).json({
-          success: false,
-          message: "One or more selected brands are invalid for this shop",
+      if (normalizedBrandIds.length) {
+        const validBrands = await Brand.countDocuments({
+          _id: { $in: normalizedBrandIds },
+          shops: { $in: category.shops }
         });
+
+        if (validBrands !== normalizedBrandIds.length) {
+          return res.status(400).json({
+            success: false,
+            message: "One or more selected brands are invalid",
+          });
+        }
       }
-    }
 
       updateData.brands = normalizedBrandIds;
     }
 
-    const category = await Category.findOneAndUpdate(
-      { _id: id, shop: req.shopId },
+    const updatedCategory = await Category.findByIdAndUpdate(
+      id,
       updateData,
       { new: true, runValidators: true }
     );
 
-    if (!category) {
-      return res.status(404).json({
-        success: false,
-        message: "Category not found"
-      });
-    }
-
     res.status(200).json({
       success: true,
       message: "Category updated successfully",
-      data: category
+      data: updatedCategory
     });
 
   } catch (error) {
@@ -264,17 +262,23 @@ if (normalizedBrandIds.length) {
 exports.deleteCategory = async (req, res) => {
   try {
     const { id } = req.params;
-    if (!req.shopId) {
-      return res.status(400).json({
-        success: false,
-        message: "Please select a shop first",
-      });
-    }
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
         success: false,
         message: "Invalid category id",
+      });
+    }
+
+    const category = await Category.findOne({
+      _id: id,
+      ownerShop: req.shopId,
+    });
+
+    if (!category) {
+      return res.status(404).json({
+        success: false,
+        message: "Category not found or you don't have permission to delete",
       });
     }
 
@@ -286,21 +290,11 @@ exports.deleteCategory = async (req, res) => {
     if (productUsingCategory) {
       return res.status(400).json({
         success: false,
-        message: "Cannot delete category. It is used in products."
+        message: "Cannot delete category. It is used in products.",
       });
     }
 
-    const category = await Category.findOneAndDelete({
-      _id: id,
-      shop: req.shopId,
-    });
-
-    if (!category) {
-      return res.status(404).json({
-        success: false,
-        message: "Category not found"
-      });
-    }
+    await category.deleteOne();
 
     res.status(200).json({
       success: true,
