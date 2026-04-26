@@ -243,6 +243,13 @@ exports.updateCategory = async (req, res) => {
       { new: true, runValidators: true }
     );
 
+    if (updateData.icon !== undefined) {
+      await Product.updateMany(
+        { category: id },
+        { $set: { icon: updateData.icon } }
+      );
+    }
+
     res.status(200).json({
       success: true,
       message: "Category updated successfully",

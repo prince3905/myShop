@@ -40,15 +40,6 @@
         </mat-hint>
       </mat-form-field>
 
-      <mat-form-field appearance="outline">
-        <mat-label>Icon Name (Phosphor)</mat-label>
-        <input matInput [(ngModel)]="product.icon" placeholder="chair" />
-        <mat-hint>例: chair, sofa, table, bed</mat-hint>
-        <span matSuffix class="icon-preview" *ngIf="product.icon">
-          <i class="ph" [class]="'ph-' + product.icon"></i>
-        </span>
-      </mat-form-field>
-
       <mat-form-field appearance="outline" class="full-width">
         <mat-label>Description</mat-label>
         <textarea matInput rows="3" [(ngModel)]="product.description" appCapitalizeFirst></textarea>

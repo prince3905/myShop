@@ -125,7 +125,7 @@
               <mat-expansion-panel-header>
                 <div class="panel-row">
                   <div class="product-icon">
-                    <i class="ph" [class]="'ph-' + (item.icon || 'chair')"></i>
+                    <i class="ph" [class]="'ph-' + (item.category?.icon || item.icon || 'folder')"></i>
                   </div>
                   <div class="product-name">{{ item.name }}</div>
                   <div>{{ item.brand?.name || '-' }}</div>

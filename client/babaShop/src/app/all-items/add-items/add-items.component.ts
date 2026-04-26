@@ -21,7 +21,6 @@ export class AddItemsComponent implements OnInit {
     category: "",
     brand: "",
     description: "",
-    icon: "chair",
   };
   categories: any[] = [];
   brands: any[] = [];

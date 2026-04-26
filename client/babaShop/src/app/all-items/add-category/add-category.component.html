@@ -20,13 +20,9 @@
         </div>
 
         <form (ngSubmit)="onSubmit()" #categoryForm="ngForm" class="filter-form">
-<mat-form-field appearance="outline">
-            <mat-label>Icon Name (Phosphor)</mat-label>
-            <input matInput name="icon" [(ngModel)]="icon" placeholder="folder" />
-            <mat-hint>例: chair, sofa, table, bed</mat-hint>
-            <span matSuffix class="icon-preview" *ngIf="icon">
-              <i class="ph" [class]="'ph-' + icon"></i>
-            </span>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Category Name</mat-label>
+            <input matInput name="name" [(ngModel)]="name" appCapitalizeFirst required />
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="full-width">
@@ -51,12 +47,10 @@
             <mat-label>Icon Name (Phosphor)</mat-label>
             <input matInput name="icon" [(ngModel)]="icon" placeholder="folder" />
             <mat-hint>例: folder, box, package, star</mat-hint>
+            <span matSuffix class="icon-preview" *ngIf="icon">
+              <i class="ph" [class]="'ph-' + icon"></i>
+            </span>
           </mat-form-field>
-
-          <div class="icon-preview-box" *ngIf="icon">
-            <i class="ph" [class]="'ph-' + icon"></i>
-            <span>{{ icon }}</span>
-          </div>
 
           <div class="form-actions">
             <button mat-raised-button color="primary" type="submit" [disabled]="!categoryForm.valid || isLoading">

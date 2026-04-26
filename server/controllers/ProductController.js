@@ -92,7 +92,7 @@ const mapProductForPosSearch = (productDoc, matchedBy = [], req = null) => ({
   productId: productDoc?._id,
   name: productDoc?.name || "",
   label: productDoc?.name || "",
-  icon: productDoc?.icon || "chair",
+  icon: productDoc?.category?.icon || productDoc?.icon || "folder",
   matchedBy,
   models: groupVariationsByModel(Array.isArray(productDoc?.variations) ? productDoc.variations : [], req),
 });
@@ -178,11 +178,7 @@ const getProductUsageSummary = async ({ productId, shopId, variationIds = [] }) 
 ========================= */
 exports.createProduct = async (req, res) => {
   try {
-    const { name, category, brand, description, icon, images } = req.body;
-
-    // Auto-generate description if not provided
-    const autoDescription = description || generateAutoDescription(name);
-    const productIcon = icon || "chair";
+    const { name, category, brand, description, images } = req.body;
 
     if (!req.shopId) {
       return res.status(400).json({
@@ -204,6 +200,7 @@ exports.createProduct = async (req, res) => {
       });
     }
 
+    const autoDescription = description || generateAutoDescription(name);
     const slug = slugify(name, { lower: true, strict: true });
 
     const product = await Product.create({
@@ -212,7 +209,6 @@ exports.createProduct = async (req, res) => {
       category,
       brand,
       description: autoDescription,
-      icon: productIcon,
       images,
       shop: req.shopId,
     });
@@ -301,7 +297,7 @@ exports.getProducts = async (req, res) => {
       .select("name icon brand category createdAt")
       .sort(sort)
       .populate("brand", "name")
-      .populate("category", "name")
+      .populate("category", "name icon")
       .populate({
         path: "variations",
         select: "model sku barcode attributes sellingPrice costPrice quantity",
@@ -352,6 +348,7 @@ exports.searchProductsForPos = async (req, res) => {
 
     if (!term) {
       products = await Product.find(productFilter)
+        .populate("category", "name icon")
         .populate({
           path: "variations",
           populate: {
@@ -369,7 +366,7 @@ exports.searchProductsForPos = async (req, res) => {
         Product.find({
           ...productFilter,
           name: { $regex: regex },
-        }).select("_id name icon").limit(12),
+        }).select("_id name icon").populate("category", "name icon").limit(12),
         ProductModel.find({
           ...shopScopedFilter,
           name: { $regex: regex },
@@ -417,6 +414,7 @@ exports.searchProductsForPos = async (req, res) => {
         ...productFilter,
         _id: { $in: productIds },
       })
+        .populate("category", "name icon")
         .populate({
           path: "variations",
           populate: {
@@ -457,7 +455,7 @@ exports.getProductById = async (req, res) => {
 
     const product = await Product.findOne(filter)
       .select("name slug description icon images category brand createdAt updatedAt shop")
-      .populate("category", "name")
+      .populate("category", "name icon")
       .populate("brand", "name")
       .populate({
         path: "variations",
@@ -501,7 +499,7 @@ exports.updateProduct = async (req, res) => {
       });
     }
 
-    const allowedFields = ["name", "category", "brand", "description", "icon", "images", "isActive"];
+    const allowedFields = ["name", "category", "brand", "description", "images", "isActive"];
     const updateData = {};
 
     for (const field of allowedFields) {
