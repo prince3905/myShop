@@ -16,6 +16,7 @@ import { BrandService } from "app/shared/services/brand.service";
 export class AddCategoryComponent {
   name: string = "";
   description: string = "";
+  icon: string = "folder";
   isLoading = false;
   isEditMode = false;
   categoryId: string = "";
@@ -128,6 +129,7 @@ export class AddCategoryComponent {
     this.categoryId = category?._id;
     this.name = category?.name || "";
     this.description = category?.description || "";
+    this.icon = category?.icon || "folder";
     this.selectedBrands = Array.isArray(category?.brands)
       ? category.brands.map((brand: any) => (typeof brand === "string" ? brand : `${brand?._id || ""}`))
       : [];
@@ -138,6 +140,7 @@ export class AddCategoryComponent {
     this.categoryId = "";
     this.name = "";
     this.description = "";
+    this.icon = "folder";
     this.selectedBrands = [];
   }
 
@@ -200,6 +203,7 @@ export class AddCategoryComponent {
     const payload = {
       name: this.name.trim(),
       description: this.description?.trim(),
+      icon: this.icon?.trim() || "folder",
       brands: this.selectedBrands,
     };
 

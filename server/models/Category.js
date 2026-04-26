@@ -12,6 +12,12 @@ const categorySchema = new mongoose.Schema({
 
   image: String,
 
+  icon: {
+    type: String,
+    default: "folder",
+    trim: true
+  },
+
   brands: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: "Brand",

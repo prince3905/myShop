@@ -25,7 +25,7 @@ const parsePagination = (query) => {
 ========================= */
 exports.createCategory = async (req, res) => {
   try {
-    const { name, description, image, brands = [], shops } = req.body;
+    const { name, description, image, icon, brands = [], shops } = req.body;
 
     if (!req.shopId) {
       return res.status(400).json({
@@ -78,6 +78,7 @@ exports.createCategory = async (req, res) => {
       name: cleanName,
       description: description || generateAutoDescription(cleanName),
       image,
+      icon: icon || "folder",
       brands: normalizedBrandIds,
       shops: categoryShops,
       ownerShop: req.shopId,
@@ -181,7 +182,7 @@ exports.updateCategory = async (req, res) => {
       });
     }
 
-    const allowedFields = ["name", "description", "image", "isActive", "brands"];
+    const allowedFields = ["name", "description", "image", "icon", "isActive", "brands"];
     const updateData = {};
 
     for (const field of allowedFields) {
