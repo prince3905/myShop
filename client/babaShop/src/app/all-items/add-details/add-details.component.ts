@@ -229,7 +229,10 @@ export class AddDetailsComponent implements OnInit {
       },
       error: (err) => {
         this.isLoading = false;
-        if (Number(err?.status || 0) === 404 && this.isEditMode) {
+        const status = Number(err?.status || 0);
+        const errorMsg = err?.error?.message || "";
+
+        if (status === 404 && this.isEditMode) {
           this.snackBar.open("Variation no longer exists. Switched to create mode.", "Close", {
             duration: 3000,
           });
@@ -238,8 +241,20 @@ export class AddDetailsComponent implements OnInit {
           this.loadVariations();
           return;
         }
-        this.snackBar.open(err?.error?.message || "Operation failed", "Close", {
-          duration: 3000,
+
+        let friendlyMsg = errorMsg;
+        if (status === 409 || errorMsg.includes("already exists")) {
+          if (errorMsg.toLowerCase().includes("sku")) {
+            friendlyMsg = "This SKU already exists. Please change color/storage or regenerate SKU.";
+          } else if (errorMsg.toLowerCase().includes("barcode")) {
+            friendlyMsg = "This barcode already exists. Please regenerate.";
+          } else {
+            friendlyMsg = "Duplicate entry: This variation already exists for this shop.";
+          }
+        }
+
+        this.snackBar.open(friendlyMsg || "Operation failed", "Close", {
+          duration: 4000,
         });
       },
     });
