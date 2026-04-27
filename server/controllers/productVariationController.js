@@ -79,6 +79,18 @@ exports.createVariation = async (req, res) => {
       });
     }
 
+    const existingWithModel = await ProductVariation.findOne({
+      shop: req.shopId,
+      product,
+      model,
+    });
+    if (existingWithModel) {
+      return res.status(409).json({
+        success: false,
+        message: "Variation already exists for this model. Please edit existing variation.",
+      });
+    }
+
     const variation = await ProductVariation.create({
       product,
       model,
