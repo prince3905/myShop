@@ -587,6 +587,11 @@
   background: linear-gradient(180deg, #fff1f2 0%, #ffffff 100%);
 }
 
+.analytics-card.raw-material-card {
+  border-color: #fef08a;
+  background: linear-gradient(180deg, #fefce8 0%, #ffffff 100%);
+}
+
 .analytics-card.purchase-return-card {
   border-color: #fed7aa;
   background: linear-gradient(180deg, #fff7ed 0%, #ffffff 100%);
