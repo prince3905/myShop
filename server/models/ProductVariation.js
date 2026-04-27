@@ -83,9 +83,9 @@ const productVariationSchema = new mongoose.Schema({
 
 }, { timestamps: true });
 
-/* Unique SKU per shop */
+/* Unique SKU per shop and product (same product can have same SKU only once, but diff product can reuse SKU) */
 productVariationSchema.index(
-  { shop: 1, sku: 1 },
+  { shop: 1, product: 1, sku: 1 },
   { unique: true }
 );
 productVariationSchema.index({ shop: 1, product: 1, createdAt: -1 });
