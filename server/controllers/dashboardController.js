@@ -467,7 +467,7 @@ exports.getKpis = async (req, res) => {
               isDeleted: { $ne: true },
             },
           },
-          { $group: { _id: null, totalAmount: { $sum: "$subtotal" }, count: { $sum: 1 } } },
+          { $group: { _id: null, totalAmount: { $sum: "$subtotal" }, totalPaid: { $sum: "$paidAmount" }, totalDue: { $sum: "$dueAmount" }, count: { $sum: 1 } } },
         ]),
       ]);
 
@@ -491,6 +491,12 @@ exports.getKpis = async (req, res) => {
         todayPurchaseReturnCount: Number(todayPurchaseReturnAgg[0]?.count || 0),
         todayRawMaterialPurchase: allowFinancials
           ? Number(rawMaterialPurchaseAgg[0]?.totalAmount || 0)
+          : 0,
+        todayRawMaterialPurchasePaid: allowFinancials
+          ? Number(rawMaterialPurchaseAgg[0]?.totalPaid || 0)
+          : 0,
+        todayRawMaterialPurchaseDue: allowFinancials
+          ? Number(rawMaterialPurchaseAgg[0]?.totalDue || 0)
           : 0,
         todayRawMaterialPurchaseCount: Number(rawMaterialPurchaseAgg[0]?.count || 0),
         activeShops: Number(activeShops || 0),

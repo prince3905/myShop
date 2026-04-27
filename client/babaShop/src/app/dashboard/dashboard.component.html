@@ -208,6 +208,8 @@
                         <div class="title">{{ selectedRangeSnapshotTitle }} Raw Material</div>
                         <div class="amount">₹ {{ kpis?.todayRawMaterialPurchase | number:'1.2-2' }}</div>
                         <div class="meta">
+                            Paid: ₹ {{ kpis?.todayRawMaterialPurchasePaid | number:'1.2-2' }} |
+                            Due: ₹ {{ kpis?.todayRawMaterialPurchaseDue | number:'1.2-2' }} |
                             Count: {{ kpis?.todayRawMaterialPurchaseCount || 0 }}
                         </div>
                     </div>
