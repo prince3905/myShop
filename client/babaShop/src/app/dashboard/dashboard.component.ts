@@ -976,7 +976,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   openFactoryRawMaterial(): void {
     if (!this.canOpenFactoryRawMaterial) return;
-    this.goToRoute("/factory-raw-material-purchase");
+    this.goToRoute("/raw-material-purchase");
   }
 
   openOrders(): void {
