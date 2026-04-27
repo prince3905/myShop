@@ -91,13 +91,13 @@ productVariationSchema.index(
 productVariationSchema.index({ shop: 1, product: 1, createdAt: -1 });
 productVariationSchema.index({ shop: 1, product: 1, model: 1, createdAt: -1 });
 
-/* Unique Barcode per shop (if barcode exists) */
+/* Unique Barcode per shop and product */
 productVariationSchema.index(
-  { shop: 1, barcode: 1 },
+  { shop: 1, product: 1, barcode: 1 },
   {
     unique: true,
     partialFilterExpression: { barcode: { $type: "string", $ne: "" } },
-  },
+  }
 );
 
 module.exports = mongoose.model("ProductVariation", productVariationSchema);
