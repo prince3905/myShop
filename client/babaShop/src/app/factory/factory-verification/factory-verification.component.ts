@@ -46,7 +46,7 @@ export class FactoryVerificationComponent implements OnInit {
   }
 
   get filteredTargetShopOptions(): any[] {
-    return this.targetShopOptions.filter((shop: any) => `${shop?._id || ""}` !== this.currentShopId);
+    return this.targetShopOptions;
   }
 
   get factoryPendingRows(): any[] {
