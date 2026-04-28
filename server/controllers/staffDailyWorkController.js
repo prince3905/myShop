@@ -809,8 +809,15 @@ exports.pushDailyWorkToStock = async (req, res) => {
     } else {
       targetVariation = await ProductVariation.findOne({
         shop: targetShop._id,
-        sku: sourceVariation.sku,
+        product: sourceVariation.product,
       }).select("_id product model sku quantity costPrice sellingPrice");
+
+      if (!targetVariation) {
+        targetVariation = await ProductVariation.findOne({
+          shop: targetShop._id,
+          sku: sourceVariation.sku,
+        }).select("_id product model sku quantity costPrice sellingPrice");
+      }
     }
 
     if (!targetVariation) {
