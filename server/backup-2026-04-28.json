@@ -1,0 +1,1548 @@
+{
+  "products": [
+    {
+      "_id": "69e9a269eac79cf892a5609c",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "name": "Diamond Chair",
+      "slug": "diamond-chair",
+      "category": "69e98b2b0788f21348e5c6c6",
+      "brand": "69e989480788f21348e5c1ae",
+      "description": "Best-in-class Diamond Chair with excellent build quality. Perfect for everyday use.",
+      "images": [],
+      "isActive": true,
+      "isDeleted": false,
+      "createdAt": "2026-04-23T04:39:05.828Z",
+      "updatedAt": "2026-04-26T22:13:11.897Z",
+      "__v": 0,
+      "icon": "chair"
+    },
+    {
+      "_id": "69e9a304eac79cf892a56270",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "name": "Suprem chair",
+      "slug": "suprem-chair",
+      "category": "69e98b2b0788f21348e5c6c6",
+      "brand": "69e988f90788f21348e5c02e",
+      "description": "Best-in-class Suprem chair with excellent build quality. Perfect for everyday use.",
+      "images": [],
+      "isActive": true,
+      "isDeleted": false,
+      "createdAt": "2026-04-23T04:41:40.061Z",
+      "updatedAt": "2026-04-26T22:13:11.989Z",
+      "__v": 0,
+      "icon": "chair"
+    },
+    {
+      "_id": "69e9ada3375708b2dc9c242e",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "name": "Almirah",
+      "slug": "almirah",
+      "category": "69e99ec57e23893ea2dc8532",
+      "brand": "69e99e497e23893ea2dc8389",
+      "description": "Reliable Almirah with excellent build quality. Perfect for everyday use.",
+      "icon": "door",
+      "images": [],
+      "isActive": true,
+      "isDeleted": false,
+      "createdAt": "2026-04-23T05:26:59.600Z",
+      "updatedAt": "2026-04-26T22:23:23.397Z",
+      "__v": 0
+    },
+    {
+      "_id": "69ee87fbe97566fdd3ff775a",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "name": "Cello dinning table",
+      "slug": "cello-dinning-table",
+      "category": "69ee8417fbf478f7eb7d0130",
+      "brand": "69e9898c0788f21348e5c2e2",
+      "description": "Best-in-class Cello dinning table with excellent build quality. Perfect for everyday use.",
+      "icon": "desk",
+      "images": [],
+      "isActive": true,
+      "isDeleted": false,
+      "createdAt": "2026-04-26T21:47:39.983Z",
+      "updatedAt": "2026-04-26T22:13:12.167Z",
+      "__v": 0
+    },
+    {
+      "_id": "69eed9b2bf67a9fce3dac678",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "name": "TATA 72\"",
+      "slug": "tata-72",
+      "category": "69e98b740788f21348e5c762",
+      "brand": "69e989dc0788f21348e5c416",
+      "description": "Premium TATA 72\" with excellent build quality. Perfect for everyday use.",
+      "icon": "package",
+      "images": [],
+      "isActive": true,
+      "isDeleted": false,
+      "createdAt": "2026-04-27T03:36:18.269Z",
+      "updatedAt": "2026-04-27T05:13:03.374Z",
+      "__v": 0
+    },
+    {
+      "_id": "69eedee8bf67a9fce3dad127",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "name": "TATA 62\"",
+      "slug": "tata-62",
+      "category": "69e98b740788f21348e5c762",
+      "brand": "69e989dc0788f21348e5c416",
+      "description": "Best-in-class TATA 62\" with excellent build quality. Perfect for everyday use.",
+      "icon": "package",
+      "images": [],
+      "isActive": true,
+      "isDeleted": false,
+      "createdAt": "2026-04-27T03:58:32.247Z",
+      "updatedAt": "2026-04-27T05:13:03.374Z",
+      "__v": 0
+    }
+  ],
+  "brands": [
+    {
+      "_id": "69e8bb7f54c318fc890f47f0",
+      "name": "LG",
+      "description": "LG brand known for quality and reliability.",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "updatedAt": "2026-04-26T20:48:47.734Z",
+      "shops": [
+        "69e974e0eb8fca5e1a5ef253"
+      ],
+      "ownerShop": "69e974e0eb8fca5e1a5ef253"
+    },
+    {
+      "_id": "69e988f90788f21348e5c02e",
+      "name": "Supreme",
+      "description": "Premium Supreme brand known for quality and reliability.",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "isActive": true,
+      "createdAt": "2026-04-23T02:50:33.365Z",
+      "updatedAt": "2026-04-26T20:48:47.734Z",
+      "__v": 0,
+      "shops": [
+        "69e974e0eb8fca5e1a5ef253"
+      ],
+      "ownerShop": "69e974e0eb8fca5e1a5ef253"
+    },
+    {
+      "_id": "69e9891c0788f21348e5c0c7",
+      "name": "Nilkamal",
+      "description": "Leading Nilkamal brand known for quality and reliability.",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "isActive": true,
+      "createdAt": "2026-04-23T02:51:08.340Z",
+      "updatedAt": "2026-04-26T20:48:47.734Z",
+      "__v": 0,
+      "shops": [
+        "69e974e0eb8fca5e1a5ef253"
+      ],
+      "ownerShop": "69e974e0eb8fca5e1a5ef253"
+    },
+    {
+      "_id": "69e989250788f21348e5c114",
+      "name": "Atlas",
+      "description": "Popular Atlas brand known for quality and reliability.",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "isActive": true,
+      "createdAt": "2026-04-23T02:51:17.948Z",
+      "updatedAt": "2026-04-26T20:48:47.734Z",
+      "__v": 0,
+      "shops": [
+        "69e974e0eb8fca5e1a5ef253"
+      ],
+      "ownerShop": "69e974e0eb8fca5e1a5ef253"
+    },
+    {
+      "_id": "69e9893a0788f21348e5c161",
+      "name": "Presties",
+      "description": "Premium Presties brand known for quality and reliability.",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "isActive": true,
+      "createdAt": "2026-04-23T02:51:38.442Z",
+      "updatedAt": "2026-04-26T20:48:47.734Z",
+      "__v": 0,
+      "shops": [
+        "69e974e0eb8fca5e1a5ef253"
+      ],
+      "ownerShop": "69e974e0eb8fca5e1a5ef253"
+    },
+    {
+      "_id": "69e989480788f21348e5c1ae",
+      "name": "Diamond",
+      "description": "Trusted Diamond brand known for quality and reliability.",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "isActive": true,
+      "createdAt": "2026-04-23T02:51:52.527Z",
+      "updatedAt": "2026-04-26T20:48:47.734Z",
+      "__v": 0,
+      "shops": [
+        "69e974e0eb8fca5e1a5ef253"
+      ],
+      "ownerShop": "69e974e0eb8fca5e1a5ef253"
+    },
+    {
+      "_id": "69e989530788f21348e5c1fb",
+      "name": "Century",
+      "description": "Premium Century brand known for quality and reliability.",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "isActive": true,
+      "createdAt": "2026-04-23T02:52:03.590Z",
+      "updatedAt": "2026-04-26T20:48:47.734Z",
+      "__v": 0,
+      "shops": [
+        "69e974e0eb8fca5e1a5ef253"
+      ],
+      "ownerShop": "69e974e0eb8fca5e1a5ef253"
+    },
+    {
+      "_id": "69e9895e0788f21348e5c248",
+      "name": "Neture",
+      "description": "Popular Neture brand known for quality and reliability.",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "isActive": true,
+      "createdAt": "2026-04-23T02:52:14.911Z",
+      "updatedAt": "2026-04-26T20:48:47.734Z",
+      "__v": 0,
+      "shops": [
+        "69e974e0eb8fca5e1a5ef253"
+      ],
+      "ownerShop": "69e974e0eb8fca5e1a5ef253"
+    },
+    {
+      "_id": "69e9897a0788f21348e5c295",
+      "name": "Arman",
+      "description": "Quality Arman Cooler brand known for quality and reliability.",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "isActive": true,
+      "createdAt": "2026-04-23T02:52:42.806Z",
+      "updatedAt": "2026-04-26T20:48:47.734Z",
+      "__v": 0,
+      "shops": [
+        "69e974e0eb8fca5e1a5ef253"
+      ],
+      "ownerShop": "69e974e0eb8fca5e1a5ef253"
+    },
+    {
+      "_id": "69e9898c0788f21348e5c2e2",
+      "name": "Cello",
+      "description": "Premium Cello brand known for quality and reliability.",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "isActive": true,
+      "createdAt": "2026-04-23T02:53:00.124Z",
+      "updatedAt": "2026-04-26T20:48:47.734Z",
+      "__v": 0,
+      "shops": [
+        "69e974e0eb8fca5e1a5ef253"
+      ],
+      "ownerShop": "69e974e0eb8fca5e1a5ef253"
+    },
+    {
+      "_id": "69e989a20788f21348e5c32f",
+      "name": "Nexa",
+      "description": "Leading Nexa brand known for quality and reliability.",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "isActive": true,
+      "createdAt": "2026-04-23T02:53:22.362Z",
+      "updatedAt": "2026-04-26T20:48:47.734Z",
+      "__v": 0,
+      "shops": [
+        "69e974e0eb8fca5e1a5ef253"
+      ],
+      "ownerShop": "69e974e0eb8fca5e1a5ef253"
+    },
+    {
+      "_id": "69e989c10788f21348e5c37c",
+      "name": "CMP",
+      "description": "Quality CMP brand known for quality and reliability.",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "isActive": true,
+      "createdAt": "2026-04-23T02:53:53.184Z",
+      "updatedAt": "2026-04-26T20:48:47.734Z",
+      "__v": 0,
+      "shops": [
+        "69e974e0eb8fca5e1a5ef253"
+      ],
+      "ownerShop": "69e974e0eb8fca5e1a5ef253"
+    },
+    {
+      "_id": "69e989cd0788f21348e5c3c9",
+      "name": "Rista",
+      "description": "Trusted Rista brand known for quality and reliability.",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "isActive": true,
+      "createdAt": "2026-04-23T02:54:05.442Z",
+      "updatedAt": "2026-04-26T20:48:47.734Z",
+      "__v": 0,
+      "shops": [
+        "69e974e0eb8fca5e1a5ef253"
+      ],
+      "ownerShop": "69e974e0eb8fca5e1a5ef253"
+    },
+    {
+      "_id": "69e989dc0788f21348e5c416",
+      "name": "Tata steel",
+      "description": "Leading Tata steel brand known for quality and reliability.",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "isActive": true,
+      "createdAt": "2026-04-23T02:54:20.952Z",
+      "updatedAt": "2026-04-26T20:48:47.734Z",
+      "__v": 0,
+      "shops": [
+        "69e974e0eb8fca5e1a5ef253"
+      ],
+      "ownerShop": "69e974e0eb8fca5e1a5ef253"
+    },
+    {
+      "_id": "69e989e40788f21348e5c463",
+      "name": "Bokaro",
+      "description": "Leading Bokaro brand known for quality and reliability.",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "isActive": true,
+      "createdAt": "2026-04-23T02:54:28.072Z",
+      "updatedAt": "2026-04-26T20:48:47.734Z",
+      "__v": 0,
+      "shops": [
+        "69e974e0eb8fca5e1a5ef253"
+      ],
+      "ownerShop": "69e974e0eb8fca5e1a5ef253"
+    },
+    {
+      "_id": "69e989ef0788f21348e5c4b0",
+      "name": "Jindal steel",
+      "description": "Trusted Jindal steel brand known for quality and reliability.",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "isActive": true,
+      "createdAt": "2026-04-23T02:54:39.045Z",
+      "updatedAt": "2026-04-26T20:48:47.734Z",
+      "__v": 0,
+      "shops": [
+        "69e974e0eb8fca5e1a5ef253"
+      ],
+      "ownerShop": "69e974e0eb8fca5e1a5ef253"
+    },
+    {
+      "_id": "69e98a010788f21348e5c4fd",
+      "name": "None",
+      "description": "Leading None brand known for quality and reliability.",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "isActive": true,
+      "createdAt": "2026-04-23T02:54:57.101Z",
+      "updatedAt": "2026-04-26T20:48:47.734Z",
+      "__v": 0,
+      "shops": [
+        "69e974e0eb8fca5e1a5ef253"
+      ],
+      "ownerShop": "69e974e0eb8fca5e1a5ef253"
+    },
+    {
+      "_id": "69e98a190788f21348e5c54a",
+      "name": "AVRO",
+      "description": "Trusted AVRO brand known for quality and reliability.",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "isActive": true,
+      "createdAt": "2026-04-23T02:55:21.309Z",
+      "updatedAt": "2026-04-26T20:48:47.734Z",
+      "__v": 0,
+      "shops": [
+        "69e974e0eb8fca5e1a5ef253"
+      ],
+      "ownerShop": "69e974e0eb8fca5e1a5ef253"
+    },
+    {
+      "_id": "69e98b9e0788f21348e5c7fd",
+      "name": "Mix-Steel",
+      "description": "Quality Mix-Steel brand known for quality and reliability.",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "isActive": true,
+      "createdAt": "2026-04-23T03:01:50.664Z",
+      "updatedAt": "2026-04-26T20:48:47.734Z",
+      "__v": 0,
+      "shops": [
+        "69e974e0eb8fca5e1a5ef253"
+      ],
+      "ownerShop": "69e974e0eb8fca5e1a5ef253"
+    },
+    {
+      "_id": "69e99dde7e23893ea2dc8194",
+      "name": "SharmaJi-Almari",
+      "description": "Popular SharmaJi-Almari brand known for quality and reliability.",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "isActive": true,
+      "createdAt": "2026-04-23T04:19:42.188Z",
+      "updatedAt": "2026-04-26T20:48:47.734Z",
+      "__v": 0,
+      "shops": [
+        "69e974e0eb8fca5e1a5ef253"
+      ],
+      "ownerShop": "69e974e0eb8fca5e1a5ef253"
+    },
+    {
+      "_id": "69e99dee7e23893ea2dc81e1",
+      "name": "Fayazji-Almari",
+      "description": "Quality Fayazji-Almari brand known for quality and reliability.",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "isActive": true,
+      "createdAt": "2026-04-23T04:19:58.590Z",
+      "updatedAt": "2026-04-26T20:48:47.734Z",
+      "__v": 0,
+      "shops": [
+        "69e974e0eb8fca5e1a5ef253"
+      ],
+      "ownerShop": "69e974e0eb8fca5e1a5ef253"
+    },
+    {
+      "_id": "69e99e337e23893ea2dc82a2",
+      "name": "Govind",
+      "description": "Popular Govind brand known for quality and reliability.",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "isActive": true,
+      "createdAt": "2026-04-23T04:21:07.370Z",
+      "updatedAt": "2026-04-26T20:48:47.734Z",
+      "__v": 0,
+      "shops": [
+        "69e974e0eb8fca5e1a5ef253"
+      ],
+      "ownerShop": "69e974e0eb8fca5e1a5ef253"
+    },
+    {
+      "_id": "69e99e3a7e23893ea2dc82ef",
+      "name": "Ganga",
+      "description": "Quality Ganga brand known for quality and reliability.",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "isActive": true,
+      "createdAt": "2026-04-23T04:21:14.075Z",
+      "updatedAt": "2026-04-26T20:48:47.734Z",
+      "__v": 0,
+      "shops": [
+        "69e974e0eb8fca5e1a5ef253"
+      ],
+      "ownerShop": "69e974e0eb8fca5e1a5ef253"
+    },
+    {
+      "_id": "69e99e407e23893ea2dc833c",
+      "name": "Triveni",
+      "description": "Popular Triveni brand known for quality and reliability.",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "isActive": true,
+      "createdAt": "2026-04-23T04:21:20.293Z",
+      "updatedAt": "2026-04-26T20:48:47.734Z",
+      "__v": 0,
+      "shops": [
+        "69e974e0eb8fca5e1a5ef253"
+      ],
+      "ownerShop": "69e974e0eb8fca5e1a5ef253"
+    },
+    {
+      "_id": "69e99e497e23893ea2dc8389",
+      "name": "Ashirvad",
+      "description": "Popular Ashirvad brand known for quality and reliability.",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "isActive": true,
+      "createdAt": "2026-04-23T04:21:29.283Z",
+      "updatedAt": "2026-04-26T20:48:47.734Z",
+      "__v": 0,
+      "shops": [
+        "69e974e0eb8fca5e1a5ef253"
+      ],
+      "ownerShop": "69e974e0eb8fca5e1a5ef253"
+    },
+    {
+      "_id": "69e99e677e23893ea2dc83d6",
+      "name": "Shagun",
+      "description": "Leading Shagun brand known for quality and reliability.",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "isActive": true,
+      "createdAt": "2026-04-23T04:21:59.895Z",
+      "updatedAt": "2026-04-26T20:48:47.734Z",
+      "__v": 0,
+      "shops": [
+        "69e974e0eb8fca5e1a5ef253"
+      ],
+      "ownerShop": "69e974e0eb8fca5e1a5ef253"
+    },
+    {
+      "_id": "69e99e6c7e23893ea2dc8423",
+      "name": "Sangam",
+      "description": "Trusted Sangam brand known for quality and reliability.",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "isActive": true,
+      "createdAt": "2026-04-23T04:22:04.906Z",
+      "updatedAt": "2026-04-26T20:48:47.734Z",
+      "__v": 0,
+      "shops": [
+        "69e974e0eb8fca5e1a5ef253"
+      ],
+      "ownerShop": "69e974e0eb8fca5e1a5ef253"
+    },
+    {
+      "_id": "69ed781d89e73ebd1614c8d4",
+      "name": "Bhusan Steel",
+      "description": "Trusted Bhusan Steel brand known for quality and reliability.",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "isActive": true,
+      "createdAt": "2026-04-26T02:27:41.809Z",
+      "updatedAt": "2026-04-26T20:48:47.734Z",
+      "__v": 0,
+      "shops": [
+        "69e974e0eb8fca5e1a5ef253"
+      ],
+      "ownerShop": "69e974e0eb8fca5e1a5ef253"
+    },
+    {
+      "_id": "69eed7aebf67a9fce3daaf70",
+      "name": "Voltas",
+      "description": "Premium Voltas brand known for quality and reliability.",
+      "shops": [
+        "69e974e0eb8fca5e1a5ef253"
+      ],
+      "ownerShop": "69e974e0eb8fca5e1a5ef253",
+      "isActive": true,
+      "createdAt": "2026-04-27T03:27:42.454Z",
+      "updatedAt": "2026-04-27T03:27:42.454Z",
+      "__v": 0
+    },
+    {
+      "_id": "69eed886bf67a9fce3dab877",
+      "name": "Airco-Lock",
+      "description": "Popular Airco-Lock brand known for quality and reliability.",
+      "shops": [
+        "69e974e0eb8fca5e1a5ef253"
+      ],
+      "ownerShop": "69e974e0eb8fca5e1a5ef253",
+      "isActive": true,
+      "createdAt": "2026-04-27T03:31:18.189Z",
+      "updatedAt": "2026-04-27T03:31:18.189Z",
+      "__v": 0
+    },
+    {
+      "_id": "69eed89ebf67a9fce3dabb7a",
+      "name": "Linking-Lock",
+      "description": "Leading Linking-Lock brand known for quality and reliability.",
+      "shops": [
+        "69e974e0eb8fca5e1a5ef253"
+      ],
+      "ownerShop": "69e974e0eb8fca5e1a5ef253",
+      "isActive": true,
+      "createdAt": "2026-04-27T03:31:42.525Z",
+      "updatedAt": "2026-04-27T03:31:42.525Z",
+      "__v": 0
+    },
+    {
+      "_id": "69eed8bfbf67a9fce3dabdd8",
+      "name": "Baba-Lock",
+      "description": "Leading BABA-Lock brand known for quality and reliability.",
+      "shops": [
+        "69e974e0eb8fca5e1a5ef253"
+      ],
+      "ownerShop": "69e974e0eb8fca5e1a5ef253",
+      "isActive": true,
+      "createdAt": "2026-04-27T03:32:15.411Z",
+      "updatedAt": "2026-04-27T03:32:46.657Z",
+      "__v": 0
+    },
+    {
+      "_id": "69eed8febf67a9fce3dac370",
+      "name": "Kishan-Lock",
+      "description": "Popular Kishan-Lock brand known for quality and reliability.",
+      "shops": [
+        "69e974e0eb8fca5e1a5ef253"
+      ],
+      "ownerShop": "69e974e0eb8fca5e1a5ef253",
+      "isActive": true,
+      "createdAt": "2026-04-27T03:33:18.147Z",
+      "updatedAt": "2026-04-27T03:33:18.147Z",
+      "__v": 0
+    },
+    {
+      "_id": "69eed910bf67a9fce3dac3df",
+      "name": "Voltas-Lock",
+      "description": "Popular Voltas-Lock brand known for quality and reliability.",
+      "shops": [
+        "69e974e0eb8fca5e1a5ef253"
+      ],
+      "ownerShop": "69e974e0eb8fca5e1a5ef253",
+      "isActive": true,
+      "createdAt": "2026-04-27T03:33:36.097Z",
+      "updatedAt": "2026-04-27T03:33:36.097Z",
+      "__v": 0
+    },
+    {
+      "_id": "69eed922bf67a9fce3dac52a",
+      "name": "Rims-Lock",
+      "description": "Leading Rims-Lock brand known for quality and reliability.",
+      "shops": [
+        "69e974e0eb8fca5e1a5ef253"
+      ],
+      "ownerShop": "69e974e0eb8fca5e1a5ef253",
+      "isActive": true,
+      "createdAt": "2026-04-27T03:33:54.954Z",
+      "updatedAt": "2026-04-27T03:33:54.954Z",
+      "__v": 0
+    },
+    {
+      "_id": "69eed92cbf67a9fce3dac599",
+      "name": "Link-Lock",
+      "description": "Popular Link-Lock brand known for quality and reliability.",
+      "shops": [
+        "69e974e0eb8fca5e1a5ef253"
+      ],
+      "ownerShop": "69e974e0eb8fca5e1a5ef253",
+      "isActive": true,
+      "createdAt": "2026-04-27T03:34:04.303Z",
+      "updatedAt": "2026-04-27T03:34:04.303Z",
+      "__v": 0
+    }
+  ],
+  "categories": [
+    {
+      "_id": "69e8bb7f54c318fc890f47e9",
+      "name": "Electronics",
+      "description": "Electronic items",
+      "shop": null,
+      "ownerShop": "69e974e0eb8fca5e1a5ef253",
+      "shops": [
+        "69e974e0eb8fca5e1a5ef253"
+      ],
+      "updatedAt": "2026-04-26T20:48:48.100Z"
+    },
+    {
+      "_id": "69e8bb7f54c318fc890f47ea",
+      "name": "Furniture",
+      "description": "Furniture items",
+      "shop": null,
+      "ownerShop": "69e974e0eb8fca5e1a5ef253",
+      "shops": [
+        "69e974e0eb8fca5e1a5ef253"
+      ],
+      "updatedAt": "2026-04-26T20:48:48.100Z"
+    },
+    {
+      "_id": "69e8bb7f54c318fc890f47eb",
+      "name": "Accessories",
+      "description": "Accessories",
+      "shop": null,
+      "ownerShop": "69e974e0eb8fca5e1a5ef253",
+      "shops": [
+        "69e974e0eb8fca5e1a5ef253"
+      ],
+      "updatedAt": "2026-04-26T20:48:48.100Z"
+    },
+    {
+      "_id": "69e8bb7f54c318fc890f47ec",
+      "name": "LED TV",
+      "description": "LED Television",
+      "shop": null,
+      "ownerShop": "69e974e0eb8fca5e1a5ef253",
+      "shops": [
+        "69e974e0eb8fca5e1a5ef253"
+      ],
+      "updatedAt": "2026-04-26T20:48:48.100Z"
+    },
+    {
+      "_id": "69e98b2b0788f21348e5c6c6",
+      "name": "Chairs",
+      "description": "Quality Chairs collection for every need. Browse our best selection.",
+      "brands": [
+        "69e98a190788f21348e5c54a",
+        "69e98a010788f21348e5c4fd",
+        "69e989a20788f21348e5c32f",
+        "69e9898c0788f21348e5c2e2",
+        "69e9895e0788f21348e5c248",
+        "69e989530788f21348e5c1fb",
+        "69e989480788f21348e5c1ae",
+        "69e9893a0788f21348e5c161",
+        "69e989250788f21348e5c114",
+        "69e9891c0788f21348e5c0c7",
+        "69e988f90788f21348e5c02e"
+      ],
+      "shop": null,
+      "isActive": true,
+      "createdAt": "2026-04-23T02:59:55.726Z",
+      "updatedAt": "2026-04-26T22:09:03.640Z",
+      "__v": 0,
+      "ownerShop": "69e974e0eb8fca5e1a5ef253",
+      "shops": [
+        "69e974e0eb8fca5e1a5ef253"
+      ],
+      "icon": "chair"
+    },
+    {
+      "_id": "69e98b740788f21348e5c762",
+      "name": "Steel Box",
+      "description": "Wide range of Steel Box collection for every need. Browse our best selection.",
+      "brands": [
+        "69e98a010788f21348e5c4fd",
+        "69e989ef0788f21348e5c4b0",
+        "69e989e40788f21348e5c463",
+        "69e989dc0788f21348e5c416"
+      ],
+      "shop": null,
+      "isActive": true,
+      "createdAt": "2026-04-23T03:01:08.943Z",
+      "updatedAt": "2026-04-27T05:13:03.316Z",
+      "__v": 0,
+      "ownerShop": "69e974e0eb8fca5e1a5ef253",
+      "shops": [
+        "69e974e0eb8fca5e1a5ef253"
+      ],
+      "icon": "package"
+    },
+    {
+      "_id": "69e9912b7e23893ea2dc7e54",
+      "name": "Stools",
+      "description": "Premium Stools collection for every need. Browse our best selection.",
+      "brands": [
+        "69e98a010788f21348e5c4fd",
+        "69e9898c0788f21348e5c2e2",
+        "69e9895e0788f21348e5c248",
+        "69e989530788f21348e5c1fb",
+        "69e989480788f21348e5c1ae",
+        "69e9893a0788f21348e5c161",
+        "69e989250788f21348e5c114",
+        "69e9891c0788f21348e5c0c7",
+        "69e988f90788f21348e5c02e"
+      ],
+      "shop": "69e9823432d0d849546618bb",
+      "isActive": true,
+      "createdAt": "2026-04-23T03:25:31.190Z",
+      "updatedAt": "2026-04-26T20:48:48.100Z",
+      "__v": 0,
+      "ownerShop": "69e974e0eb8fca5e1a5ef253",
+      "shops": [
+        "69e974e0eb8fca5e1a5ef253"
+      ]
+    },
+    {
+      "_id": "69e99ec57e23893ea2dc8532",
+      "name": "Almirah",
+      "description": "Wide range of Almirah collection for every need. Browse our best selection.",
+      "brands": [
+        "69e99e6c7e23893ea2dc8423",
+        "69e99e677e23893ea2dc83d6",
+        "69e99e497e23893ea2dc8389",
+        "69e99e407e23893ea2dc833c",
+        "69e99e3a7e23893ea2dc82ef",
+        "69e99e337e23893ea2dc82a2",
+        "69e99dee7e23893ea2dc81e1",
+        "69e99dde7e23893ea2dc8194",
+        "69e989530788f21348e5c1fb",
+        "69e8bb7f54c318fc890f47f0"
+      ],
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "isActive": true,
+      "createdAt": "2026-04-23T04:23:33.931Z",
+      "updatedAt": "2026-04-26T22:23:23.344Z",
+      "__v": 0,
+      "ownerShop": "69e974e0eb8fca5e1a5ef253",
+      "shops": [
+        "69e974e0eb8fca5e1a5ef253"
+      ],
+      "icon": "door"
+    },
+    {
+      "_id": "69ee8417fbf478f7eb7d0130",
+      "name": "Dinning table",
+      "description": "Quality Dinning table collection for every need. Browse our best selection.",
+      "icon": "desk",
+      "brands": [
+        "69e98a190788f21348e5c54a",
+        "69e9898c0788f21348e5c2e2",
+        "69e9895e0788f21348e5c248",
+        "69e989530788f21348e5c1fb",
+        "69e989480788f21348e5c1ae",
+        "69e989250788f21348e5c114",
+        "69e9891c0788f21348e5c0c7",
+        "69e988f90788f21348e5c02e"
+      ],
+      "shops": [
+        "69e974e0eb8fca5e1a5ef253"
+      ],
+      "ownerShop": "69e974e0eb8fca5e1a5ef253",
+      "isActive": true,
+      "createdAt": "2026-04-26T21:31:03.837Z",
+      "updatedAt": "2026-04-26T22:09:17.813Z",
+      "__v": 0
+    }
+  ],
+  "productvariations": [
+    {
+      "_id": "69e9a385eac79cf892a56334",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "product": "69e9a304eac79cf892a56270",
+      "model": "69e9a34feac79cf892a5630c",
+      "sku": "EURE-NONE-MIX",
+      "barcode": "8447057006609",
+      "attributes": {
+        "color": "Mix",
+        "size": "LG",
+        "storage": "None"
+      },
+      "sellingPrice": 800,
+      "costPrice": 420,
+      "quantity": 0,
+      "discount": {
+        "type": "FLAT",
+        "value": 0,
+        "maxDiscount": 0
+      },
+      "images": [],
+      "isActive": true,
+      "createdAt": "2026-04-23T04:43:49.345Z",
+      "updatedAt": "2026-04-23T04:43:49.345Z",
+      "__v": 0
+    },
+    {
+      "_id": "69e9ae61375708b2dc9c24f7",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "product": "69e9ada3375708b2dc9c242e",
+      "model": "69e9adca375708b2dc9c24ce",
+      "sku": "PLAN-NONE-CHO",
+      "barcode": "5641128647644",
+      "attributes": {
+        "color": "Choclate",
+        "size": "36\"",
+        "storage": "None"
+      },
+      "sellingPrice": 14500,
+      "costPrice": 11500,
+      "quantity": 0,
+      "discount": {
+        "type": "FLAT",
+        "value": 0,
+        "maxDiscount": 0
+      },
+      "images": [],
+      "isActive": true,
+      "createdAt": "2026-04-23T05:30:09.864Z",
+      "updatedAt": "2026-04-23T05:30:09.864Z",
+      "__v": 0
+    },
+    {
+      "_id": "69eedb39bf67a9fce3dacb15",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "product": "69eed9b2bf67a9fce3dac678",
+      "model": "69eed9d1bf67a9fce3dac758",
+      "sku": "TA500-NONE-NET",
+      "barcode": "7332627795360",
+      "attributes": {
+        "color": "Netural",
+        "size": "72*3",
+        "storage": "None"
+      },
+      "sellingPrice": 5500,
+      "costPrice": 3500,
+      "quantity": 0,
+      "discount": {
+        "type": "FLAT",
+        "value": 0,
+        "maxDiscount": 0
+      },
+      "images": [],
+      "isActive": true,
+      "createdAt": "2026-04-27T03:42:49.546Z",
+      "updatedAt": "2026-04-27T03:42:49.546Z",
+      "__v": 0
+    },
+    {
+      "_id": "69eedb5bbf67a9fce3dacbc0",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "product": "69eed9b2bf67a9fce3dac678",
+      "model": "69eeda51bf67a9fce3dac9fc",
+      "sku": "TA600-NONE-NET",
+      "barcode": "0307078221277",
+      "attributes": {
+        "color": "Netural",
+        "size": "72*3",
+        "storage": "None"
+      },
+      "sellingPrice": 6000,
+      "costPrice": 4000,
+      "quantity": 0,
+      "discount": {
+        "type": "FLAT",
+        "value": 0,
+        "maxDiscount": 0
+      },
+      "images": [],
+      "isActive": true,
+      "createdAt": "2026-04-27T03:43:23.659Z",
+      "updatedAt": "2026-04-27T03:43:23.659Z",
+      "__v": 0
+    },
+    {
+      "_id": "69eeddfabf67a9fce3dacc6e",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "product": "69eed9b2bf67a9fce3dac678",
+      "model": "69eeda99bf67a9fce3daca34",
+      "sku": "TA400HIGH-NONE-NET",
+      "barcode": "6906954075030",
+      "attributes": {
+        "color": "Netural",
+        "size": "72*3*High",
+        "storage": "None"
+      },
+      "sellingPrice": 5000,
+      "costPrice": 3500,
+      "quantity": 0,
+      "discount": {
+        "type": "FLAT",
+        "value": 0,
+        "maxDiscount": 0
+      },
+      "images": [],
+      "isActive": true,
+      "createdAt": "2026-04-27T03:54:34.697Z",
+      "updatedAt": "2026-04-27T03:54:34.697Z",
+      "__v": 0
+    },
+    {
+      "_id": "69eedff1bf67a9fce3dad2da",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "product": "69eedee8bf67a9fce3dad127",
+      "model": "69eedf39bf67a9fce3dad21f",
+      "sku": "TA350-NONE-NET",
+      "barcode": "0573154431599",
+      "attributes": {
+        "color": "Netural",
+        "size": "62\"",
+        "storage": "None"
+      },
+      "sellingPrice": 3800,
+      "costPrice": 1800,
+      "quantity": 0,
+      "discount": {
+        "type": "FLAT",
+        "value": 0,
+        "maxDiscount": 0
+      },
+      "images": [],
+      "isActive": true,
+      "createdAt": "2026-04-27T04:02:57.419Z",
+      "updatedAt": "2026-04-27T04:33:41.644Z",
+      "__v": 0
+    },
+    {
+      "_id": "69eee01cbf67a9fce3dad394",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "product": "69eedee8bf67a9fce3dad127",
+      "model": "69eedf3fbf67a9fce3dad25d",
+      "sku": "TA400-NONE-NRT",
+      "barcode": "4358181242280",
+      "attributes": {
+        "color": "Nrtural",
+        "size": "62\"",
+        "storage": "None"
+      },
+      "sellingPrice": 4200,
+      "costPrice": 2000,
+      "quantity": 0,
+      "discount": {
+        "type": "FLAT",
+        "value": 0,
+        "maxDiscount": 0
+      },
+      "images": [],
+      "isActive": true,
+      "createdAt": "2026-04-27T04:03:40.945Z",
+      "updatedAt": "2026-04-27T04:33:49.633Z",
+      "__v": 0
+    },
+    {
+      "_id": "69eeedd3911012f15a9c7ebb",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "product": "69eedee8bf67a9fce3dad127",
+      "model": "69eedf4ebf67a9fce3dad29b",
+      "sku": "TA500-NONE-NET-2",
+      "barcode": "6655311374612",
+      "attributes": {
+        "color": "Netural",
+        "size": "62\"",
+        "storage": "None"
+      },
+      "sellingPrice": 4500,
+      "costPrice": 3500,
+      "quantity": 0,
+      "discount": {
+        "type": "FLAT",
+        "value": 0,
+        "maxDiscount": 0
+      },
+      "images": [],
+      "isActive": true,
+      "createdAt": "2026-04-27T05:02:11.258Z",
+      "updatedAt": "2026-04-28T01:27:59.717Z",
+      "__v": 0
+    },
+    {
+      "_id": "69f07e32f9d096f15b0cff6d",
+      "product": "69eed9b2bf67a9fce3dac678",
+      "model": "69eed9d1bf67a9fce3dac758",
+      "sku": "TA400-NONE-NET",
+      "barcode": "4358177369458",
+      "attributes": {
+        "color": "Netural",
+        "size": "72*3",
+        "storage": "None"
+      },
+      "sellingPrice": 4800,
+      "costPrice": 0,
+      "quantity": 0,
+      "discount": {
+        "type": "FLAT",
+        "value": 0
+      },
+      "images": [],
+      "isActive": true,
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "createdAt": "2026-04-28T09:30:26.213Z",
+      "updatedAt": "2026-04-28T09:30:26.213Z"
+    }
+  ],
+  "distributors": [
+    {
+      "_id": "651ffa900a034ddd54a75168",
+      "name": "Ajay & Ajit Panday (Rahul Steel Furniture)",
+      "shopName": "Rahul Steel Furniture",
+      "email": "rahul@gmail.com",
+      "phone": "9431999787",
+      "telephone": "7004313870",
+      "address": "Namdhari Market, Near zila school - - -822101",
+      "items": [],
+      "createdAt": "2023-10-06T12:16:16.144Z",
+      "__v": 0,
+      "status": "active",
+      "city": "Daltonganj",
+      "state": "jharkhand",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "updatedAt": "2026-04-28T10:04:16.461Z",
+      "currentBalance": 0,
+      "openingBalance": 0
+    },
+    {
+      "_id": "651ff3e10a034ddd54a75151",
+      "name": "Raju Gupta (Raju Cloth center)",
+      "shopName": "Raju Cloth center",
+      "email": "raju@gmail.com",
+      "phone": "7488639062",
+      "telephone": "",
+      "address": "Mohan Bigha,  821307",
+      "items": [],
+      "createdAt": "2023-10-06T11:47:45.110Z",
+      "__v": 0,
+      "status": "active",
+      "city": "Dehri-on-shon",
+      "state": "bihar",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "updatedAt": "2026-03-10T16:46:30.918Z",
+      "currentBalance": 0,
+      "openingBalance": 0
+    },
+    {
+      "_id": "651ffc3b0a034ddd54a7516e",
+      "name": "Rustam Jee (New Zeba Furniture shop)",
+      "shopName": "New Zeba Furniture shop",
+      "email": "rustam@gmail.com",
+      "phone": "9304093138",
+      "telephone": "9939309349",
+      "address": "Tikri Road, Aurangabad - - 431001",
+      "items": [
+        "65e59580ab032f5c216f6c2e"
+      ],
+      "createdAt": "2023-10-06T12:23:23.182Z",
+      "__v": 3,
+      "status": "active",
+      "city": "Aurangabad",
+      "state": "Bihar",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "updatedAt": "2026-04-28T10:04:10.672Z",
+      "currentBalance": 0,
+      "openingBalance": 0
+    },
+    {
+      "_id": "651ff5850a034ddd54a75157",
+      "name": "Dina Prasad (Dina Top Center)",
+      "shopName": "Dina Top Center",
+      "email": "dina@gmail.com",
+      "phone": "7903303761",
+      "telephone": "",
+      "address": "Nala Road, near Durga mandir - 800004",
+      "items": [],
+      "createdAt": "2023-10-06T11:54:45.708Z",
+      "__v": 0,
+      "status": "active",
+      "city": "Patna",
+      "state": "Bihar",
+      "updatedAt": "2026-03-10T16:46:31.375Z",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "currentBalance": 0,
+      "openingBalance": 0
+    },
+    {
+      "_id": "651ffbbf0a034ddd54a7516b",
+      "name": "Esrar Jee (Hind Enterprises)",
+      "shopName": "Hind Enterprises",
+      "email": "hindenterprises@gmail.com",
+      "phone": "9955155726",
+      "telephone": "8935918722",
+      "address": "Near ameet hotel -- - 431001",
+      "items": [],
+      "createdAt": "2023-10-06T12:21:19.298Z",
+      "__v": 0,
+      "status": "active",
+      "city": "Aurangabad",
+      "state": "Bihar",
+      "updatedAt": "2026-04-28T10:04:13.096Z",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "currentBalance": 0,
+      "openingBalance": 0
+    },
+    {
+      "_id": "651ff6130a034ddd54a7515a",
+      "name": "Sailesh Kumar (Sailesh Center)",
+      "shopName": "Sailesh Center",
+      "email": "sailesh@gmail.com",
+      "phone": "9123193965",
+      "telephone": "7547050487",
+      "address": "City chouke, near Masjid- 800004",
+      "items": [],
+      "createdAt": "2023-10-06T11:57:07.479Z",
+      "__v": 0,
+      "status": "active",
+      "city": "Patna",
+      "state": "Bihar",
+      "updatedAt": "2026-03-10T16:46:31.574Z",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "currentBalance": 0,
+      "openingBalance": 0
+    },
+    {
+      "_id": "651ffa020a034ddd54a75165",
+      "name": "Palamu Hardware (Palamu Hardware)",
+      "shopName": "Palamu Hardware",
+      "email": "palamu@gmail.com",
+      "phone": "7070577230",
+      "telephone": "9142703622",
+      "address": "Aadhat Road, - - 822101",
+      "items": [
+        "668b5ecf0e18949356ae67cc"
+      ],
+      "createdAt": "2023-10-06T12:13:54.461Z",
+      "__v": 1,
+      "status": "active",
+      "city": "Daltonganj",
+      "state": "jharkhand",
+      "updatedAt": "2026-04-27T05:29:10.014Z",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "currentBalance": 0,
+      "creditLimit": 0,
+      "isDeleted": false,
+      "openingBalance": 0,
+      "paymentTerms": 0
+    },
+    {
+      "_id": "651ff7430a034ddd54a75160",
+      "name": "Naveen Kumar (Naveen enterprises)",
+      "shopName": "Naveen enterprises",
+      "email": "naveen@gmail.com",
+      "phone": "9852121530",
+      "telephone": "8271355287",
+      "address": "Nala Road, Dariapur, - - 800004",
+      "items": [
+        "673dee714fab5845c3dc1d1c"
+      ],
+      "createdAt": "2023-10-06T12:02:11.562Z",
+      "__v": 1,
+      "status": "active",
+      "city": "patna",
+      "state": "Bihar",
+      "updatedAt": "2026-04-27T05:29:11.259Z",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "currentBalance": 0,
+      "openingBalance": 0
+    },
+    {
+      "_id": "651ffcb20a034ddd54a75171",
+      "name": "Aslam Jee (Zeba Steel )",
+      "shopName": "Zeba Steel ",
+      "email": "zeba@gmail.com",
+      "phone": "8292221875",
+      "telephone": "8084728190",
+      "address": "Tikri Road - - 431001",
+      "items": [],
+      "createdAt": "2023-10-06T12:25:22.635Z",
+      "__v": 0,
+      "status": "active",
+      "city": "Aurngabad",
+      "state": "Bihar",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "updatedAt": "2026-04-28T10:04:54.539Z",
+      "currentBalance": 0,
+      "openingBalance": 0
+    },
+    {
+      "_id": "651ff6a00a034ddd54a7515d",
+      "name": "Ravi Kumar (Sarvotam furniture shop)",
+      "shopName": "Sarvotam furniture shop",
+      "email": "sarvotam@gmail.com",
+      "phone": "9835420706",
+      "telephone": "8789491056",
+      "address": "Nala Road, Dariapur,- 800004",
+      "items": [],
+      "createdAt": "2023-10-06T11:59:28.793Z",
+      "__v": 0,
+      "status": "active",
+      "city": "Patna",
+      "state": "Bihar",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "updatedAt": "2026-03-27T00:19:47.555Z",
+      "currentBalance": 0,
+      "openingBalance": 0
+    },
+    {
+      "_id": "651ff4a80a034ddd54a75154",
+      "name": "Munna Prasad (Munna Cloth shop)",
+      "shopName": "Munna Cloth shop",
+      "email": "munna@gmail.com",
+      "phone": "8935848211",
+      "telephone": "",
+      "address": "Mohan Bigha,  821307",
+      "items": [],
+      "createdAt": "2023-10-06T11:51:04.309Z",
+      "__v": 0,
+      "status": "active",
+      "city": "Dehri-on-shon,",
+      "state": "Bihar",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "updatedAt": "2026-03-10T16:46:32.046Z",
+      "currentBalance": 0,
+      "openingBalance": 0
+    },
+    {
+      "_id": "651ff2cf194a0c2a27c985e6",
+      "name": "Suraj Prasad (Suraj Lock shop)",
+      "shopName": "Suraj Lock shop",
+      "email": "suraj@gmail.com",
+      "phone": "9122834506",
+      "telephone": "9122834506",
+      "address": "Near mahavir mandir,, 822116",
+      "items": [
+        "65311815f84312cfecd31aad",
+        "6543ac85f84312cfecd32138"
+      ],
+      "createdAt": "2023-10-06T11:43:11.404Z",
+      "__v": 2,
+      "status": "active",
+      "city": "Japla",
+      "state": "Jharkhand",
+      "updatedAt": "2026-04-17T21:00:01.989Z",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "currentBalance": 0,
+      "openingBalance": 0
+    }
+  ],
+  "rawmaterials": [
+    {
+      "_id": "69eef1908cbb288e493f5578",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "name": "TATA 30M",
+      "code": "TA30",
+      "unitLabel": "PCS",
+      "sizeLabel": "30mm",
+      "colorLabel": "Natural",
+      "openingQty": 0,
+      "currentRate": 0,
+      "supplierName": "",
+      "note": "last rate 520",
+      "active": true,
+      "createdBy": "69e8dcf66b65f0e5879115ca",
+      "updatedBy": null,
+      "isDeleted": false,
+      "createdAt": "2026-04-27T05:18:08.313Z",
+      "updatedAt": "2026-04-27T05:18:08.313Z",
+      "__v": 0,
+      "rate": 0
+    },
+    {
+      "_id": "69eef1d98cbb288e493f568b",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "name": "TATA 40",
+      "code": "TA40",
+      "unitLabel": "PCS",
+      "sizeLabel": "40mm",
+      "colorLabel": "Natural",
+      "openingQty": 0,
+      "currentRate": 0,
+      "supplierName": "",
+      "note": "last rate 590",
+      "active": true,
+      "createdBy": "69e8dcf66b65f0e5879115ca",
+      "updatedBy": "69e8dcf66b65f0e5879115ca",
+      "isDeleted": false,
+      "createdAt": "2026-04-27T05:19:21.178Z",
+      "updatedAt": "2026-04-27T05:38:18.012Z",
+      "__v": 0,
+      "rate": 0
+    },
+    {
+      "_id": "69eef2268cbb288e493f5716",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "name": "TATA 50",
+      "code": "TA40",
+      "unitLabel": "PCS",
+      "sizeLabel": "50mm",
+      "colorLabel": "Natural",
+      "openingQty": 0,
+      "currentRate": 0,
+      "supplierName": "",
+      "note": "last rate 620",
+      "active": true,
+      "createdBy": "69e8dcf66b65f0e5879115ca",
+      "updatedBy": "69e8dcf66b65f0e5879115ca",
+      "isDeleted": false,
+      "createdAt": "2026-04-27T05:20:38.371Z",
+      "updatedAt": "2026-04-27T05:21:00.247Z",
+      "__v": 0,
+      "rate": 0
+    },
+    {
+      "_id": "69eef2698cbb288e493f582a",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "name": "TATA 35",
+      "code": "TA35",
+      "unitLabel": "PCS",
+      "sizeLabel": "35mm",
+      "colorLabel": "Natural",
+      "openingQty": 0,
+      "currentRate": 0,
+      "supplierName": "",
+      "note": "last rate 550",
+      "active": true,
+      "createdBy": "69e8dcf66b65f0e5879115ca",
+      "updatedBy": null,
+      "isDeleted": false,
+      "createdAt": "2026-04-27T05:21:45.577Z",
+      "updatedAt": "2026-04-27T05:21:45.577Z",
+      "__v": 0,
+      "rate": 0
+    },
+    {
+      "_id": "69f00865155305cf132dc8e6",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "name": "Side Handle",
+      "code": "SH1",
+      "unitLabel": "PCS",
+      "sizeLabel": "none",
+      "colorLabel": "none",
+      "openingQty": 0,
+      "currentRate": 0,
+      "supplierName": "",
+      "note": "",
+      "active": true,
+      "createdBy": "69e8dcf66b65f0e5879115ca",
+      "updatedBy": null,
+      "isDeleted": false,
+      "createdAt": "2026-04-28T01:07:49.110Z",
+      "updatedAt": "2026-04-28T01:07:49.110Z",
+      "__v": 0,
+      "rate": 0
+    },
+    {
+      "_id": "69f008a5155305cf132dc973",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "name": "Front Handle",
+      "code": "FH2",
+      "unitLabel": "PCS",
+      "sizeLabel": "none",
+      "colorLabel": "none",
+      "openingQty": 0,
+      "currentRate": 0,
+      "supplierName": "",
+      "note": "",
+      "active": true,
+      "createdBy": "69e8dcf66b65f0e5879115ca",
+      "updatedBy": null,
+      "isDeleted": false,
+      "createdAt": "2026-04-28T01:08:53.446Z",
+      "updatedAt": "2026-04-28T01:08:53.446Z",
+      "__v": 0,
+      "rate": 0
+    },
+    {
+      "_id": "69f008f9155305cf132dca00",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "name": "Front Kundi",
+      "code": "FK1",
+      "unitLabel": "PCS",
+      "sizeLabel": "14N",
+      "colorLabel": "none",
+      "openingQty": 0,
+      "currentRate": 0,
+      "supplierName": "",
+      "note": "",
+      "active": true,
+      "createdBy": "69e8dcf66b65f0e5879115ca",
+      "updatedBy": "69e8dcf66b65f0e5879115ca",
+      "isDeleted": true,
+      "createdAt": "2026-04-28T01:10:17.681Z",
+      "updatedAt": "2026-04-28T03:19:12.411Z",
+      "__v": 0,
+      "rate": 0
+    },
+    {
+      "_id": "69f00927155305cf132dca8d",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "name": "Font Kundi 17N",
+      "code": "FK2",
+      "unitLabel": "PCS",
+      "sizeLabel": "17N",
+      "colorLabel": "none",
+      "openingQty": 0,
+      "currentRate": 0,
+      "supplierName": "",
+      "note": "",
+      "active": true,
+      "createdBy": "69e8dcf66b65f0e5879115ca",
+      "updatedBy": "69e8dcf66b65f0e5879115ca",
+      "isDeleted": false,
+      "createdAt": "2026-04-28T01:11:03.975Z",
+      "updatedAt": "2026-04-28T03:19:47.842Z",
+      "__v": 0,
+      "rate": 0
+    },
+    {
+      "_id": "69f009be155305cf132dcb1a",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "name": "Aluminium Repeat",
+      "code": "AR1",
+      "unitLabel": "KG",
+      "sizeLabel": "none",
+      "colorLabel": "none",
+      "openingQty": 0,
+      "currentRate": 0,
+      "supplierName": "",
+      "note": "",
+      "active": true,
+      "createdBy": "69e8dcf66b65f0e5879115ca",
+      "updatedBy": null,
+      "isDeleted": false,
+      "createdAt": "2026-04-28T01:13:34.349Z",
+      "updatedAt": "2026-04-28T01:13:34.349Z",
+      "__v": 0,
+      "rate": 0
+    },
+    {
+      "_id": "69f009fd155305cf132dcba7",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "name": "Iron Repeat",
+      "code": "IR1",
+      "unitLabel": "BAG",
+      "sizeLabel": "none",
+      "colorLabel": "none",
+      "openingQty": 0,
+      "currentRate": 0,
+      "supplierName": "",
+      "note": "",
+      "active": true,
+      "createdBy": "69e8dcf66b65f0e5879115ca",
+      "updatedBy": null,
+      "isDeleted": false,
+      "createdAt": "2026-04-28T01:14:37.214Z",
+      "updatedAt": "2026-04-28T01:14:37.214Z",
+      "__v": 0,
+      "rate": 0
+    },
+    {
+      "_id": "69f02786889444eaa22a0a88",
+      "shop": "69e974e0eb8fca5e1a5ef253",
+      "name": "Font Kundi 14N",
+      "code": "FN14",
+      "unitLabel": "PCS",
+      "sizeLabel": "14",
+      "colorLabel": "none",
+      "openingQty": 0,
+      "currentRate": 0,
+      "supplierName": "",
+      "note": "",
+      "active": true,
+      "createdBy": "69e8dcf66b65f0e5879115ca",
+      "updatedBy": null,
+      "isDeleted": false,
+      "createdAt": "2026-04-28T03:20:38.392Z",
+      "updatedAt": "2026-04-28T03:20:38.392Z",
+      "__v": 0,
+      "rate": 0
+    }
+  ],
+  "staff": [],
+  "shops": [
+    {
+      "_id": "69e974e0eb8fca5e1a5ef253",
+      "name": "BABA VISHWANAT TRUNK & FURNITURE HOUSE",
+      "shopCode": "BVTH001",
+      "owner": "69e8dcf66b65f0e5879115ca",
+      "shopType": "HYBRID",
+      "subscriptionPlan": "FREE",
+      "isActive": true,
+      "isVerified": true,
+      "integrationSettings": {
+        "gstEnabled": false,
+        "whatsappEnabled": false,
+        "smsEnabled": false,
+        "emailEnabled": true,
+        "paymentGateway": "NONE"
+      },
+      "backupSettings": {
+        "autoBackup": false,
+        "frequency": "WEEKLY",
+        "lastBackupAt": "2026-04-23T02:23:25.097Z"
+      },
+      "paymentSettings": {
+        "upiId": "8792280200@upi",
+        "upiDisplayName": "BABA VISHWANAT TRUNK & FURNITURE HOUSE"
+      },
+      "createdAt": "2026-04-23T01:24:49.001Z",
+      "updatedAt": "2026-04-23T02:23:25.102Z",
+      "__v": 0,
+      "address": {
+        "state": "",
+        "district": "",
+        "city": "",
+        "pincode": "",
+        "addressLine1": "Machlli Gali ,Hariharganj Palamu Jharkahnd 822131",
+        "addressLine2": ""
+      },
+      "contactNumber": "9122480123",
+      "email": "coolfire.prince0@gmail.com"
+    },
+    {
+      "_id": "69e9823432d0d849546618bb",
+      "name": "BABA VISHWANAT FURNITURE HOUSE",
+      "shopCode": "BVFH001",
+      "owner": "69e8dcf66b65f0e5879115ca",
+      "contactNumber": "9122480123",
+      "email": "lalan3905@gmail.com",
+      "shopType": "HYBRID",
+      "subscriptionPlan": "FREE",
+      "isActive": true,
+      "isVerified": false,
+      "integrationSettings": {
+        "gstEnabled": false,
+        "whatsappEnabled": false,
+        "smsEnabled": false,
+        "emailEnabled": true,
+        "paymentGateway": "NONE"
+      },
+      "backupSettings": {
+        "autoBackup": false,
+        "frequency": "WEEKLY",
+        "lastBackupAt": null
+      },
+      "paymentSettings": {
+        "upiId": "",
+        "upiDisplayName": ""
+      },
+      "createdAt": "2026-04-23T02:21:40.776Z",
+      "updatedAt": "2026-04-23T02:21:40.776Z",
+      "__v": 0
+    }
+  ]
+}
