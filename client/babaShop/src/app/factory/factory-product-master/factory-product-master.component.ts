@@ -186,11 +186,13 @@ export class FactoryProductMasterComponent implements OnInit {
   }
 
   loadShopVariations(): void {
+    this.shopVariationOptions = [];
     this.variationService.getVariations({ limit: 300, sort: "sku" }).subscribe({
       next: (response) => {
         this.shopVariationOptions = response?.data || [];
       },
-      error: () => {
+      error: (err) => {
+        console.error("Variation load error:", err);
         this.shopVariationOptions = [];
       },
     });

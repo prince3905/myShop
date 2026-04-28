@@ -11,45 +11,24 @@ Koi bhi change git push karne se pehle ye sab check karein:
 
 ### ✅ Logic & Permissions
 - [ ] Naya feature ke liye permission check kiya?
-- [ ] Sidebar hide ho raha hai bina permission ke?
-- [ ] Backend API reject kar raha hai bina permission ke?
-- [ ] STAFF/MANAGER role par cost price/profit hide hai?
 
 ### ✅ Testing
-- [ ] STAFF login se test kiya?
-- [ ] MANAGER login se test kiya?
-- [ ] ADMIN login se test kiya?
-- [ ] SUPER_ADMIN login se test kiya?
+
 
 ### ✅ UI/UX
 - [ ] Mobile responsive check kiya?
 - [ ] Loading states everywhere handle kiye?
 - [ ] Error messages clear hain?
+UI app se milta julata rehena chhiye
 
 ---
 
 ## 🔒 Permission Rules
 
-### Role Access Matrix
-
-| Feature | STAFF | MANAGER | ADMIN | SUPER_ADMIN |
-|---------|------|--------|-------|-----------|
-| Sales List | ✅ | ✅ | ✅ | ✅ |
-| POS | ✅ | ✅ | ✅ | ✅ |
-| Products List | Optional | ✅ | ✅ | ✅ |
-| Add/Edit Product | ❌ | ❌ | ✅ | ✅ |
-| Sales Profit | ❌ | ❌ | ✅ | ✅ |
-| Cost Price | ❌ | ❌ | ✅ | ✅ |
-| Reports | ❌ | ✅ | ✅ | ✅ |
-| Factory | ❌ | ✅ | ✅ | ✅ |
-| Settings | ❌ | ❌ | ✅ | ✅ |
-| User Management | ❌ | ❌ | ✅ | ✅ |
-
 ### Important Rules
 - **STAFF** ko kabhi cost price nahi dikhna chahiye
 - **MANAGER** ko kabhi profit nahi dikhna chahiye
-- Har naye feature me permission check lagana ZAROORI hai
-- Sidebar + Route + Backend sabhi jagah permission check lagana hai
+- Har naye feature me permission check lagana ZAROORI ha
 
 ---
 
@@ -59,7 +38,6 @@ Naya feature add karte waqt:
 
 1. ✅ FeatureRegistry me add karein
 2. ✅ roleFeaturePolicy me add karein
-3. ✅ Sidebar condition lagayein
 4. ✅ Route guard lagayein
 5. ✅ Backend controller me permission check lagayein
 6. ✅ Test with all roles
@@ -71,6 +49,7 @@ Naya feature add karte waqt:
 - **MASTER/Main branch par direct push BLOCKED** - Sirf PR se hi push karein
 - Har push se pehle pre-push checklist MANDATORY hai
 - Code review zaroori hai for new features
+bina permition code push nhi hoga
 
 ---
 
