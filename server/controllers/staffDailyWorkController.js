@@ -818,6 +818,37 @@ exports.pushDailyWorkToStock = async (req, res) => {
           sku: sourceVariation.sku,
         }).select("_id product model sku quantity costPrice sellingPrice");
       }
+
+      if (!targetVariation) {
+        const product = await Product.findOne({ _id: sourceVariation.product, shop: req.shopId }).select("_id name category brand");
+        const model = await ProductModel.findOne({ _id: sourceVariation.model, shop: req.shopId }).select("_id name");
+
+        const newVariation = await ProductVariation.create({
+          product: sourceVariation.product,
+          model: sourceVariation.model,
+          sku: sourceVariation.sku,
+          barcode: sourceVariation.barcode || "",
+          attributes: sourceVariation.attributes,
+          sellingPrice: sourceVariation.sellingPrice,
+          costPrice: 0,
+          quantity: 0,
+          discount: { type: "FLAT", value: 0 },
+          images: [],
+          isActive: true,
+          shop: targetShop._id,
+        });
+
+        await Stock.updateOne(
+          { shop: targetShop._id, variation: newVariation._id },
+          {
+            $setOnInsert: { shop: targetShop._id, variation: newVariation._id, quantity: 0 },
+            $set: { product: sourceVariation.product, model: sourceVariation.model, sku: newVariation.sku },
+          },
+          { upsert: true }
+        );
+
+        targetVariation = newVariation;
+      }
     }
 
     if (!targetVariation) {
