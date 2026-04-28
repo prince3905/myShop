@@ -75,14 +75,14 @@
 .nav-link p {
   margin: 0;
   flex: 1;
-  white-space: normal;
-  overflow: visible;
-  text-overflow: clip;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   display: flex;
   align-items: center;
   justify-content: space-between;
   color: gold;
-  word-break: break-word;
+  max-width: 180px;
 }
 
 /* HOVER STATE */
