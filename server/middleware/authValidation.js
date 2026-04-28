@@ -36,15 +36,15 @@ exports.validateRegister = [
     .optional()
     .isIn(["ADMIN", "MANAGER", "STAFF"])
     .withMessage("Role must be ADMIN, MANAGER, or STAFF"),
-  body("phoneNo")
+body("phoneNo")
     .optional()
-    .custom((value) => {
-      if (!value || `${value}`.trim() === "") return true;
-      if (!/^\d{10,}$/.test(value)) {
-        throw new Error("Invalid phone number format");
-      }
-      return true;
-    }),
+    .isMobilePhone("any")
+    .withMessage("Invalid phone number format - use 10 digit number"),
+
+  body("phone")
+    .optional()
+    .isMobilePhone("any")
+    .withMessage("Invalid phone number format - use 10 digit number"),
 ];
 
 // CUSTOMER CREATION VALIDATION

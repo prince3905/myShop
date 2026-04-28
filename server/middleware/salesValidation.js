@@ -22,13 +22,8 @@ exports.validateSaleCreation = [
     .trim(),
   body("customerPhone")
     .optional()
-    .custom((value) => {
-      if (!value || `${value}`.trim() === "") return true;
-      if (!/^\d{10,}$/.test(value)) {
-        throw new Error("Invalid phone number format");
-      }
-      return true;
-    }),
+    .isMobilePhone("any")
+    .withMessage("Invalid phone number format - use 10 digit number"),
   body("items")
     .isArray({ min: 1 })
     .withMessage("At least one item is required"),
