@@ -38,8 +38,13 @@ exports.validateRegister = [
     .withMessage("Role must be ADMIN, MANAGER, or STAFF"),
   body("phoneNo")
     .optional()
-    .isMobilePhone()
-    .withMessage("Invalid phone number format"),
+    .custom((value) => {
+      if (!value || `${value}`.trim() === "") return true;
+      if (!/^\d{10,}$/.test(value)) {
+        throw new Error("Invalid phone number format");
+      }
+      return true;
+    }),
 ];
 
 // CUSTOMER CREATION VALIDATION
@@ -53,8 +58,13 @@ exports.validateCustomerCreation = [
     .trim(),
   body("phone")
     .optional()
-    .isMobilePhone()
-    .withMessage("Invalid phone number format"),
+    .custom((value) => {
+      if (!value || `${value}`.trim() === "") return true;
+      if (!/^\d{10,}$/.test(value)) {
+        throw new Error("Invalid phone number format");
+      }
+      return true;
+    }),
   body("email")
     .optional()
     .isEmail()
