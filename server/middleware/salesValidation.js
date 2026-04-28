@@ -16,14 +16,14 @@ exports.validate = (req, res, next) => {
 exports.validateSaleCreation = [
   body("customerName")
     .optional({ nullable: true, allowEmpty: true })
-    .isString()
+    .customSanitizer((value) => value || "")
     .isLength({ max: 100 })
-    .withMessage("Customer name cannot exceed 100 characters")
-    .trim(),
+    .withMessage("Customer name cannot exceed 100 characters"),
   body("customerPhone")
     .optional({ nullable: true, allowEmpty: true })
+    .customSanitizer((value) => value || "")
     .custom((value) => {
-      if (!value || `${value}`.trim() === "") return true;
+      if (!value || value === "") return true;
       if (!/^\d{10,}$/.test(value)) {
         throw new Error("Invalid phone number format - use 10 digit number");
       }
