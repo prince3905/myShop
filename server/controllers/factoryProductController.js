@@ -55,14 +55,20 @@ const validateShopMapping = async (req, payload = {}) => {
   let variationDoc = null;
 
   if (mapping.shopCategory) {
-    categoryDoc = await Category.findOne({ _id: mapping.shopCategory, shop: req.shopId });
+    categoryDoc = await Category.findOne({ 
+      _id: mapping.shopCategory, 
+      $or: [{ shop: req.shopId }, { ownerShop: req.shopId }, { shops: req.shopId }] 
+    });
     if (!categoryDoc) {
       return { error: "Selected category not found for current shop" };
     }
   }
 
   if (mapping.shopBrand) {
-    brandDoc = await Brand.findOne({ _id: mapping.shopBrand, shop: req.shopId });
+    brandDoc = await Brand.findOne({ 
+      _id: mapping.shopBrand, 
+      $or: [{ shop: req.shopId }, { ownerShop: req.shopId }, { shops: req.shopId }] 
+    });
     if (!brandDoc) {
       return { error: "Selected brand not found for current shop" };
     }
