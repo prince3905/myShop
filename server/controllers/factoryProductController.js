@@ -268,9 +268,13 @@ exports.createFactoryProduct = async (req, res) => {
       shop: req.shopId,
       isDeleted: false,
       name: new RegExp(`^${escapeRegex(payload.name)}$`, "i"),
-    }).select("_id name");
+    }).select("_id name shopVariation");
+    
     if (existingProduct) {
-      return res.status(409).json({ success: false, message: `Factory product "${existingProduct.name}" already exists` });
+      const sameVariation = !payload.shopVariation ? !existingProduct.shopVariation : `${existingProduct.shopVariation || ""}` === `${payload.shopVariation || ""}`;
+      if (sameVariation) {
+        return res.status(409).json({ success: false, message: `Factory product "${existingProduct.name}" already exists` });
+      }
     }
 
     const product = await FactoryProduct.create(payload);
@@ -492,9 +496,12 @@ exports.updateFactoryProduct = async (req, res) => {
       shop: req.shopId,
       isDeleted: false,
       name: new RegExp(`^${escapeRegex(product.name)}$`, "i"),
-    }).select("_id name");
+    }).select("_id name shopVariation");
     if (existingProduct) {
-      return res.status(409).json({ success: false, message: `Factory product "${existingProduct.name}" already exists` });
+      const sameVariation = !product.shopVariation ? !existingProduct.shopVariation : `${existingProduct.shopVariation || ""}` === `${product.shopVariation || ""}`;
+      if (sameVariation) {
+        return res.status(409).json({ success: false, message: `Factory product "${existingProduct.name}" already exists` });
+      }
     }
 
     await product.save();

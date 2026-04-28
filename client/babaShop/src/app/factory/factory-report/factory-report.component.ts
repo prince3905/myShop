@@ -72,7 +72,7 @@ export class FactoryReportComponent implements OnInit {
 
         this.recentProductions = productions.slice(0, 8);
         this.recentScraps = scraps.slice(0, 8);
-        this.rawMaterialSnapshot = materials.slice(0, 8);
+        this.rawMaterialSnapshot = materials;
         this.selectedProduction = this.recentProductions[0] || null;
 
         this.report = {
