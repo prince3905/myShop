@@ -85,6 +85,9 @@ export class AuthInterceptor implements HttpInterceptor {
       if (backendMessage.includes('read-only')) {
         return backendMessage;
       }
+      if (backendMessage.includes('phone') || backendMessage.includes('Phone')) {
+        return 'Invalid phone number. Use 10 digit number.';
+      }
       return backendMessage;
     }
 
