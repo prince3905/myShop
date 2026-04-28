@@ -63,7 +63,7 @@ const populatePushHistoryQuery = (query) =>
     .populate("sourceShop", "name shopCode")
     .populate("targetShop", "name shopCode")
     .populate("staff", "name workType")
-    .populate("factoryProduct", "name")
+    .populate("factoryProduct", "name shopVariation unitLabel workerPieceRate")
     .populate("sourceVariation", "sku")
     .populate("targetVariation", "sku")
     .populate("product", "name")
@@ -659,6 +659,7 @@ exports.updateDailyWork = async (req, res) => {
     dailyWork.workType = `${req.body?.workType || dailyWork.workType || staff.workType || ""}`.trim();
     dailyWork.factoryProduct = factoryProduct?._id || null;
     dailyWork.factoryProductName = `${factoryProduct?.name || ""}`.trim();
+    dailyWork.factoryProductSku = factoryProduct?.shopVariation?.sku || "";
     dailyWork.workItem = workItem?._id || null;
     dailyWork.workItemName = `${workItem?.itemName || ""}`.trim();
     dailyWork.unit = `${factoryProduct?.unitLabel || workItem?.unit || dailyWork.unit || "PCS"}`.trim();

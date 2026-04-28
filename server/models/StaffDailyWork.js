@@ -41,6 +41,11 @@ const staffDailyWorkSchema = new mongoose.Schema(
       trim: true,
       default: "",
     },
+    factoryProductSku: {
+      type: String,
+      trim: true,
+      default: "",
+    },
     workItem: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "StaffWorkItem",

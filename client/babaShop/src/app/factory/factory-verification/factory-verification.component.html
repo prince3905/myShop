@@ -139,7 +139,7 @@
         </div>
 
         <div class="product-info-section">
-          <div class="product-name">{{ row.factoryProductName || row.factoryProduct?.name || '-' }}</div>
+          <div class="product-name">{{ row.factoryProductName || row.factoryProduct?.name || '-' }} <span *ngIf="row.factoryProductSku || row.factoryProduct?.shopVariation?.sku">({{ row.factoryProductSku || row.factoryProduct?.shopVariation?.sku }})</span></div>
           <div class="product-date">
             <mat-icon>calendar_today</mat-icon>
             {{ row.entryDate | date: 'dd MMM yyyy' }}

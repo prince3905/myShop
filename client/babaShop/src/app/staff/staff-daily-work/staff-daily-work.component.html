@@ -314,7 +314,7 @@
 
             <div class="work-chips">
               <span class="work-chip product" *ngIf="item.factoryProductName">
-                {{ item.factoryProductName }} · {{ item.unitsCompleted || 0 }} {{ item.unit || 'PCS' }}
+                {{ item.factoryProductName }} <span *ngIf="item.factoryProductSku">· {{ item.factoryProductSku }}</span> · {{ item.unitsCompleted || 0 }} {{ item.unit || 'PCS' }}
               </span>
               <span class="work-chip details" *ngIf="item.workDetails">{{ item.workDetails }}</span>
               <span class="work-chip job" *ngIf="item.linkedJob">{{ item.linkedJob }}</span>
