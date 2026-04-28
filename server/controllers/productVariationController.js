@@ -254,6 +254,7 @@ exports.updateVariation = async (req, res) => {
       "discount",
       "images",
       "isActive",
+      "model",
     ];
     const updateData = {};
 
