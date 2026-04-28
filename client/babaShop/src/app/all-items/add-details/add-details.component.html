@@ -182,11 +182,8 @@
                   <div class="action-cell">
                     <button mat-icon-button color="primary" (click)="editVariation(v)" [disabled]="!canMutate"><mat-icon>edit</mat-icon></button>
                     <button mat-icon-button [color]="v.isActive ? 'warn' : 'accent'" (click)="toggleStatus(v)" [disabled]="!canMutate"><mat-icon>{{ v.isActive ? 'toggle_on' : 'toggle_off' }}</mat-icon></button>
-                    <button mat-icon-button color="accent" (click)="printVariationLabel(v)" [disabled]="!v.barcode" title="Print 1 Label">
+                    <button mat-icon-button color="accent" (click)="printVariationLabelBulk(v)" [disabled]="!v.barcode" title="Print Labels">
                       <mat-icon>print</mat-icon>
-                    </button>
-                    <button mat-icon-button color="warn" (click)="printVariationLabelBulk(v)" [disabled]="!v.barcode" title="Print Multiple Labels">
-                      <mat-icon>local_offer</mat-icon>
                     </button>
                     <button mat-icon-button color="warn" (click)="deleteVariation(v)" [disabled]="!canMutate"><mat-icon>delete</mat-icon></button>
                   </div>
