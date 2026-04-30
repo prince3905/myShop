@@ -1,0 +1,6 @@
+build:
+  builder: NIXPACKS
+  config:
+    BUILD_COMMAND: npm run build
+    START_COMMAND: cd server && npm start
+    NODE_VERSION: "18"

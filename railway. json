@@ -1,0 +1,10 @@
+{
+  "$schema": "https://railway.railwayfile. com/railway.schema.json",
+  "build": {
+    "builder": "NIXPACKS"
+  },
+  "deploy": {
+    "numReplicas": 1,
+    "startCommand": "cd server && npm start"
+  }
+}

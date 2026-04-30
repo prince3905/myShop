@@ -1,0 +1,5 @@
+build:
+  builder: NIXPACKS
+deploy:
+  numReplicas: 1
+  startCommand: cd server && node server.js
