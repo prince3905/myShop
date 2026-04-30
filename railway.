@@ -1,1 +1,9 @@
-{\ n  "$schema": "https://railway. app/railway- schema. json",\ n  "build": { "builder": "NIXPACKS" },\ n  "deploy": {\ n    "numReplicas": 1,\ n    "startCommand": "cd server && node server. js",\ n    "healthCheckPath": "/api/ health"\ n  }\ n}\ njson\ n
+{
+  "$schema": "https://railway. app/railway- schema. json",
+  "build": { "builder": "NIXPACKS" },
+  "deploy": {
+    "numReplicas": 1,
+    "startCommand": "cd server && node server.1",
+    "healthCheckPath": "/api/ health"
+  }
+} json
