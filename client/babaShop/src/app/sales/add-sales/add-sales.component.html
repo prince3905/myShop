@@ -165,55 +165,55 @@
             </button>
           </div>
 
-          <div class="catalog-grid" *ngIf="suggestions?.length; else emptyCatalog">
-            <div
-              class="product-card"
-              *ngFor="let suggestion of suggestions"
-              [class.active]="activeSuggestionIndex === $index"
-              (click)="selectSuggestion(suggestion)"
-            >
-              <div class="product-image">
-                <i class="ph" [class]="'ph-' + (suggestion?.category?.icon || suggestion?.icon || 'folder')"></i>
-              </div>
-              <div class="product-card-body">
-                <div class="product-name">{{ suggestion?.label || suggestion?.name }}</div>
-                <div class="product-badges">
-                  <span class="product-badge price" *ngIf="suggestion?.maxSellingPrice > 0">
-                    {{ suggestion?.minSellingPrice === suggestion?.maxSellingPrice
-                      ? ('Rs ' + (suggestion?.maxSellingPrice | number:'1.0-0'))
-                      : ('Rs ' + (suggestion?.minSellingPrice | number:'1.0-0') + ' - ' + (suggestion?.maxSellingPrice | number:'1.0-0')) }}
-                  </span>
-                  <span class="product-badge stock" *ngIf="suggestion?.availableStock !== null && suggestion?.availableStock !== undefined">
-                    Stock: {{ suggestion?.availableStock }}
-                  </span>
-                </div>
-                <div class="product-supporting">
-                  <span>{{ suggestion?.modelCount || 0 }} model{{ (suggestion?.modelCount || 0) === 1 ? '' : 's' }}</span>
-                  <span>{{ suggestion?.variationCount || 0 }} option{{ (suggestion?.variationCount || 0) === 1 ? '' : 's' }}</span>
-                </div>
-                <div class="product-meta">{{ suggestion?.matchedBy?.join(' • ') || 'Tap to load models' }}</div>
-                <div class="product-actions">
-                  <button
-                    type="button"
-                    class="product-action-button"
-                    [class.quick-add]="canQuickAddSuggestion(suggestion)"
-                    (click)="quickAddSuggestion($event, suggestion)">
-                    {{ getQuickAddSuggestionLabel(suggestion) }}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
+           <div class="catalog-grid" *ngIf="suggestions?.length; else emptyCatalog">
+             <div
+               class="product-card"
+               *ngFor="let suggestion of suggestions"
+               [class.active]="activeSuggestionIndex === $index"
+               (click)="selectSuggestion(suggestion)"
+             >
+               <div class="product-image">
+                 <i class="ph" [class]="'ph-' + (suggestion?.category?.icon || suggestion?.icon || 'folder')"></i>
+               </div>
+               <div class="product-card-body">
+                 <div class="product-name">{{ suggestion?.label || suggestion?.name }}</div>
+                 <div class="product-badges">
+                   <span class="product-badge price" *ngIf="suggestion?.maxSellingPrice > 0">
+                     {{ suggestion?.minSellingPrice === suggestion?.maxSellingPrice
+                       ? ('Rs ' + (suggestion?.maxSellingPrice | number:'1.0-0'))
+                       : ('Rs ' + (suggestion?.minSellingPrice | number:'1.0-0') + ' - ' + (suggestion?.maxSellingPrice | number:'1.0-0')) }}
+                   </span>
+                   <span class="product-badge stock" *ngIf="suggestion?.availableStock !== null && suggestion?.availableStock !== undefined">
+                     Stock: {{ suggestion?.availableStock }}
+                   </span>
+                 </div>
+                 <div class="product-supporting">
+                   <span>{{ suggestion?.modelCount || 0 }} model{{ (suggestion?.modelCount || 0) === 1 ? '' : 's' }}</span>
+                   <span>{{ suggestion?.variationCount || 0 }} option{{ (suggestion?.variationCount || 0) === 1 ? '' : 's' }}</span>
+                 </div>
+                 <div class="product-meta">{{ suggestion?.matchedBy?.join(' • ') || 'Tap to load models' }}</div>
+                 <div class="product-actions">
+                   <button
+                     type="button"
+                     class="product-action-button"
+                     [class.quick-add]="canQuickAddSuggestion(suggestion)"
+                     (click)="quickAddSuggestion($event, suggestion)">
+                     {{ getQuickAddSuggestionLabel(suggestion) }}
+                   </button>
+                 </div>
+               </div>
+             </div>
+           </div>
 
-          <ng-template #emptyCatalog>
-            <div class="catalog-empty">
-              <mat-icon>{{ itemSearchLoading ? 'hourglass_top' : (itemName ? 'search_off' : 'point_of_sale') }}</mat-icon>
-              <div *ngIf="itemSearchLoading">Searching products...</div>
-              <div *ngIf="!itemSearchLoading && itemName">No matching products found.</div>
-              <div *ngIf="!itemSearchLoading && !itemName">Search item name or scan barcode to start billing.</div>
-              <small *ngIf="!itemSearchLoading && itemName">Try a different name, model, or barcode.</small>
-            </div>
-          </ng-template>
+           <ng-template #emptyCatalog>
+             <div class="catalog-empty">
+               <mat-icon>{{ itemSearchLoading ? 'hourglass_top' : (itemName ? 'search_off' : 'point_of_sale') }}</mat-icon>
+               <div *ngIf="itemSearchLoading">Searching products...</div>
+               <div *ngIf="!itemSearchLoading && itemName">No matching products found.</div>
+               <div *ngIf="!itemSearchLoading && !itemName">Search item name or scan barcode to start billing.</div>
+               <small *ngIf="!itemSearchLoading && itemName">Try a different name, model, or barcode.</small>
+             </div>
+           </ng-template>
         </div>
 
         <div class="cart-panel shot-panel">
