@@ -1702,14 +1702,3 @@
     justify-content: flex-end;
   }
 }
-
-.catalog-grid {
-  max-height: 50vh;
-  overflow-y: auto;
-}
-
-@media (max-width: 768px) {
-  .catalog-grid {
-    max-height: 40vh;
-  }
-}
