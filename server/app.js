@@ -23,6 +23,7 @@ const dynamicOriginPatterns = [
   /^https:\/\/[a-z0-9.-]+\.onrender\.com$/i,
   /^capacitor:\/\/localhost$/i,
   /^ionic:\/\/localhost$/i,
+  /^https:\/\/[a-z0-9.-]+\.railway\.app$/i,
 ];
 
 const authWindowMs = 15 * 60 * 1000;
