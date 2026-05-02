@@ -186,3 +186,55 @@ mat-expansion-panel {
 mat-panel-title mat-icon {
   margin-right: 10px;
 }
+
+.info-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  background: #e3f2fd;
+  border-radius: 4px;
+  margin-bottom: 15px;
+  font-size: 14px;
+  color: #1565c0;
+}
+
+.action-note {
+  padding: 12px;
+  background: #fff3e0;
+  border-left: 4px solid #ff9800;
+  margin: 15px 0;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.warning-text {
+  color: #f44336;
+  font-weight: 500;
+  margin: 8px 0;
+}
+
+.stock-detail {
+  padding: 10px;
+  background: #f9f9f9;
+  border-radius: 4px;
+  margin: 8px 0;
+  font-size: 14px;
+}
+
+.stock-detail strong {
+  color: #333;
+}
+
+.stock-detail .variance {
+  color: #f44336;
+  font-weight: bold;
+  margin-top: 5px;
+}
+
+.sale-detail {
+  padding: 5px 0;
+  font-size: 14px;
+  color: #666;
+  border-bottom: 1px dashed #ddd;
+}

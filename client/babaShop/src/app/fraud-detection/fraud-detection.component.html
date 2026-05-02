@@ -2,7 +2,7 @@
   <!-- Header -->
   <div class="header-section">
     <h2> Fraud Detection Report</h2>
-    <p class="subtitle">संदिग्ध गतिविधियों की जाँच करें</p>
+    <p class="subtitle">संदिग्ध गतिविधियों की जाँच करें - Staff/Cashier theft prevention</p>
   </div>
 
   <!-- Filters -->
@@ -26,7 +26,6 @@
               {{ shop.name }} ({{ shop.shopCode }})
             </mat-option>
           </mat-select>
-          <mat-hint *ngIf="shops.length === 0">No shops loaded. Check console for errors.</mat-hint>
         </mat-form-field>
 
         <button mat-raised-button color="primary" (click)="loadReport()" [disabled]="loading">
@@ -87,7 +86,7 @@
         <mat-card-content>
           <div *ngIf="shopReport.alerts?.length === 0" class="no-alerts">
             <mat-icon>check_circle</mat-icon>
-            <p>कोई संदिग्ध गतिविधि नहीं मिली</p>
+            <p>कोई संदिग्ध गतिविधि नहीं मिली - Staff सुरक्षित हैं ✓</p>
           </div>
 
           <mat-accordion *ngIf="shopReport.alerts?.length > 0">
@@ -106,64 +105,93 @@
 
               <p class="alert-description">{{ alert.description }}</p>
 
-              <!-- Cash Mismatch -->
+              <!-- CASH_MISMATCH - Cash register check -->
               <div *ngIf="alert.type === 'CASH_MISMATCH'" class="alert-data">
-                <div class="data-row"><span>Total Sales:</span> ₹{{ alert.data?.totalSales || 0 }}</div>
-                <div class="data-row"><span>Cash Collected:</span> ₹{{ alert.data?.cashCollected || 0 }}</div>
-                <div class="data-row"><span>Cash Refunds:</span> ₹{{ alert.data?.cashRefunds || 0 }}</div>
-                <div class="data-row highlight"><span>Expected Cash:</span> ₹{{ alert.data?.expectedCash || 0 }}</div>
-                <div class="data-row"><span>Transactions:</span> {{ alert.data?.transactionCount || 0 }}</div>
+                <div class="info-note" *ngIf="alert.data?.note">
+                  <mat-icon>info</mat-icon> {{ alert.data.note }}
+                </div>
+                <div class="data-row"><span>Total Sales:</span> ₹{{ alert.data?.totalSales | number:'1.2-2' }}</div>
+                <div class="data-row"><span>Cash from Sales:</span> ₹{{ alert.data?.totalCash | number:'1.2-2' }}</div>
+                <div class="data-row"><span>Card Sales:</span> ₹{{ alert.data?.totalCard | number:'1.2-2' }}</div>
+                <div class="data-row"><span>Online Sales:</span> ₹{{ alert.data?.totalOnline | number:'1.2-2' }}</div>
+                <div class="data-row"><span>Cash Refunds Given:</span> ₹{{ alert.data?.cashRefunds | number:'1.2-2' }}</div>
+                <div class="data-row"><span>Total Refunds:</span> ₹{{ alert.data?.totalRefunds | number:'1.2-2' }}</div>
+                <div class="data-row highlight"><span>Expected Cash in Register:</span> ₹{{ alert.data?.expectedCash | number:'1.2-2' }}</div>
+                <div class="data-row"><span>Total Transactions:</span> {{ alert.data?.transactionCount || 0 }}</div>
+                <div class="action-note">
+                  <strong>Action:</strong> Physical cash count karein aur expected cash se match karein.
+                  Agar kam hai to staff ne cash nikal liya hai!
+                </div>
               </div>
 
-              <!-- Suspicious Returns -->
+              <!-- SUSPICIOUS_RETURNS - Customer return patterns -->
               <div *ngIf="alert.type === 'SUSPICIOUS_RETURNS'" class="alert-data">
-                <div *ngFor="let cust of alert.data?.suspiciousCustomers" class="customer-alert">
+                <div *ngFor="let cust of alert.data?.customers" class="customer-alert">
                   <h4>{{ cust.customer?.name }} ({{ cust.customer?.phone }})</h4>
-                  <p>Return Count: {{ cust.returnCount }}</p>
-                  <div *ngFor="let ret of cust.returns" class="return-detail">
-                    <span>Invoice: {{ ret.invoiceNo }}</span> |
-                    <span>Amount: ₹{{ ret.amount }}</span> |
-                    <span>Date: {{ ret.date | date:'short' }}</span>
-                  </div>
+                  <p><strong>Return Count:</strong> {{ cust.returnCount }} baar return kiya hai</p>
+                  <p class="warning-text">⚠️ Shady customer - baar baar return karke shop ko nuksan pahuncha raha hai</p>
                 </div>
               </div>
 
-              <!-- Discount Abuse -->
+              <!-- STOCK_DISCREPANCY - Inventory theft detection -->
+              <div *ngIf="alert.type === 'STOCK_DISCREPANCY'" class="alert-data">
+                <div class="info-note" *ngIf="alert.data?.note">
+                  <mat-icon>info</mat-icon> {{ alert.data.note }}
+                </div>
+                <div class="data-row"><span>Total Missing Items:</span> {{ alert.data?.totalMissingItems || 0 }}</div>
+                <div class="data-row"><span>Total Missing Quantity:</span> {{ alert.data?.totalMissingQty || 0 }} units</div>
+                <div class="action-note">
+                  <strong>Action:</strong> Stock reconciliation mein kami aayi hai. Staff ne saman chura liya hai ya ghar le gaya hai!
+                </div>
+                <h4>Missing Items:</h4>
+                <div *ngFor="let item of alert.data?.discrepancies" class="stock-detail">
+                  <div><strong>{{ item.productName }}</strong> ({{ item.modelName }})</div>
+                  <div>SKU: {{ item.sku }}</div>
+                  <div>System had: {{ item.systemQty }} | Physically counted: {{ item.countedQty }}</div>
+                  <div class="variance">Missing: {{ item.missingQty }} units</div>
+                </div>
+              </div>
+
+              <!-- VOIDED_TRANSACTIONS - Bill cancel fraud -->
+              <div *ngIf="alert.type === 'VOIDED_TRANSACTIONS'" class="alert-data">
+                <div class="info-note" *ngIf="alert.data?.note">
+                  <mat-icon>info</mat-icon> {{ alert.data.note }}
+                </div>
+                <div class="data-row"><span>Total Cancelled Bills:</span> {{ alert.data?.cancelledSales?.length || 0 }}</div>
+                <div class="data-row highlight"><span>Total Amount Cancelled:</span> ₹{{ alert.data?.totalCancelledAmount | number:'1.2-2' }}</div>
+                <div class="action-note">
+                  <strong>Action:</strong> Check karo ki staff ne cash liya fir bill cancel kiya hai kya. Yeh common theft trick hai!
+                </div>
+                <h4>Cancelled Bills:</h4>
+                <div *ngFor="let sale of alert.data?.cancelledSales" class="sale-detail">
+                  <span>Invoice: {{ sale.invoiceNo }}</span> |
+                  <span>Amount: ₹{{ sale.amount | number:'1.2-2' }}</span> |
+                  <span>Date: {{ sale.date | date:'short' }}</span>
+                </div>
+              </div>
+
+              <!-- DISCOUNT_ABUSE - Unauthorized discounts -->
               <div *ngIf="alert.type === 'DISCOUNT_ABUSE'" class="alert-data">
-                <div *ngFor="let staff of alert.data?.staffAlerts" class="staff-alert">
-                  <h4>{{ staff.staff?.name }}</h4>
-                  <p>High Discount Sales: {{ staff.highDiscountSales }}</p>
-                  <p>Total Discount Given: ₹{{ staff.totalDiscountGiven }}</p>
-                  <div *ngFor="let sale of staff.sales" class="sale-detail">
-                    <span>Invoice: {{ sale.invoiceNo }}</span> |
-                    <span>Amount: ₹{{ sale.totalAmount }}</span> |
-                    <span>Discount: ₹{{ sale.discount }} ({{ sale.discountPercent }}%)</span>
-                  </div>
+                <div class="info-note" *ngIf="alert.data?.note">
+                  <mat-icon>info</mat-icon> {{ alert.data.note }}
                 </div>
-              </div>
-
-              <!-- Back-dated Sales -->
-              <div *ngIf="alert.type === 'BACK_DATED_SALES'" class="alert-data">
+                <div class="data-row"><span>Total High-Discount Sales:</span> {{ alert.data?.sales?.length || 0 }}</div>
+                <div class="data-row highlight"><span>Total Discount Amount:</span> ₹{{ alert.data?.totalDiscountAmount | number:'1.2-2' }}</div>
+                <div class="action-note">
+                  <strong>Action:</strong> Staff apne dosto/family ko zyada discount de raha hai - shop ko nuksan!
+                </div>
+                <h4>Suspicious Sales:</h4>
                 <div *ngFor="let sale of alert.data?.sales" class="sale-detail">
                   <span>Invoice: {{ sale.invoiceNo }}</span> |
-                  <span>Amount: ₹{{ sale.amount }}</span> |
-                  <span>Created: {{ sale.createdAt | date:'short' }}</span> |
-                  <span>By: {{ sale.createdBy }}</span> |
-                  <span>Role: {{ sale.role }}</span>
+                  <span>Amount: ₹{{ sale.totalAmount | number:'1.2-2' }}</span> |
+                  <span>Bill Discount: ₹{{ sale.billDiscount }}</span> |
+                  <span>Date: {{ sale.date | date:'short' }}</span>
+                  <div *ngIf="sale.highItemDiscounts?.length > 0">
+                    <small>Item Discounts: {{ sale.highItemDiscounts | json }}</small>
+                  </div>
                 </div>
               </div>
 
-              <!-- Stock Discrepancy -->
-              <div *ngIf="alert.type === 'STOCK_DISCREPANCY'" class="alert-data">
-                <p>Month: {{ alert.data?.reconciliationMonth }}</p>
-                <p>Total Mismatches: {{ alert.data?.totalMismatches }}</p>
-                <div *ngFor="let mismatch of alert.data?.mismatches" class="stock-detail">
-                  <span>{{ mismatch.productName }} ({{ mismatch.sku }})</span> -
-                  <span>System: {{ mismatch.systemQty }}</span> |
-                  <span>Counted: {{ mismatch.countedQty }}</span> |
-                  <span class="variance">Variance: {{ mismatch.variance }}</span>
-                </div>
-              </div>
             </mat-expansion-panel>
           </mat-accordion>
         </mat-card-content>
