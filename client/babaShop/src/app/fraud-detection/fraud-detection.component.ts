@@ -1,0 +1,103 @@
+import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { MatCardModule } from '@angular/material/card';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatSelectModule } from '@angular/material/select';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatExpansionModule } from '@angular/material/expansion';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatBadgeModule } from '@angular/material/badge';
+import { FraudDetectionService } from 'app/shared/services/fraud-detection.service';
+import { AuthService } from 'app/shared/services/auth.service';
+import { ShopService } from 'app/shared/services/shop.service';
+import { MatSnackBar } from '@angular/material/snack-bar';
+
+@Component({
+  selector: 'fraud-detection',
+  templateUrl: './fraud-detection.component.html',
+  styleUrls: ['./fraud-detection.component.css'],
+  standalone: false,
+})
+export class FraudDetectionComponent implements OnInit {
+  loading: boolean = false;
+  days: number = 7;
+  report: any = null;
+  shops: any[] = [];
+  selectedShopId: string = '';
+
+  constructor(
+    private fraudDetectionService: FraudDetectionService,
+    public authService: AuthService,
+    private shopService: ShopService,
+    private snackBar: MatSnackBar
+  ) {}
+
+  ngOnInit(): void {
+    if (this.authService.isSuperAdmin()) {
+      this.loadShops();
+    }
+    this.loadReport();
+  }
+
+  loadShops(): void {
+    this.shopService.getAllShops().subscribe(
+      (response: any) => {
+        console.log('Shops API Response:', response);
+        this.shops = response.data || response.shops || [];
+        console.log('Shops loaded:', this.shops);
+      },
+      (error) => {
+        console.error('Error loading shops:', error);
+      }
+    );
+  }
+
+  loadReport(): void {
+    this.loading = true;
+    const isSuperAdmin = this.authService.isSuperAdmin();
+    const shopId = isSuperAdmin && this.selectedShopId ? this.selectedShopId : undefined;
+
+    this.fraudDetectionService.getFraudDetectionReport(this.days, shopId).subscribe(
+      (response: any) => {
+        this.report = response.data;
+        this.loading = false;
+      },
+      (error) => {
+        this.loading = false;
+        this.snackBar.open('रिपोर्ट लोड करने में त्रुटि हुई', 'OK', { duration: 3000 });
+        console.error('Fraud detection error:', error);
+      }
+    );
+  }
+
+  onDaysChange(): void {
+    this.loadReport();
+  }
+
+  onShopChange(): void {
+    this.loadReport();
+  }
+
+  getSeverityColor(severity: string): string {
+    switch (severity) {
+      case 'HIGH': return 'warn';
+      case 'MEDIUM': return 'accent';
+      case 'LOW': return 'primary';
+      default: return 'primary';
+    }
+  }
+
+  getSeverityIcon(severity: string): string {
+    switch (severity) {
+      case 'HIGH': return 'error';
+      case 'MEDIUM': return 'warning';
+      case 'LOW': return 'info';
+      default: return 'info';
+    }
+  }
+}

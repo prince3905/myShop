@@ -90,6 +90,7 @@ const roleFeaturePolicy = {
     "settings.shop",
     "settings.permissions",
     "settings.system",
+    "fraud.detection",
   ],
   [ROLES.SUPER_ADMIN]: ["*"],
 };

@@ -1,0 +1,173 @@
+<div class="fraud-detection-container">
+  <!-- Header -->
+  <div class="header-section">
+    <h2> Fraud Detection Report</h2>
+    <p class="subtitle">संदिग्ध गतिविधियों की जाँच करें</p>
+  </div>
+
+  <!-- Filters -->
+  <mat-card class="filter-card">
+    <mat-card-content>
+      <div class="filters-row">
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>दिन चुनें</mat-label>
+          <mat-select [(value)]="days" (selectionChange)="onDaysChange()">
+            <mat-option [value]="7">पिछले 7 दिन</mat-option>
+            <mat-option [value]="15">पिछले 15 दिन</mat-option>
+            <mat-option [value]="30">पिछले 30 दिन</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field *ngIf="authService.isSuperAdmin()" appearance="outline" class="filter-field">
+          <mat-label>Shop चुनें (Global के लिए खाली छोड़ें)</mat-label>
+          <mat-select [(ngModel)]="selectedShopId" (selectionChange)="onShopChange()">
+            <mat-option value="">सभी दुकानें (Global)</mat-option>
+            <mat-option *ngFor="let shop of shops" [value]="shop._id">
+              {{ shop.name }} ({{ shop.shopCode }})
+            </mat-option>
+          </mat-select>
+          <mat-hint *ngIf="shops.length === 0">No shops loaded. Check console for errors.</mat-hint>
+        </mat-form-field>
+
+        <button mat-raised-button color="primary" (click)="loadReport()" [disabled]="loading">
+          <mat-icon>refresh</mat-icon> रिफ्रेश
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="loading-container">
+    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+    <p>रिपोर्ट लोड हो रही है...</p>
+  </div>
+
+  <!-- Report Content -->
+  <div *ngIf="!loading && report" class="report-content">
+    <!-- Global Summary (Super Admin) -->
+    <div *ngIf="authService.isSuperAdmin()" class="global-summary">
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title>Global Summary</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="summary-stats">
+            <div class="stat-box">
+              <span class="stat-value">{{ report.globalSummary?.totalShops || 0 }}</span>
+              <span class="stat-label">दुकानें</span>
+            </div>
+            <div class="stat-box high">
+              <span class="stat-value">{{ report.globalSummary?.highSeverityAlerts || 0 }}</span>
+              <span class="stat-label">High Alerts</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-value">{{ report.globalSummary?.totalAlerts || 0 }}</span>
+              <span class="stat-label">कुल Alerts</span>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Shops Reports -->
+    <div *ngFor="let shopReport of report.shops" class="shop-report">
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title>
+            {{ shopReport.shop?.name || 'Unknown Shop' }}
+            <span class="shop-code">({{ shopReport.shop?.code || 'N/A' }})</span>
+          </mat-card-title>
+          <mat-card-subtitle>
+            Alerts: {{ shopReport.summary?.totalAlerts || 0 }} |
+            High: {{ shopReport.summary?.highSeverity || 0 }} |
+            Medium: {{ shopReport.summary?.mediumSeverity || 0 }} |
+            Low: {{ shopReport.summary?.lowSeverity || 0 }}
+          </mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div *ngIf="shopReport.alerts?.length === 0" class="no-alerts">
+            <mat-icon>check_circle</mat-icon>
+            <p>कोई संदिग्ध गतिविधि नहीं मिली</p>
+          </div>
+
+          <mat-accordion *ngIf="shopReport.alerts?.length > 0">
+            <mat-expansion-panel *ngFor="let alert of shopReport.alerts">
+              <mat-expansion-panel-header>
+                <mat-panel-title>
+                  <mat-icon [color]="getSeverityColor(alert.severity)">
+                    {{ getSeverityIcon(alert.severity) }}
+                  </mat-icon>
+                  {{ alert.title }}
+                </mat-panel-title>
+                <mat-panel-description>
+                  <span [class]="'severity-badge ' + alert.severity">{{ alert.severity }}</span>
+                </mat-panel-description>
+              </mat-expansion-panel-header>
+
+              <p class="alert-description">{{ alert.description }}</p>
+
+              <!-- Cash Mismatch -->
+              <div *ngIf="alert.type === 'CASH_MISMATCH'" class="alert-data">
+                <div class="data-row"><span>Total Sales:</span> ₹{{ alert.data?.totalSales || 0 }}</div>
+                <div class="data-row"><span>Cash Collected:</span> ₹{{ alert.data?.cashCollected || 0 }}</div>
+                <div class="data-row"><span>Cash Refunds:</span> ₹{{ alert.data?.cashRefunds || 0 }}</div>
+                <div class="data-row highlight"><span>Expected Cash:</span> ₹{{ alert.data?.expectedCash || 0 }}</div>
+                <div class="data-row"><span>Transactions:</span> {{ alert.data?.transactionCount || 0 }}</div>
+              </div>
+
+              <!-- Suspicious Returns -->
+              <div *ngIf="alert.type === 'SUSPICIOUS_RETURNS'" class="alert-data">
+                <div *ngFor="let cust of alert.data?.suspiciousCustomers" class="customer-alert">
+                  <h4>{{ cust.customer?.name }} ({{ cust.customer?.phone }})</h4>
+                  <p>Return Count: {{ cust.returnCount }}</p>
+                  <div *ngFor="let ret of cust.returns" class="return-detail">
+                    <span>Invoice: {{ ret.invoiceNo }}</span> |
+                    <span>Amount: ₹{{ ret.amount }}</span> |
+                    <span>Date: {{ ret.date | date:'short' }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Discount Abuse -->
+              <div *ngIf="alert.type === 'DISCOUNT_ABUSE'" class="alert-data">
+                <div *ngFor="let staff of alert.data?.staffAlerts" class="staff-alert">
+                  <h4>{{ staff.staff?.name }}</h4>
+                  <p>High Discount Sales: {{ staff.highDiscountSales }}</p>
+                  <p>Total Discount Given: ₹{{ staff.totalDiscountGiven }}</p>
+                  <div *ngFor="let sale of staff.sales" class="sale-detail">
+                    <span>Invoice: {{ sale.invoiceNo }}</span> |
+                    <span>Amount: ₹{{ sale.totalAmount }}</span> |
+                    <span>Discount: ₹{{ sale.discount }} ({{ sale.discountPercent }}%)</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Back-dated Sales -->
+              <div *ngIf="alert.type === 'BACK_DATED_SALES'" class="alert-data">
+                <div *ngFor="let sale of alert.data?.sales" class="sale-detail">
+                  <span>Invoice: {{ sale.invoiceNo }}</span> |
+                  <span>Amount: ₹{{ sale.amount }}</span> |
+                  <span>Created: {{ sale.createdAt | date:'short' }}</span> |
+                  <span>By: {{ sale.createdBy }}</span> |
+                  <span>Role: {{ sale.role }}</span>
+                </div>
+              </div>
+
+              <!-- Stock Discrepancy -->
+              <div *ngIf="alert.type === 'STOCK_DISCREPANCY'" class="alert-data">
+                <p>Month: {{ alert.data?.reconciliationMonth }}</p>
+                <p>Total Mismatches: {{ alert.data?.totalMismatches }}</p>
+                <div *ngFor="let mismatch of alert.data?.mismatches" class="stock-detail">
+                  <span>{{ mismatch.productName }} ({{ mismatch.sku }})</span> -
+                  <span>System: {{ mismatch.systemQty }}</span> |
+                  <span>Counted: {{ mismatch.countedQty }}</span> |
+                  <span class="variance">Variance: {{ mismatch.variance }}</span>
+                </div>
+              </div>
+            </mat-expansion-panel>
+          </mat-accordion>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+</div>

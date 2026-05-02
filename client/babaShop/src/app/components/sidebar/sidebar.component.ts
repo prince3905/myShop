@@ -248,6 +248,21 @@ export const ROUTES: RouteInfo[] = [
       },
     ],
   },
+
+  {
+    title: "Fraud Detection",
+    icon: "security",
+    roles: ["SUPER_ADMIN", "ADMIN"],
+    children: [
+      {
+        path: "/fraud-detection",
+        title: "Fraud Alerts",
+        icon: "warning",
+        roles: ["SUPER_ADMIN", "ADMIN"],
+        feature: "fraud.detection",
+      },
+    ],
+  },
 ];
 
 @Component({

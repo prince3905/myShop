@@ -72,6 +72,7 @@ import { FactoryVerificationComponent } from "app/factory/factory-verification/f
 import { RawMaterialPurchaseComponent } from "app/factory/raw-material-purchase/raw-material-purchase.component";
 import { RawMaterialRegisterComponent } from "app/factory/raw-material-register/raw-material-register.component";
 import { FactoryReportComponent } from "app/factory/factory-report/factory-report.component";
+import { FraudDetectionComponent } from "app/fraud-detection/fraud-detection.component";
 
 @NgModule({
   imports: [
@@ -148,6 +149,7 @@ import { FactoryReportComponent } from "app/factory/factory-report/factory-repor
     RawMaterialPurchaseComponent,
     RawMaterialRegisterComponent,
     FactoryReportComponent,
+    FraudDetectionComponent,
     HasRoleDirective,
     CapitalizeFirstDirective,
   ],

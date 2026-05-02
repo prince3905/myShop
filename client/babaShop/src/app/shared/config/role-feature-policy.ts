@@ -91,6 +91,7 @@ export const ROLE_FEATURE_POLICY: Record<string, string[]> = {
     "settings.shop",
     "settings.permissions",
     "settings.system",
+    "fraud.detection",
   ],
   SUPER_ADMIN: ["*"],
 };
