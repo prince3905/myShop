@@ -126,6 +126,12 @@ exports.getFraudDetectionReport = async (req, res) => {
         riskLevel: "LOW",
       };
 
+      // Get historical stats once for the shop
+      const historicalData = await getHistoricalDailySales(shop._id, start, end);
+      const cashStats = calculateStats(historicalData.cashValues);
+      const salesCountStats = calculateStats(historicalData.salesCountValues);
+      const totalStats = calculateStats(historicalData.totalValues);
+
       // ==================== 1. CASH MISMATCH DETECTION ====================
       try {
         const sales = await Sale.find({
@@ -178,13 +184,19 @@ exports.getFraudDetectionReport = async (req, res) => {
         const totalCollection = totalCash + totalCard + totalOnline;
 
         // Anomaly detection: Is current cash unusual compared to history?
-        const cashStats = calculateStats((await getHistoricalDailySales(shop._id, start, end)).cashValues);
         const cashZScore = getZScore(totalCash, cashStats.mean, cashStats.stdDev);
         const isCashAnomaly = cashZScore > 2; // More than 2 std deviations
 
+        let cashSeverity = "LOW"; // Default to informational
+        if (cashRefunds > 500 || isCashAnomaly) {
+          cashSeverity = "HIGH";
+        } else if (cashRefunds > 0) {
+          cashSeverity = "MEDIUM";
+        }
+
         shopReport.alerts.push({
           type: "CASH_MISMATCH",
-          severity: Math.abs(expectedCash - totalCash) > 500 || cashRefunds > 500 ? "HIGH" : "MEDIUM",
+          severity: cashSeverity,
           title: "Cash Summary",
           description: `Total Sales: ₹${totalSales} | Cash: ₹${totalCash} | Card: ₹${totalCard} | Online: ₹${totalOnline} | Cash Refunds: ₹${cashRefunds}`,
           data: {
@@ -197,12 +209,12 @@ exports.getFraudDetectionReport = async (req, res) => {
             totalRefunds,
             expectedCash,
             transactionCount: sales.length,
-            note: "Expected cash in register = Cash Sales - Cash Refunds. Please count physical cash and compare.",
+            note: "Expected cash in register = Cash Sales - Cash Refunds. Please count physical cash and compare. (गल्ले का कैश = नकद बिक्री - नकद रिफंड। कृपया गल्ले में मौजूद असली कैश को गिनें और मिला कर देखें।)",
             anomalyCheck: {
               isAnomaly: isCashAnomaly,
               zScore: cashZScore.toFixed(2),
               historicalMean: cashStats.mean.toFixed(2),
-              message: isCashAnomaly ? "⚠️ Cash collection is UNUSUAL compared to past 30 days!" : "Cash collection is within normal range.",
+              message: isCashAnomaly ? "⚠️ Cash collection is UNUSUAL compared to past 30 days! (पिछले 30 दिनों की तुलना में आज कैश कलेक्शन बहुत अलग/अजीब है!)" : "Cash collection is within normal range. (कैश कलेक्शन सामान्य है।)",
             },
           },
         });
@@ -285,7 +297,7 @@ exports.getFraudDetectionReport = async (req, res) => {
               discrepancies,
               totalMissingItems: discrepancies.length,
               totalMissingQty,
-              note: "Physical count was less than system stock. Staff may have stolen items!",
+              note: "Physical count was less than system stock. Staff may have stolen items! (असली सामान सिस्टम में दिखाए गए स्टॉक से कम है। हो सकता है स्टाफ ने चोरी की हो!)",
             },
           });
         }
@@ -332,12 +344,12 @@ exports.getFraudDetectionReport = async (req, res) => {
                 date: s.createdAt,
               })),
               totalCancelledAmount,
-              note: "Staff may take cash and then cancel the bill. Verify these cancellations.",
+              note: "Staff may take cash and then cancel the bill. Verify these cancellations. (स्टाफ कस्टमर से कैश लेकर बाद में बिल कैंसिल कर सकता है। इन कैंसिल किए गए बिलों की जांच करें।)",
               anomalyCheck: {
                 isAnomaly: cancelledZScore > 2,
                 zScore: cancelledZScore.toFixed(2),
                 historicalMean: cancelledStats.mean.toFixed(2),
-                message: cancelledZScore > 2 ? "⚠️ Unusually high cancellations compared to history!" : "Cancellation rate is within normal range.",
+                message: cancelledZScore > 2 ? "⚠️ Unusually high cancellations compared to history! (पहले के मुकाबले आज बहुत ज़्यादा बिल कैंसिल हुए हैं!)" : "Cancellation rate is within normal range. (कैंसिलेशन दर सामान्य है।)",
               },
             },
           });
@@ -390,7 +402,7 @@ exports.getFraudDetectionReport = async (req, res) => {
             data: {
               sales: suspiciousDiscounts,
               totalDiscountAmount,
-              note: "Large discounts may indicate staff giving unauthorized discounts to friends/family.",
+              note: "Large discounts may indicate staff giving unauthorized discounts to friends/family. (ज़्यादा डिस्काउंट का मतलब हो सकता है कि स्टाफ अपने दोस्तों या रिश्तेदारों को बिना अनुमति के छूट दे रहा है।)",
             },
           });
         }
@@ -426,7 +438,7 @@ exports.getFraudDetectionReport = async (req, res) => {
                 time: s.createdAt,
               })),
               totalNightSales: nightTotal,
-              note: "Staff may be creating fake sales or manipulating records during odd hours when supervision is low.",
+              note: "Staff may be creating fake sales or manipulating records during odd hours when supervision is low. (स्टाफ रात के समय या जब कोई निगरानी न हो, तब फर्जी सेल बना सकता है या रिकॉर्ड में हेराफेरी कर सकता है।)",
             },
           });
         }
@@ -494,7 +506,7 @@ exports.getFraudDetectionReport = async (req, res) => {
                 returnCount: r.returnCount,
                 returns: r.returns,
               })),
-              note: "Multiple returns in short span indicate possible return fraud or staff collusion with customers.",
+              note: "Multiple returns in short span indicate possible return fraud or staff collusion with customers. (थोड़े ही समय में बार-बार सामान वापस होना, रिटर्न फ्रॉड या स्टाफ-कस्टमर की मिलीभगत का संकेत हो सकता है।)",
             },
           });
         }
@@ -525,7 +537,7 @@ exports.getFraudDetectionReport = async (req, res) => {
             current: currentSalesCount,
             historicalMean: salesCountStats.mean.toFixed(0),
             zScore: salesCountZScore.toFixed(2),
-            message: currentSalesCount > salesCountStats.mean ? "Unusually HIGH sales activity" : "Unusually LOW sales activity - possible under-reporting",
+            message: currentSalesCount > salesCountStats.mean ? "Unusually HIGH sales activity (सेल बहुत ज़्यादा है)" : "Unusually LOW sales activity - possible under-reporting (सेल बहुत कम है - हो सकता है स्टाफ सेल की एंट्री नहीं कर रहा हो)",
           });
         }
         if (totalSalesZScore > 2) {
@@ -534,7 +546,7 @@ exports.getFraudDetectionReport = async (req, res) => {
             current: shopReport.alerts.find(a => a.type === 'CASH_MISMATCH')?.data?.totalSales || 0,
             historicalMean: totalStats.mean.toFixed(0),
             zScore: totalSalesZScore.toFixed(2),
-            message: "Sales amount is far from historical average - possible manipulation",
+            message: "Sales amount is far from historical average - possible manipulation (सेल की रकम रोज़ाना के औसत से बहुत अलग है - हेराफेरी की संभावना है)",
           });
         }
 
@@ -546,7 +558,7 @@ exports.getFraudDetectionReport = async (req, res) => {
             description: `${anomalies.length} unusual pattern(s) detected compared to past 30 days`,
             data: {
               anomalies,
-              note: "These patterns are statistically unusual. HIGH chance of staff manipulation or theft!",
+              note: "These patterns are statistically unusual. HIGH chance of staff manipulation or theft! (ये आंकड़े बहुत अजीब हैं। स्टाफ द्वारा हेराफेरी या चोरी की बहुत अधिक संभावना है!)",
             },
           });
         }
