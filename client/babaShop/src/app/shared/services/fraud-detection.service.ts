@@ -17,7 +17,8 @@ export class FraudDetectionService {
     days?: number | null,
     shopId?: string,
     startDate?: Date | null,
-    endDate?: Date | null
+    endDate?: Date | null,
+    severity?: string
   ): Observable<any> {
     let params = new HttpParams();
     
@@ -33,6 +34,11 @@ export class FraudDetectionService {
     
     if (shopId) {
       params = params.set("shopId", shopId);
+    }
+
+    // Add severity filter
+    if (severity && severity !== 'ALL') {
+      params = params.set("severity", severity);
     }
     
     return this.http.get(`${this.baseURL}/api/fraud-detection`, { params });

@@ -69,7 +69,7 @@ const getHistoricalDailySales = async (shopId, currentStart, currentEnd) => {
 
 exports.getFraudDetectionReport = async (req, res) => {
   try {
-    const { date, days = 7, shopId: queryShopId, startDate, endDate } = req.query;
+    const { date, days = 7, shopId: queryShopId, startDate, endDate, severity } = req.query;
     const daysBack = parseInt(days) || 7;
     
     // Use custom date range if provided, otherwise use daysBack
@@ -672,6 +672,31 @@ exports.getFraudDetectionReport = async (req, res) => {
           }
         }
       }
+    }
+
+    // Apply severity filter if requested
+    if (severity && severity !== 'ALL') {
+      report.shops.forEach((shopReport) => {
+        if (shopReport.alerts) {
+          shopReport.alerts = shopReport.alerts.filter(
+            (a) => a.severity === severity
+          );
+        }
+        // Recalculate summary
+        shopReport.summary = {
+          totalAlerts: shopReport.alerts.length,
+          highSeverity: shopReport.alerts.filter((a) => a.severity === 'HIGH').length,
+          mediumSeverity: shopReport.alerts.filter((a) => a.severity === 'MEDIUM').length,
+          lowSeverity: shopReport.alerts.filter((a) => a.severity === 'LOW').length,
+        };
+      });
+      
+      // Recalculate global summary
+      report.globalSummary = {
+        totalShops: shops.length,
+        totalAlerts: report.shops.reduce((sum, s) => sum + s.summary.totalAlerts, 0),
+        highSeverityAlerts: report.shops.reduce((sum, s) => sum + s.summary.highSeverity, 0),
+      };
     }
 
     res.status(200).json({ success: true, data: report });

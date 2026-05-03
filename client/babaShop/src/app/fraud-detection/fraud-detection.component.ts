@@ -36,7 +36,6 @@ export class FraudDetectionComponent implements OnInit {
   startDate: Date | null = null;
   endDate: Date | null = null;
   selectedSeverity: string = 'ALL';
-  shopFilteredAlerts: { [key: string]: any[] } = {};
 
   constructor(
     private fraudDetectionService: FraudDetectionService,
@@ -55,9 +54,7 @@ export class FraudDetectionComponent implements OnInit {
   loadShops(): void {
     this.shopService.getAllShops().subscribe(
       (response: any) => {
-        console.log('Shops API Response:', response);
         this.shops = response.data || response.shops || [];
-        console.log('Shops loaded:', this.shops);
       },
       (error) => {
         console.error('Error loading shops:', error);
@@ -71,8 +68,8 @@ export class FraudDetectionComponent implements OnInit {
     const shopId = isSuperAdmin && this.selectedShopId ? this.selectedShopId : undefined;
 
     const request = this.startDate && this.endDate 
-      ? this.fraudDetectionService.getFraudDetectionReport(null, shopId, this.startDate, this.endDate)
-      : this.fraudDetectionService.getFraudDetectionReport(this.days, shopId);
+      ? this.fraudDetectionService.getFraudDetectionReport(null, shopId, this.startDate, this.endDate, this.selectedSeverity)
+      : this.fraudDetectionService.getFraudDetectionReport(this.days, shopId, null, null, this.selectedSeverity);
 
     request.subscribe(
       (response: any) => {
@@ -87,7 +84,6 @@ export class FraudDetectionComponent implements OnInit {
         this.loading = false;
         const errMsg = error?.error?.message || error?.message || 'रिपोर्ट लोड करने में त्रुटि हुई';
         this.snackBar.open(errMsg, 'OK', { duration: 5000 });
-        console.error('Fraud detection error:', error);
       }
     );
   }
@@ -113,35 +109,7 @@ export class FraudDetectionComponent implements OnInit {
   }
 
   filterAlerts(): void {
-    if (!this.report?.shops) return;
-    
-    // Clear and rebuild
-    this.shopFilteredAlerts = {};
-    
-    this.report.shops.forEach((shopReport: any) => {
-      const shopId = shopReport.shop?.id || 'unknown';
-      let alerts = shopReport.alerts || [];
-      
-      if (this.selectedSeverity !== 'ALL') {
-        alerts = alerts.filter((a: any) => a.severity === this.selectedSeverity);
-      }
-      
-      this.shopFilteredAlerts[shopId] = alerts;
-    });
-  }
-
-  getFilteredAlerts(alerts: any[], shopId?: string): any[] {
-    if (!alerts) return [];
-    const key = shopId || 'unknown';
-    
-    // Return filtered if available
-    if (this.shopFilteredAlerts[key]) {
-      return this.shopFilteredAlerts[key];
-    }
-    
-    // Fallback
-    if (this.selectedSeverity === 'ALL') return alerts;
-    return alerts.filter((a: any) => a.severity === this.selectedSeverity);
+    this.loadReport();
   }
 
   onShopChange(): void {

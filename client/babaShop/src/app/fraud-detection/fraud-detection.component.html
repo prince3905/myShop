@@ -182,11 +182,11 @@
                 </mat-select>
               </mat-form-field>
               <span class="alert-count-display">
-                {{ getFilteredAlerts(shopReport.alerts, shopReport.shop?.id)?.length || 0 }} of {{ shopReport.alerts?.length || 0 }} alerts
+                {{ shopReport.alerts?.length || 0 }} alerts (filtering in progress)
               </span>
             </div>
 
-            <mat-expansion-panel *ngFor="let alert of filteredAlerts" [class]="'alert-panel-' + alert.severity">
+            <mat-expansion-panel *ngFor="let alert of shopReport.alerts" [class]="'alert-panel-' + alert.severity">
               <mat-expansion-panel-header>
                 <mat-panel-title>
                   <div class="alert-title-row">
