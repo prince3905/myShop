@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -35,6 +35,8 @@ export class FraudDetectionComponent implements OnInit {
   selectedShopId: string = '';
   startDate: Date | null = null;
   endDate: Date | null = null;
+  selectedSeverity: string = 'ALL';
+  @ViewChild('trendCanvas') trendCanvas!: ElementRef<HTMLCanvasElement>;
 
   constructor(
     private fraudDetectionService: FraudDetectionService,
@@ -110,6 +112,16 @@ export class FraudDetectionComponent implements OnInit {
     this.endDate = null;
     this.days = 7;
     this.loadReport();
+  }
+
+  filterAlerts(): void {
+    // Triggers change detection
+  }
+
+  getFilteredAlerts(alerts: any[]): any[] {
+    if (!alerts) return [];
+    if (this.selectedSeverity === 'ALL') return alerts;
+    return alerts.filter(a => a.severity === this.selectedSeverity);
   }
 
   onShopChange(): void {

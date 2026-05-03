@@ -156,6 +156,14 @@
             </div>
           </div>
 
+          <!-- Trend Chart -->
+          <div class="trend-section" *ngIf="shopReport.trendData?.length > 0">
+            <h3 class="section-title"><mat-icon>trending_up</mat-icon> 30-Day Trend</h3>
+            <div class="chart-container">
+              <canvas #trendCanvas width="400" height="200"></canvas>
+            </div>
+          </div>
+
           <!-- No Alerts State -->
           <div *ngIf="shopReport.alerts?.length === 0" class="no-alerts-state">
             <mat-icon class="success-icon">verified</mat-icon>
@@ -165,7 +173,20 @@
 
           <!-- Alerts Accordion -->
           <mat-accordion *ngIf="shopReport.alerts?.length > 0" class="alerts-accordion">
-            <mat-expansion-panel *ngFor="let alert of shopReport.alerts" [class]="'alert-panel-' + alert.severity">
+            <div class="filter-bar">
+              <mat-form-field appearance="outline" class="filter-small">
+                <mat-label>Filter by Severity</mat-label>
+                <mat-select [(ngModel)]="selectedSeverity" (selectionChange)="filterAlerts()">
+                  <mat-option value="ALL">All Alerts</mat-option>
+                  <mat-option value="HIGH">High Only</mat-option>
+                  <mat-option value="MEDIUM">Medium Only</mat-option>
+                  <mat-option value="LOW">Low Only</mat-option>
+                </mat-select>
+              </mat-form-field>
+              <span class="alert-count-display">{{ getFilteredAlerts(shopReport.alerts)?.length || 0 }} of {{ shopReport.alerts?.length || 0 }} alerts</span>
+            </div>
+
+            <mat-expansion-panel *ngFor="let alert of getFilteredAlerts(shopReport.alerts)" [class]="'alert-panel-' + alert.severity">
               <mat-expansion-panel-header>
                 <mat-panel-title>
                   <div class="alert-title-row">

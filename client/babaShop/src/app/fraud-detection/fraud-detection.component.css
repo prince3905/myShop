@@ -796,20 +796,22 @@ mat-expansion-panel {
   color: #333;
 }
 
-.date-info {
+.filter-bar {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  background: #e3f2fd;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding: 12px;
+  background: #f8f9fa;
   border-radius: 8px;
-  margin-top: 12px;
-  font-size: 14px;
-  color: #1565c0;
 }
 
-.date-info mat-icon {
-  font-size: 18px;
-  height: 18px;
-  width: 18px;
+.filter-small {
+  flex: 0 0 200px;
+}
+
+.alert-count-display {
+  font-size: 14px;
+  color: #666;
+  margin-left: auto;
 }
