@@ -21,8 +21,8 @@
         <mat-form-field appearance="outline" class="filter-field">
           <mat-label>Date Range (Optional)</mat-label>
           <mat-date-range-input [rangePicker]="picker">
-            <input matStartDate placeholder="Start Date" [(ngModel)]="startDate" (dateChange)="onDateChange()">
-            <input matEndDate placeholder="End Date" [(ngModel)]="endDate" (dateChange)="onDateChange()">
+            <input matStartDate placeholder="Start Date" [(ngModel)]="startDate">
+            <input matEndDate placeholder="End Date" [(ngModel)]="endDate">
           </mat-date-range-input>
           <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
           <mat-date-range-picker #picker></mat-date-range-picker>
@@ -30,7 +30,7 @@
 
         <mat-form-field appearance="outline" class="filter-field">
           <mat-label>Quick Select</mat-label>
-          <mat-select [(value)]="days" (selectionChange)="onDaysChange()">
+          <mat-select [(value)]="days" selectionChange)="onDaysChange">
             <mat-option [value]="7">Last 7 Days</mat-option>
             <mat-option [value]="15">Last 15 Days</mat-option>
             <mat-option [value]="30">Last 30 Days</mat-option>
@@ -39,7 +39,7 @@
 
         <mat-form-field *ngIf="authService.isSuperAdmin()" appearance="outline" class="filter-field">
           <mat-label>Select Shop</mat-label>
-          <mat-select [(ngModel)]="selectedShopId" (selectionChange)="onShopChange()">
+          <mat-select [(ngModel)]="selectedShopId" selectionChange)="onShopChange">
             <mat-option value="">All Shops (Global View)</mat-option>
             <mat-option *ngFor="let shop of shops" [value]="shop._id">
               {{ shop.name }} ({{ shop.shopCode }})

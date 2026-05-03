@@ -65,7 +65,11 @@ export class FraudDetectionComponent implements OnInit {
   loadReport(): void {
     this.loading = true;
     const isSuperAdmin = this.authService.isSuperAdmin();
-    const shopId = isSuperAdmin && this.selectedShopId ? this.selectedShopId : undefined;
+    let shopId = undefined;
+    
+    if (isSuperAdmin && this.selectedShopId) {
+      shopId = this.selectedShopId;
+    }
 
     const request = this.startDate && this.endDate 
       ? this.fraudDetectionService.getFraudDetectionReport(null, shopId, this.startDate, this.endDate, this.selectedSeverity)
@@ -75,6 +79,9 @@ export class FraudDetectionComponent implements OnInit {
       (response: any) => {
         if (response && response.success) {
           this.report = response.data;
+          if (!shopId && this.report?.shops?.length > 1) {
+            console.log('Global mode: Showing all shops');
+          }
         } else {
           this.snackBar.open('Invalid response from server', 'OK', { duration: 3000 });
         }
@@ -96,7 +103,7 @@ export class FraudDetectionComponent implements OnInit {
 
   onDateChange(): void {
     if (this.startDate && this.endDate) {
-      this.days = null;
+      this.days = null as any;
       this.loadReport();
     }
   }
