@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { protect, authorizeRoles } = require("../middle-ware/authMiddleware");
+const { protect, authorizeRoles } = require("../middleware/authMiddleware");
 const fraudDetectionController = require("../controllers/fraudDetectionController");
 
 router.use(protect);

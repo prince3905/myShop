@@ -3,6 +3,7 @@ const Sale = require("../models/CustomerSale");
 const SaleReturn = require("../models/SaleReturn");
 const StockReconciliation = require("../models/StockReconciliation");
 const Shop = require("../models/Shop");
+const { sendFraudAlert } = require("../utils/emailAlert.service");
 
 const getDateRange = (date, daysBack = 7) => {
   const end = date ? new Date(date) : new Date();
@@ -510,6 +511,25 @@ exports.getFraudDetectionReport = async (req, res) => {
       totalAlerts: report.shops.reduce((sum, s) => sum + s.summary.totalAlerts, 0),
       highSeverityAlerts: report.shops.reduce((sum, s) => sum + s.summary.highSeverity, 0),
     };
+
+    // Send email alerts for high-risk shops
+    if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+      for (const shopReport of report.shops) {
+        if (shopReport.riskLevel === 'HIGH' || shopReport.riskScore >= 70) {
+          // Get admin emails (you can customize this)
+          const adminEmail = process.env.ADMIN_EMAIL || process.env.EMAIL_USER;
+          if (adminEmail) {
+            await sendFraudAlert(
+              shopReport.shop?.name || 'Unknown Shop',
+              shopReport.riskScore,
+              shopReport.riskLevel,
+              shopReport.alerts,
+              adminEmail
+            );
+          }
+        }
+      }
+    }
 
     res.status(200).json({ success: true, data: report });
   } catch (error) {

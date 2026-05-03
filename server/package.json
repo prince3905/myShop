@@ -20,6 +20,7 @@
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.0",
     "mongoose": "^7.3.4",
+    "nodemailer": "^8.0.7",
     "slugify": "^1.6.9",
     "winston": "^3.17.0"
   },
