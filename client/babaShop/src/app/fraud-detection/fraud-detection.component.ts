@@ -36,6 +36,7 @@ export class FraudDetectionComponent implements OnInit {
   startDate: Date | null = null;
   endDate: Date | null = null;
   selectedSeverity: string = 'ALL';
+  filteredAlerts: any[] = [];
 
   constructor(
     private fraudDetectionService: FraudDetectionService,
@@ -112,16 +113,27 @@ export class FraudDetectionComponent implements OnInit {
   }
 
   filterAlerts(): void {
-    // Force change detection
-    if (this.report) {
-      this.report = { ...this.report };
+    if (!this.report?.shops) return;
+    
+    // Collect all alerts from all shops
+    let allAlerts: any[] = [];
+    this.report.shops.forEach((shopReport: any) => {
+      allAlerts = allAlerts.concat(shopReport.alerts || []);
+    });
+    
+    // Filter if needed
+    if (this.selectedSeverity !== 'ALL') {
+      this.filteredAlerts = allAlerts.filter((a: any) => a.severity === this.selectedSeverity);
+    } else {
+      this.filteredAlerts = allAlerts;
     }
+    
+    // Force refresh
+    this.report = { ...this.report };
   }
 
-  getFilteredAlerts(alerts: any[], shopId?: string): any[] {
-    if (!alerts || !Array.isArray(alerts)) return [];
-    if (this.selectedSeverity === 'ALL') return alerts;
-    return alerts.filter((a: any) => a && a.severity === this.selectedSeverity);
+  getFilteredAlerts(alerts: any[]): any[] {
+    return this.filteredAlerts || alerts || [];
   }
 
   onShopChange(): void {
