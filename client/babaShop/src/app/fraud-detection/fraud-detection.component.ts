@@ -68,41 +68,26 @@ export class FraudDetectionComponent implements OnInit {
     const isSuperAdmin = this.authService.isSuperAdmin();
     const shopId = isSuperAdmin && this.selectedShopId ? this.selectedShopId : undefined;
 
-    if (this.startDate && this.endDate) {
-      // Use custom date range
-      this.fraudDetectionService.getFraudDetectionReport(
-        null,
-        shopId,
-        this.startDate,
-        this.endDate
-      ).subscribe(
-        (response: any) => {
+    const request = this.startDate && this.endDate 
+      ? this.fraudDetectionService.getFraudDetectionReport(null, shopId, this.startDate, this.endDate)
+      : this.fraudDetectionService.getFraudDetectionReport(this.days, shopId);
+
+    request.subscribe(
+      (response: any) => {
+        if (response && response.success) {
           this.report = response.data;
-          this.loading = false;
-        },
-        (error) => {
-          this.loading = false;
-          this.snackBar.open('रिपोर्ट लोड करने में त्रुटि हुई', 'OK', { duration: 3000 });
-          console.error('Fraud detection error:', error);
+        } else {
+          this.snackBar.open('Invalid response from server', 'OK', { duration: 3000 });
         }
-      );
-    } else {
-      // Use days
-      this.fraudDetectionService.getFraudDetectionReport(
-        this.days,
-        shopId
-      ).subscribe(
-        (response: any) => {
-          this.report = response.data;
-          this.loading = false;
-        },
-        (error) => {
-          this.loading = false;
-          this.snackBar.open('रिपोर्ट लोड करने में त्रुटि हुई', 'OK', { duration: 3000 });
-          console.error('Fraud detection error:', error);
-        }
-      );
-    }
+        this.loading = false;
+      },
+      (error) => {
+        this.loading = false;
+        const errMsg = error?.error?.message || error?.message || 'रिपोर्ट लोड करने में त्रुटि हुई';
+        this.snackBar.open(errMsg, 'OK', { duration: 5000 });
+        console.error('Fraud detection error:', error);
+      }
+    );
   }
 
   onDaysChange(): void {
