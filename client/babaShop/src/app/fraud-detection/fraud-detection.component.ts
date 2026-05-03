@@ -92,14 +92,12 @@ export class FraudDetectionComponent implements OnInit {
   }
 
   onDaysChange(): void {
-    // Clear custom dates when quick select is used
     this.startDate = null;
     this.endDate = null;
     this.loadReport();
   }
 
   onDateChange(): void {
-    // Reset days when custom dates are selected
     if (this.startDate && this.endDate) {
       this.days = null;
       this.loadReport();
@@ -115,13 +113,15 @@ export class FraudDetectionComponent implements OnInit {
 
   filterAlerts(): void {
     // Force change detection
-    this.report = { ...this.report };
+    if (this.report) {
+      this.report = { ...this.report };
+    }
   }
 
-  getFilteredAlerts(alerts: any[]): any[] {
-    if (!alerts) return [];
+  getFilteredAlerts(alerts: any[], shopId?: string): any[] {
+    if (!alerts || !Array.isArray(alerts)) return [];
     if (this.selectedSeverity === 'ALL') return alerts;
-    return alerts.filter(a => a.severity === this.selectedSeverity);
+    return alerts.filter((a: any) => a && a.severity === this.selectedSeverity);
   }
 
   onShopChange(): void {
