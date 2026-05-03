@@ -796,9 +796,20 @@ mat-expansion-panel {
   color: #333;
 }
 
-.anomaly-message {
-  color: #f44336;
-  font-weight: 500;
-  padding-top: 8px;
-  border-top: 1px solid #ddd;
+.date-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #e3f2fd;
+  border-radius: 8px;
+  margin-top: 12px;
+  font-size: 14px;
+  color: #1565c0;
+}
+
+.date-info mat-icon {
+  font-size: 18px;
+  height: 18px;
+  width: 18px;
 }

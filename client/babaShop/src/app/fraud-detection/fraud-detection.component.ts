@@ -14,6 +14,8 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
 import { FraudDetectionService } from 'app/shared/services/fraud-detection.service';
 import { AuthService } from 'app/shared/services/auth.service';
 import { ShopService } from 'app/shared/services/shop.service';
@@ -31,6 +33,8 @@ export class FraudDetectionComponent implements OnInit {
   report: any = null;
   shops: any[] = [];
   selectedShopId: string = '';
+  startDate: Date | null = null;
+  endDate: Date | null = null;
 
   constructor(
     private fraudDetectionService: FraudDetectionService,
@@ -78,6 +82,24 @@ export class FraudDetectionComponent implements OnInit {
   }
 
   onDaysChange(): void {
+    // Clear custom dates when quick select is used
+    this.startDate = null;
+    this.endDate = null;
+    this.loadReport();
+  }
+
+  onDateChange(): void {
+    // Reset days when custom dates are selected
+    if (this.startDate && this.endDate) {
+      this.days = null;
+      this.loadReport();
+    }
+  }
+
+  clearDates(): void {
+    this.startDate = null;
+    this.endDate = null;
+    this.days = 7;
     this.loadReport();
   }
 

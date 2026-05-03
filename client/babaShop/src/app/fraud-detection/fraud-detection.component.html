@@ -19,7 +19,17 @@
     <mat-card-content>
       <div class="filters-row">
         <mat-form-field appearance="outline" class="filter-field">
-          <mat-label>Time Period</mat-label>
+          <mat-label>Date Range (Optional)</mat-label>
+          <mat-date-range-input [rangePicker]="picker">
+            <input matStartDate placeholder="Start Date" [(ngModel)]="startDate" (dateChange)="onDateChange()">
+            <input matEndDate placeholder="End Date" [(ngModel)]="endDate" (dateChange)="onDateChange()">
+          </mat-date-range-input>
+          <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+          <mat-date-range-picker #picker></mat-date-range-picker>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>Quick Select</mat-label>
           <mat-select [(value)]="days" (selectionChange)="onDaysChange()">
             <mat-option [value]="7">Last 7 Days</mat-option>
             <mat-option [value]="15">Last 15 Days</mat-option>
@@ -36,6 +46,14 @@
             </mat-option>
           </mat-select>
         </mat-form-field>
+
+        <button mat-icon-button (click)="clearDates()" matTooltip="Clear custom dates">
+          <mat-icon>clear</mat-icon>
+        </button>
+      </div>
+      <div class="date-info" *ngIf="startDate && endDate">
+        <mat-icon>event</mat-icon>
+        <span>Custom Range: {{ startDate | date:'mediumDate' }} - {{ endDate | date:'mediumDate' }}</span>
       </div>
     </mat-card-content>
   </mat-card>

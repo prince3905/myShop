@@ -68,9 +68,21 @@ const getHistoricalDailySales = async (shopId, currentStart, currentEnd) => {
 
 exports.getFraudDetectionReport = async (req, res) => {
   try {
-    const { date, days = 7, shopId: queryShopId } = req.query;
+    const { date, days = 7, shopId: queryShopId, startDate, endDate } = req.query;
     const daysBack = parseInt(days) || 7;
-    const { start, end } = getDateRange(date, daysBack);
+    
+    // Use custom date range if provided, otherwise use daysBack
+    let start, end;
+    if (startDate && endDate) {
+      start = new Date(startDate);
+      start.setHours(0, 0, 0, 0);
+      end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+    } else {
+      const dateRange = getDateRange(date, daysBack);
+      start = dateRange.start;
+      end = dateRange.end;
+    }
 
     if (!req.user || !req.user.role) {
       return res.status(401).json({ success: false, message: "Unauthorized" });
