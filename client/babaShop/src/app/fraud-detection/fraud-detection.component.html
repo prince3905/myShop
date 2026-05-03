@@ -182,7 +182,7 @@
                 </mat-select>
               </mat-form-field>
               <span class="alert-count-display">
-                {{ filteredAlerts?.length || 0 }} of {{ shopReport.alerts?.length || 0 }} alerts
+                {{ getFilteredAlerts(shopReport.alerts, shopReport.shop?.id)?.length || 0 }} of {{ shopReport.alerts?.length || 0 }} alerts
               </span>
             </div>
 
