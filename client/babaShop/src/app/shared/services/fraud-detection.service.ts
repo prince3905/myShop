@@ -32,10 +32,11 @@ export class FraudDetectionService {
       params = params.set("days", "7");
     }
     
+    // Add shopId if provided (super admin selecting specific shop)
     if (shopId) {
       params = params.set("shopId", shopId);
     }
-
+    
     // Add severity filter
     if (severity && severity !== 'ALL') {
       params = params.set("severity", severity);

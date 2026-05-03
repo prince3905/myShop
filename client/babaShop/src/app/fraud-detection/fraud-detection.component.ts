@@ -67,12 +67,13 @@ export class FraudDetectionComponent implements OnInit {
     const isSuperAdmin = this.authService.isSuperAdmin();
     let shopId: string | undefined = undefined;
     
-    // If super admin and shop selected
+    // Super admin can select specific shop
     if (isSuperAdmin && this.selectedShopId) {
       shopId = this.selectedShopId;
     }
+    // Non-super admin uses their assigned shop (handled by backend)
 
-    const request = this.startDate && this.endDate 
+    const request = (this.startDate && this.endDate) 
       ? this.fraudDetectionService.getFraudDetectionReport(null, shopId, this.startDate, this.endDate, this.selectedSeverity)
       : this.fraudDetectionService.getFraudDetectionReport(this.days, shopId, null, null, this.selectedSeverity);
 
@@ -80,11 +81,6 @@ export class FraudDetectionComponent implements OnInit {
       (response: any) => {
         if (response && response.success) {
           this.report = response.data;
-          if (shopId) {
-            console.log('Single shop mode:', this.report?.shops?.[0]?.shop?.name);
-          } else {
-            console.log('Global mode: Showing', this.report?.globalSummary?.totalShops, 'shops');
-          }
         } else {
           this.snackBar.open('Invalid response from server', 'OK', { duration: 3000 });
         }
@@ -92,7 +88,7 @@ export class FraudDetectionComponent implements OnInit {
       },
       (error) => {
         this.loading = false;
-        const errMsg = error?.error?.message || error?.message || 'रिपोर्ट लोड करने में त्रुटि हुई';
+        const errMsg = error?.error?.message || error?.message || 'Error loading report';
         this.snackBar.open(errMsg, 'OK', { duration: 5000 });
         console.error('Fraud detection error:', error);
       }
@@ -119,11 +115,11 @@ export class FraudDetectionComponent implements OnInit {
     this.loadReport();
   }
 
-  filterAlerts(): void {
+  onShopChange(): void {
     this.loadReport();
   }
 
-  onShopChange(): void {
+  filterAlerts(): void {
     this.loadReport();
   }
 

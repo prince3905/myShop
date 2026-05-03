@@ -30,7 +30,7 @@
 
         <mat-form-field appearance="outline" class="filter-field">
           <mat-label>Quick Select</mat-label>
-          <mat-select [(value)]="days" selectionChange)="onDaysChange">
+          <mat-select [(value)]="days" (selectionChange)="onDaysChange()">
             <mat-option [value]="7">Last 7 Days</mat-option>
             <mat-option [value]="15">Last 15 Days</mat-option>
             <mat-option [value]="30">Last 30 Days</mat-option>
@@ -39,11 +39,21 @@
 
         <mat-form-field *ngIf="authService.isSuperAdmin()" appearance="outline" class="filter-field">
           <mat-label>Select Shop</mat-label>
-          <mat-select [(ngModel)]="selectedShopId" selectionChange)="onShopChange">
+          <mat-select [(ngModel)]="selectedShopId" (selectionChange)="onShopChange()">
             <mat-option value="">All Shops (Global View)</mat-option>
             <mat-option *ngFor="let shop of shops" [value]="shop._id">
               {{ shop.name }} ({{ shop.shopCode }})
             </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>Filter by Severity</mat-label>
+          <mat-select [(ngModel)]="selectedSeverity" (selectionChange)="filterAlerts()">
+            <mat-option value="ALL">All Alerts</mat-option>
+            <mat-option value="HIGH">High Only</mat-option>
+            <mat-option value="MEDIUM">Medium Only</mat-option>
+            <mat-option value="LOW">Low Only</mat-option>
           </mat-select>
         </mat-form-field>
 
@@ -66,8 +76,8 @@
 
   <!-- Report Content -->
   <div *ngIf="!loading && report" class="report-content">
-    <!-- Global Summary -->
-    <div *ngIf="authService.isSuperAdmin()" class="global-summary-section">
+    <!-- Global Summary (Super Admin) -->
+    <div *ngIf="authService.isSuperAdmin() && !selectedShopId" class="global-summary-section">
       <mat-card>
         <mat-card-header>
           <mat-card-title><mat-icon>dashboard</mat-icon> Global Overview</mat-card-title>
@@ -120,7 +130,6 @@
             </div>
           </mat-card-subtitle>
         </mat-card-header>
-
         <mat-card-content>
           <!-- Risk Score Visualization -->
           <div class="risk-visualization" *ngIf="shopReport.riskScore > 0">
@@ -156,12 +165,6 @@
             </div>
           </div>
 
-          <!-- Trend Chart -->
-          <div class="trend-section" *ngIf="shopReport.trendData?.length > 0">
-            <h3 class="section-title"><mat-icon>trending_up</mat-icon> 30-Day Trend</h3>
-            <p class="trend-note">Trend visualization coming soon. Data available in report.</p>
-          </div>
-
           <!-- No Alerts State -->
           <div *ngIf="shopReport.alerts?.length === 0" class="no-alerts-state">
             <mat-icon class="success-icon">verified</mat-icon>
@@ -171,21 +174,6 @@
 
           <!-- Alerts Accordion -->
           <mat-accordion *ngIf="shopReport.alerts?.length > 0" class="alerts-accordion">
-            <div class="filter-bar">
-              <mat-form-field appearance="outline" class="filter-small">
-                <mat-label>Filter by Severity</mat-label>
-                <mat-select [(ngModel)]="selectedSeverity" (selectionChange)="filterAlerts()">
-                  <mat-option value="ALL">All Alerts</mat-option>
-                  <mat-option value="HIGH">High Only</mat-option>
-                  <mat-option value="MEDIUM">Medium Only</mat-option>
-                  <mat-option value="LOW">Low Only</mat-option>
-                </mat-select>
-              </mat-form-field>
-              <span class="alert-count-display">
-                {{ shopReport.alerts?.length || 0 }} alerts (filtering in progress)
-              </span>
-            </div>
-
             <mat-expansion-panel *ngFor="let alert of shopReport.alerts" [class]="'alert-panel-' + alert.severity">
               <mat-expansion-panel-header>
                 <mat-panel-title>
@@ -269,7 +257,7 @@
                     <div class="data-item"><span class="data-label">Missing Items</span><span class="data-value">{{ alert.data?.totalMissingItems || 0 }}</span></div>
                     <div class="data-item data-highlight"><span class="data-label">Total Missing Qty</span><span class="data-value">{{ alert.data?.totalMissingQty || 0 }} units</span></div>
                   </div>
-                  
+                 
                   <div class="action-box action-danger">
                     <mat-icon>error</mat-icon>
                     <div>
@@ -351,12 +339,12 @@
                 </div>
 
                 <!-- ANOMALY_DETECTED (AI) Alert -->
-                <div *ngIf="alert.type === 'ANOMALY_DETECT_ED'" class="alert-data-section">
+                <div *ngIf="alert.type === 'ANOMALY_DETECTED'" class="alert-data-section">
                   <div class="ai-header">
                     <mat-icon>smart_toy</mat-icon>
                     <span>AI Statistical Analysis - Z-Score Based Detection</span>
                   </div>
-                  
+                 
                   <div class="action-box action-danger">
                     <mat-icon>error</mat-icon>
                     <div>
@@ -374,9 +362,58 @@
                     <div class="anomaly-body">
                       <div class="anomaly-stat"><span>Current:</span> {{ anomaly.current }}</div>
                       <div class="anomaly-stat"><span>Historical Avg:</span> {{ anomaly.historicalMean }}</div>
-                      <div class="anomaly-stat"><span>Z-Score:</span> {{ anomaly.zScore }} (Anomaly if &gt;2)</div>
+                      <div class="anomaly-stat"><span>Z-Score:</span> {{ anomaly.zScore }} (Anomaly if >2)</div>
                     </div>
                     <div class="anomaly-message">{{ anomaly.message }}</div>
+                  </div>
+                </div>
+
+                <!-- UNUSUAL_TIMING Alert -->
+                <div *ngIf="alert.type === 'UNUSUAL_TIMING'" class="alert-data-section">
+                  <div class="data-grid">
+                    <div class="data-item"><span class="data-label">Night Sales</span><span class="data-value">{{ alert.data?.sales?.length || 0 }} transactions</span></div>
+                    <div class="data-item data-highlight"><span class="data-label">Total Amount</span><span class="data-value">₹{{ alert.data?.totalNightSales | number:'1.2-2' }}</span></div>
+                  </div>
+
+                  <div class="action-box action-warning">
+                    <mat-icon>priority_high</mat-icon>
+                    <div>
+                      <strong>Unusual Hour Activity:</strong> Sales occurred between 11 PM - 5 AM when supervision is low. Verify these transactions!
+                    </div>
+                  </div>
+
+                  <h4 class="section-header"><mat-icon>access_time</mat-icon> Night Transactions</h4>
+                  <div class="transaction-list">
+                    <div *ngFor="let sale of alert.data?.sales" class="transaction-item">
+                      <span class="invoice">#{{ sale.invoiceNo }}</span>
+                      <span class="amount">₹{{ sale.amount | number:'1.2-2' }}</span>
+                      <span class="date">{{ sale.time | date:'shortTime' }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- RAPID_RETURNS Alert -->
+                <div *ngIf="alert.type === 'RAPID_RETURNS'" class="alert-data-section">
+                  <div class="action-box action-danger">
+                    <mat-icon>error</mat-icon>
+                    <div>
+                      <strong>Rapid Returns Detected!</strong><br>
+                      Multiple returns by same customer within 24 hours indicate possible return fraud or staff collusion.
+                    </div>
+                  </div>
+
+                  <h4 class="section-header"><mat-icon>repeat</mat-icon> Rapid Returns</h4>
+                  <div *ngFor="let ret of alert.data?.rapidReturns" class="customer-card">
+                    <div class="customer-header">
+                      <mat-icon>person</mat-icon>
+                      <div>
+                        <strong>{{ ret.customer?.name }}</strong>
+                        <span>{{ ret.customer?.phone }}</span>
+                      </div>
+                    </div>
+                    <div class="customer-body">
+                      <mat-chip class="chip-warn">Return Count: {{ ret.returnCount }} in 24hrs</mat-chip>
+                    </div>
                   </div>
                 </div>
 

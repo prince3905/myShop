@@ -24,7 +24,7 @@ const calculateStats = (values) => {
 };
 
 // Calculate Z-score (how many standard deviations away from mean)
-const getzScore = (value, mean, stdDev) => {
+const getZScore = (value, mean, stdDev) => {
   if (stdDev === 0) return 0;
   return Math.abs((value - mean) / stdDev);
 };
@@ -40,7 +40,6 @@ const getHistoricalDailySales = async (shopId, currentStart, currentEnd) => {
     status: { $ne: "CANCELLED" },
   }).select("createdAt totalAmount paymentMethod paidAmount");
 
-  // Group by day
   const dailyData = {};
   sales.forEach((sale) => {
     const day = sale.createdAt.toISOString().split('T')[0];
@@ -92,12 +91,17 @@ exports.getFraudDetectionReport = async (req, res) => {
     const isSuperAdmin = req.user.role === "SUPER_ADMIN";
 
     let shops = [];
+    
+    // Determine which shops to check
     if (isSuperAdmin && queryShopId) {
+      // Specific shop selected by super admin
       const shop = await Shop.findById(queryShopId).select("_id name shopCode");
       if (shop) shops = [shop];
     } else if (isSuperAdmin && !queryShopId) {
+      // No shop selected = GLOBAL mode (all shops)
       shops = await Shop.find({ isActive: true }).select("_id name shopCode");
     } else {
+      // Normal admin - use their assigned shop
       if (!req.shopId) {
         return res.status(400).json({ success: false, message: "Shop not found" });
       }
@@ -121,12 +125,6 @@ exports.getFraudDetectionReport = async (req, res) => {
         riskScore: 0,
         riskLevel: "LOW",
       };
-
-      // Get historical data for anomaly detection
-      const historicalData = await getHistoricalDailySales(shop._id, start, end);
-      const cashStats = calculateStats(historicalData.cashValues);
-      const salesCountStats = calculateStats(historicalData.salesCountValues);
-      const totalStats = calculateStats(historicalData.totalValues);
 
       // ==================== 1. CASH MISMATCH DETECTION ====================
       try {
@@ -180,8 +178,9 @@ exports.getFraudDetectionReport = async (req, res) => {
         const totalCollection = totalCash + totalCard + totalOnline;
 
         // Anomaly detection: Is current cash unusual compared to history?
-        const cashzScore = getzScore(totalCash, cashStats.mean, cashStats.stdDev);
-        const isCashAnomaly = cashzScore > 2; // More than 2 std deviations
+        const cashStats = calculateStats((await getHistoricalDailySales(shop._id, start, end)).cashValues);
+        const cashZScore = getZScore(totalCash, cashStats.mean, cashStats.stdDev);
+        const isCashAnomaly = cashZScore > 2; // More than 2 std deviations
 
         shopReport.alerts.push({
           type: "CASH_MISMATCH",
@@ -201,7 +200,7 @@ exports.getFraudDetectionReport = async (req, res) => {
             note: "Expected cash in register = Cash Sales - Cash Refunds. Please count physical cash and compare.",
             anomalyCheck: {
               isAnomaly: isCashAnomaly,
-              zScore: cashzScore.toFixed(2),
+              zScore: cashZScore.toFixed(2),
               historicalMean: cashStats.mean.toFixed(2),
               message: isCashAnomaly ? "⚠️ Cash collection is UNUSUAL compared to past 30 days!" : "Cash collection is within normal range.",
             },
@@ -319,11 +318,11 @@ exports.getFraudDetectionReport = async (req, res) => {
           });
           const cancelledValues = Object.values(dailyCancelled);
           const cancelledStats = calculateStats(cancelledValues);
-          const cancelledzScore = getzScore(totalCancelledAmount, cancelledStats.mean, cancelledStats.stdDev);
+          const cancelledZScore = getZScore(totalCancelledAmount, cancelledStats.mean, cancelledStats.stdDev);
 
           shopReport.alerts.push({
             type: "VOIDED_TRANSACTIONS",
-            severity: totalCancelledAmount > 5000 || cancelledzScore > 2 ? "HIGH" : "MEDIUM",
+            severity: totalCancelledAmount > 5000 || cancelledZScore > 2 ? "HIGH" : "MEDIUM",
             title: "Cancelled Bills Alert",
             description: `${cancelledSales.length} bills were cancelled, total value: ₹${totalCancelledAmount}`,
             data: {
@@ -335,10 +334,10 @@ exports.getFraudDetectionReport = async (req, res) => {
               totalCancelledAmount,
               note: "Staff may take cash and then cancel the bill. Verify these cancellations.",
               anomalyCheck: {
-                isAnomaly: cancelledzScore > 2,
-                zScore: cancelledzScore.toFixed(2),
+                isAnomaly: cancelledZScore > 2,
+                zScore: cancelledZScore.toFixed(2),
                 historicalMean: cancelledStats.mean.toFixed(2),
-                message: cancelledzScore > 2 ? "⚠️ Unusually high cancellations compared to history!" : "Cancellation rate is within normal range.",
+                message: cancelledZScore > 2 ? "⚠️ Unusually high cancellations compared to history!" : "Cancellation rate is within normal range.",
               },
             },
           });
@@ -512,29 +511,29 @@ exports.getFraudDetectionReport = async (req, res) => {
           status: { $ne: "CANCELLED" },
         });
 
-        const salesCountzScore = getzScore(currentSalesCount, salesCountStats.mean, salesCountStats.stdDev);
-        const totalSaleszScore = getzScore(
+        const salesCountZScore = getZScore(currentSalesCount, salesCountStats.mean, salesCountStats.stdDev);
+        const totalSalesZScore = getZScore(
           shopReport.alerts.find(a => a.type === 'CASH_MISMATCH')?.data?.totalSales || 0,
           totalStats.mean,
           totalStats.stdDev
         );
 
         const anomalies = [];
-        if (salesCountzScore > 2) {
+        if (salesCountZScore > 2) {
           anomalies.push({
             metric: "Sales Count",
             current: currentSalesCount,
             historicalMean: salesCountStats.mean.toFixed(0),
-            zScore: salesCountzScore.toFixed(2),
+            zScore: salesCountZScore.toFixed(2),
             message: currentSalesCount > salesCountStats.mean ? "Unusually HIGH sales activity" : "Unusually LOW sales activity - possible under-reporting",
           });
         }
-        if (totalSaleszScore > 2) {
+        if (totalSalesZScore > 2) {
           anomalies.push({
             metric: "Total Sales Amount",
             current: shopReport.alerts.find(a => a.type === 'CASH_MISMATCH')?.data?.totalSales || 0,
             historicalMean: totalStats.mean.toFixed(0),
-            zScore: totalSaleszScore.toFixed(2),
+            zScore: totalSalesZScore.toFixed(2),
             message: "Sales amount is far from historical average - possible manipulation",
           });
         }
@@ -554,67 +553,6 @@ exports.getFraudDetectionReport = async (req, res) => {
       } catch (err) {
         console.error("Anomaly detection error:", err.message);
       }
-
-      // ==================== 7. RISK SCORING ====================
-      let riskScore = 0;
-      const riskFactors = [];
-
-      shopReport.alerts.forEach((alert) => {
-        if (alert.type === "CASH_MISMATCH") {
-          if (alert.data?.anomalyCheck?.isAnomaly) {
-            riskScore += 30;
-            riskFactors.push("Unusual cash patterns detected");
-          }
-          if (Math.abs((alert.data?.expectedCash || 0) - (alert.data?.totalCash || 0)) > 500) {
-            riskScore += 25;
-            riskFactors.push("Large cash mismatch");
-          }
-        }
-        if (alert.type === "SUSPICIOUS_RETURNS") {
-          riskScore += 20;
-          riskFactors.push("Suspicious customer return patterns");
-        }
-        if (alert.type === "STOCK_DISCREPANCY") {
-          riskScore += 35;
-          riskFactors.push("Stock missing - possible theft");
-        }
-        if (alert.type === "VOIDED_TRANSACTIONS") {
-          riskScore += 25;
-          if (alert.data?.anomalyCheck?.isAnomaly) {
-            riskScore += 15;
-            riskFactors.push("Unusual cancellation patterns");
-          }
-        }
-        if (alert.type === "DISCOUNT_ABUSE") {
-          riskScore += 15;
-          riskFactors.push("Unauthorized discount giving");
-        }
-        if (alert.type === "ANOMALY_DETECTED") {
-          riskScore += 30;
-          riskFactors.push("Statistical anomaly detected");
-        }
-      });
-
-      shopReport.riskScore = Math.min(riskScore, 100);
-      shopReport.riskLevel = shopReport.riskScore >= 70 ? "HIGH" : shopReport.riskScore >= 40 ? "MEDIUM" : "LOW";
-      shopReport.riskFactors = riskFactors;
-
-      // Summary
-      shopReport.summary = {
-        totalAlerts: shopReport.alerts.length,
-        highSeverity: shopReport.alerts.filter((a) => a.severity === "HIGH").length,
-        mediumSeverity: shopReport.alerts.filter((a) => a.severity === "MEDIUM").length,
-        lowSeverity: shopReport.alerts.filter((a) => a.severity === "LOW").length,
-      };
-
-      report.shops.push(shopReport);
-    }
-
-    report.globalSummary = {
-      totalShops: shops.length,
-      totalAlerts: report.shops.reduce((sum, s) => sum + s.summary.totalAlerts, 0),
-      highSeverityAlerts: report.shops.reduce((sum, s) => sum + s.summary.highSeverity, 0),
-    };
 
       // ==================== 9. TREND DATA FOR CHART ====================
       try {
@@ -656,22 +594,68 @@ exports.getFraudDetectionReport = async (req, res) => {
       } catch (err) {
         console.error("Trend calculation error:", err.message);
       }
-    if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
-      for (const shopReport of report.shops) {
-        if (shopReport.riskLevel === 'HIGH' || shopReport.riskScore >= 70) {
-          // Get admin emails (you can customize this)
-          const adminEmail = process.env.ADMIN_EMAIL || process.env.EMAIL_USER;
-          if (adminEmail) {
-            await sendFraudAlert(
-              shopReport.shop?.name || 'Unknown Shop',
-              shopReport.riskScore,
-              shopReport.riskLevel,
-              shopReport.alerts,
-              adminEmail
-            );
+
+      // ==================== 10. RISK SCORING ====================
+      let riskScore = 0;
+      const riskFactors = [];
+
+      shopReport.alerts.forEach((alert) => {
+        if (alert.type === "CASH_MISMATCH") {
+          if (alert.data?.anomalyCheck?.isAnomaly) {
+            riskScore += 30;
+            riskFactors.push("Unusual cash patterns detected");
+          }
+          if (Math.abs((alert.data?.expectedCash || 0) - (alert.data?.totalCash || 0)) > 500) {
+            riskScore += 25;
+            riskFactors.push("Large cash mismatch");
           }
         }
-      }
+        if (alert.type === "SUSPICIOUS_RETURNS") {
+          riskScore += 20;
+          riskFactors.push("Suspicious customer return patterns");
+        }
+        if (alert.type === "STOCK_DISCREPANCY") {
+          riskScore += 35;
+          riskFactors.push("Stock missing - possible theft");
+        }
+        if (alert.type === "VOIDED_TRANSACTIONS") {
+          riskScore += 25;
+          if (alert.data?.anomalyCheck?.isAnomaly) {
+            riskScore += 15;
+            riskFactors.push("Unusual cancellation patterns");
+          }
+        }
+        if (alert.type === "DISCOUNT_ABUSE") {
+          riskScore += 15;
+          riskFactors.push("Unauthorized discount giving");
+        }
+        if (alert.type === "UNUSUAL_TIMING") {
+          riskScore += 20;
+          riskFactors.push("Unusual transaction timing");
+        }
+        if (alert.type === "RAPID_RETURNS") {
+          riskScore += 25;
+          riskFactors.push("Rapid successive returns detected");
+        }
+        if (alert.type === "ANOMALY_DETECTED") {
+          riskScore += 30;
+          riskFactors.push("Statistical anomaly detected");
+        }
+      });
+
+      shopReport.riskScore = Math.min(riskScore, 100);
+      shopReport.riskLevel = shopReport.riskScore >= 70 ? "HIGH" : shopReport.riskScore >= 40 ? "MEDIUM" : "LOW";
+      shopReport.riskFactors = riskFactors;
+
+      // Summary
+      shopReport.summary = {
+        totalAlerts: shopReport.alerts.length,
+        highSeverity: shopReport.alerts.filter((a) => a.severity === "HIGH").length,
+        mediumSeverity: shopReport.alerts.filter((a) => a.severity === "MEDIUM").length,
+        lowSeverity: shopReport.alerts.filter((a) => a.severity === "LOW").length,
+      };
+
+      report.shops.push(shopReport);
     }
 
     // Apply severity filter if requested
@@ -685,9 +669,9 @@ exports.getFraudDetectionReport = async (req, res) => {
         // Recalculate summary
         shopReport.summary = {
           totalAlerts: shopReport.alerts.length,
-          highSeverity: shopReport.alerts.filter((a) => a.severity === 'HIGH').length,
-          mediumSeverity: shopReport.alerts.filter((a) => a.severity === 'MEDIUM').length,
-          lowSeverity: shopReport.alerts.filter((a) => a.severity === 'LOW').length,
+          highSeverity: shopReport.alerts.filter((a) => a.severity === "HIGH").length,
+          mediumSeverity: shopReport.alerts.filter((a) => a.severity === "MEDIUM").length,
+          lowSeverity: shopReport.alerts.filter((a) => a.severity === "LOW").length,
         };
       });
       
@@ -697,6 +681,30 @@ exports.getFraudDetectionReport = async (req, res) => {
         totalAlerts: report.shops.reduce((sum, s) => sum + s.summary.totalAlerts, 0),
         highSeverityAlerts: report.shops.reduce((sum, s) => sum + s.summary.highSeverity, 0),
       };
+    } else {
+      report.globalSummary = {
+        totalShops: shops.length,
+        totalAlerts: report.shops.reduce((sum, s) => sum + s.summary.totalAlerts, 0),
+        highSeverityAlerts: report.shops.reduce((sum, s) => sum + s.summary.highSeverity, 0),
+      };
+    }
+
+    // Send email alerts for high-risk shops
+    if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+      for (const shopReport of report.shops) {
+        if (shopReport.riskLevel === 'HIGH' || shopReport.riskScore >= 70) {
+          const adminEmail = process.env.ADMIN_EMAIL || process.env.EMAIL_USER;
+          if (adminEmail) {
+            await sendFraudAlert(
+              shopReport.shop?.name || 'Unknown Shop',
+              shopReport.riskScore,
+              shopReport.riskLevel,
+              shopReport.alerts,
+              adminEmail
+            );
+          }
+        }
+      }
     }
 
     res.status(200).json({ success: true, data: report });

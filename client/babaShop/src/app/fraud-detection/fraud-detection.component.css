@@ -60,6 +60,16 @@
   min-width: 200px;
 }
 
+.filter-small {
+  flex: 0 0 200px;
+}
+
+.alert-count-display {
+  font-size: 14px;
+  color: #666;
+  margin-left: auto;
+}
+
 /* Loading */
 .loading-container {
   text-align: center;
@@ -203,12 +213,6 @@
 .risk-score-badge.risk-HIGH {
   background: #ffebee;
   color: #c62828;
-}
-
-.risk-score-badge mat-icon {
-  font-size: 18px;
-  height: 18px;
-  width: 18px;
 }
 
 .risk-score-value {
@@ -377,6 +381,25 @@ mat-chip.chip-HIGH {
   font-size: 14px;
 }
 
+/* Date Info */
+.date-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #e3f2fd;
+  border-radius: 8px;
+  margin-top: 12px;
+  font-size: 14px;
+  color: #1565c0;
+}
+
+.date-info mat-icon {
+  font-size: 18px;
+  height: 18px;
+  width: 18px;
+}
+
 /* No Alerts */
 .no-alerts-state {
   text-align: center;
@@ -444,7 +467,7 @@ mat-expansion-panel {
 
 .severity-chip-LOW {
   background: #e8f5e9;
-  color: #4caf50;
+  color: #2e7d32;
 }
 
 .alert-type-badge {
@@ -796,6 +819,27 @@ mat-expansion-panel {
   color: #333;
 }
 
+.anomaly-message {
+  color: #f44336;
+  font-weight: 500;
+  padding-top: 8px;
+  border-top: 1px solid #ddd;
+}
+
+/* Trend Section */
+.trend-section {
+  margin: 20px 0;
+}
+
+.trend-note {
+  padding: 12px;
+  background: #e3f2fd;
+  border-radius: 8px;
+  color: #1565c0;
+  font-size: 14px;
+}
+
+/* Filter Bar */
 .filter-bar {
   display: flex;
   align-items: center;
