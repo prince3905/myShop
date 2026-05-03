@@ -75,6 +75,7 @@
           <mat-card-title>
             {{ shopReport.shop?.name || 'Unknown Shop' }}
             <span class="shop-code">({{ shopReport.shop?.code || 'N/A' }})</span>
+            <span [class]="'risk-badge risk-' + shopReport.riskLevel">Risk: {{ shopReport.riskScore }}/100 ({{ shopReport.riskLevel }})</span>
           </mat-card-title>
           <mat-card-subtitle>
             Alerts: {{ shopReport.summary?.totalAlerts || 0 }} |
@@ -84,6 +85,25 @@
           </mat-card-subtitle>
         </mat-card-header>
         <mat-card-content>
+
+          <!-- Risk Score Visual -->
+          <div class="risk-score-container" *ngIf="shopReport.riskScore > 0">
+            <div class="risk-label">🛡️ Theft Risk Score (AI Analysis):</div>
+            <div class="risk-bar">
+              <div class="risk-fill" [style.width.%]="shopReport.riskScore" 
+                   [class]="'risk-fill-' + shopReport.riskLevel"></div>
+            </div>
+            <div class="risk-factors" *ngIf="shopReport.riskFactors?.length > 0">
+              <strong>Risk Factors:</strong>
+              <ul>
+                <li *ngFor="let factor of shopReport.riskFactors">{{ factor }}</li>
+              </ul>
+            </div>
+            <div class="risk-warning" *ngIf="shopReport.riskLevel === 'HIGH'">
+              ⚠️ HIGH THEFT RISK! Staff se physical cash aur stock verify karein immediately!
+            </div>
+          </div>
+
           <div *ngIf="shopReport.alerts?.length === 0" class="no-alerts">
             <mat-icon>check_circle</mat-icon>
             <p>कोई संदिग्ध गतिविधि नहीं मिली - Staff सुरक्षित हैं ✓</p>
@@ -118,6 +138,19 @@
                 <div class="data-row"><span>Total Refunds:</span> ₹{{ alert.data?.totalRefunds | number:'1.2-2' }}</div>
                 <div class="data-row highlight"><span>Expected Cash in Register:</span> ₹{{ alert.data?.expectedCash | number:'1.2-2' }}</div>
                 <div class="data-row"><span>Total Transactions:</span> {{ alert.data?.transactionCount || 0 }}</div>
+                
+                <!-- Anomaly Detection Result -->
+                <div class="anomaly-check" *ngIf="alert.data?.anomalyCheck">
+                  <div [class]="alert.data.anomalyCheck.isAnomaly ? 'anomaly-detected' : 'no-anomaly'">
+                    <mat-icon>{{ alert.data.anomalyCheck.isAnomaly ? 'warning' : 'check_circle' }}</mat-icon>
+                    <strong>{{ alert.data.anomalyCheck.message }}</strong>
+                  </div>
+                  <div class="anomaly-details" *ngIf="alert.data.anomalyCheck.isAnomaly">
+                    <small>Z-Score: {{ alert.data.anomalyCheck.zScore }} (Normal: &lt;2, Anomaly: &gt;2)</small><br>
+                    <small>Historical Average: ₹{{ alert.data.anomalyCheck.historicalMean }}</small>
+                  </div>
+                </div>
+
                 <div class="action-note">
                   <strong>Action:</strong> Physical cash count karein aur expected cash se match karein.
                   Agar kam hai to staff ne cash nikal liya hai!
@@ -159,6 +192,19 @@
                 </div>
                 <div class="data-row"><span>Total Cancelled Bills:</span> {{ alert.data?.cancelledSales?.length || 0 }}</div>
                 <div class="data-row highlight"><span>Total Amount Cancelled:</span> ₹{{ alert.data?.totalCancelledAmount | number:'1.2-2' }}</div>
+                
+                <!-- Anomaly Detection Result for Cancellations -->
+                <div class="anomaly-check" *ngIf="alert.data?.anomalyCheck">
+                  <div [class]="alert.data.anomalyCheck.isAnomaly ? 'anomaly-detected' : 'no-anomaly'">
+                    <mat-icon>{{ alert.data.anomalyCheck.isAnomaly ? 'warning' : 'check_circle' }}</mat-icon>
+                    <strong>{{ alert.data.anomalyCheck.message }}</strong>
+                  </div>
+                  <div class="anomaly-details" *ngIf="alert.data.anomalyCheck.isAnomaly">
+                    <small>Z-Score: {{ alert.data.anomalyCheck.zScore }} (Normal: &lt;2, Anomaly: &gt;2)</small><br>
+                    <small>Historical Average: ₹{{ alert.data.anomalyCheck.historicalMean }}</small>
+                  </div>
+                </div>
+
                 <div class="action-note">
                   <strong>Action:</strong> Check karo ki staff ne cash liya fir bill cancel kiya hai kya. Yeh common theft trick hai!
                 </div>
@@ -189,6 +235,26 @@
                   <div *ngIf="sale.highItemDiscounts?.length > 0">
                     <small>Item Discounts: {{ sale.highItemDiscounts | json }}</small>
                   </div>
+                </div>
+              </div>
+
+              <!-- ANOMALY_DETECTED (AI Statistical Detection) -->
+              <div *ngIf="alert.type === 'ANOMALY_DETECT_ED'" class="alert-data">
+                <div class="ai-badge">🤖 AI Statistical Analysis</div>
+                <div class="action-note" style="background: #ffebee; border-left-color: #f44336;">
+                  <strong>⚠️ AI DETECTED UNUSUAL PATTERNS!</strong><br>
+                  These patterns are statistically significant deviations from normal behavior. HIGH chance of theft/manipulation!
+                </div>
+                <h4>Anomalies Found:</h4>
+                <div *ngFor="let anomaly of alert.data?.anomalies" class="anomaly-item">
+                  <div><strong>Metric:</strong> {{ anomaly.metric }}</div>
+                  <div><strong>Current Value:</strong> {{ anomaly.current }}</div>
+                  <div><strong>Historical Average:</strong> {{ anomaly.historicalMean }}</div>
+                  <div><strong>Z-Score:</strong> {{ anomaly.zScore }} (Anomaly if >2)</div>
+                  <div class="variance" style="margin-top: 8px;">{{ anomaly.message }}</div>
+                </div>
+                <div class="action-note" *ngIf="alert.data?.note">
+                  <strong>Note:</strong> {{ alert.data.note }}
                 </div>
               </div>
 

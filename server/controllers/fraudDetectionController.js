@@ -13,6 +13,59 @@ const getDateRange = (date, daysBack = 7) => {
   return { start, end };
 };
 
+// Calculate mean and standard deviation for anomaly detection
+const calculateStats = (values) => {
+  if (values.length === 0) return { mean: 0, stdDev: 0 };
+  const mean = values.reduce((a, b) => a + b, 0) / values.length;
+  const variance = values.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / values.length;
+  const stdDev = Math.sqrt(variance);
+  return { mean, stdDev };
+};
+
+// Calculate Z-score (how many standard deviations away from mean)
+const getZScore = (value, mean, stdDev) => {
+  if (stdDev === 0) return 0;
+  return Math.abs((value - mean) / stdDev);
+};
+
+// Get historical data for a shop (last 30 days, excluding current period)
+const getHistoricalDailySales = async (shopId, currentStart, currentEnd) => {
+  const histStart = new Date(currentStart);
+  histStart.setDate(histStart.getDate() - 30);
+  
+  const sales = await Sale.find({
+    shop: shopId,
+    createdAt: { $gte: histStart, $lt: currentStart },
+    status: { $ne: "CANCELLED" },
+  }).select("createdAt totalAmount paymentMethod paidAmount");
+
+  // Group by day
+  const dailyData = {};
+  sales.forEach((sale) => {
+    const day = sale.createdAt.toISOString().split('T')[0];
+    if (!dailyData[day]) {
+      dailyData[day] = { cash: 0, card: 0, online: 0, salesCount: 0, total: 0 };
+    }
+    const amount = sale.totalAmount || 0;
+    dailyData[day].total += amount;
+    dailyData[day].salesCount += 1;
+    
+    if (sale.paymentMethod === "CASH") {
+      dailyData[day].cash += sale.paidAmount || amount;
+    } else if (sale.paymentMethod === "CARD") {
+      dailyData[day].card += sale.paidAmount || amount;
+    } else if (["UPI", "ONLINE", "BANK"].includes(sale.paymentMethod)) {
+      dailyData[day].online += sale.paidAmount || amount;
+    }
+  });
+
+  return {
+    cashValues: Object.values(dailyData).map(d => d.cash),
+    salesCountValues: Object.values(dailyData).map(d => d.salesCount),
+    totalValues: Object.values(dailyData).map(d => d.total),
+  };
+};
+
 exports.getFraudDetectionReport = async (req, res) => {
   try {
     const { date, days = 7, shopId: queryShopId } = req.query;
@@ -52,7 +105,15 @@ exports.getFraudDetectionReport = async (req, res) => {
       const shopReport = {
         shop: { id: shop._id, name: shop.name, code: shop.shopCode },
         alerts: [],
+        riskScore: 0,
+        riskLevel: "LOW",
       };
+
+      // Get historical data for anomaly detection
+      const historicalData = await getHistoricalDailySales(shop._id, start, end);
+      const cashStats = calculateStats(historicalData.cashValues);
+      const salesCountStats = calculateStats(historicalData.salesCountValues);
+      const totalStats = calculateStats(historicalData.totalValues);
 
       // ==================== 1. CASH MISMATCH DETECTION ====================
       try {
@@ -102,9 +163,12 @@ exports.getFraudDetectionReport = async (req, res) => {
           }
         });
 
-        // Expected cash = cash from sales minus cash refunds given back
         const expectedCash = totalCash - cashRefunds;
         const totalCollection = totalCash + totalCard + totalOnline;
+
+        // Anomaly detection: Is current cash unusual compared to history?
+        const cashZScore = getZScore(totalCash, cashStats.mean, cashStats.stdDev);
+        const isCashAnomaly = cashZScore > 2; // More than 2 std deviations
 
         shopReport.alerts.push({
           type: "CASH_MISMATCH",
@@ -122,6 +186,12 @@ exports.getFraudDetectionReport = async (req, res) => {
             expectedCash,
             transactionCount: sales.length,
             note: "Expected cash in register = Cash Sales - Cash Refunds. Please count physical cash and compare.",
+            anomalyCheck: {
+              isAnomaly: isCashAnomaly,
+              zScore: cashZScore.toFixed(2),
+              historicalMean: cashStats.mean.toFixed(2),
+              message: isCashAnomaly ? "⚠️ Cash collection is UNUSUAL compared to past 30 days!" : "Cash collection is within normal range.",
+            },
           },
         });
       } catch (err) {
@@ -178,7 +248,6 @@ exports.getFraudDetectionReport = async (req, res) => {
 
         reconciliations.forEach((rec) => {
           rec.lines.forEach((line) => {
-            // varianceQty = countedQty - systemQty (negative means missing stock)
             if (line.varianceQty < 0) {
               discrepancies.push({
                 productName: line.productName || "Unknown",
@@ -204,7 +273,7 @@ exports.getFraudDetectionReport = async (req, res) => {
               discrepancies,
               totalMissingItems: discrepancies.length,
               totalMissingQty,
-              note: "Physical count was less than system stock. Investigate if items were stolen or not properly recorded.",
+              note: "Physical count was less than system stock. Staff may have stolen items!",
             },
           });
         }
@@ -223,9 +292,25 @@ exports.getFraudDetectionReport = async (req, res) => {
         if (cancelledSales.length > 0) {
           const totalCancelledAmount = cancelledSales.reduce((sum, s) => sum + (s.totalAmount || 0), 0);
 
+          // Anomaly: Compare with historical cancellation patterns
+          const histCancelled = await Sale.find({
+            shop: shop._id,
+            createdAt: { $gte: new Date(start.getTime() - 30 * 24 * 60 * 60 * 1000), $lt: start },
+            status: "CANCELLED",
+          }).select("totalAmount");
+
+          const dailyCancelled = {};
+          histCancelled.forEach((s) => {
+            const day = s.createdAt.toISOString().split('T')[0];
+            dailyCancelled[day] = (dailyCancelled[day] || 0) + (s.totalAmount || 0);
+          });
+          const cancelledValues = Object.values(dailyCancelled);
+          const cancelledStats = calculateStats(cancelledValues);
+          const cancelledZScore = getZScore(totalCancelledAmount, cancelledStats.mean, cancelledStats.stdDev);
+
           shopReport.alerts.push({
             type: "VOIDED_TRANSACTIONS",
-            severity: totalCancelledAmount > 5000 ? "HIGH" : "MEDIUM",
+            severity: totalCancelledAmount > 5000 || cancelledZScore > 2 ? "HIGH" : "MEDIUM",
             title: "Cancelled Bills Alert",
             description: `${cancelledSales.length} bills were cancelled, total value: ₹${totalCancelledAmount}`,
             data: {
@@ -236,6 +321,12 @@ exports.getFraudDetectionReport = async (req, res) => {
               })),
               totalCancelledAmount,
               note: "Staff may take cash and then cancel the bill. Verify these cancellations.",
+              anomalyCheck: {
+                isAnomaly: cancelledZScore > 2,
+                zScore: cancelledZScore.toFixed(2),
+                historicalMean: cancelledStats.mean.toFixed(2),
+                message: cancelledZScore > 2 ? "⚠️ Unusually high cancellations compared to history!" : "Cancellation rate is within normal range.",
+              },
             },
           });
         }
@@ -294,6 +385,102 @@ exports.getFraudDetectionReport = async (req, res) => {
       } catch (err) {
         console.error("Discount abuse error:", err.message);
       }
+
+      // ==================== 6. ANOMALY DETECTION (AI-like Statistical) ====================
+      try {
+        // Check if sales volume is anomalous
+        const currentSalesCount = await Sale.countDocuments({
+          shop: shop._id,
+          createdAt: { $gte: start, $lte: end },
+          status: { $ne: "CANCELLED" },
+        });
+
+        const salesCountZScore = getZScore(currentSalesCount, salesCountStats.mean, salesCountStats.stdDev);
+        const totalSalesZScore = getZScore(
+          shopReport.alerts.find(a => a.type === 'CASH_MISMATCH')?.data?.totalSales || 0,
+          totalStats.mean,
+          totalStats.stdDev
+        );
+
+        const anomalies = [];
+        if (salesCountZScore > 2) {
+          anomalies.push({
+            metric: "Sales Count",
+            current: currentSalesCount,
+            historicalMean: salesCountStats.mean.toFixed(0),
+            zScore: salesCountZScore.toFixed(2),
+            message: currentSalesCount > salesCountStats.mean ? "Unusually HIGH sales activity" : "Unusually LOW sales activity - possible under-reporting",
+          });
+        }
+        if (totalSalesZScore > 2) {
+          anomalies.push({
+            metric: "Total Sales Amount",
+            current: shopReport.alerts.find(a => a.type === 'CASH_MISMATCH')?.data?.totalSales || 0,
+            historicalMean: totalStats.mean.toFixed(0),
+            zScore: totalSalesZScore.toFixed(2),
+            message: "Sales amount is far from historical average - possible manipulation",
+          });
+        }
+
+        if (anomalies.length > 0) {
+          shopReport.alerts.push({
+            type: "ANOMALY_DETECTED",
+            severity: "HIGH",
+            title: "🤖 AI Anomaly Detection Alert",
+            description: `${anomalies.length} unusual pattern(s) detected compared to past 30 days`,
+            data: {
+              anomalies,
+              note: "These patterns are statistically unusual. HIGH chance of staff manipulation or theft!",
+            },
+          });
+        }
+      } catch (err) {
+        console.error("Anomaly detection error:", err.message);
+      }
+
+      // ==================== 7. RISK SCORING ====================
+      let riskScore = 0;
+      const riskFactors = [];
+
+      shopReport.alerts.forEach((alert) => {
+        if (alert.type === "CASH_MISMATCH") {
+          if (alert.data?.anomalyCheck?.isAnomaly) {
+            riskScore += 30;
+            riskFactors.push("Unusual cash patterns detected");
+          }
+          if (Math.abs((alert.data?.expectedCash || 0) - (alert.data?.totalCash || 0)) > 500) {
+            riskScore += 25;
+            riskFactors.push("Large cash mismatch");
+          }
+        }
+        if (alert.type === "SUSPICIOUS_RETURNS") {
+          riskScore += 20;
+          riskFactors.push("Suspicious customer return patterns");
+        }
+        if (alert.type === "STOCK_DISCREPANCY") {
+          riskScore += 35;
+          riskFactors.push("Stock missing - possible theft");
+        }
+        if (alert.type === "VOIDED_TRANSACTIONS") {
+          riskScore += 25;
+          if (alert.data?.anomalyCheck?.isAnomaly) {
+            riskScore += 15;
+            riskFactors.push("Unusual cancellation patterns");
+          }
+        }
+        if (alert.type === "DISCOUNT_ABUSE") {
+          riskScore += 15;
+          riskFactors.push("Unauthorized discount giving");
+        }
+        if (alert.type === "ANOMALY_DETECTED") {
+          riskScore += 30;
+          riskFactors.push("Statistical anomaly detected");
+        }
+      });
+
+      shopReport.riskScore = Math.min(riskScore, 100);
+      shopReport.riskLevel = shopReport.riskScore >= 70 ? "HIGH" : shopReport.riskScore >= 40 ? "MEDIUM" : "LOW";
+      shopReport.riskFactors = riskFactors;
 
       // Summary
       shopReport.summary = {
