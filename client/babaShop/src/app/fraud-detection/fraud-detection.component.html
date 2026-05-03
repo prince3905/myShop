@@ -183,7 +183,9 @@
                   <mat-option value="LOW">Low Only</mat-option>
                 </mat-select>
               </mat-form-field>
-              <span class="alert-count-display">{{ getFilteredAlerts(shopReport.alerts)?.length || 0 }} of {{ shopReport.alerts?.length || 0 }} alerts</span>
+              <span class="alert-count-display">
+                {{ getFilteredAlerts(shopReport.alerts)?.length || 0 }} of {{ shopReport.alerts?.length || 0 }} alerts
+              </span>
             </div>
 
             <mat-expansion-panel *ngFor="let alert of getFilteredAlerts(shopReport.alerts)" [class]="'alert-panel-' + alert.severity">

@@ -36,6 +36,7 @@ export class FraudDetectionComponent implements OnInit {
   startDate: Date | null = null;
   endDate: Date | null = null;
   selectedSeverity: string = 'ALL';
+  filteredAlertsMap: Map<string, any[]> = new Map();
   @ViewChild('trendCanvas') trendCanvas!: ElementRef<HTMLCanvasElement>;
 
   constructor(
@@ -115,7 +116,20 @@ export class FraudDetectionComponent implements OnInit {
   }
 
   filterAlerts(): void {
-    // Triggers change detection
+    if (!this.report?.shops) return;
+    
+    this.filteredAlertsMap.clear();
+    this.report.shops.forEach((shopReport: any) => {
+      const shopKey = shopReport.shop?.id || 'unknown';
+      if (this.selectedSeverity === 'ALL') {
+        this.filteredAlertsMap.set(shopKey, shopReport.alerts || []);
+      } else {
+        const filtered = (shopReport.alerts || []).filter(
+          (a: any) => a.severity === this.selectedSeverity
+        );
+        this.filteredAlertsMap.set(shopKey, filtered);
+      }
+    });
   }
 
   getFilteredAlerts(alerts: any[]): any[] {
