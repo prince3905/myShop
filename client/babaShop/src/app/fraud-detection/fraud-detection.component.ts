@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -36,8 +36,6 @@ export class FraudDetectionComponent implements OnInit {
   startDate: Date | null = null;
   endDate: Date | null = null;
   selectedSeverity: string = 'ALL';
-  filteredAlertsMap: Map<string, any[]> = new Map();
-  @ViewChild('trendCanvas') trendCanvas!: ElementRef<HTMLCanvasElement>;
 
   constructor(
     private fraudDetectionService: FraudDetectionService,
@@ -116,20 +114,8 @@ export class FraudDetectionComponent implements OnInit {
   }
 
   filterAlerts(): void {
-    if (!this.report?.shops) return;
-    
-    this.filteredAlertsMap.clear();
-    this.report.shops.forEach((shopReport: any) => {
-      const shopKey = shopReport.shop?.id || 'unknown';
-      if (this.selectedSeverity === 'ALL') {
-        this.filteredAlertsMap.set(shopKey, shopReport.alerts || []);
-      } else {
-        const filtered = (shopReport.alerts || []).filter(
-          (a: any) => a.severity === this.selectedSeverity
-        );
-        this.filteredAlertsMap.set(shopKey, filtered);
-      }
-    });
+    // Force change detection
+    this.report = { ...this.report };
   }
 
   getFilteredAlerts(alerts: any[]): any[] {
