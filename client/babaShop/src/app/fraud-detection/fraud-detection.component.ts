@@ -65,8 +65,9 @@ export class FraudDetectionComponent implements OnInit {
   loadReport(): void {
     this.loading = true;
     const isSuperAdmin = this.authService.isSuperAdmin();
-    let shopId = undefined;
+    let shopId: string | undefined = undefined;
     
+    // If super admin and shop selected
     if (isSuperAdmin && this.selectedShopId) {
       shopId = this.selectedShopId;
     }
@@ -79,8 +80,10 @@ export class FraudDetectionComponent implements OnInit {
       (response: any) => {
         if (response && response.success) {
           this.report = response.data;
-          if (!shopId && this.report?.shops?.length > 1) {
-            console.log('Global mode: Showing all shops');
+          if (shopId) {
+            console.log('Single shop mode:', this.report?.shops?.[0]?.shop?.name);
+          } else {
+            console.log('Global mode: Showing', this.report?.globalSummary?.totalShops, 'shops');
           }
         } else {
           this.snackBar.open('Invalid response from server', 'OK', { duration: 3000 });
@@ -91,6 +94,7 @@ export class FraudDetectionComponent implements OnInit {
         this.loading = false;
         const errMsg = error?.error?.message || error?.message || 'रिपोर्ट लोड करने में त्रुटि हुई';
         this.snackBar.open(errMsg, 'OK', { duration: 5000 });
+        console.error('Fraud detection error:', error);
       }
     );
   }
