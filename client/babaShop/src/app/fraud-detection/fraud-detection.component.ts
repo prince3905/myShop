@@ -12,6 +12,8 @@ import { MatExpansionModule } from '@angular/material/expansion';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatBadgeModule } from '@angular/material/badge';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { FraudDetectionService } from 'app/shared/services/fraud-detection.service';
 import { AuthService } from 'app/shared/services/auth.service';
 import { ShopService } from 'app/shared/services/shop.service';
