@@ -61,7 +61,7 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
   
   Sales_added: any = {};
   final_Sales_data: any = {};
-  Display_items: any = {};
+  Display_items: any[] = [];
   totalPurchasePrice: number = null;
   totalQuantity: number = null;
 
@@ -93,6 +93,8 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly customerSearch$ = new Subject<string>();
   isSavingSale = false;
   private lastAutoHoldSignature = "";
+
+  quickAddItems: any[] = [];
   
   get canBackdateSale(): boolean {
     const role = this.authService.getUserRole();
@@ -152,6 +154,7 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
     window.addEventListener("online", this.onlineStatusHandler);
     this.setupSuggestionStreams();
     this.itemSearch$.next("");
+    this.loadQuickAddItems();
   }
 
   ngAfterViewInit(): void {
@@ -188,6 +191,61 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
         this.activeShopDetails = null;
       },
     });
+  }
+
+  loadQuickAddItems(): void {
+    this.variationService.getVariations({ isQuickAdd: true }).subscribe({
+      next: (res: any) => {
+        this.quickAddItems = res?.data || res || [];
+      },
+      error: () => {
+        this.quickAddItems = [];
+      }
+    });
+  }
+
+  onQuickAddClick(variation: any): void {
+    const availableStock = Number(variation.quantity || 0);
+    
+    if (availableStock <= 0) {
+      this.snackBar.open(`Out of stock: ${variation.product?.name || 'Item'}`, "Close", { duration: 2000 });
+      return;
+    }
+
+    const existingIndex = this.Display_items?.findIndex(
+      (item: any) => item.variationId === variation._id
+    ) ?? -1;
+
+    if (existingIndex > -1) {
+      const currentQty = Number(this.Display_items[existingIndex].quantity || 0);
+      if (currentQty >= availableStock) {
+        this.snackBar.open(`Stock limit reached. Available: ${availableStock}`, "Close", { duration: 2000 });
+        return;
+      }
+      this.Display_items[existingIndex].quantity += 1;
+    } else {
+      const newItem = {
+        itemName: variation.product?.name || "Unknown Product",
+        category: "",
+        brand: "",
+        quantity: 1,
+        purchasePrice: Number(variation.sellingPrice || variation.costPrice || 0),
+        model: variation.model?.name || "",
+        size: variation.attributes?.size || "",
+        color: variation.attributes?.color || "",
+        variations: variation.sku || "",
+        variationId: variation._id,
+        variationSku: variation.sku || "",
+        productId: variation.product?._id || variation.product,
+        modelId: variation.model?._id || variation.model,
+        availableStock: availableStock,
+      };
+      this.Display_items.unshift(newItem);
+    }
+
+    this.calculateTotals();
+    this.saveDraftToStorage();
+    this.snackBar.open(`${variation.product?.name || 'Item'} added`, "Close", { duration: 1500 });
   }
 
   private loadSaleForEdit(id: string): void {

@@ -18,7 +18,11 @@ exports.createVariationValidation = [
 
   body("quantity")
     .optional()
-    .isNumeric().withMessage("Quantity must be number")
+    .isNumeric().withMessage("Quantity must be number"),
+
+  body("isQuickAdd")
+    .optional()
+    .isBoolean().withMessage("isQuickAdd must be boolean")
 ];
 
 exports.updateVariationValidation = [
@@ -32,5 +36,9 @@ exports.updateVariationValidation = [
 
   body("quantity")
     .optional()
-    .isNumeric().withMessage("Quantity must be number")
+    .isNumeric().withMessage("Quantity must be number"),
+
+  body("isQuickAdd")
+    .optional()
+    .isBoolean().withMessage("isQuickAdd must be boolean")
 ];

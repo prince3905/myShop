@@ -51,6 +51,13 @@ export const ROUTES: RouteInfo[] = [
         roles: ["SUPER_ADMIN", "ADMIN"],
         feature: "inventory.purchase",
       },
+      {
+        path: "/barcode-catalog",
+        title: "Barcode Catalog",
+        icon: "qr_code_2",
+        roles: ["SUPER_ADMIN", "ADMIN"],
+        feature: "inventory.product_details",
+      },
     ],
   },
 

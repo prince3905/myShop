@@ -85,6 +85,25 @@
             </div>
           </div>
 
+          <div class="quick-add-strip" *ngIf="quickAddItems?.length">
+            <button
+              mat-stroked-button
+              type="button"
+              class="quick-add-btn"
+              *ngFor="let qaItem of quickAddItems"
+              (click)="onQuickAddClick(qaItem)"
+              [disabled]="(qaItem.quantity || 0) <= 0"
+              [matTooltip]="(qaItem.quantity || 0) <= 0 ? 'Out of Stock' : (qaItem.model?.name || '') + ' ' + (qaItem.attributes?.size || '') + ' ' + (qaItem.attributes?.color || '') + ' | Stock: ' + (qaItem.quantity || 0)"
+            >
+              <div class="qa-content">
+                <span class="qa-name">{{ qaItem.product?.name || 'Item' }}</span>
+                <span class="qa-variation">{{ qaItem.model?.name || '' }} {{ qaItem.attributes?.size || '' }} {{ qaItem.attributes?.color || '' }}</span>
+                <span class="qa-price">₹{{ qaItem.sellingPrice || 0 }}</span>
+                <span class="qa-stock" [class.out-of-stock]="(qaItem.quantity || 0) <= 0">Stock: {{ qaItem.quantity || 0 }}</span>
+              </div>
+            </button>
+          </div>
+
           <div class="customer-bar">
             <mat-form-field appearance="outline" class="customer-name-field">
               <mat-label>Customer</mat-label>

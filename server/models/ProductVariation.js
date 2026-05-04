@@ -79,6 +79,11 @@ const productVariationSchema = new mongoose.Schema({
   isActive: {
     type: Boolean,
     default: true
+  },
+
+  isQuickAdd: {
+    type: Boolean,
+    default: false
   }
 
 }, { timestamps: true });

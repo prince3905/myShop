@@ -38,6 +38,7 @@ import { RawMaterialPurchaseComponent } from "app/factory/raw-material-purchase/
 import { RawMaterialRegisterComponent } from "app/factory/raw-material-register/raw-material-register.component";
 import { FactoryReportComponent } from "app/factory/factory-report/factory-report.component";
 import { FraudDetectionComponent } from "../../fraud-detection/fraud-detection.component";
+import { BarcodeCatalogComponent } from "app/all-items/barcode-catalog/barcode-catalog.component";
 
 const ALL_ROLES = ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"];
 const MANAGER_AND_ABOVE = ["SUPER_ADMIN", "ADMIN", "MANAGER"];
@@ -89,4 +90,5 @@ export const AdminLayoutRoutes: Routes = [
   { path: "shops", component: ManageShopsComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ["SUPER_ADMIN"] } },
   { path: "settings", component: SettingsComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ADMIN_AND_ABOVE, feature: "settings.permissions" } },
   { path: "fraud-detection", component: FraudDetectionComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ADMIN_AND_ABOVE, feature: "fraud.detection" } },
+  { path: "barcode-catalog", component: BarcodeCatalogComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ADMIN_AND_ABOVE, requireShop: true, feature: "inventory.product_details" } },
 ];

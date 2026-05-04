@@ -210,6 +210,7 @@ export class AddDetailsComponent implements OnInit {
       costPrice: Number(this.variation.costPrice || 0),
       sellingPrice: Number(this.variation.sellingPrice || 0),
       isActive: !!this.variation.isActive,
+      isQuickAdd: !!this.variation.isQuickAdd,
     };
 
     const req$ = this.isEditMode

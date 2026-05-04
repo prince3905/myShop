@@ -1,0 +1,30 @@
+/* Print styles only */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .print-only-layout, .print-only-layout * {
+    visibility: visible;
+  }
+  .print-only-layout {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    padding: 0;
+    background: transparent;
+  }
+  .no-print {
+    display: none !important;
+  }
+  
+  .catalog-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 10px;
+  }
+  
+  .catalog-cell {
+    border: 1px solid #000;
+    page-break-inside: avoid;
+  }
+}
