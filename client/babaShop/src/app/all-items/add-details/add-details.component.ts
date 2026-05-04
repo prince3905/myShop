@@ -55,6 +55,7 @@ export class AddDetailsComponent implements OnInit {
     costPrice: 0,
     sellingPrice: 0,
     isActive: true,
+    isQuickAdd: false,
   };
 
   constructor(
@@ -157,6 +158,7 @@ export class AddDetailsComponent implements OnInit {
           costPrice: Number(v.costPrice || 0),
           sellingPrice: Number(v.sellingPrice || 0),
           isActive: v.isActive !== false,
+          isQuickAdd: !!v.isQuickAdd,
         };
         this.allowCodeRegenerationInEdit = false;
         this.loadVariationUsage(v._id);
@@ -292,6 +294,7 @@ export class AddDetailsComponent implements OnInit {
       costPrice: Number(v.costPrice || 0),
       sellingPrice: Number(v.sellingPrice || 0),
       isActive: v.isActive !== false,
+      isQuickAdd: !!v.isQuickAdd,
     };
     this.allowCodeRegenerationInEdit = false;
     this.loadVariationUsage(v._id);
@@ -559,6 +562,7 @@ export class AddDetailsComponent implements OnInit {
       costPrice: 0,
       sellingPrice: 0,
       isActive: true,
+      isQuickAdd: false,
     };
     this.allowCodeRegenerationInEdit = false;
     this.canRegenerateCodes = true;
