@@ -1,4 +1,5 @@
-import { Component, OnInit, ElementRef, ViewChild, AfterViewInit, OnDestroy, Renderer2, Inject, DOCUMENT } from '@angular/core';
+import { Component, OnInit, ElementRef, ViewChild, AfterViewInit, OnDestroy, Renderer2, Inject } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
 import { VariationService } from 'app/shared/services/variation.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
