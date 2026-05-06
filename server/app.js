@@ -14,6 +14,8 @@ const allowedOrigins = (
   .map((origin) => origin.trim())
   .filter(Boolean);
 
+const allowedConnectSources = ["'self'", ...allowedOrigins];
+
 const dynamicOriginPatterns = [
   /^https?:\/\/localhost(?::\d+)?$/i,
   /^https?:\/\/127\.0\.0\.1(?::\d+)?$/i,
@@ -93,7 +95,7 @@ app.use(
             styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://maxcdn.bootstrapcdn.com", "https://cdnjs.cloudflare.com"],
             fontSrc: ["'self'", "https://fonts.gstatic.com", "https://maxcdn.bootstrapcdn.com", "https://cdnjs.cloudflare.com"],
             imgSrc: ["'self'", "data:", "https:"],
-            connectSrc: ["'self'"],
+            connectSrc: allowedConnectSources,
             frameSrc: ["'none'"],
             objectSrc: ["'none'"],
             upgradeInsecureRequests: [],
@@ -103,8 +105,6 @@ app.use(
   }),
 );
 
-// Request logging middleware (logs all HTTP requests)
-app.use(logger.requestLogger);
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: false, limit: "1mb" }));
 app.use("/api/auth/login", authRateLimit);
@@ -146,6 +146,13 @@ app.get("/api/health", (req, res) => {
     success: true,
     status: "ok",
     timestamp: new Date().toISOString(),
+  });
+});
+
+app.use("/api", (req, res) => {
+  res.status(404).json({
+    success: false,
+    message: "API route not found",
   });
 });
 

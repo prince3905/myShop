@@ -61,7 +61,7 @@ export const resolveApiURLForMode = (mode: ApiMode, customURL = ""): string => {
     return "http://10.0.2.2:3000";
   }
   if (mode === "ngrok") {
-    return DEFAULT_NGROK_URL;
+    return normalizeApiURL(customURL) || DEFAULT_NGROK_URL;
   }
   if (mode === "custom") {
     return normalizeApiURL(customURL);

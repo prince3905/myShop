@@ -257,7 +257,6 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
           this.router.navigate(["/sale-list"]);
           return;
         }
-        console.log("Sale loaded for edit, billDiscount:", sale.billDiscount);
         this.customerName = sale.customerName || "";
         this.customerPhone = sale.customerPhone || "";
         this.customerAddress = sale.customerAddress || "";
@@ -1137,8 +1136,6 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
       ...(this.saleDate && this.canBackdateSale ? { saleDate: this.formatDateForApi(this.saleDate) } : {}),
       ...(this.editMode && this.originalSaleDate ? { createdAt: this.originalSaleDate } : {}),
     };
-    console.log("Final payload:", JSON.stringify(this.final_Sales_data, null, 2));
-
     if (this.isSavingSale) {
       return;
     }
@@ -1496,7 +1493,6 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
     this.Display_items = clonedItems;
     this.calculateTotals();
     this.saveDraftToStorage();
-    console.log("After rebuild - Display_items[0]:", this.Display_items[0]);
   }
 
   private shouldAutoHoldOnSaleError(error: any): boolean {
