@@ -160,6 +160,24 @@
                   </mat-select>
                 </mat-form-field>
 
+                <!-- Optional Bag / Pack Helper for Easy Calculation -->
+                <div class="bag-helper-row inline-fields three-col">
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Kitni Bori Kharidi (Bori Count)</mat-label>
+                    <input matInput type="number" min="0" [(ngModel)]="item.bagsCount" [name]="'bagsCount' + i" (ngModelChange)="onPackCalcChange(item)" placeholder="e.g. 2">
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>1 Bori Ka Daam (₹)</mat-label>
+                    <input matInput type="number" min="0" [(ngModel)]="item.packPrice" [name]="'packPrice' + i" (ngModelChange)="onPackCalcChange(item)" placeholder="e.g. 175">
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>1 Bori Me Kitna Piece Hai</mat-label>
+                    <input matInput type="number" min="0" [(ngModel)]="item.pcsPerPack" [name]="'pcsPerPack' + i" (ngModelChange)="onPackCalcChange(item)" placeholder="e.g. 24">
+                  </mat-form-field>
+                </div>
+
                 <div class="inline-fields three-col">
                   <mat-form-field appearance="outline" class="full-width">
                     <mat-label>Qty</mat-label>
@@ -306,7 +324,10 @@
               <div class="items-list">
                 <div class="item-row" *ngFor="let item of purchase.items">
                   <span class="item-name">{{ item.materialName }}</span>
-                  <span class="item-qty">{{ item.orderedQty | number: '1.0-2' }} {{ item.unitLabel }}</span>
+                  <span class="item-qty">
+                    {{ item.orderedQty | number: '1.0-2' }} {{ item.unitLabel }}
+                    <span *ngIf="getItemPcs(item)" style="font-size:0.78rem; color:#0284c7; font-weight:600;">({{ getItemPcs(item) }} Pcs)</span>
+                  </span>
                   <span class="item-rate">× ₹{{ item.rate | number: '1.2-2' }}</span>
                 </div>
               </div>

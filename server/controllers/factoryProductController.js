@@ -55,34 +55,27 @@ const validateShopMapping = async (req, payload = {}) => {
   let variationDoc = null;
 
   if (mapping.shopCategory) {
-    categoryDoc = await Category.findOne({ 
-      _id: mapping.shopCategory, 
-      $or: [{ shop: req.shopId }, { ownerShop: req.shopId }, { shops: req.shopId }] 
-    });
+    categoryDoc = await Category.findById(mapping.shopCategory);
     if (!categoryDoc) {
-      return { error: "Selected category not found for current shop" };
+      return { error: "Selected category not found" };
     }
   }
 
   if (mapping.shopBrand) {
-    brandDoc = await Brand.findOne({ 
-      _id: mapping.shopBrand, 
-      $or: [{ shop: req.shopId }, { ownerShop: req.shopId }, { shops: req.shopId }] 
-    });
+    brandDoc = await Brand.findById(mapping.shopBrand);
     if (!brandDoc) {
-      return { error: "Selected brand not found for current shop" };
+      return { error: "Selected brand not found" };
     }
   }
 
   if (mapping.shopProduct) {
     productDoc = await Product.findOne({
       _id: mapping.shopProduct,
-      shop: req.shopId,
       isDeleted: { $ne: true },
     }).select("_id category brand name");
 
     if (!productDoc) {
-      return { error: "Selected shop product not found for current shop" };
+      return { error: "Selected shop product not found" };
     }
 
     if (mapping.shopCategory && `${productDoc.category || ""}` !== `${mapping.shopCategory}`) {
@@ -97,12 +90,11 @@ const validateShopMapping = async (req, payload = {}) => {
   if (mapping.shopModel) {
     modelDoc = await ProductModel.findOne({
       _id: mapping.shopModel,
-      shop: req.shopId,
       isDeleted: { $ne: true },
     }).select("_id product name");
 
     if (!modelDoc) {
-      return { error: "Selected shop model not found for current shop" };
+      return { error: "Selected shop model not found" };
     }
 
     if (mapping.shopProduct && `${modelDoc.product || ""}` !== `${mapping.shopProduct}`) {
@@ -113,11 +105,11 @@ const validateShopMapping = async (req, payload = {}) => {
   if (mapping.shopVariation) {
     variationDoc = await ProductVariation.findOne({
       _id: mapping.shopVariation,
-      shop: req.shopId,
-    }).select("_id product model sku sellingPrice attributes");
+      isDeleted: { $ne: true },
+    }).select("_id product model sku attributes sellingPrice");
 
     if (!variationDoc) {
-      return { error: "Selected shop variation not found for current shop" };
+      return { error: "Selected shop variation not found" };
     }
 
     if (mapping.shopProduct && `${variationDoc.product || ""}` !== `${mapping.shopProduct}`) {
@@ -278,6 +270,11 @@ exports.createFactoryProduct = async (req, res) => {
     }
 
     const product = await FactoryProduct.create(payload);
+    if (product.shopVariation && Number(product.defaultSellingPrice || 0) > 0) {
+      await ProductVariation.findByIdAndUpdate(product.shopVariation, {
+        sellingPrice: Number(product.defaultSellingPrice),
+      });
+    }
     const populated = await populateFactoryProduct(FactoryProduct.findById(product._id));
 
     return res.status(201).json({ success: true, message: "Factory product added", product: populated });
@@ -505,6 +502,11 @@ exports.updateFactoryProduct = async (req, res) => {
     }
 
     await product.save();
+    if (product.shopVariation && Number(product.defaultSellingPrice || 0) > 0) {
+      await ProductVariation.findByIdAndUpdate(product.shopVariation, {
+        sellingPrice: Number(product.defaultSellingPrice),
+      });
+    }
     const populated = await populateFactoryProduct(FactoryProduct.findById(product._id));
     return res.json({ success: true, message: "Factory product updated", product: populated });
   } catch (error) {

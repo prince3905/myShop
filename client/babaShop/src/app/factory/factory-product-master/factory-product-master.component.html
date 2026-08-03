@@ -178,6 +178,33 @@
             </div>
           </div>
 
+          <!-- Interactive Bulk Sheet Calculator Tool -->
+          <div class="section-card calculator-card" style="background: #f0f9ff; border: 1px solid #bae6fd; padding: 12px; border-radius: 8px; margin-bottom: 16px;">
+            <div class="section-header" style="color: #0369a1; font-weight: 700; margin-bottom: 4px;">
+              <mat-icon style="color: #0284c7;">calculate</mat-icon>
+              <span>Bulk Sheet-to-Box Calculator (Auto Recipe Helper)</span>
+            </div>
+            <div class="calc-subtext" style="font-size: 0.82rem; color: #0369a1; margin-bottom: 10px;">
+              Agar aapne bulk me chadarein kaat kar boxes banaye hain (jaise 5 chadar me 8 box), toh yahan bharein:
+            </div>
+            <div class="inline-fields three-col" style="display: flex; gap: 8px; align-items: center;">
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Total Sheets Cut (Kitni Chadar Kati)</mat-label>
+                <input matInput type="number" min="0" [(ngModel)]="bulkCalc.totalSheets" name="bulkTotalSheets" (ngModelChange)="calculateBulkPerBox()" placeholder="e.g. 5">
+                <mat-icon matPrefix>content_cut</mat-icon>
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Total Boxes Made (Kitne Box Bane)</mat-label>
+                <input matInput type="number" min="0" [(ngModel)]="bulkCalc.totalBoxes" name="bulkTotalBoxes" (ngModelChange)="calculateBulkPerBox()" placeholder="e.g. 8">
+                <mat-icon matPrefix>inventory</mat-icon>
+              </mat-form-field>
+              <div class="calc-result-box" style="display: flex; flex-direction: column; justify-content: center; align-items: center; background: #ffffff; border-radius: 8px; border: 1px solid #7dd3fc; padding: 6px 12px; height: 56px;">
+                <div style="font-size: 0.7rem; color: #64748b; font-weight: 600; text-transform: uppercase;">1 Box Sheet Qty</div>
+                <div style="font-size: 1.05rem; color: #0284c7; font-weight: 800;">{{ bulkCalc.resultPerBox | number: '1.3-3' }} Sheet</div>
+              </div>
+            </div>
+          </div>
+
           <!-- Material Template Section -->
           <div class="section-card">
             <div class="section-header">
@@ -220,6 +247,11 @@
                     <mat-label>Rate</mat-label>
                     <input matInput type="number" min="0" [(ngModel)]="line.rate" [name]="'rate' + i">
                   </mat-form-field>
+                </div>
+                <div *ngIf="bulkCalc.resultPerBox > 0" style="margin-top: 4px; margin-bottom: 8px;">
+                  <button type="button" mat-stroked-button color="primary" style="font-size: 0.78rem;" (click)="applyBulkToMaterialLine(line)">
+                    <mat-icon>auto_fix_high</mat-icon> Apply {{ bulkCalc.resultPerBox }} Sheet Qty To This Line
+                  </button>
                 </div>
               </div>
             </div>

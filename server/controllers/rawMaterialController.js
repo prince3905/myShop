@@ -50,6 +50,9 @@ const attachStockMetrics = async (req, materials, options = {}) => {
       .lean(),
   ]);
 
+  const materialMap = new Map();
+  materials.forEach((m) => materialMap.set(String(m._id), m));
+
   const receivedMap = new Map();
   for (const purchase of approvedPurchases || []) {
     for (const item of purchase?.items || []) {
@@ -57,11 +60,25 @@ const attachStockMetrics = async (req, materials, options = {}) => {
       if (!rawMaterialId || !ids.some((id) => String(id) === rawMaterialId)) {
         continue;
       }
-      const receivedQty = Number(item?.receivedQty || 0);
-      const rate = Number(item?.rate || 0);
+      const mat = materialMap.get(rawMaterialId);
+      const matUnit = `${mat?.unitLabel || "PCS"}`.toUpperCase();
+      const itemUnit = `${item?.unitLabel || matUnit}`.toUpperCase();
+      const pcsPerPack = Number(mat?.pcsPerPack || 0);
+
+      let rawQty = Number(item?.receivedQty || 0) || Number(item?.orderedQty || 0);
+      let rate = Number(item?.rate || 0);
+
+      if (itemUnit === "BAG" && matUnit === "PCS" && pcsPerPack > 0) {
+        rawQty = rawQty * pcsPerPack;
+        rate = rate / pcsPerPack;
+      } else if (itemUnit === "PCS" && matUnit === "BAG" && pcsPerPack > 0) {
+        rawQty = rawQty / pcsPerPack;
+        rate = rate * pcsPerPack;
+      }
+
       const existing = receivedMap.get(rawMaterialId) || { receivedQty: 0, receivedValue: 0 };
-      existing.receivedQty = Number(existing.receivedQty || 0) + receivedQty;
-      existing.receivedValue = Number(existing.receivedValue || 0) + (receivedQty * rate);
+      existing.receivedQty = Number(existing.receivedQty || 0) + rawQty;
+      existing.receivedValue = Number(existing.receivedValue || 0) + (rawQty * rate);
       receivedMap.set(rawMaterialId, existing);
     }
   }
@@ -93,18 +110,38 @@ const attachStockMetrics = async (req, materials, options = {}) => {
     const received = receivedMap.get(key) || {};
     const consumed = consumedMap.get(key) || {};
     const currentRate = Number(material.currentRate || 0);
+    const packPrice = Number(material.packPrice || 0);
+    const pcsPerPack = Number(material.pcsPerPack || 0);
+    const unitLabel = `${material.unitLabel || "PCS"}`.toUpperCase();
+
+    const openingQty = Number(material.openingQty || 0);
     const receivedQty = Number(received.receivedQty || 0);
     const consumedQty = Number(consumed.consumedQty || 0);
-    const currentBalanceQty = receivedQty - consumedQty;
+
+    let currentBalanceQty = 0;
+    let currentBalanceValue = 0;
+
+    const isPackUnit = ["BAG", "SET", "PACKET", "PKT", "BOX"].includes(unitLabel) && pcsPerPack > 0;
+
+    if (isPackUnit) {
+      const consumedInPacks = consumedQty / pcsPerPack;
+      currentBalanceQty = openingQty + receivedQty - consumedInPacks;
+      const packRate = packPrice > 0 ? packPrice : (currentRate * pcsPerPack);
+      currentBalanceValue = currentBalanceQty * packRate;
+    } else {
+      currentBalanceQty = openingQty + receivedQty - consumedQty;
+      currentBalanceValue = currentBalanceQty * currentRate;
+    }
 
     return {
       ...material,
+      openingQty,
       receivedQty,
       receivedValue: Number(received.receivedValue || 0),
       consumedQty,
       consumedValue: Number(consumed.consumedValue || 0),
       currentBalanceQty,
-      currentBalanceValue: currentBalanceQty * currentRate,
+      currentBalanceValue,
     };
   });
 };
@@ -122,7 +159,9 @@ exports.createRawMaterial = async (req, res) => {
       unitLabel: `${req.body?.unitLabel || "PCS"}`.trim().toUpperCase(),
       sizeLabel: `${req.body?.sizeLabel || ""}`.trim(),
       colorLabel: `${req.body?.colorLabel || ""}`.trim(),
-      openingQty: 0,
+      openingQty: Number(req.body?.openingQty || 0),
+      packPrice: Number(req.body?.packPrice || 0),
+      pcsPerPack: Number(req.body?.pcsPerPack || 0),
       currentRate: Number(req.body?.currentRate || 0),
       supplierName: "",
       note: `${req.body?.note || ""}`.trim(),
@@ -487,7 +526,9 @@ exports.updateRawMaterial = async (req, res) => {
     material.unitLabel = `${req.body?.unitLabel || material.unitLabel || "PCS"}`.trim().toUpperCase();
     material.sizeLabel = `${req.body?.sizeLabel ?? material.sizeLabel ?? ""}`.trim();
     material.colorLabel = `${req.body?.colorLabel ?? material.colorLabel ?? ""}`.trim();
-    material.openingQty = 0;
+    material.openingQty = Number(req.body?.openingQty ?? material.openingQty ?? 0);
+    material.packPrice = Number(req.body?.packPrice ?? material.packPrice ?? 0);
+    material.pcsPerPack = Number(req.body?.pcsPerPack ?? material.pcsPerPack ?? 0);
     material.currentRate = Number(req.body?.currentRate ?? material.currentRate ?? 0);
     material.supplierName = "";
     material.note = `${req.body?.note ?? material.note ?? ""}`.trim();

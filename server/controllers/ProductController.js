@@ -103,16 +103,16 @@ const validateCategoryBrandMapping = async ({ shopId, categoryId, brandId }) => 
   }
 
   const [category, brand] = await Promise.all([
-    Category.findOne({ _id: categoryId, $or: [{ shop: shopId }, { shop: null }] }).select("_id name brands").lean(),
-    Brand.findOne({ _id: brandId, $or: [{ shop: shopId }, { shop: null }] }).select("_id name").lean(),
+    Category.findById(categoryId).select("_id name brands").lean(),
+    Brand.findById(brandId).select("_id name").lean(),
   ]);
 
   if (!category) {
-    return { valid: false, message: "Selected category not found for this shop" };
+    return { valid: false, message: "Selected category not found" };
   }
 
   if (!brand) {
-    return { valid: false, message: "Selected brand not found for this shop" };
+    return { valid: false, message: "Selected brand not found" };
   }
 
   const mappedBrandIds = Array.isArray(category.brands)

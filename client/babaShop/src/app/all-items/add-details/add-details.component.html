@@ -24,18 +24,64 @@
         <div class="filter-form">
           <div class="form-section">
             <div class="section-title">Model Setup</div>
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Select Model *</mat-label>
-              <mat-select [(ngModel)]="variation.model" (ngModelChange)="onVariationMetaChange()">
-                <mat-option *ngFor="let m of models" [value]="m._id">{{ m.name }}</mat-option>
-              </mat-select>
-            </mat-form-field>
+            <div class="model-select-row">
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Select Model *</mat-label>
+                <mat-select [(ngModel)]="variation.model" (ngModelChange)="onVariationMetaChange()">
+                  <mat-option *ngFor="let m of models" [value]="m._id">{{ m.name }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+              
+              <button
+                mat-icon-button
+                color="primary"
+                type="button"
+                *ngIf="variation.model && canMutate"
+                (click)="startEditModel(getSelectedModel())"
+                matTooltip="Edit / Rename Selected Model"
+              >
+                <mat-icon>edit</mat-icon>
+              </button>
 
+              <button
+                mat-icon-button
+                color="warn"
+                type="button"
+                *ngIf="variation.model && canMutate"
+                (click)="deleteModel(getSelectedModel())"
+                matTooltip="Delete Selected Model"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+
+            <!-- Input Box for New Model / Edit Model -->
             <mat-form-field appearance="outline" class="full-width" *ngIf="canMutate">
-              <mat-label>New Model</mat-label>
+              <mat-label>{{ editingModelId ? 'Edit Model Name' : 'New Model' }}</mat-label>
               <input matInput [(ngModel)]="modelName" appCapitalizeFirst />
-              <button mat-icon-button matSuffix color="primary" type="button" (click)="createModel()" [disabled]="creatingModel || !modelName">
-                <mat-icon>add</mat-icon>
+              
+              <button
+                mat-icon-button
+                matSuffix
+                color="primary"
+                type="button"
+                (click)="saveModel()"
+                [disabled]="creatingModel || !modelName"
+                [matTooltip]="editingModelId ? 'Save Changes' : 'Add New Model'"
+              >
+                <mat-icon>{{ editingModelId ? 'check' : 'add' }}</mat-icon>
+              </button>
+
+              <button
+                mat-icon-button
+                matSuffix
+                color="warn"
+                type="button"
+                *ngIf="editingModelId"
+                (click)="cancelEditModel()"
+                matTooltip="Cancel Edit"
+              >
+                <mat-icon>close</mat-icon>
               </button>
             </mat-form-field>
           </div>

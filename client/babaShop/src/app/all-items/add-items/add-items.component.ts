@@ -169,11 +169,11 @@ export class AddItemsComponent implements OnInit {
               queryParams: this.returnTo ? { refresh: Date.now(), productName: this.product.name } : undefined,
             });
           },
-          error: () => {
+          error: (err: any) => {
             this.isLoading = false;
 
-            this.snackBar.open("Failed to update product", "Close", {
-              duration: 3000,
+            this.snackBar.open(err?.error?.message || "Failed to update product", "Close", {
+              duration: 3500,
               panelClass: ["snackbar-error"]
             });
           }
@@ -208,11 +208,11 @@ export class AddItemsComponent implements OnInit {
               queryParams: this.returnTo ? { refresh: Date.now(), productName: this.product.name } : undefined,
             });
           },
-          error: () => {
+          error: (err: any) => {
             this.isLoading = false;
 
-            this.snackBar.open("Failed to add product", "Close", {
-              duration: 3000,
+            this.snackBar.open(err?.error?.message || "Failed to add product", "Close", {
+              duration: 3500,
               panelClass: ["snackbar-error"]
             });
           }

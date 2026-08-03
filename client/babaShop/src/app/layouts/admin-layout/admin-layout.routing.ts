@@ -1,9 +1,8 @@
 import { Routes } from "@angular/router";
 
-import { DashboardComponent } from "../../dashboard/dashboard.component";
-import { UserProfileComponent } from "../../user-profile/user-profile.component";
+import { DashboardComponent } from "app/dashboard/dashboard.component";
+import { UserProfileComponent } from "app/user-profile/user-profile.component";
 import { SecurePageGuardGuard } from "app/shared/guard/secure-page-guard.guard";
-import { LoginComponent } from "app/login/login.component";
 import { ItemsListComponent } from "app/all-items/items-list/items-list.component";
 import { AddItemsComponent } from "app/all-items/add-items/add-items.component";
 import { ItemDetailsComponent } from "app/all-items/item-details/item-details.component";
@@ -37,7 +36,7 @@ import { FactoryVerificationComponent } from "app/factory/factory-verification/f
 import { RawMaterialPurchaseComponent } from "app/factory/raw-material-purchase/raw-material-purchase.component";
 import { RawMaterialRegisterComponent } from "app/factory/raw-material-register/raw-material-register.component";
 import { FactoryReportComponent } from "app/factory/factory-report/factory-report.component";
-import { FraudDetectionComponent } from "../../fraud-detection/fraud-detection.component";
+import { FraudDetectionComponent } from "app/fraud-detection/fraud-detection.component";
 import { BarcodeCatalogComponent } from "app/all-items/barcode-catalog/barcode-catalog.component";
 
 const ALL_ROLES = ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"];
@@ -51,7 +50,6 @@ export const AdminLayoutRoutes: Routes = [
     canActivate: [SecurePageGuardGuard, RoleGuard],
     data: { roles: ALL_ROLES, feature: "dashboard.basic" },
   },
-  { path: "login", component: LoginComponent },
   { path: "profile", component: UserProfileComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ALL_ROLES, feature: "settings.profile" } },
   { path: "user-profile", component: UserProfileComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ALL_ROLES, feature: "settings.profile" } },
   { path: "item-list", component: ItemsListComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ALL_ROLES, requireShop: true, allowGlobalRead: true, feature: "inventory.products" } },

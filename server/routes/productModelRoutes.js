@@ -21,4 +21,18 @@ router.post(
 
 router.get("/", authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"), authorizeFeature("inventory.products"), productModelController.getProductModels);
 
+router.put(
+  "/:id",
+  authorizeFeature("inventory.products.manage"),
+  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER"),
+  productModelController.updateProductModel
+);
+
+router.delete(
+  "/:id",
+  authorizeFeature("inventory.products.manage"),
+  authorizeRoles("SUPER_ADMIN", "ADMIN"),
+  productModelController.deleteProductModel
+);
+
 module.exports = router;

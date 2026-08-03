@@ -330,15 +330,18 @@
               <div class="snapshot-stats">
                 <div class="snapshot-stat">
                   <span class="sstat-label">Used</span>
-                  <span class="sstat-value">{{ item.consumedQty | number: '1.0-0' }}</span>
+                  <span class="sstat-value">{{ item.consumedQty | number: '1.0-0' }} <small style="font-size: 0.7rem; color: #e11d48; font-weight: 600;">PCS</small></span>
                 </div>
                 <div class="snapshot-stat">
                   <span class="sstat-label">Balance</span>
-                  <span class="sstat-value">{{ item.currentBalanceQty | number: '1.0-0' }}</span>
+                  <span class="sstat-value">{{ item.currentBalanceQty | number: '1.0-0' }} <small style="font-size: 0.7rem; color: #0284c7; font-weight: 600;">{{ item.unitLabel || 'PCS' }}</small></span>
+                  <div *ngIf="item.unitLabel === 'BAG' && item.pcsPerPack && item.pcsPerPack > 0" style="font-size: 0.7rem; color: #0284c7; font-weight: 700; margin-top: 2px;">
+                    = {{ (item.currentBalanceQty * item.pcsPerPack) | number: '1.0-0' }} Pcs
+                  </div>
                 </div>
                 <div class="snapshot-stat">
-                  <span class="sstat-label">Rate</span>
-                  <span class="sstat-value">₹{{ item.currentRate | number: '1.2-2' }}</span>
+                  <span class="sstat-label">Per Pc Rate</span>
+                  <span class="sstat-value">₹{{ item.currentRate | number: '1.2-2' }} <small style="font-size: 0.7rem; color: #64748b;">/ PCS</small></span>
                 </div>
               </div>
               <div class="snapshot-value">

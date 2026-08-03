@@ -41,6 +41,29 @@ export class FactoryProductMasterComponent implements OnInit {
     active: true,
   };
 
+  bulkCalc = {
+    totalSheets: 0,
+    totalBoxes: 0,
+    resultPerBox: 0,
+  };
+
+  calculateBulkPerBox(): void {
+    const sheets = Number(this.bulkCalc.totalSheets || 0);
+    const boxes = Number(this.bulkCalc.totalBoxes || 0);
+    if (sheets > 0 && boxes > 0) {
+      this.bulkCalc.resultPerBox = Number((sheets / boxes).toFixed(3));
+    } else {
+      this.bulkCalc.resultPerBox = 0;
+    }
+  }
+
+  applyBulkToMaterialLine(line: any): void {
+    if (this.bulkCalc.resultPerBox > 0) {
+      line.qtyPerUnit = this.bulkCalc.resultPerBox;
+      this.snackBar.open(`Applied ${this.bulkCalc.resultPerBox} Sheet/Box to recipe line`, "Close", { duration: 2200 });
+    }
+  }
+
   filters = {
     search: "",
     active: "",
@@ -244,13 +267,16 @@ export class FactoryProductMasterComponent implements OnInit {
       standardWasteQtyPerUnit: Number(product.standardWasteQtyPerUnit || 0),
       standardWasteUnitLabel: product.standardWasteUnitLabel || "KG",
       standardWasteValuePerUnit: Number(product.standardWasteValuePerUnit || 0),
-      standardMaterialLines: (product.standardMaterialLines || []).map((line: any) => ({
-        rawMaterial: line.rawMaterial?._id || line.rawMaterial || "",
-        materialName: line.materialName || line.rawMaterial?.name || "",
-        qtyPerUnit: Number(line.qtyPerUnit || 0),
-        unitLabel: line.unitLabel || line.rawMaterial?.unitLabel || "PCS",
-        rate: Number(line.rate || line.rawMaterial?.currentRate || 0),
-      })),
+      standardMaterialLines: (product.standardMaterialLines || []).map((line: any) => {
+        const lineUnit = `${line.unitLabel || line.rawMaterial?.unitLabel || "PCS"}`.toUpperCase();
+        return {
+          rawMaterial: line.rawMaterial?._id || line.rawMaterial || "",
+          materialName: line.materialName || line.rawMaterial?.name || "",
+          qtyPerUnit: Number(line.qtyPerUnit || 0),
+          unitLabel: lineUnit === "BAG" ? "PCS" : lineUnit,
+          rate: Number(line.rate || line.rawMaterial?.currentRate || 0),
+        };
+      }),
       note: product.note || "",
       active: !!product.active,
     };
@@ -418,7 +444,12 @@ export class FactoryProductMasterComponent implements OnInit {
       return;
     }
     line.materialName = material.name || "";
-    line.unitLabel = material.unitLabel || "PCS";
+    const masterUnit = `${material.unitLabel || "PCS"}`.toUpperCase();
+    if (masterUnit === "BAG" || (material.pcsPerPack && Number(material.pcsPerPack) > 0)) {
+      line.unitLabel = "PCS";
+    } else {
+      line.unitLabel = masterUnit;
+    }
     line.rate = Number(material.currentRate || 0);
   }
 

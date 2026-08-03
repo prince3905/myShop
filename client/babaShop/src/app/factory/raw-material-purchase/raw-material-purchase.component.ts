@@ -93,10 +93,39 @@ export class RawMaterialPurchaseComponent implements OnInit {
   createItem(): any {
     return {
       rawMaterial: "",
+      packPrice: 0,
+      pcsPerPack: 0,
+      bagsCount: 0,
       quantity: 1,
       rate: 0,
       note: "",
     };
+  }
+
+  onMaterialChange(index: number): void {
+    const item = this.purchaseForm.items[index];
+    if (!item || !item.rawMaterial) return;
+
+    const mat = this.rawMaterials.find((m) => `${m._id}` === `${item.rawMaterial}`);
+    if (mat) {
+      if (mat.packPrice > 0) item.packPrice = mat.packPrice;
+      if (mat.pcsPerPack > 0) item.pcsPerPack = mat.pcsPerPack;
+      if (mat.currentRate > 0) item.rate = mat.currentRate;
+      this.onPackCalcChange(item);
+    }
+  }
+
+  onPackCalcChange(item: any): void {
+    const packPrice = Number(item.packPrice || 0);
+    const pcsPerPack = Number(item.pcsPerPack || 0);
+    const bagsCount = Number(item.bagsCount || 0);
+
+    if (packPrice > 0 && pcsPerPack > 0) {
+      item.rate = Number((packPrice / pcsPerPack).toFixed(2));
+      if (bagsCount > 0) {
+        item.quantity = bagsCount * pcsPerPack;
+      }
+    }
   }
 
   get subtotalPreview(): number {
@@ -168,15 +197,7 @@ export class RawMaterialPurchaseComponent implements OnInit {
     this.purchaseForm.items.splice(index, 1);
   }
 
-  onMaterialChange(index: number): void {
-    const row = this.purchaseForm.items[index];
-    const selected = this.rawMaterials.find((item) => `${item?._id}` === `${row?.rawMaterial}`);
-    if (!selected) return;
-    row.rate = Number(selected?.currentRate || 0);
-    if (!row.quantity || Number(row.quantity) <= 0) {
-      row.quantity = 1;
-    }
-  }
+
 
   submit(form: NgForm): void {
     if (!this.canManage || this.saving || form.invalid) {
@@ -376,6 +397,17 @@ export class RawMaterialPurchaseComponent implements OnInit {
   getRawMaterialNameById(id: string): string {
     const material = this.rawMaterials.find((item) => `${item?._id}` === `${id}`);
     return material?.name || "-";
+  }
+
+  getItemPcs(item: any): number | null {
+    const qty = Number(item?.orderedQty || item?.quantity || 0);
+    const matId = item?.rawMaterial?._id || item?.rawMaterial;
+    const mat = this.rawMaterials.find((m) => `${m._id}` === `${matId}`);
+    const pcsPerPack = Number(item?.pcsPerPack || mat?.pcsPerPack || 0);
+    if (pcsPerPack > 0 && qty > 0) {
+      return pcsPerPack * qty;
+    }
+    return null;
   }
 
   private formatDate(date: Date | string | null): string {

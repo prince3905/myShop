@@ -6,6 +6,8 @@ import { Location } from "@angular/common";
 import { NavigationEnd, Router } from "@angular/router";
 import { Subject } from "rxjs";
 import { filter, takeUntil } from "rxjs/operators";
+import { MatDialog } from "@angular/material/dialog";
+import { ShopSyncModalComponent } from "app/shops/shop-sync-modal/shop-sync-modal.component";
 
 interface NavbarLink {
   title: string;
@@ -49,9 +51,23 @@ export class NavbarComponent implements OnInit {
     private router: Router,
     private shopService: ShopService,
     private authService: AuthService,
+    private dialog: MatDialog,
   ) {
     this.location = location;
     this.sidebarVisible = false;
+  }
+
+  openShopSyncModal(): void {
+    const dialogRef = this.dialog.open(ShopSyncModalComponent, {
+      width: "580px",
+      disableClose: true,
+    });
+
+    dialogRef.afterClosed().subscribe((didSync) => {
+      if (didSync) {
+        window.location.reload();
+      }
+    });
   }
 
   ngOnInit() {

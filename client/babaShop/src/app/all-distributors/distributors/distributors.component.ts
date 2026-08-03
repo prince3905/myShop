@@ -7,6 +7,7 @@ import { Subject, Subscription } from "rxjs";
 import { MatDialog } from "@angular/material/dialog";
 import { AddDistributorsComponent } from "../add-distributors/add-distributors.component";
 import { ViewDistributorComponent } from "../view-distributor/view-distributor.component";
+import { ShopSyncModalComponent } from "app/shops/shop-sync-modal/shop-sync-modal.component";
 import { ShopService } from "app/shared/services/shop.service";
 import { AuthService } from "app/shared/services/auth.service";
 
@@ -164,6 +165,20 @@ export class DistributorsComponent implements OnInit, OnDestroy {
   selectSuggestion(suggestion: string): void {
     this.name = suggestion;
     this.suggestions = [];
+  }
+
+  openShopSyncModal(): void {
+    this.dialog
+      .open(ShopSyncModalComponent, {
+        width: "580px",
+        disableClose: true,
+      })
+      .afterClosed()
+      .subscribe((res) => {
+        if (res === true) {
+          this.getAllDistributors(this.getQueryParams(1));
+        }
+      });
   }
 
   openAddDistributor() {

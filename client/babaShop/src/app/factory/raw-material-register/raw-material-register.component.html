@@ -74,8 +74,13 @@
 
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Material Name</mat-label>
-            <input matInput [(ngModel)]="materialForm.name" name="name" required>
+            <input matInput [(ngModel)]="materialForm.name" name="name" (ngModelChange)="onMaterialNameChange()" [matAutocomplete]="nameAuto" required>
             <mat-icon matPrefix>label</mat-icon>
+            <mat-autocomplete #nameAuto="matAutocomplete" (optionSelected)="onMaterialNameChange()">
+              <mat-option *ngFor="let option of nameSuggestions" [value]="option">
+                {{ option }}
+              </mat-option>
+            </mat-autocomplete>
           </mat-form-field>
 
           <div class="inline-fields four-col">
@@ -103,10 +108,33 @@
             </mat-form-field>
           </div>
 
+          <!-- Pack / Bag Price Calculator -->
+          <div class="inline-fields">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>{{ packPriceLabel }}</mat-label>
+              <input matInput type="number" min="0" [(ngModel)]="materialForm.packPrice" name="packPrice" (ngModelChange)="onPackCalcChange()" placeholder="e.g. 175">
+              <mat-icon matPrefix>shopping_bag</mat-icon>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>{{ pcsPerPackLabel }}</mat-label>
+              <input matInput type="number" min="0" [(ngModel)]="materialForm.pcsPerPack" name="pcsPerPack" (ngModelChange)="onPackCalcChange()" placeholder="e.g. 24">
+              <mat-icon matPrefix>numbers</mat-icon>
+            </mat-form-field>
+          </div>
+
           <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Last Rate</mat-label>
+            <mat-label>1 Piece Ka Daam (₹ Auto Calculated)</mat-label>
             <input matInput type="number" min="0" [(ngModel)]="materialForm.currentRate" name="currentRate" required>
             <mat-icon matPrefix>currency_rupee</mat-icon>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>{{ countedStockLabel }}</mat-label>
+            <input matInput type="number" min="0" [(ngModel)]="materialForm.openingQty" name="openingQty" [placeholder]="countedStockPlaceholder">
+            <mat-icon matPrefix>inventory_2</mat-icon>
+            <mat-hint *ngIf="countedStockPcsEquivalent" style="color: #0284c7; font-weight: 600;">
+              = {{ countedStockPcsEquivalent }} Total Pieces (Auto Math)
+            </mat-hint>
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="full-width">
@@ -189,29 +217,48 @@
             </div>
 
             <div class="balance-display">
-              <div class="balance-item">
-                <div class="balance-label">Received</div>
-                <div class="balance-value received">{{ material.receivedQty | number: '1.0-0' }}</div>
+              <div class="balance-item" *ngIf="material.openingQty && material.openingQty > 0">
+                <div class="balance-label">Initial Stock</div>
+                <div class="balance-value" style="color: #6366f1;">
+                  {{ material.openingQty | number: '1.0-0' }} {{ material.unitLabel }}
+                </div>
               </div>
-              <div class="balance-item">
+              <div class="balance-item" *ngIf="material.receivedQty && material.receivedQty > 0">
+                <div class="balance-label">Received</div>
+                <div class="balance-value received">
+                  {{ material.receivedQty | number: '1.0-0' }} {{ material.unitLabel }}
+                </div>
+              </div>
+              <div class="balance-item" *ngIf="material.consumedQty && material.consumedQty > 0">
                 <div class="balance-label">Used</div>
-                <div class="balance-value used">{{ material.consumedQty | number: '1.0-0' }}</div>
+                <div class="balance-value used">
+                  {{ material.consumedQty | number: '1.0-0' }} PCS
+                </div>
               </div>
               <div class="balance-item highlight">
-                <div class="balance-label">Balance</div>
-                <div class="balance-value">{{ material.currentBalanceQty | number: '1.0-0' }}</div>
+                <div class="balance-label">Available Balance</div>
+                <div class="balance-value">
+                  {{ material.currentBalanceQty | number: '1.0-0' }} {{ material.unitLabel }}
+                </div>
+                <div *ngIf="(material.unitLabel === 'BAG' || material.unitLabel === 'SET' || material.unitLabel === 'PACKET' || material.unitLabel === 'PKT' || material.unitLabel === 'BOX') && material.pcsPerPack && material.pcsPerPack > 0" style="font-size: 0.75rem; color: #0284c7; font-weight: 700; margin-top: 3px;">
+                  = {{ (material.currentBalanceQty * material.pcsPerPack) | number: '1.0-0' }} Pcs
+                </div>
               </div>
             </div>
 
             <div class="rate-display">
               <div class="rate-item">
-                <span class="rate-label">Last Rate</span>
-                <strong>₹{{ material.currentRate | number: '1.2-2' }}/{{ material.unitLabel }}</strong>
+                <span class="rate-label">Per Piece Rate</span>
+                <strong style="color: #0284c7;">₹{{ material.currentRate | number: '1.2-2' }} / PCS</strong>
               </div>
               <div class="rate-item highlight">
-                <span class="rate-label">Value</span>
+                <span class="rate-label">Total Value</span>
                 <strong>₹{{ material.currentBalanceValue | number: '1.0-0' }}</strong>
               </div>
+            </div>
+
+            <div *ngIf="material.packPrice && material.packPrice > 0" style="font-size: 0.75rem; color: #475569; background: #f1f5f9; padding: 4px 8px; border-radius: 6px; margin-top: 6px; text-align: center; font-weight: 500;">
+              📦 Purchase Info: ₹{{ material.packPrice | number: '1.2-2' }} / {{ material.unitLabel === 'BAG' ? 'Bag' : (material.unitLabel === 'SET' ? 'Set' : (material.unitLabel === 'BOX' ? 'Box' : 'Packet')) }} ({{ material.pcsPerPack }} Pcs/{{ material.unitLabel === 'BAG' ? 'Bag' : (material.unitLabel === 'SET' ? 'Set' : (material.unitLabel === 'BOX' ? 'Box' : 'Packet')) }})
             </div>
 
             <div class="material-footer">

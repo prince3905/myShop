@@ -20,11 +20,9 @@ import { MatInputModule } from '@angular/material/input';
 import { MatCardModule } from '@angular/material/card';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatMenuModule } from '@angular/material/menu';
-import {MatExpansionModule} from '@angular/material/expansion';
+import { MatExpansionModule } from '@angular/material/expansion';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
-
-
-
+import { MatPaginatorModule } from '@angular/material/paginator';
 
 
 import { ItemService } from './shared/services/item.service';
@@ -53,7 +51,8 @@ import { MatIconModule } from '@angular/material/icon';
     MatExpansionModule,
     MatAutocompleteModule,
     MatDialogModule,
-    MatIconModule
+    MatIconModule,
+    MatPaginatorModule
 ],
   declarations: [
     AppComponent,
@@ -63,6 +62,7 @@ import { MatIconModule } from '@angular/material/icon';
   ],
   exports: [
     MatMenuModule,
+    MatPaginatorModule
   ],
   providers: [
     {

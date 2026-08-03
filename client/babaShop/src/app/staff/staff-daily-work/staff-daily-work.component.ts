@@ -160,10 +160,18 @@ export class StaffDailyWorkComponent implements OnInit {
         const rawMaterialId = `${line?.rawMaterial?._id || line?.rawMaterial || ""}`.trim();
         const material = this.rawMaterialOptions.find((row) => row?._id === rawMaterialId);
         const requiredQty = Number(line?.qtyPerUnit || 0) * qty;
-        const availableQty = Number(material?.currentBalanceQty || 0);
+
+        let availableQty = Number(material?.currentBalanceQty || 0);
+        const matUnit = `${material?.unitLabel || ""}`.toUpperCase();
+        const pcsPerPack = Number(material?.pcsPerPack || 0);
+
+        if (matUnit === "BAG" && pcsPerPack > 0) {
+          availableQty = availableQty * pcsPerPack;
+        }
+
         return {
           materialName: line?.materialName || material?.name || "Raw Material",
-          unitLabel: line?.unitLabel || material?.unitLabel || "PCS",
+          unitLabel: "PCS",
           requiredQty,
           availableQty,
           shortageQty: Math.max(0, requiredQty - availableQty),

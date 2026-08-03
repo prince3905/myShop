@@ -39,6 +39,16 @@ const rawMaterialSchema = new mongoose.Schema(
       min: 0,
       default: 0,
     },
+    packPrice: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    pcsPerPack: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
     currentRate: {
       type: Number,
       required: true,

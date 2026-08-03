@@ -67,15 +67,22 @@
                             <i class="material-icons">add_business</i>
                             <span>Add Shop</span>
                         </button>
-                        <button mat-menu-item disabled>
+                        <button mat-menu-item (click)="openShopSyncModal()">
                             <i class="material-icons">sync_alt</i>
-                            <span>Switch Shop</span>
+                            <span>Clone / Sync Shop Data</span>
                         </button>
                         <button mat-menu-item *ngFor="let shop of shops" (click)="onShopChange(shop._id)">
                             <i class="material-icons">storefront</i>
                             <span>{{ shop.name }} ({{ shop.shopCode }})</span>
                         </button>
                     </mat-menu>
+                </li>
+
+                <li class="nav-item" *ngIf="isSuperAdmin">
+                    <a class="nav-link quick-link sync-link" href="javascript:void(0)" (click)="openShopSyncModal()" title="Clone / Sync Shop Data">
+                        <i class="material-icons">sync_alt</i>
+                        <span class="quick-link-text">Sync Data</span>
+                    </a>
                 </li>
 
                 <li class="nav-item" *ngFor="let link of navLinks">

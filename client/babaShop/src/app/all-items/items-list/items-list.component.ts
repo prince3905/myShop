@@ -12,6 +12,7 @@ import { ProductService } from "app/shared/services/product.service";
 import { CategoryService } from "app/shared/services/category.service";
 import { BrandService } from "app/shared/services/brand.service";
 import { AuthService } from "app/shared/services/auth.service";
+import { ShopSyncModalComponent } from "app/shops/shop-sync-modal/shop-sync-modal.component";
 @Component({
   selector: "items-list",
   templateUrl: "./items-list.component.html",
@@ -292,6 +293,19 @@ export class ItemsListComponent implements OnInit {
     if (this.selectedBrand && !isSelectedBrandValid) {
       this.selectedBrand = null;
     }
+  }
+
+  openShopSyncModal(): void {
+    const dialogRef = this.dialog.open(ShopSyncModalComponent, {
+      width: "580px",
+      disableClose: true,
+    });
+
+    dialogRef.afterClosed().subscribe((didSync) => {
+      if (didSync) {
+        this.loadProducts((this.paginator?.pageIndex || 0) + 1, this.pageSize);
+      }
+    });
   }
 
   openAddItemModal(): void {

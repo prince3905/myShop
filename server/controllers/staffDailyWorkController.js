@@ -197,6 +197,11 @@ const validateFactoryProductStock = async ({ req, factoryProduct, unitsCompleted
 
   const materialIds = Array.from(requiredMap.keys()).map((id) => new mongoose.Types.ObjectId(id));
 
+  const RawMaterial = require("../models/RawMaterial");
+  const rawMaterials = await RawMaterial.find({ _id: { $in: materialIds } }).lean();
+  const rawMaterialMap = new Map();
+  rawMaterials.forEach((m) => rawMaterialMap.set(String(m._id), m));
+
   const [approvedPurchases, dailyWorks] = await Promise.all([
     RawMaterialPurchase.find({
       shop: req.shopId,
@@ -228,8 +233,18 @@ const validateFactoryProductStock = async ({ req, factoryProduct, unitsCompleted
       if (!requiredMap.has(rawMaterialId)) {
         continue;
       }
+      const mat = rawMaterialMap.get(rawMaterialId);
+      const matUnit = `${mat?.unitLabel || "PCS"}`.toUpperCase();
+      const itemUnit = `${item?.unitLabel || matUnit}`.toUpperCase();
+      const pcsPerPack = Number(mat?.pcsPerPack || 0);
+
+      let rawQty = Number(item?.receivedQty || 0) || Number(item?.orderedQty || 0);
+      if (itemUnit === "BAG" && matUnit === "PCS" && pcsPerPack > 0) {
+        rawQty = rawQty * pcsPerPack;
+      }
+
       const existing = receivedMap.get(rawMaterialId) || 0;
-      receivedMap.set(rawMaterialId, existing + Number(item?.receivedQty || 0));
+      receivedMap.set(rawMaterialId, existing + rawQty);
     }
   }
 
@@ -251,14 +266,26 @@ const validateFactoryProductStock = async ({ req, factoryProduct, unitsCompleted
   }
 
   for (const [rawMaterialId, required] of requiredMap.entries()) {
-    const receivedQty = Number(receivedMap.get(rawMaterialId) || 0);
+    const mat = rawMaterialMap.get(rawMaterialId);
+    const matUnit = `${mat?.unitLabel || "PCS"}`.toUpperCase();
+    const pcsPerPack = Number(mat?.pcsPerPack || 0);
+
+    const openingQty = Number(mat?.openingQty || 0);
+    const openingInPcs = (matUnit === "BAG" && pcsPerPack > 0) ? (openingQty * pcsPerPack) : openingQty;
+    
+    let receivedQty = Number(receivedMap.get(rawMaterialId) || 0);
+    if (matUnit === "BAG" && pcsPerPack > 0) {
+      receivedQty = receivedQty * pcsPerPack;
+    }
+
     const consumedQty = Number(consumedMap.get(rawMaterialId) || 0);
-    const availableQty = receivedQty - consumedQty;
-    if (required.requiredQty > availableQty + 0.0001) {
+    const availableQtyInPcs = openingInPcs + receivedQty - consumedQty;
+
+    if (required.requiredQty > availableQtyInPcs + 0.0001) {
       return {
         status: 400,
         success: false,
-        message: `${required.materialName} ka stock kam hai. Required ${required.requiredQty} ${required.unitLabel}, available ${Math.max(0, availableQty)} ${required.unitLabel}.`,
+        message: `${required.materialName} ka stock kam hai. Required ${required.requiredQty} PCS, available ${Math.max(0, Math.floor(availableQtyInPcs))} PCS.`,
       };
     }
   }
@@ -888,9 +915,19 @@ exports.pushDailyWorkToStock = async (req, res) => {
       createdBy: req.user._id,
     });
 
-    await ProductVariation.findByIdAndUpdate(targetVariation._id, {
+    const resolvedSellingPrice = Number(factoryProduct.defaultSellingPrice || 0) || Number(sourceVariation.sellingPrice || 0) || Number(targetVariation.sellingPrice || 0);
+
+    const variationUpdate = {
       costPrice: Number(nextCostPrice || 0),
-    });
+    };
+    if (resolvedSellingPrice > 0) {
+      variationUpdate.sellingPrice = resolvedSellingPrice;
+    }
+
+    await ProductVariation.findByIdAndUpdate(targetVariation._id, variationUpdate);
+    if (`${sourceVariation._id}` !== `${targetVariation._id}` && resolvedSellingPrice > 0) {
+      await ProductVariation.findByIdAndUpdate(sourceVariation._id, { sellingPrice: resolvedSellingPrice });
+    }
 
     await Stock.findOneAndUpdate(
       { shop: targetShop._id, variation: targetVariation._id },

@@ -41,6 +41,12 @@
   top: 20px;
 }
 
+.model-select-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .form-panel-header {
   display: flex;
   align-items: center;

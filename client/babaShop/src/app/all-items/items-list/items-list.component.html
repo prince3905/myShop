@@ -69,6 +69,9 @@
             <button mat-raised-button color="primary" *hasRole="['SUPER_ADMIN','ADMIN','MANAGER']" (click)="openAddItemModal()">
               <mat-icon>add</mat-icon> Add Product
             </button>
+            <button mat-stroked-button color="accent" *hasRole="['SUPER_ADMIN','ADMIN']" (click)="openShopSyncModal()">
+              <mat-icon>sync_alt</mat-icon> Sync Catalog
+            </button>
             <button mat-stroked-button *hasRole="['SUPER_ADMIN','ADMIN']" (click)="openAddCategoryModal()">
               <mat-icon>add</mat-icon> Category
             </button>

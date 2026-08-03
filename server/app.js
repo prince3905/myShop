@@ -36,6 +36,7 @@ const isDevelopment = `${process.env.NODE_ENV || "development"}` !== "production
 const { authRateLimit, salesRateLimit, userRateLimit, customerRateLimit, generalRateLimit } = require("./middleware/rateLimiter");
 
 const shopRouter = require("./routes/shopRoutes");
+const shopSyncRoutes = require("./routes/shopSyncRoutes");
 const userRoutes = require("./routes/allUsersRoutes");
 const authRouter = require("./routes/authRoutes");
 const distributorRouter = require("./routes/distributorRoutes");
@@ -113,6 +114,7 @@ app.use("/api/users/login", authRateLimit);
 
 
 app.use("/api/shops", shopRouter);
+app.use("/api/shops/sync", shopSyncRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/auth", authRouter);
 app.use("/api/distributor", distributorRouter);

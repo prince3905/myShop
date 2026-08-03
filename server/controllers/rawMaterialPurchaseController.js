@@ -315,6 +315,27 @@ exports.approvePurchase = async (req, res) => {
     purchase.updatedBy = req.user._id;
     await purchase.save();
 
+    // Auto-update RawMaterial currentRate and packPrice in Master with latest purchase rate
+    const RawMaterial = require("../models/RawMaterial");
+    for (const item of purchase.items || []) {
+      if (item.rawMaterial && item.rate > 0) {
+        const mat = await RawMaterial.findById(item.rawMaterial);
+        if (mat) {
+          let updatedRate = Number(item.rate || 0);
+          let updatedPackPrice = mat.packPrice;
+          const unit = `${item.unitLabel || mat.unitLabel || ""}`.toUpperCase();
+          if (unit === "BAG" && mat.pcsPerPack > 0) {
+            updatedPackPrice = item.rate;
+            updatedRate = Number((item.rate / mat.pcsPerPack).toFixed(2));
+          }
+          mat.currentRate = updatedRate;
+          if (updatedPackPrice > 0) mat.packPrice = updatedPackPrice;
+          mat.updatedBy = req.user._id;
+          await mat.save();
+        }
+      }
+    }
+
     await createDistributorLedgerEntry({
       shop: req.shopId,
       distributor: purchase.distributor,

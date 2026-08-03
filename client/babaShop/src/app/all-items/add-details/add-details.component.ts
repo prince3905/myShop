@@ -40,6 +40,7 @@ export class AddDetailsComponent implements OnInit {
   isLoading = false;
   listLoading = false;
   creatingModel = false;
+  editingModelId: string | null = null;
   modelName = "";
   allowCodeRegenerationInEdit = false;
   canRegenerateCodes = true;
@@ -357,6 +358,18 @@ export class AddDetailsComponent implements OnInit {
     return err?.error?.message || "Delete failed";
   }
 
+  getSelectedModel(): any {
+    return this.models.find((m) => m._id === this.variation.model);
+  }
+
+  saveModel(): void {
+    if (this.editingModelId) {
+      this.updateModel();
+    } else {
+      this.createModel();
+    }
+  }
+
   createModel() {
     if (!this.canMutate) return;
     const name = (this.modelName || "").trim();
@@ -372,7 +385,7 @@ export class AddDetailsComponent implements OnInit {
         next: (res: any) => {
           this.creatingModel = false;
           this.modelName = "";
-          this.snackBar.open("Model created", "Close", { duration: 2500 });
+          this.snackBar.open("Model created successfully", "Close", { duration: 2500 });
           const model = res?.data;
           if (model) {
             this.models = [model, ...this.models];
@@ -389,6 +402,93 @@ export class AddDetailsComponent implements OnInit {
           });
         },
       });
+  }
+
+  startEditModel(model: any): void {
+    if (!this.canMutate || !model?._id) return;
+
+    const hasVariations = this.variations.some(
+      (v) => `${v.model?._id || v.model || ""}` === `${model._id}`
+    );
+
+    if (hasVariations) {
+      this.snackBar.open(
+        `Is Model (${model.name}) ke sath pehle se Variations judi hui hain. Edit ya Delete karne ke liye pehle iski sabhi Variations delete karein.`,
+        "Close",
+        { duration: 4500, panelClass: ["snackbar-error"] }
+      );
+      return;
+    }
+
+    this.editingModelId = model._id;
+    this.modelName = model.name;
+    this.snackBar.open(`Editing Model: ${model.name}. Change name in the box and click Save.`, "Close", { duration: 3000 });
+  }
+
+  cancelEditModel(): void {
+    this.editingModelId = null;
+    this.modelName = "";
+  }
+
+  updateModel(): void {
+    if (!this.canMutate || !this.editingModelId) return;
+    const name = (this.modelName || "").trim();
+    if (!name) {
+      this.snackBar.open("Model name is required", "Close", { duration: 2500 });
+      return;
+    }
+
+    this.creatingModel = true;
+    this.productModelService.updateModel(this.editingModelId, { name }).subscribe({
+      next: () => {
+        this.creatingModel = false;
+        this.snackBar.open("Model updated successfully", "Close", { duration: 2500 });
+        this.editingModelId = null;
+        this.modelName = "";
+        this.loadModels();
+      },
+      error: (err: any) => {
+        this.creatingModel = false;
+        this.snackBar.open(err?.error?.message || "Failed to update model", "Close", { duration: 4000 });
+      },
+    });
+  }
+
+  deleteModel(model: any): void {
+    if (!this.canMutate || !model?._id) return;
+
+    const hasVariations = this.variations.some(
+      (v) => `${v.model?._id || v.model || ""}` === `${model._id}`
+    );
+
+    if (hasVariations) {
+      this.snackBar.open(
+        `Is Model (${model.name}) ke sath pehle se Variations judi hui hain. Delete karne se pehle iski sabhi Variations delete karein.`,
+        "Close",
+        { duration: 4500, panelClass: ["snackbar-error"] }
+      );
+      return;
+    }
+
+    const confirmed = window.confirm(`Are you sure you want to delete model "${model.name}"?`);
+    if (!confirmed) return;
+
+    this.productModelService.deleteModel(model._id).subscribe({
+      next: () => {
+        this.snackBar.open("Model deleted successfully", "Close", { duration: 2500 });
+        if (this.variation.model === model._id) {
+          this.variation.model = "";
+        }
+        if (this.editingModelId === model._id) {
+          this.editingModelId = null;
+          this.modelName = "";
+        }
+        this.loadModels();
+      },
+      error: (err: any) => {
+        this.snackBar.open(err?.error?.message || "Failed to delete model", "Close", { duration: 4000 });
+      },
+    });
   }
 
   printVariationLabel(v: any): void {
