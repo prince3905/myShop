@@ -147,6 +147,7 @@ export class SettingsComponent implements OnInit {
 
     this.shopForm = this.fb.group({
       name: [""],
+      shopCode: [""],
       contactNumber: [""],
       email: [""],
       upiId: [""],
@@ -318,6 +319,7 @@ export class SettingsComponent implements OnInit {
         this.preferencesForm.patchValue(data.preferences || {});
         this.shopForm.patchValue({
           name: data.shop?.name || "",
+          shopCode: data.shop?.shopCode || "",
           contactNumber: data.shop?.contactNumber || "",
           email: data.shop?.email || "",
           upiId: data.shop?.paymentSettings?.upiId || "",
@@ -378,6 +380,7 @@ export class SettingsComponent implements OnInit {
   saveShopSettings() {
     const payload = {
       name: this.shopForm.value.name,
+      shopCode: this.shopForm.value.shopCode,
       contactNumber: this.shopForm.value.contactNumber,
       email: this.shopForm.value.email,
       address: {

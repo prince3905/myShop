@@ -84,7 +84,19 @@ const productVariationSchema = new mongoose.Schema({
   isQuickAdd: {
     type: Boolean,
     default: false
-  }
+  },
+
+  priceHistory: [
+    {
+      oldSellingPrice: Number,
+      newSellingPrice: Number,
+      oldCostPrice: Number,
+      newCostPrice: Number,
+      reason: String,
+      changedAt: { type: Date, default: Date.now },
+      updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" }
+    }
+  ]
 
 }, { timestamps: true });
 

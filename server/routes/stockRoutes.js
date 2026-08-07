@@ -94,4 +94,11 @@ router.post(
   stockController.manualAdjust,
 );
 
+router.post(
+  "/transfer",
+  authorizeFeature("inventory.stocks"),
+  authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER"),
+  stockController.transferStockBetweenShops,
+);
+
 module.exports = router;

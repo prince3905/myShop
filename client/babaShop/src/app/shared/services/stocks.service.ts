@@ -39,6 +39,10 @@ export class StocksService {
     return this.http.post(`${this.baseURL}/api/stocks/adjust`, payload);
   }
 
+  transferStock(payload: any) {
+    return this.http.post(`${this.baseURL}/api/stocks/transfer`, payload);
+  }
+
   getLowStockAlerts(): Observable<any> {
     return this.http.get(`${this.baseURL}/api/stocks/alerts/low-stock`);
   }

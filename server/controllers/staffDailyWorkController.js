@@ -356,8 +356,10 @@ exports.createDailyWork = async (req, res) => {
     if (workItem?.error) {
       return res.status(workItem.error.status).json(workItem.error);
     }
-    if (`${staff?.rateType || ""}` === "PIECE" && !factoryProduct) {
-      return res.status(400).json({ success: false, message: "Piece-rate staff requires a factory product" });
+    const isKhorakiOnly = (req.body?.isKhorakiIncluded === true || req.body?.isKhorakiOnly === true) && Number(unitsCompleted || 0) === 0;
+
+    if (`${staff?.rateType || ""}` === "PIECE" && !factoryProduct && !isKhorakiOnly) {
+      return res.status(400).json({ success: false, message: "Piece-rate staff requires a factory product for production work" });
     }
 
     const stockError = await validateFactoryProductStock({
@@ -367,6 +369,12 @@ exports.createDailyWork = async (req, res) => {
     });
     if (stockError) {
       return res.status(stockError.status).json(stockError);
+    }
+
+    const isKhorakiIncluded = req.body?.isKhorakiIncluded === true || req.body?.includeKhoraki === true || req.body?.khoraki === true;
+    let computedKhorakiAmount = Number(req.body?.khorakiAmount ?? (attendanceStatus === "HALF_DAY" ? 50 : 100));
+    if (attendanceStatus === "ABSENT") {
+      computedKhorakiAmount = 0;
     }
 
     const dailyWork = await StaffDailyWork.create({
@@ -391,6 +399,8 @@ exports.createDailyWork = async (req, res) => {
         req.body?.earnedAmount,
         factoryProduct?.workerPieceRate ?? workItem?.pieceRate,
       ),
+      isKhorakiIncluded,
+      khorakiAmount: isKhorakiIncluded ? computedKhorakiAmount : 0,
       verificationStatus: "PENDING",
       verifiedQty: 0,
       verificationNote: "",
@@ -404,11 +414,26 @@ exports.createDailyWork = async (req, res) => {
       createdBy: req.user._id,
     });
 
+    if (isKhorakiIncluded && computedKhorakiAmount > 0) {
+      const StaffPayment = require("../models/StaffPayment");
+      const productNameStr = factoryProduct?.name ? ` for ${factoryProduct.name}` : "";
+      await StaffPayment.create({
+        shop: req.shopId,
+        staff: staff._id,
+        entryDate,
+        entryType: "KHORAKI",
+        amount: computedKhorakiAmount,
+        paymentMethod: "CASH",
+        note: `Daily Khoraki (${attendanceStatus === "HALF_DAY" ? "Half Day ₹50" : "Full Day ₹100"})${productNameStr}`,
+        createdBy: req.user._id,
+      });
+    }
+
     const populated = await populateDailyWorkQuery(StaffDailyWork.findById(dailyWork._id));
 
     return res.status(201).json({
       success: true,
-      message: "Daily work entry added",
+      message: isKhorakiIncluded ? "Daily work entry added + Khoraki (₹100) logged" : "Daily work entry added",
       dailyWork: populated,
     });
   } catch (error) {

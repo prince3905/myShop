@@ -87,6 +87,15 @@ const staffDailyWorkSchema = new mongoose.Schema(
       min: 0,
       default: 0,
     },
+    isKhorakiIncluded: {
+      type: Boolean,
+      default: false,
+    },
+    khorakiAmount: {
+      type: Number,
+      min: 0,
+      default: 100,
+    },
     verificationStatus: {
       type: String,
       enum: ["PENDING", "APPROVED", "PARTIAL", "REJECTED"],

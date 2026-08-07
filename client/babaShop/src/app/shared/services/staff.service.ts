@@ -50,4 +50,8 @@ export class StaffService {
   deleteStaff(id: string): Observable<any> {
     return this.http.delete(`${this.baseURL}/api/staffs/${id}`);
   }
+
+  getStaffLedger(id: string): Observable<any> {
+    return this.http.get(`${this.baseURL}/api/staffs/ledger/${id}`);
+  }
 }

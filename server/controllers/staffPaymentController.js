@@ -72,8 +72,8 @@ exports.createStaffPayment = async (req, res) => {
       createdBy: req.user._id,
     };
 
-    if (!["ADVANCE", "PAYMENT"].includes(payload.entryType)) {
-      return res.status(400).json({ success: false, message: "Entry type must be ADVANCE or PAYMENT" });
+    if (!["ADVANCE", "PAYMENT", "KHORAKI"].includes(payload.entryType)) {
+      return res.status(400).json({ success: false, message: "Entry type must be ADVANCE, PAYMENT or KHORAKI" });
     }
 
     if (!Number.isFinite(payload.amount) || payload.amount <= 0) {
@@ -279,8 +279,8 @@ exports.updateStaffPayment = async (req, res) => {
     payment.note = `${req.body?.note ?? payment.note ?? ""}`.trim();
     payment.updatedBy = req.user._id;
 
-    if (!["ADVANCE", "PAYMENT"].includes(payment.entryType)) {
-      return res.status(400).json({ success: false, message: "Entry type must be ADVANCE or PAYMENT" });
+    if (!["ADVANCE", "PAYMENT", "KHORAKI"].includes(payment.entryType)) {
+      return res.status(400).json({ success: false, message: "Entry type must be ADVANCE, PAYMENT or KHORAKI" });
     }
 
     if (!Number.isFinite(payment.amount) || payment.amount <= 0) {

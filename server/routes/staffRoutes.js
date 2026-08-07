@@ -29,6 +29,7 @@ router.use(requireShopSelectionForWrite);
 
 router.get("/summary", authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"), authorizeFeature("staff.master"), staffController.getStaffSummary);
 router.get("/options", authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"), authorizeStaffOptionsAccess, staffController.getStaffs);
+router.get("/ledger/:id", authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"), authorizeStaffOptionsAccess, staffController.getStaffLedger);
 router.get("/", authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"), authorizeFeature("staff.master"), staffController.getStaffs);
 router.post("/", authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"), authorizeFeature("staff.master.manage"), staffController.createStaff);
 router.put("/:id", authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"), authorizeFeature("staff.master.manage"), staffController.updateStaff);

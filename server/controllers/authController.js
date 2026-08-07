@@ -615,6 +615,23 @@ exports.updateShopSettings = async (req, res) => {
       });
     }
 
+    if (req.body?.shopCode) {
+      if (req.user?.role !== "SUPER_ADMIN") {
+        return res.status(403).json({
+          success: false,
+          message: "Only Super Admin can change Shop Code",
+        });
+      }
+      const newShopCode = `${req.body.shopCode}`.trim().toUpperCase();
+      if (newShopCode && newShopCode !== shop.shopCode) {
+        const existing = await Shop.findOne({ shopCode: newShopCode, _id: { $ne: shop._id } });
+        if (existing) {
+          return res.status(400).json({ success: false, message: `Shop code "${newShopCode}" already in use` });
+        }
+        shop.shopCode = newShopCode;
+      }
+    }
+
     const allowed = ["name", "contactNumber", "email", "address"];
     for (const key of allowed) {
       if (req.body[key] !== undefined) {

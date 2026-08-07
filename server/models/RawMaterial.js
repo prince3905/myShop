@@ -79,11 +79,17 @@ const rawMaterialSchema = new mongoose.Schema(
       ref: "User",
       default: null,
     },
-    isDeleted: {
-      type: Boolean,
-      default: false,
-      index: true,
-    },
+    rateHistory: [
+      {
+        oldRate: Number,
+        newRate: Number,
+        oldPackPrice: Number,
+        newPackPrice: Number,
+        reason: String,
+        changedAt: { type: Date, default: Date.now },
+        updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+      },
+    ],
   },
   { timestamps: true },
 );

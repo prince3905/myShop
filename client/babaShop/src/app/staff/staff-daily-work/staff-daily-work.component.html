@@ -5,8 +5,18 @@
     <div class="work-hero-bar">
       <div>
         <h2 class="hero-title">Daily Work & Attendance</h2>
-        <p class="hero-sub">Kis worker ne kis din kya kaam kiya, attendance kya thi aur kitna earn hua.</p>
+        <p class="hero-sub">Kis worker ne kis din kya kaam kiya, attendance kya thi aur kitna earn / khoraki hua.</p>
       </div>
+    </div>
+
+    <!-- ── Sub-Tab Switcher Bar ── -->
+    <div style="display: flex; gap: 12px; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px;">
+      <button mat-raised-button [color]="activeTab === 'WORK' ? 'primary' : ''" (click)="activeTab = 'WORK'" style="border-radius: 10px; font-weight: 700; padding: 6px 20px;">
+        <mat-icon>precision_manufacturing</mat-icon> 🏭 Production Daily Work
+      </button>
+      <button mat-raised-button (click)="activeTab = 'KHORAKI'" style="border-radius: 10px; font-weight: 700; padding: 6px 20px;" [style.background]="activeTab === 'KHORAKI' ? 'linear-gradient(60deg, #ea580c, #c2410c)' : '#fff'" [style.color]="activeTab === 'KHORAKI' ? '#fff' : '#c2410c'" [style.border]="activeTab === 'KHORAKI' ? 'none' : '1px solid #fdba74'">
+        <mat-icon>lunch_dining</mat-icon> 🍲 Daily Khana Khoraki Register & Cards ({{ khorakiList.length }})
+      </button>
     </div>
 
     <!-- ── Summary KPI Cards ── -->
@@ -155,6 +165,22 @@
             </div>
           </div>
 
+          <!-- 1-Click Khoraki (Food Allowance) Toggle Box -->
+          <div style="background: linear-gradient(135deg, #fff7ed, #ffedd5); border: 1.5px solid #fdba74; border-radius: 12px; padding: 12px 16px; margin: 12px 0; display: flex; align-items: center; justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <mat-icon style="color: #c2410c; font-size: 24px; width: 24px; height: 24px;">lunch_dining</mat-icon>
+              <div>
+                <strong style="color: #9a3412; font-size: 14px; display: block;">Daily Khoraki (Food Expense Payout)</strong>
+                <span style="font-size: 12px; color: #c2410c;">
+                  {{ dailyWorkForm.attendanceStatus === 'PRESENT' ? '🟢 Present → Full Day ₹100 Khoraki' : (dailyWorkForm.attendanceStatus === 'HALF_DAY' ? '🟡 Half Day → ₹50 Khoraki' : '🔴 Absent → No Khoraki') }}
+                </span>
+              </div>
+            </div>
+            <mat-slide-toggle color="primary" [(ngModel)]="dailyWorkForm.isKhorakiIncluded" name="isKhorakiIncluded" [disabled]="dailyWorkForm.attendanceStatus === 'ABSENT'">
+              <span style="font-weight: 800; color: #ea580c; font-size: 15px;">₹{{ defaultKhorakiAmount }}</span>
+            </mat-slide-toggle>
+          </div>
+
           <!-- Material Requirement Preview -->
           <div class="material-preview-card" *ngIf="materialRequirementPreview.length > 0">
             <div class="material-preview-header">
@@ -285,7 +311,8 @@
           <p>No daily work entries found.</p>
         </div>
 
-        <div class="work-cards-grid" *ngIf="!loadingDailyWorks && dailyWorks.length > 0">
+        <!-- ── TAB 1: PRODUCTION WORK CARDS GRID ── -->
+        <div class="work-cards-grid" *ngIf="activeTab === 'WORK' && !loadingDailyWorks && dailyWorks.length > 0">
           <div class="work-card-v3" *ngFor="let item of dailyWorks">
             <div class="work-card-top">
               <div class="worker-avatar">
@@ -344,6 +371,72 @@
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+
+        <!-- ── TAB 2: DEDICATED KHORAKI INFORMATION CARDS GRID ── -->
+        <div class="work-cards-grid" *ngIf="activeTab === 'KHORAKI' && !loadingDailyWorks">
+          <div *ngIf="khorakiList.length === 0" style="text-align: center; padding: 40px; background: #fff; border-radius: 16px; border: 1px dashed #fdba74;">
+            <mat-icon style="font-size: 48px; width: 48px; height: 48px; color: #ea580c;">lunch_dining</mat-icon>
+            <p style="margin-top: 10px; color: #9a3412; font-weight: 700;">No Daily Khoraki records found for selected filters.</p>
+            <span style="font-size: 13px; color: #c2410c;">Turn on "Daily Khoraki" toggle in the form to issue khana khoraki!</span>
+          </div>
+
+          <div class="work-card-v3" *ngFor="let item of khorakiList" style="border-left: 5px solid #ea580c; background: #fff8f6; border-radius: 16px; box-shadow: 0 4px 14px rgba(234, 88, 12, 0.08);">
+            
+            <!-- Khoraki Card Header -->
+            <div class="work-card-top" style="border-bottom: 1px solid #ffedd5; padding-bottom: 10px;">
+              <div class="worker-avatar" style="background: linear-gradient(60deg, #ea580c, #c2410c); color: white; width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 18px;">
+                {{ (item.staff?.name || 'S')[0].toUpperCase() }}
+              </div>
+              <div class="worker-info">
+                <div class="worker-name" style="color: #9a3412; font-size: 16px; font-weight: 800;">{{ item.staff?.name || 'Unknown' }}</div>
+                <div class="worker-type" style="color: #c2410c; font-weight: 600;">{{ item.staff?.workType || item.workType || 'Worker' }}</div>
+              </div>
+              <div style="background: #fff7ed; color: #ea580c; border: 1.5px solid #fdba74; font-weight: 800; padding: 6px 12px; border-radius: 10px; font-size: 14px; display: flex; align-items: center; gap: 6px;">
+                <mat-icon style="font-size: 18px; width: 18px; height: 18px; color: #ea580c;">lunch_dining</mat-icon>
+                ₹{{ item.khorakiAmount || (item.attendanceStatus === 'HALF_DAY' ? 50 : 100) }}
+              </div>
+            </div>
+
+            <!-- Khoraki Information Panel -->
+            <div style="margin: 12px 0; font-size: 13px; color: #475569; background: #ffffff; padding: 12px 14px; border-radius: 12px; border: 1px solid #fed7aa;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <span style="font-weight: 600; color: #64748b;">📅 Khoraki Date:</span>
+                <strong style="color: #0f172a; font-size: 13px;">{{ item.entryDate | date: 'dd MMM yyyy' }}</strong>
+              </div>
+
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <span style="font-weight: 600; color: #64748b;">📋 Attendance Shift:</span>
+                <span [style.color]="item.attendanceStatus === 'PRESENT' ? '#15803d' : '#c2410c'" style="font-weight: 800; background: #f0fdf4; padding: 2px 8px; border-radius: 6px;">
+                  {{ item.attendanceStatus === 'PRESENT' ? '🟢 PRESENT → Full Day ₹100' : '🟡 HALF DAY → ₹50' }}
+                </span>
+              </div>
+
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-weight: 600; color: #64748b;">🏭 Product Against:</span>
+                <span style="font-weight: 700; color: #0284c7;">
+                  {{ item.factoryProductName ? item.factoryProductName : 'General Attendance Khoraki' }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Khoraki Footer & Actions -->
+            <div class="work-footer" style="padding-top: 8px;">
+              <div style="font-size: 12px; color: #15803d; font-weight: 700; display: flex; align-items: center; gap: 4px; background: #dcfce7; padding: 4px 10px; border-radius: 6px;">
+                <mat-icon style="font-size: 16px; width: 16px; height: 16px; color: #15803d;">verified</mat-icon>
+                Khoraki Cash Issued
+              </div>
+              <div class="work-actions" *ngIf="canEditRow(item) || canDeleteRow(item)">
+                <button mat-icon-button color="primary" [disabled]="deletingId === item._id" (click)="startEdit(item)" title="Edit Khoraki">
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button *ngIf="canDeleteRow(item)" mat-icon-button color="warn" [disabled]="deletingId === item._id" (click)="deleteDailyWork(item)" title="Delete Khoraki">
+                  <mat-icon>{{ deletingId === item._id ? 'hourglass_top' : 'delete' }}</mat-icon>
+                </button>
+              </div>
+            </div>
+
           </div>
         </div>
       </div>

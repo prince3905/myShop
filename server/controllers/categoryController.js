@@ -63,13 +63,13 @@ exports.createCategory = async (req, res) => {
     if (normalizedBrandIds.length) {
       const validBrands = await Brand.countDocuments({
         _id: { $in: normalizedBrandIds },
-        shops: { $in: categoryShops }
+        isDeleted: { $ne: true }
       });
 
       if (validBrands !== normalizedBrandIds.length) {
         return res.status(400).json({
           success: false,
-          message: "One or more selected brands are invalid for selected shops",
+          message: "One or more selected brands are invalid",
         });
       }
     }
@@ -223,7 +223,7 @@ exports.updateCategory = async (req, res) => {
       if (normalizedBrandIds.length) {
         const validBrands = await Brand.countDocuments({
           _id: { $in: normalizedBrandIds },
-          shops: { $in: category.shops }
+          isDeleted: { $ne: true }
         });
 
         if (validBrands !== normalizedBrandIds.length) {

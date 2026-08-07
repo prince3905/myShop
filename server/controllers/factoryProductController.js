@@ -507,8 +507,36 @@ exports.updateFactoryProduct = async (req, res) => {
         sellingPrice: Number(product.defaultSellingPrice),
       });
     }
+
+    // Auto-sync ONLY PENDING (unapproved) StaffDailyWork entries for this factory product
+    // Approved historical entries remain permanently locked for financial audit integrity
+    const StaffDailyWork = require("../models/StaffDailyWork");
+    const dailyWorks = await StaffDailyWork.find({
+      shop: req.shopId,
+      factoryProduct: product._id,
+      verificationStatus: "PENDING",
+      isDeleted: false,
+    });
+
+    for (const dw of dailyWorks) {
+      const units = Number(dw.unitsCompleted || 0);
+      dw.pieceRate = product.workerPieceRate;
+      dw.earnedAmount = units * product.workerPieceRate;
+
+      const qty = units;
+      const materialCost = (product.standardMaterialLines || []).reduce((sum, line) => {
+        return sum + (Number(line.qtyPerUnit || 0) * qty * Number(line.rate || 0));
+      }, 0);
+      const otherCost = Number(product.standardOtherCost || 0) * qty;
+      const workerCost = dw.earnedAmount;
+      dw.actualBatchCost = materialCost + workerCost + otherCost;
+      dw.actualCostPerUnit = qty > 0 ? dw.actualBatchCost / qty : 0;
+
+      await dw.save();
+    }
+
     const populated = await populateFactoryProduct(FactoryProduct.findById(product._id));
-    return res.json({ success: true, message: "Factory product updated", product: populated });
+    return res.json({ success: true, message: "Factory product updated and daily work rates synced", product: populated });
   } catch (error) {
     logger.error("Update Factory Product Error:", error);
     return res.status(500).json({ success: false, message: "Failed to update factory product" });

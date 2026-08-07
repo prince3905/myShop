@@ -13,7 +13,7 @@ import { forkJoin } from "rxjs";
   styleUrls: ["./staff-payments.component.css"],
 })
 export class StaffPaymentsComponent implements OnInit {
-  readonly entryTypes = ["ADVANCE", "PAYMENT"];
+  readonly entryTypes = ["ADVANCE", "PAYMENT", "KHORAKI"];
   readonly paymentMethods = ["CASH", "UPI", "BANK", "CARD", "ONLINE", "CHEQUE"];
 
   paymentForm = {

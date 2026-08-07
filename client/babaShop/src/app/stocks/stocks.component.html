@@ -525,5 +525,71 @@
         </div>
       </div>
     </div>
+
+    <!-- ── Dedicated 1-Click Inter-Shop Stock Transfer ── -->
+    <div class="card mt-3" *ngIf="canAdjustStock">
+      <div class="card-header card-header-info" style="background: linear-gradient(60deg, #0284c7, #0369a1); color: white;">
+        <h4 class="card-title" style="color: white; font-weight: 700;">🚚 1-Click Inter-Shop Stock Transfer</h4>
+        <p class="card-category" style="color: rgba(255,255,255,0.9);">Transfer stock directly from current shop to another shop with automatic IN/OUT records</p>
+      </div>
+      <div class="card-body">
+        <div class="filter-row">
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Product</mat-label>
+            <mat-select [(ngModel)]="transferForm.product" (selectionChange)="onTransferProductChange()">
+              <mat-option [value]="null">Select Product</mat-option>
+              <mat-option *ngFor="let p of products" [value]="p._id">
+                {{ p.name }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Model</mat-label>
+            <mat-select [(ngModel)]="transferForm.model" [disabled]="!transferForm.product" (selectionChange)="onTransferModelChange()">
+              <mat-option [value]="null">Select Model</mat-option>
+              <mat-option *ngFor="let m of transferModelOptions" [value]="m._id">
+                {{ m.name }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="filter-field search-field">
+            <mat-label>Variation SKU</mat-label>
+            <mat-select [(ngModel)]="transferForm.variation" [disabled]="!transferForm.model">
+              <mat-option [value]="null">Select Variation</mat-option>
+              <mat-option *ngFor="let v of transferVariationOptions" [value]="v._id">
+                {{ v.sku }} - Avl: {{ v.quantity || 0 }} Pcs
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Target Shop (Destination)</mat-label>
+            <mat-select [(ngModel)]="transferForm.targetShopId">
+              <mat-option [value]="null">Select Target Shop</mat-option>
+              <mat-option *ngFor="let shop of targetShopOptions" [value]="shop._id">
+                {{ shop.shopCode || shop.name }} ({{ shop.name }})
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Transfer Quantity (Pcs)</mat-label>
+            <input matInput type="number" [(ngModel)]="transferForm.transferQty" placeholder="e.g. 5" min="1" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="filter-field note-field">
+            <mat-label>Transfer Note</mat-label>
+            <input matInput [(ngModel)]="transferForm.note" placeholder="Reason for transfer" appCapitalizeFirst />
+          </mat-form-field>
+
+          <button mat-raised-button color="accent" [disabled]="transferSaving || !transferForm.variation || !transferForm.targetShopId" (click)="submitStockTransfer()" style="background-color: #0284c7; color: white;">
+            <mat-icon>local_shipping</mat-icon>
+            {{ transferSaving ? 'Transferring...' : 'Transfer Stock Now' }}
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>

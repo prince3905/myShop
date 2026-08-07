@@ -115,11 +115,11 @@
               <mat-select [(ngModel)]="paymentForm.entryType" name="entryType" (selectionChange)="onEntryTypeChange()" required>
                 <mat-option *ngFor="let type of entryTypes" [value]="type">
                   <span [class.advance-opt]="type === 'ADVANCE'" [class.payment-opt]="type === 'PAYMENT'">
-                    {{ type === 'ADVANCE' ? '📥 Advance (Staff ko diya)' : '💰 Payment (Settlement)' }}
+                    {{ type === 'ADVANCE' ? '📥 Advance (Staff ko diya)' : (type === 'KHORAKI' ? '🍲 Khoraki (Khana Khoraki ₹100)' : '💰 Payment (Settlement)') }}
                   </span>
                 </mat-option>
               </mat-select>
-              <mat-icon matPrefix>{{ paymentForm.entryType === 'ADVANCE' ? 'call_received' : 'payments' }}</mat-icon>
+              <mat-icon matPrefix>{{ paymentForm.entryType === 'ADVANCE' ? 'call_received' : (paymentForm.entryType === 'KHORAKI' ? 'lunch_dining' : 'payments') }}</mat-icon>
             </mat-form-field>
           </div>
 
@@ -220,22 +220,22 @@
         </div>
 
         <div class="payment-cards-grid" *ngIf="!loadingPayments && payments.length > 0">
-          <div class="payment-card-v3" *ngFor="let payment of payments" [class.advance-card]="payment.entryType === 'ADVANCE'" [class.payment-card]="payment.entryType === 'PAYMENT'">
+          <div class="payment-card-v3" *ngFor="let payment of payments" [class.advance-card]="payment.entryType === 'ADVANCE'" [class.payment-card]="payment.entryType === 'PAYMENT'" [style.borderLeft]="payment.entryType === 'KHORAKI' ? '4px solid #ea580c' : null">
             <div class="payment-card-top">
-              <div class="staff-avatar" [class.advance]="payment.entryType === 'ADVANCE'" [class.payment]="payment.entryType === 'PAYMENT'">
+              <div class="staff-avatar" [class.advance]="payment.entryType === 'ADVANCE'" [class.payment]="payment.entryType === 'PAYMENT'" [style.background]="payment.entryType === 'KHORAKI' ? '#ffedd5' : null" [style.color]="payment.entryType === 'KHORAKI' ? '#c2410c' : null">
                 {{ (payment.staff?.name || 'S')[0].toUpperCase() }}
               </div>
               <div class="staff-info">
                 <div class="staff-name">{{ payment.staff?.name || 'Unknown' }}</div>
                 <div class="staff-type">{{ payment.staff?.workType || '-' }}</div>
               </div>
-              <div class="type-badge" [class.advance]="payment.entryType === 'ADVANCE'" [class.payment]="payment.entryType === 'PAYMENT'">
-                {{ payment.entryType === 'ADVANCE' ? 'Advance' : 'Payment' }}
+              <div class="type-badge" [class.advance]="payment.entryType === 'ADVANCE'" [class.payment]="payment.entryType === 'PAYMENT'" [style.background]="payment.entryType === 'KHORAKI' ? '#fff7ed' : null" [style.color]="payment.entryType === 'KHORAKI' ? '#c2410c' : null" [style.borderColor]="payment.entryType === 'KHORAKI' ? '#fdba74' : null">
+                {{ payment.entryType === 'ADVANCE' ? 'Advance' : (payment.entryType === 'KHORAKI' ? '🍲 Khoraki' : 'Payment') }}
               </div>
             </div>
 
             <div class="amount-display">
-              <mat-icon>{{ payment.entryType === 'ADVANCE' ? 'call_received' : 'payments' }}</mat-icon>
+              <mat-icon [style.color]="payment.entryType === 'KHORAKI' ? '#ea580c' : null">{{ payment.entryType === 'ADVANCE' ? 'call_received' : (payment.entryType === 'KHORAKI' ? 'lunch_dining' : 'payments') }}</mat-icon>
               <span class="amount-value">₹{{ payment.amount | number: '1.2-2' }}</span>
             </div>
 

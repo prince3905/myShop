@@ -142,18 +142,19 @@
                     <input matInput formControlName="name" appCapitalizeFirst>
                   </mat-form-field>
                   <mat-form-field appearance="outline" class="full-width">
-                    <mat-label>Contact</mat-label>
-                    <input matInput formControlName="contactNumber">
+                    <mat-label>Shop Code</mat-label>
+                    <input matInput formControlName="shopCode" placeholder="e.g. BVTH001" [readonly]="!canEditUpiSettings" style="text-transform: uppercase; font-weight: 700; color: #0284c7;">
+                    <mat-hint *ngIf="!canEditUpiSettings">Only Super Admin can change Shop Code</mat-hint>
                   </mat-form-field>
                 </div>
                 <div class="form-grid-2">
                   <mat-form-field appearance="outline" class="full-width">
-                    <mat-label>Shop Email</mat-label>
-                    <input matInput formControlName="email">
+                    <mat-label>Contact</mat-label>
+                    <input matInput formControlName="contactNumber">
                   </mat-form-field>
                   <mat-form-field appearance="outline" class="full-width">
-                    <mat-label>Address Line 1</mat-label>
-                    <input matInput formControlName="addressLine1" appCapitalizeFirst>
+                    <mat-label>Shop Email</mat-label>
+                    <input matInput formControlName="email">
                   </mat-form-field>
                 </div>
                 <div class="form-grid-2">

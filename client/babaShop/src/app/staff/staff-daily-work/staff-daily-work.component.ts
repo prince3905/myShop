@@ -31,6 +31,8 @@ export class StaffDailyWorkComponent implements OnInit {
     linkedJob: "",
     unitsCompleted: 0,
     earnedAmount: 0,
+    isKhorakiIncluded: false,
+    khorakiAmount: 100,
     note: "",
   };
 
@@ -66,6 +68,18 @@ export class StaffDailyWorkComponent implements OnInit {
   userRole: string | null = null;
   currentUserId: string | null = null;
   currentShopLabel = "-";
+  activeTab: 'WORK' | 'KHORAKI' = 'WORK';
+
+  get defaultKhorakiAmount(): number {
+    const status = this.dailyWorkForm.attendanceStatus;
+    if (status === "HALF_DAY") return 50;
+    if (status === "ABSENT") return 0;
+    return 100;
+  }
+
+  get khorakiList(): any[] {
+    return (this.dailyWorks || []).filter((dw: any) => dw.isKhorakiIncluded === true || Number(dw.khorakiAmount || 0) > 0);
+  }
 
   constructor(
     private staffService: StaffService,
@@ -256,6 +270,12 @@ export class StaffDailyWorkComponent implements OnInit {
 
   onAttendanceChange(): void {
     this.dailyWorkForm.earnedAmount = this.earnedAmountPreview;
+    this.dailyWorkForm.khorakiAmount = this.defaultKhorakiAmount;
+    if (this.dailyWorkForm.attendanceStatus === "ABSENT") {
+      this.dailyWorkForm.isKhorakiIncluded = false;
+    } else {
+      this.dailyWorkForm.isKhorakiIncluded = true;
+    }
   }
 
   onFactoryProductChange(): void {
@@ -327,6 +347,8 @@ export class StaffDailyWorkComponent implements OnInit {
       linkedJob: dailyWork.linkedJob || "",
       unitsCompleted: Number(dailyWork.unitsCompleted || 0),
       earnedAmount: Number(dailyWork.earnedAmount || 0),
+      isKhorakiIncluded: dailyWork.isKhorakiIncluded === true,
+      khorakiAmount: Number(dailyWork.khorakiAmount || 100),
       note: dailyWork.note || "",
     };
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -349,6 +371,8 @@ export class StaffDailyWorkComponent implements OnInit {
       linkedJob: "",
       unitsCompleted: 0,
       earnedAmount: 0,
+      isKhorakiIncluded: false,
+      khorakiAmount: 100,
       note: "",
     };
     if (form) {
