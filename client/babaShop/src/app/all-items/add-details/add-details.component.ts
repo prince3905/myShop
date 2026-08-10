@@ -29,6 +29,7 @@ export class AddDetailsComponent implements OnInit {
   product: any = null;
   models: any[] = [];
   variations: any[] = [];
+  allShopVariations: any[] = [];
   totalVariations = 0;
   pageSize = 10;
   pageIndex = 0;
@@ -83,6 +84,16 @@ export class AddDetailsComponent implements OnInit {
     this.loadProduct();
     this.loadModels();
     this.loadVariations();
+    this.loadAllShopVariations();
+  }
+
+  loadAllShopVariations() {
+    this.variationService.getVariations({ limit: 1000 }).subscribe({
+      next: (res: any) => {
+        this.allShopVariations = Array.isArray(res?.data) ? res.data : [];
+      },
+      error: () => {},
+    });
   }
 
   get canMutate(): boolean {
@@ -737,6 +748,14 @@ export class AddDetailsComponent implements OnInit {
     const cleaned = (modelName || "").trim().toUpperCase();
     if (!cleaned) return "";
 
+    const digits = cleaned.match(/\d+/g);
+    if (digits && digits.length >= 2) {
+      return `${digits[0]}${digits[1]}`.slice(0, 5);
+    }
+    if (digits && digits.length === 1) {
+      return `${digits[0]}`.slice(0, 4);
+    }
+
     const alphaNumMatch = cleaned.match(/\b[A-Z]+\d+[A-Z0-9]*\b/);
     if (alphaNumMatch?.[0]) return alphaNumMatch[0];
 
@@ -746,7 +765,7 @@ export class AddDetailsComponent implements OnInit {
     if (words.length === 1) {
       return words[0].slice(0, 4);
     }
-    return `${words[0][0] || ""}${words[1][0] || ""}${(words[2]?.[0] || "")}`.slice(0, 4);
+    return words.join("").slice(0, 4);
   }
 
   private getStorageToken(storage: string): string {
@@ -779,8 +798,9 @@ export class AddDetailsComponent implements OnInit {
 
   private ensureUniqueSku(baseSku: string): string {
     const currentEditingId = this.isEditMode ? this.variationId : null;
+    const list = this.allShopVariations.length ? this.allShopVariations : this.variations;
     const used = new Set(
-      (this.variations || [])
+      (list || [])
         .filter((v: any) => v?._id !== currentEditingId)
         .map((v: any) => (v?.sku || "").toUpperCase())
         .filter(Boolean),
@@ -801,8 +821,9 @@ export class AddDetailsComponent implements OnInit {
     const normalized = (sku || "").trim().toUpperCase();
     if (!normalized) return "";
 
+    const list = this.allShopVariations.length ? this.allShopVariations : this.variations;
     const used = new Set(
-      (this.variations || [])
+      (list || [])
         .filter((v: any) => v?._id !== (this.isEditMode ? this.variationId : null))
         .map((v: any) => `${v?.barcode || ""}`)
         .filter(Boolean),

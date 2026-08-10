@@ -165,8 +165,7 @@ const normalizeMaterialLines = async (req, lines = []) => {
     if (rawMaterialId) {
       const rawMaterialDoc = await RawMaterial.findOne({
         _id: rawMaterialId,
-        shop: req.shopId,
-        isDeleted: false,
+        isDeleted: { $ne: true },
       }).lean();
 
       if (!rawMaterialDoc) {
@@ -258,7 +257,7 @@ exports.createFactoryProduct = async (req, res) => {
 
     const existingProduct = await FactoryProduct.findOne({
       shop: req.shopId,
-      isDeleted: false,
+      isDeleted: { $ne: true },
       name: new RegExp(`^${escapeRegex(payload.name)}$`, "i"),
     }).select("_id name shopVariation");
     
@@ -292,7 +291,7 @@ exports.getFactoryProducts = async (req, res) => {
 
     const filter = {
       shop: req.shopId,
-      isDeleted: false,
+      isDeleted: { $ne: true },
     };
 
     if (STAFF_ONLY_FILTER(req)) {
@@ -329,7 +328,7 @@ exports.getFactoryProductOptions = async (req, res) => {
 
     const filter = {
       shop: req.shopId,
-      isDeleted: false,
+      isDeleted: { $ne: true },
     };
 
     const { search, active } = req.query || {};
@@ -362,7 +361,7 @@ exports.getFactoryProductSummary = async (req, res) => {
 
     const baseMatch = {
       shop: req.shopId,
-      isDeleted: false,
+      isDeleted: { $ne: true },
     };
 
     if (STAFF_ONLY_FILTER(req)) {
@@ -417,7 +416,7 @@ exports.updateFactoryProduct = async (req, res) => {
       return res.status(403).json({ success: false, message: "You do not have permission to update products" });
     }
 
-    const product = await FactoryProduct.findOne({ _id: req.params.id, shop: req.shopId, isDeleted: false });
+    const product = await FactoryProduct.findOne({ _id: req.params.id, shop: req.shopId, isDeleted: { $ne: true } });
     if (!product) {
       return res.status(404).json({ success: false, message: "Factory product not found" });
     }
@@ -491,7 +490,7 @@ exports.updateFactoryProduct = async (req, res) => {
     const existingProduct = await FactoryProduct.findOne({
       _id: { $ne: product._id },
       shop: req.shopId,
-      isDeleted: false,
+      isDeleted: { $ne: true },
       name: new RegExp(`^${escapeRegex(product.name)}$`, "i"),
     }).select("_id name shopVariation");
     if (existingProduct) {
@@ -515,7 +514,7 @@ exports.updateFactoryProduct = async (req, res) => {
       shop: req.shopId,
       factoryProduct: product._id,
       verificationStatus: "PENDING",
-      isDeleted: false,
+      isDeleted: { $ne: true },
     });
 
     for (const dw of dailyWorks) {
@@ -554,7 +553,7 @@ exports.deleteFactoryProduct = async (req, res) => {
     }
 
     const product = await FactoryProduct.findOneAndUpdate(
-      { _id: req.params.id, shop: req.shopId, isDeleted: false },
+      { _id: req.params.id, shop: req.shopId, isDeleted: { $ne: true } },
       { $set: { isDeleted: true, updatedBy: req.user._id } },
       { new: true },
     );

@@ -65,14 +65,43 @@ export class FactoryVerificationComponent implements OnInit {
     return this.factoryPendingRows.length;
   }
 
+  getVariationLabel(item: any): string {
+    if (!item) return "";
+    const fp = item?.factoryProduct || item;
+    const variation = fp?.shopVariation || item?.shopVariation;
+
+    const sku = item?.factoryProductSku || fp?.code || variation?.sku || "";
+    const size = fp?.variationSize || variation?.attributes?.size || "";
+    const color = fp?.variationColor || variation?.attributes?.color || "";
+    const modelName = fp?.shopModel?.name || variation?.model?.name || "";
+
+    const parts: string[] = [];
+    if (modelName && modelName.toUpperCase() !== (fp?.name || "").toUpperCase()) {
+      parts.push(modelName);
+    }
+    if (size) {
+      parts.push(size);
+    }
+    if (color && !["NONE", "NETURAL", "NATURAL"].includes(color.toUpperCase())) {
+      parts.push(color);
+    }
+    if (sku) {
+      parts.push(sku);
+    }
+
+    return parts.join(" · ");
+  }
+
   get productWiseFactoryPending(): any[] {
     const grouped = new Map<string, any>();
 
     this.factoryPendingRows.forEach((row: any) => {
       const key = `${row?.factoryProduct?._id || row?.factoryProduct || row?._id}`;
+      const varLabel = this.getVariationLabel(row);
       const existing = grouped.get(key) || {
         key,
         productName: row?.factoryProductName || row?.factoryProduct?.name || "-",
+        variationLabel: varLabel,
         unit: row?.unit || row?.factoryProduct?.unitLabel || "PCS",
         qty: 0,
         entries: 0,
@@ -110,7 +139,9 @@ export class FactoryVerificationComponent implements OnInit {
       verificationStatus: this.filters.verificationStatus || "",
     }).subscribe({
       next: (response) => {
-        this.rows = (response?.dailyWorks || []).filter((row: any) => !!row?.factoryProduct);
+        this.rows = (response?.dailyWorks || []).filter(
+          (row: any) => !!row?.factoryProduct && Number(row?.unitsCompleted || 0) > 0
+        );
         this.rows.forEach((row: any) => this.ensureTargetShopSelection(row));
         this.summary = this.buildSummary(this.rows);
         this.loading = false;

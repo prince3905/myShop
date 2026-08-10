@@ -181,7 +181,12 @@
             <div class="production-cards" *ngIf="recentProductions.length > 0">
               <div class="production-card" *ngFor="let item of recentProductions" [class.selected]="selectedProduction?.sourceId === item.sourceId" (click)="selectProduction(item)">
                 <div class="pc-header">
-                  <div class="pc-product">{{ item.itemName }}</div>
+                  <div class="pc-product">
+                    {{ item.itemName }}
+                    <span class="variation-badge" *ngIf="getVariationLabel(item)" style="background: #fff7ed; color: #c2410c; border: 1px solid #ffedd5; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 700; margin-left: 4px;">
+                      {{ getVariationLabel(item) }}
+                    </span>
+                  </div>
                   <div class="pc-date">{{ item.entryDate | date: 'dd MMM' }}</div>
                 </div>
                 <div class="pc-worker" *ngIf="item.workerName">

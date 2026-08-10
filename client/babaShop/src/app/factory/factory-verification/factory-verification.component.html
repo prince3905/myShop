@@ -139,7 +139,12 @@
         </div>
 
         <div class="product-info-section">
-          <div class="product-name">{{ row.factoryProductName || row.factoryProduct?.name || '-' }} <span *ngIf="row.factoryProductSku || row.factoryProduct?.shopVariation?.sku">({{ row.factoryProductSku || row.factoryProduct?.shopVariation?.sku }})</span></div>
+          <div class="product-name">
+            {{ row.factoryProductName || row.factoryProduct?.name || '-' }}
+            <span class="variation-badge" *ngIf="getVariationLabel(row)" style="background: #fff7ed; color: #c2410c; border: 1px solid #ffedd5; padding: 2px 8px; border-radius: 6px; font-weight: 700; margin-left: 6px; display: inline-flex; align-items: center; gap: 4px; font-size: 13px;">
+              <mat-icon style="font-size: 14px; width: 14px; height: 14px;">straighten</mat-icon> {{ getVariationLabel(row) }}
+            </span>
+          </div>
           <div class="product-date">
             <mat-icon>calendar_today</mat-icon>
             {{ row.entryDate | date: 'dd MMM yyyy' }}
@@ -240,7 +245,12 @@
               <div class="ph-type">{{ row.staff?.workType || '-' }}</div>
             </div>
           </div>
-          <div class="ph-product">{{ row.factoryProduct?.name || '-' }}</div>
+          <div class="ph-product">
+            {{ row.factoryProduct?.name || '-' }}
+            <span class="variation-badge" *ngIf="getVariationLabel(row)" style="background: #fff7ed; color: #c2410c; border: 1px solid #ffedd5; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 700; margin-left: 4px;">
+              {{ getVariationLabel(row) }}
+            </span>
+          </div>
           <div class="ph-qty">{{ row.quantity || 0 }} {{ row.unit || 'PCS' }}</div>
           <div class="ph-route">
             <span>{{ getShopLabel(row.sourceShop) }}</span>
@@ -271,7 +281,12 @@
 
       <div class="pending-stock-grid">
         <div class="pending-stock-card" *ngFor="let row of productWiseFactoryPending">
-          <div class="ps-product">{{ row.productName }}</div>
+          <div class="ps-product">
+            {{ row.productName }}
+            <span class="variation-badge" *ngIf="row.variationLabel" style="background: #fff7ed; color: #c2410c; border: 1px solid #ffedd5; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 700; margin-left: 4px;">
+              {{ row.variationLabel }}
+            </span>
+          </div>
           <div class="ps-qty">
             <strong>{{ row.qty || 0 }}</strong>
             <span>{{ row.unit || 'PCS' }}</span>

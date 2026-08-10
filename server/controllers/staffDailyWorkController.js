@@ -233,13 +233,14 @@ const validateFactoryProductStock = async ({ req, factoryProduct, unitsCompleted
       if (!requiredMap.has(rawMaterialId)) {
         continue;
       }
+      const PACK_UNITS = ["BAG", "SET", "PACKET", "PKT", "BOX"];
       const mat = rawMaterialMap.get(rawMaterialId);
       const matUnit = `${mat?.unitLabel || "PCS"}`.toUpperCase();
       const itemUnit = `${item?.unitLabel || matUnit}`.toUpperCase();
       const pcsPerPack = Number(mat?.pcsPerPack || 0);
 
       let rawQty = Number(item?.receivedQty || 0) || Number(item?.orderedQty || 0);
-      if (itemUnit === "BAG" && matUnit === "PCS" && pcsPerPack > 0) {
+      if ((PACK_UNITS.includes(itemUnit) || PACK_UNITS.includes(matUnit)) && pcsPerPack > 0) {
         rawQty = rawQty * pcsPerPack;
       }
 
@@ -265,23 +266,24 @@ const validateFactoryProductStock = async ({ req, factoryProduct, unitsCompleted
     }
   }
 
+  const PACK_UNITS = ["BAG", "SET", "PACKET", "PKT", "BOX"];
   for (const [rawMaterialId, required] of requiredMap.entries()) {
     const mat = rawMaterialMap.get(rawMaterialId);
     const matUnit = `${mat?.unitLabel || "PCS"}`.toUpperCase();
     const pcsPerPack = Number(mat?.pcsPerPack || 0);
 
     const openingQty = Number(mat?.openingQty || 0);
-    const openingInPcs = (matUnit === "BAG" && pcsPerPack > 0) ? (openingQty * pcsPerPack) : openingQty;
+    const isPackUnit = PACK_UNITS.includes(matUnit) && pcsPerPack > 0;
+    const openingInPcs = isPackUnit ? (openingQty * pcsPerPack) : openingQty;
     
-    let receivedQty = Number(receivedMap.get(rawMaterialId) || 0);
-    if (matUnit === "BAG" && pcsPerPack > 0) {
-      receivedQty = receivedQty * pcsPerPack;
-    }
-
+    const receivedInPcs = Number(receivedMap.get(rawMaterialId) || 0);
     const consumedQty = Number(consumedMap.get(rawMaterialId) || 0);
-    const availableQtyInPcs = openingInPcs + receivedQty - consumedQty;
 
-    if (required.requiredQty > availableQtyInPcs + 0.0001) {
+    const totalIncomingInPcs = openingInPcs + receivedInPcs;
+    const availableQtyInPcs = totalIncomingInPcs - consumedQty;
+
+    // Only enforce stock check if raw material stock has been initialized/purchased
+    if (totalIncomingInPcs > 0 && required.requiredQty > availableQtyInPcs + 0.0001) {
       return {
         status: 400,
         success: false,
@@ -383,8 +385,8 @@ exports.createDailyWork = async (req, res) => {
       entryDate,
       attendanceStatus,
       workType: `${req.body?.workType || staff.workType || ""}`.trim(),
-      factoryProduct: factoryProduct?._id || null,
-      factoryProductName: `${factoryProduct?.name || ""}`.trim(),
+      factoryProduct: unitsCompleted > 0 ? (factoryProduct?._id || null) : null,
+      factoryProductName: unitsCompleted > 0 ? `${factoryProduct?.name || ""}`.trim() : "",
       workItem: workItem?._id || null,
       workItemName: `${workItem?.itemName || ""}`.trim(),
       unit: `${factoryProduct?.unitLabel || workItem?.unit || "PCS"}`.trim(),
@@ -414,20 +416,7 @@ exports.createDailyWork = async (req, res) => {
       createdBy: req.user._id,
     });
 
-    if (isKhorakiIncluded && computedKhorakiAmount > 0) {
-      const StaffPayment = require("../models/StaffPayment");
-      const productNameStr = factoryProduct?.name ? ` for ${factoryProduct.name}` : "";
-      await StaffPayment.create({
-        shop: req.shopId,
-        staff: staff._id,
-        entryDate,
-        entryType: "KHORAKI",
-        amount: computedKhorakiAmount,
-        paymentMethod: "CASH",
-        note: `Daily Khoraki (${attendanceStatus === "HALF_DAY" ? "Half Day ₹50" : "Full Day ₹100"})${productNameStr}`,
-        createdBy: req.user._id,
-      });
-    }
+
 
     const populated = await populateDailyWorkQuery(StaffDailyWork.findById(dailyWork._id));
 
@@ -1076,5 +1065,45 @@ exports.verifyDailyWork = async (req, res) => {
   } catch (error) {
     logger.error("Verify Staff Daily Work Error:", error);
     return res.status(500).json({ success: false, message: "Failed to verify daily work entry" });
+  }
+};
+
+exports.removeKhorakiFromDailyWork = async (req, res) => {
+  try {
+    if (!req.shopId) {
+      return res.status(400).json({ success: false, message: "Please select a shop first" });
+    }
+
+    if (!MANAGER_AND_ABOVE.includes(`${req.user?.role || ""}`)) {
+      return res.status(403).json({ success: false, message: "You do not have permission to modify daily work entries" });
+    }
+
+    const dailyWork = await StaffDailyWork.findOne({
+      _id: req.params.id,
+      shop: req.shopId,
+      isDeleted: false,
+    });
+
+    if (!dailyWork) {
+      return res.status(404).json({ success: false, message: "Daily work entry not found" });
+    }
+
+    // If entry contains actual production work, just turn OFF Khoraki so production work stays 100% intact!
+    if (Number(dailyWork.unitsCompleted || 0) > 0 || Number(dailyWork.earnedAmount || 0) > 0) {
+      dailyWork.isKhorakiIncluded = false;
+      dailyWork.khorakiAmount = 0;
+      dailyWork.updatedBy = req.user._id;
+      await dailyWork.save();
+      return res.json({ success: true, message: "Khoraki removed! Production work remains 100% safe." });
+    } else {
+      // Pure Khoraki entry: soft delete the entry
+      dailyWork.isDeleted = true;
+      dailyWork.updatedBy = req.user._id;
+      await dailyWork.save();
+      return res.json({ success: true, message: "Khoraki entry deleted" });
+    }
+  } catch (error) {
+    logger.error("Remove Khoraki Error:", error);
+    return res.status(500).json({ success: false, message: "Failed to remove Khoraki" });
   }
 };

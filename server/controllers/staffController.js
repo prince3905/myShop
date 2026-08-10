@@ -396,17 +396,21 @@ exports.getStaffLedger = async (req, res) => {
     let totalEarned = 0;
     let totalAdvance = 0;
     let totalPayment = 0;
+    let totalKhoraki = 0;
 
     const ledger = rawRows.map((row) => {
       if (row.type === "DAILY_WORK") {
         totalEarned += row.earned;
         runningBalance += row.earned;
-      } else if (row.type === "ADVANCE" || row.type === "KHORAKI") {
+      } else if (row.type === "ADVANCE") {
         totalAdvance += row.paid;
         runningBalance -= row.paid;
       } else if (row.type === "PAYMENT") {
         totalPayment += row.paid;
         runningBalance -= row.paid;
+      } else if (row.type === "KHORAKI") {
+        totalKhoraki += row.paid;
+        // Khoraki is extra food expense paid by shop, DOES NOT deduct from worker balance!
       }
 
       return {
@@ -435,6 +439,7 @@ exports.getStaffLedger = async (req, res) => {
         totalEarned,
         totalAdvance,
         totalPayment,
+        totalKhoraki,
         totalPaid: totalAdvance + totalPayment,
         netBalance: runningBalance,
       },

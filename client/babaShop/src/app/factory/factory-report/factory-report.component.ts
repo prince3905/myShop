@@ -63,8 +63,8 @@ export class FactoryReportComponent implements OnInit {
       materialsResponse: this.rawMaterialService.getMaterials({ search: this.filters.search }),
     }).subscribe({
       next: ({ dailyWorksResponse, materialsResponse }) => {
-        const dailyWorks = (dailyWorksResponse?.dailyWorks || []).filter((row: any) =>
-          !!row?.factoryProduct && ["APPROVED", "PARTIAL"].includes(`${row?.verificationStatus || ""}`),
+        const dailyWorks = (dailyWorksResponse?.dailyWorks || []).filter(
+          (row: any) => !!row?.factoryProduct && Number(row?.unitsCompleted || 0) > 0 && ["APPROVED", "PARTIAL"].includes(`${row?.verificationStatus || ""}`),
         );
         const materials = materialsResponse?.materials || [];
         const productions = this.buildProductionRows(dailyWorks);
@@ -146,10 +146,16 @@ export class FactoryReportComponent implements OnInit {
       const factoryCost = materialCost + labourCost + otherCost;
       const actualBatchCost = materialCost + workerCost + otherCost;
 
+      const baseName = row.factoryProductName || product?.name || row.workItemName || row.workType || "Item";
+      const varLabel = this.getVariationLabel(row);
+      const fullItemName = varLabel ? `${baseName} (${varLabel})` : baseName;
+
       return {
         sourceId: row?._id || null,
         entryDate: row.entryDate,
-        itemName: row.factoryProductName || product?.name || row.workItemName || row.workType,
+        itemName: fullItemName,
+        factoryProduct: product,
+        factoryProductSku: row.factoryProductSku,
         serialNo: row.staff?.name || "",
         workerName: row.staff?.name || "",
         qtyProduced: qty,
@@ -205,6 +211,33 @@ export class FactoryReportComponent implements OnInit {
     return (Object.values(grouped) as Array<{ label: string; qty: number; count: number }>)
       .sort((a, b) => b.qty - a.qty)
       .slice(0, 5);
+  }
+
+  getVariationLabel(item: any): string {
+    if (!item) return "";
+    const fp = item?.factoryProduct || item;
+    const variation = fp?.shopVariation || item?.shopVariation;
+
+    const sku = item?.factoryProductSku || fp?.code || variation?.sku || "";
+    const size = fp?.variationSize || variation?.attributes?.size || "";
+    const color = fp?.variationColor || variation?.attributes?.color || "";
+    const modelName = fp?.shopModel?.name || variation?.model?.name || "";
+
+    const parts: string[] = [];
+    if (modelName && modelName.toUpperCase() !== (fp?.name || "").toUpperCase()) {
+      parts.push(modelName);
+    }
+    if (size) {
+      parts.push(size);
+    }
+    if (color && !["NONE", "NETURAL", "NATURAL"].includes(color.toUpperCase())) {
+      parts.push(color);
+    }
+    if (sku) {
+      parts.push(sku);
+    }
+
+    return parts.join(" · ");
   }
 
   private buildWorkerProduction(dailyWorks: any[]): Array<{ label: string; qty: number; earned: number; count: number }> {

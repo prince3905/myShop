@@ -77,6 +77,13 @@ export class StaffDailyWorkComponent implements OnInit {
     return 100;
   }
 
+  get productionWorkList(): any[] {
+    return (this.dailyWorks || []).filter((dw: any) => {
+      const isPureKhoraki = dw.isKhorakiIncluded && (!dw.unitsCompleted || dw.unitsCompleted === 0) && (!dw.earnedAmount || dw.earnedAmount === 0);
+      return !isPureKhoraki;
+    });
+  }
+
   get khorakiList(): any[] {
     return (this.dailyWorks || []).filter((dw: any) => dw.isKhorakiIncluded === true || Number(dw.khorakiAmount || 0) > 0);
   }
@@ -120,6 +127,9 @@ export class StaffDailyWorkComponent implements OnInit {
   }
 
   canDeleteRow(dailyWork: any): boolean {
+    if (dailyWork?.stockPushStatus === "PUSHED") {
+      return false;
+    }
     return this.canManage && !!dailyWork?._id;
   }
 
@@ -273,8 +283,6 @@ export class StaffDailyWorkComponent implements OnInit {
     this.dailyWorkForm.khorakiAmount = this.defaultKhorakiAmount;
     if (this.dailyWorkForm.attendanceStatus === "ABSENT") {
       this.dailyWorkForm.isKhorakiIncluded = false;
-    } else {
-      this.dailyWorkForm.isKhorakiIncluded = true;
     }
   }
 
@@ -317,6 +325,9 @@ export class StaffDailyWorkComponent implements OnInit {
           { duration: 2500 },
         );
         this.cancelEdit(form);
+        if (payload.isKhorakiIncluded && this.activeTab === 'KHORAKI') {
+          this.activeTab = 'KHORAKI';
+        }
         this.loadAll();
       },
       error: (error) => {
@@ -472,6 +483,33 @@ export class StaffDailyWorkComponent implements OnInit {
     return "";
   }
 
+  getVariationLabel(item: any): string {
+    if (!item) return "";
+    const fp = item?.factoryProduct || item;
+    const variation = fp?.shopVariation || item?.shopVariation;
+
+    const sku = item?.factoryProductSku || fp?.code || variation?.sku || "";
+    const size = fp?.variationSize || variation?.attributes?.size || "";
+    const color = fp?.variationColor || variation?.attributes?.color || "";
+    const modelName = fp?.shopModel?.name || variation?.model?.name || "";
+
+    const parts: string[] = [];
+    if (modelName && modelName.toUpperCase() !== (fp?.name || "").toUpperCase()) {
+      parts.push(modelName);
+    }
+    if (size) {
+      parts.push(size);
+    }
+    if (color && !["NONE", "NETURAL", "NATURAL"].includes(color.toUpperCase())) {
+      parts.push(color);
+    }
+    if (sku) {
+      parts.push(sku);
+    }
+
+    return parts.join(" · ");
+  }
+
   getActualBoxCostPreview(item: any): number {
     const product = item?.factoryProduct;
     const qty = Number(item?.unitsCompleted || 0);
@@ -508,6 +546,34 @@ export class StaffDailyWorkComponent implements OnInit {
       error: (error) => {
         this.deletingId = null;
         this.showError(error?.error?.message || "Failed to delete daily work entry");
+      },
+    });
+  }
+
+  deleteKhorakiCard(dailyWork: any): void {
+    if (!dailyWork?._id || this.deletingId) {
+      return;
+    }
+
+    const hasWork = Number(dailyWork.unitsCompleted || 0) > 0 || Number(dailyWork.earnedAmount || 0) > 0;
+    const msg = hasWork
+      ? `Remove Khoraki for ${dailyWork.staff?.name || "worker"}? (Production work will remain safe)`
+      : `Delete Khoraki entry for ${dailyWork.staff?.name || "worker"}?`;
+
+    if (!window.confirm(msg)) {
+      return;
+    }
+
+    this.deletingId = dailyWork._id;
+    this.staffDailyWorkService.removeKhoraki(dailyWork._id).subscribe({
+      next: (response) => {
+        this.deletingId = null;
+        this.snackBar.open(response?.message || "Khoraki removed", "Close", { duration: 2500 });
+        this.loadAll();
+      },
+      error: (error) => {
+        this.deletingId = null;
+        this.showError(error?.error?.message || "Failed to remove Khoraki");
       },
     });
   }

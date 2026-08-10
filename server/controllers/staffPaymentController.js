@@ -214,12 +214,14 @@ exports.getStaffPaymentSummary = async (req, res) => {
 
     const totalAdvance = Number(totals.find((row) => row._id === "ADVANCE")?.totalAmount || 0);
     const totalPayment = Number(totals.find((row) => row._id === "PAYMENT")?.totalAmount || 0);
+    const totalKhoraki = Number(totals.find((row) => row._id === "KHORAKI")?.totalAmount || 0);
 
     return res.json({
       success: true,
       summary: {
         totalAdvance,
         totalPayment,
+        totalKhoraki,
         netBalance: totalAdvance - totalPayment,
         todayEntries: Number(todayCount || 0),
         byType,

@@ -9,18 +9,12 @@ const escapeRegex = (value = "") => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
 
 const objectIds = (materials) => materials.map((item) => item._id);
 
-const buildMovementMatch = (req, extra = {}, options = {}) => {
-  const match = {
+const buildMovementMatch = (req, extra = {}) => {
+  return {
     shop: req.shopId,
-    isDeleted: false,
+    isDeleted: { $ne: true },
     ...extra,
   };
-
-  if (!options.ignoreCreatorScope && STAFF_ONLY_FILTER(req)) {
-    match.createdBy = req.user._id;
-  }
-
-  return match;
 };
 
 const attachStockMetrics = async (req, materials, options = {}) => {
@@ -179,7 +173,7 @@ exports.createRawMaterial = async (req, res) => {
 
     const existingMaterial = await RawMaterial.findOne({
       shop: req.shopId,
-      isDeleted: false,
+      isDeleted: { $ne: true },
       name: new RegExp(`^${escapeRegex(payload.name)}$`, "i"),
       sizeLabel: new RegExp(`^${escapeRegex(payload.sizeLabel)}$`, "i"),
       colorLabel: new RegExp(`^${escapeRegex(payload.colorLabel)}$`, "i"),
@@ -210,12 +204,10 @@ exports.getRawMaterials = async (req, res) => {
 
     const filter = {
       shop: req.shopId,
-      isDeleted: false,
+      isDeleted: { $ne: true },
     };
 
-    if (STAFF_ONLY_FILTER(req)) {
-      filter.createdBy = req.user._id;
-    }
+
 
     const { search, active } = req.query || {};
     if (`${active || ""}`.trim()) {
@@ -254,7 +246,7 @@ exports.getRawMaterialOptions = async (req, res) => {
 
     const filter = {
       shop: req.shopId,
-      isDeleted: false,
+      isDeleted: { $ne: true },
     };
 
     const { search, active } = req.query || {};
@@ -294,7 +286,7 @@ exports.getRawMaterialSummary = async (req, res) => {
 
     const baseMatch = {
       shop: req.shopId,
-      isDeleted: false,
+      isDeleted: { $ne: true },
     };
 
     if (STAFF_ONLY_FILTER(req)) {
@@ -350,7 +342,7 @@ exports.getRawMaterialHistory = async (req, res) => {
     const material = await RawMaterial.findOne({
       _id: req.params.id,
       shop: req.shopId,
-      isDeleted: false,
+      isDeleted: { $ne: true },
     }).lean();
 
     if (!material) {
@@ -514,7 +506,7 @@ exports.updateRawMaterial = async (req, res) => {
     const material = await RawMaterial.findOne({
       _id: req.params.id,
       shop: req.shopId,
-      isDeleted: false,
+      isDeleted: { $ne: true },
     });
 
     if (!material) {
@@ -546,7 +538,7 @@ exports.updateRawMaterial = async (req, res) => {
     const existingMaterial = await RawMaterial.findOne({
       _id: { $ne: material._id },
       shop: req.shopId,
-      isDeleted: false,
+      isDeleted: { $ne: true },
       name: new RegExp(`^${escapeRegex(material.name)}$`, "i"),
       sizeLabel: new RegExp(`^${escapeRegex(material.sizeLabel || "")}$`, "i"),
       colorLabel: new RegExp(`^${escapeRegex(material.colorLabel || "")}$`, "i"),
@@ -575,7 +567,7 @@ exports.deleteRawMaterial = async (req, res) => {
     }
 
     const material = await RawMaterial.findOneAndUpdate(
-      { _id: req.params.id, shop: req.shopId, isDeleted: false },
+      { _id: req.params.id, shop: req.shopId, isDeleted: { $ne: true } },
       { $set: { isDeleted: true, updatedBy: req.user._id } },
       { new: true },
     );

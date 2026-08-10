@@ -165,20 +165,31 @@
             </div>
           </div>
 
-          <!-- 1-Click Khoraki (Food Allowance) Toggle Box -->
-          <div style="background: linear-gradient(135deg, #fff7ed, #ffedd5); border: 1.5px solid #fdba74; border-radius: 12px; padding: 12px 16px; margin: 12px 0; display: flex; align-items: center; justify-content: space-between;">
-            <div style="display: flex; align-items: center; gap: 10px;">
-              <mat-icon style="color: #c2410c; font-size: 24px; width: 24px; height: 24px;">lunch_dining</mat-icon>
-              <div>
-                <strong style="color: #9a3412; font-size: 14px; display: block;">Daily Khoraki (Food Expense Payout)</strong>
-                <span style="font-size: 12px; color: #c2410c;">
-                  {{ dailyWorkForm.attendanceStatus === 'PRESENT' ? '🟢 Present → Full Day ₹100 Khoraki' : (dailyWorkForm.attendanceStatus === 'HALF_DAY' ? '🟡 Half Day → ₹50 Khoraki' : '🔴 Absent → No Khoraki') }}
-                </span>
+          <!-- High-Visibility 1-Click Khoraki (Food Allowance) Box -->
+          <div style="background: #fff7ed; border: 2px solid #ea580c; border-radius: 14px; padding: 14px 18px; margin: 16px 0; box-shadow: 0 4px 12px rgba(234, 88, 12, 0.12);">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 44px; height: 44px; border-radius: 12px; background: #ea580c; color: white; display: flex; align-items: center; justify-content: center;">
+                  <mat-icon style="font-size: 26px; width: 26px; height: 26px; color: white;">lunch_dining</mat-icon>
+                </div>
+                <div>
+                  <strong style="color: #9a3412; font-size: 15px; display: block; font-weight: 800;">
+                    🍲 Khana Khoraki (Daily Food Expense)
+                  </strong>
+                  <span style="font-size: 13px; color: #c2410c; font-weight: 600;">
+                    {{ dailyWorkForm.attendanceStatus === 'PRESENT' ? '🟢 Present → ₹100 Extra Food Money' : (dailyWorkForm.attendanceStatus === 'HALF_DAY' ? '🟡 Half Day → ₹50 Extra Food Money' : '🔴 Absent → No Khoraki') }}
+                  </span>
+                </div>
+              </div>
+
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <mat-checkbox color="primary" [(ngModel)]="dailyWorkForm.isKhorakiIncluded" name="isKhorakiIncluded" [disabled]="dailyWorkForm.attendanceStatus === 'ABSENT'" style="transform: scale(1.3);">
+                  <strong style="font-size: 16px; color: #ea580c; font-weight: 800; margin-left: 4px;">
+                    +₹{{ defaultKhorakiAmount }}
+                  </strong>
+                </mat-checkbox>
               </div>
             </div>
-            <mat-slide-toggle color="primary" [(ngModel)]="dailyWorkForm.isKhorakiIncluded" name="isKhorakiIncluded" [disabled]="dailyWorkForm.attendanceStatus === 'ABSENT'">
-              <span style="font-weight: 800; color: #ea580c; font-size: 15px;">₹{{ defaultKhorakiAmount }}</span>
-            </mat-slide-toggle>
           </div>
 
           <!-- Material Requirement Preview -->
@@ -306,14 +317,14 @@
           <mat-spinner diameter="24"></mat-spinner> Loading entries...
         </div>
 
-        <div class="empty-state-bento" *ngIf="!loadingDailyWorks && dailyWorks.length === 0">
+        <div class="empty-state-bento" *ngIf="activeTab === 'WORK' && !loadingDailyWorks && productionWorkList.length === 0">
           <mat-icon>event_note</mat-icon>
-          <p>No daily work entries found.</p>
+          <p>No production work entries found.</p>
         </div>
 
         <!-- ── TAB 1: PRODUCTION WORK CARDS GRID ── -->
-        <div class="work-cards-grid" *ngIf="activeTab === 'WORK' && !loadingDailyWorks && dailyWorks.length > 0">
-          <div class="work-card-v3" *ngFor="let item of dailyWorks">
+        <div class="work-cards-grid" *ngIf="activeTab === 'WORK' && !loadingDailyWorks && productionWorkList.length > 0">
+          <div class="work-card-v3" *ngFor="let item of productionWorkList">
             <div class="work-card-top">
               <div class="worker-avatar">
                 {{ (item.staff?.name || 'S')[0].toUpperCase() }}
@@ -341,7 +352,11 @@
 
             <div class="work-chips">
               <span class="work-chip product" *ngIf="item.factoryProductName">
-                {{ item.factoryProductName }} <span *ngIf="item.factoryProductSku || item.factoryProduct?.shopVariation?.sku">· {{ item.factoryProductSku || item.factoryProduct?.shopVariation?.sku }}</span> · {{ item.unitsCompleted || 0 }} {{ item.unit || 'PCS' }}
+                {{ item.factoryProductName }}
+                <span class="variation-badge" *ngIf="getVariationLabel(item)" style="background: #fff7ed; color: #c2410c; border: 1px solid #ffedd5; padding: 2px 8px; border-radius: 6px; font-weight: 700; margin-left: 6px; display: inline-flex; align-items: center; gap: 4px;">
+                  <mat-icon style="font-size: 14px; width: 14px; height: 14px;">straighten</mat-icon> {{ getVariationLabel(item) }}
+                </span>
+                · {{ item.unitsCompleted || 0 }} {{ item.unit || 'PCS' }}
               </span>
               <span class="work-chip details" *ngIf="item.workDetails">{{ item.workDetails }}</span>
               <span class="work-chip job" *ngIf="item.linkedJob">{{ item.linkedJob }}</span>
@@ -431,7 +446,7 @@
                 <button mat-icon-button color="primary" [disabled]="deletingId === item._id" (click)="startEdit(item)" title="Edit Khoraki">
                   <mat-icon>edit</mat-icon>
                 </button>
-                <button *ngIf="canDeleteRow(item)" mat-icon-button color="warn" [disabled]="deletingId === item._id" (click)="deleteDailyWork(item)" title="Delete Khoraki">
+                <button *ngIf="canDeleteRow(item)" mat-icon-button color="warn" [disabled]="deletingId === item._id" (click)="deleteKhorakiCard(item)" title="Remove Khoraki">
                   <mat-icon>{{ deletingId === item._id ? 'hourglass_top' : 'delete' }}</mat-icon>
                 </button>
               </div>

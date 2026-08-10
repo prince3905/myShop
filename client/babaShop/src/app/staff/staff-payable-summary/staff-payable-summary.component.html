@@ -186,7 +186,7 @@
           <ng-container *ngIf="!ledgerLoading">
             
             <!-- Summary KPI Cards Bar -->
-            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px;">
+            <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 20px;">
               <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 12px; border-radius: 10px;">
                 <span style="font-size: 11px; font-weight: 600; color: #166534; text-transform: uppercase;">Total Earned (+)</span>
                 <div style="font-size: 18px; font-weight: 700; color: #15803d; margin-top: 4px;">₹{{ activeLedgerSummary?.totalEarned | number: '1.2-2' }}</div>
@@ -198,6 +198,11 @@
               <div style="background: #f0f9ff; border: 1px solid #bae6fd; padding: 12px; border-radius: 10px;">
                 <span style="font-size: 11px; font-weight: 600; color: #0369a1; text-transform: uppercase;">Total Payment (-)</span>
                 <div style="font-size: 18px; font-weight: 700; color: #0284c7; margin-top: 4px;">₹{{ activeLedgerSummary?.totalPayment | number: '1.2-2' }}</div>
+              </div>
+              <div style="background: #fff7ed; border: 1px dashed #fdba74; padding: 12px; border-radius: 10px;">
+                <span style="font-size: 11px; font-weight: 700; color: #ea580c; text-transform: uppercase;">Total Khoraki 🍲</span>
+                <div style="font-size: 18px; font-weight: 700; color: #ea580c; margin-top: 4px;">₹{{ activeLedgerSummary?.totalKhoraki | number: '1.2-2' }}</div>
+                <span style="font-size: 10px; color: #9a3412; font-weight: 600;">(Extra Shop Expense)</span>
               </div>
               <div style="padding: 12px; border-radius: 10px; border: 1px solid;" [style.background]="(activeLedgerSummary?.netBalance || 0) >= 0 ? '#f0fdf4' : '#fef2f2'" [style.borderColor]="(activeLedgerSummary?.netBalance || 0) >= 0 ? '#86efac' : '#fca5a5'">
                 <span style="font-size: 11px; font-weight: 600; text-transform: uppercase;" [style.color]="(activeLedgerSummary?.netBalance || 0) >= 0 ? '#15803d' : '#b91c1c'">Net Payable</span>
@@ -258,8 +263,11 @@
                       <span *ngIf="row.earned > 0">+₹{{ row.earned | number: '1.2-2' }}</span>
                       <span *ngIf="row.earned === 0" style="color: #cbd5e1;">-</span>
                     </td>
-                    <td style="padding: 12px; text-align: right; font-weight: 700; color: #b91c1c;">
-                      <span *ngIf="row.paid > 0">-₹{{ row.paid | number: '1.2-2' }}</span>
+                    <td style="padding: 12px; text-align: right; font-weight: 700;">
+                      <span *ngIf="row.type === 'KHORAKI'" style="color: #ea580c; font-size: 12px; font-weight: 800;">
+                        ₹{{ row.paid | number: '1.2-2' }} <span style="font-size: 10px; color: #9a3412;">(Shop Expense)</span>
+                      </span>
+                      <span *ngIf="row.type !== 'KHORAKI' && row.paid > 0" style="color: #b91c1c;">-₹{{ row.paid | number: '1.2-2' }}</span>
                       <span *ngIf="row.paid === 0" style="color: #cbd5e1;">-</span>
                     </td>
                     <td style="padding: 12px; text-align: right; font-weight: 700;" [style.color]="row.runningBalance >= 0 ? '#15803d' : '#b91c1c'">
