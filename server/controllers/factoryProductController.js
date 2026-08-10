@@ -269,10 +269,27 @@ exports.createFactoryProduct = async (req, res) => {
     }
 
     const product = await FactoryProduct.create(payload);
-    if (product.shopVariation && Number(product.defaultSellingPrice || 0) > 0) {
-      await ProductVariation.findByIdAndUpdate(product.shopVariation, {
-        sellingPrice: Number(product.defaultSellingPrice),
-      });
+
+    const matCostPerUnit = (product.standardMaterialLines || []).reduce((sum, line) => {
+      return sum + (Number(line.qtyPerUnit || 0) * Number(line.rate || 0));
+    }, 0);
+    const workerRate = Number(product.workerPieceRate || 0);
+    const labourCost = Number(product.standardLabourCost || 0);
+    const otherCost = Number(product.standardOtherCost || 0);
+    const wasteValue = Number(product.standardWasteValuePerUnit || 0);
+    const calculatedRecipeCost = Number((matCostPerUnit + workerRate + labourCost + otherCost + wasteValue).toFixed(2));
+
+    if (product.shopVariation) {
+      const updatePayload = {};
+      if (Number(product.defaultSellingPrice || 0) > 0) {
+        updatePayload.sellingPrice = Number(product.defaultSellingPrice);
+      }
+      if (calculatedRecipeCost > 0) {
+        updatePayload.costPrice = calculatedRecipeCost;
+      }
+      if (Object.keys(updatePayload).length > 0) {
+        await ProductVariation.findByIdAndUpdate(product.shopVariation, updatePayload);
+      }
     }
     const populated = await populateFactoryProduct(FactoryProduct.findById(product._id));
 
@@ -501,10 +518,27 @@ exports.updateFactoryProduct = async (req, res) => {
     }
 
     await product.save();
-    if (product.shopVariation && Number(product.defaultSellingPrice || 0) > 0) {
-      await ProductVariation.findByIdAndUpdate(product.shopVariation, {
-        sellingPrice: Number(product.defaultSellingPrice),
-      });
+
+    const matCostPerUnit = (product.standardMaterialLines || []).reduce((sum, line) => {
+      return sum + (Number(line.qtyPerUnit || 0) * Number(line.rate || 0));
+    }, 0);
+    const workerRate = Number(product.workerPieceRate || 0);
+    const labourCost = Number(product.standardLabourCost || 0);
+    const otherCost = Number(product.standardOtherCost || 0);
+    const wasteValue = Number(product.standardWasteValuePerUnit || 0);
+    const calculatedRecipeCost = Number((matCostPerUnit + workerRate + labourCost + otherCost + wasteValue).toFixed(2));
+
+    if (product.shopVariation) {
+      const updatePayload = {};
+      if (Number(product.defaultSellingPrice || 0) > 0) {
+        updatePayload.sellingPrice = Number(product.defaultSellingPrice);
+      }
+      if (calculatedRecipeCost > 0) {
+        updatePayload.costPrice = calculatedRecipeCost;
+      }
+      if (Object.keys(updatePayload).length > 0) {
+        await ProductVariation.findByIdAndUpdate(product.shopVariation, updatePayload);
+      }
     }
 
     // Auto-sync ONLY PENDING (unapproved) StaffDailyWork entries for this factory product
