@@ -541,6 +541,38 @@ export class StaffDailyWorkComponent implements OnInit {
     return badges;
   }
 
+  getFinancialSummary(item: any): any {
+    const qty = Number(item?.unitsCompleted || 0);
+    const pieceRate = Number(item?.factoryProduct?.workerPieceRate || item?.pieceRate || 0);
+    const workerPay = Number(item?.earnedAmount ?? (qty * pieceRate));
+
+    const fp = item?.factoryProduct || {};
+    const matCostPerUnit = (fp?.standardMaterialLines || []).reduce((sum: number, line: any) => {
+      return sum + (Number(line?.qtyPerUnit || 0) * Number(line?.rate || 0));
+    }, 0);
+    const otherCostPerUnit = Number(fp?.standardOtherCost || 0);
+    const wasteValuePerUnit = Number(fp?.standardWasteValuePerUnit || 0);
+
+    const costPerPiece = matCostPerUnit + (qty > 0 ? (workerPay / qty) : pieceRate) + otherCostPerUnit + wasteValuePerUnit;
+    const totalBatchCost = qty * costPerPiece;
+
+    const sellPricePerPiece = Number(fp?.shopVariation?.sellingPrice || fp?.defaultSellingPrice || 0);
+    const totalSellingValue = qty * sellPricePerPiece;
+    const estimatedBatchMargin = totalSellingValue - totalBatchCost;
+
+    return {
+      qty,
+      pieceRate,
+      workerPay,
+      costPerPiece,
+      totalBatchCost,
+      sellPricePerPiece,
+      totalSellingValue,
+      estimatedBatchMargin,
+      unit: item?.unit || fp?.unitLabel || "PCS",
+    };
+  }
+
   getActualBoxCostPreview(item: any): number {
     const product = item?.factoryProduct;
     const qty = Number(item?.unitsCompleted || 0);

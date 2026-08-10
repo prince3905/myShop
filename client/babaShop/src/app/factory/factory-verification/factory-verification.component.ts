@@ -303,6 +303,38 @@ export class FactoryVerificationComponent implements OnInit {
     return badges;
   }
 
+  getFinancialSummary(row: any): any {
+    const qty = Number(row?.unitsCompleted || 0);
+    const pieceRate = Number(row?.factoryProduct?.workerPieceRate || row?.pieceRate || 0);
+    const workerPay = Number(row?.earnedAmount ?? (qty * pieceRate));
+
+    const fp = row?.factoryProduct || {};
+    const matCostPerUnit = (fp?.standardMaterialLines || []).reduce((sum: number, line: any) => {
+      return sum + (Number(line?.qtyPerUnit || 0) * Number(line?.rate || 0));
+    }, 0);
+    const otherCostPerUnit = Number(fp?.standardOtherCost || 0);
+    const wasteValuePerUnit = Number(fp?.standardWasteValuePerUnit || 0);
+
+    const costPerPiece = matCostPerUnit + (qty > 0 ? (workerPay / qty) : pieceRate) + otherCostPerUnit + wasteValuePerUnit;
+    const totalBatchCost = qty * costPerPiece;
+
+    const sellPricePerPiece = this.getShopSellingPrice(row);
+    const totalSellingValue = qty * sellPricePerPiece;
+    const estimatedBatchMargin = totalSellingValue - totalBatchCost;
+
+    return {
+      qty,
+      pieceRate,
+      workerPay,
+      costPerPiece,
+      totalBatchCost,
+      sellPricePerPiece,
+      totalSellingValue,
+      estimatedBatchMargin,
+      unit: row?.unit || fp?.unitLabel || "PCS",
+    };
+  }
+
   getMaterialPreview(row: any): string {
     const qty = Number(row?.unitsCompleted || 0);
     return (row?.factoryProduct?.standardMaterialLines || [])

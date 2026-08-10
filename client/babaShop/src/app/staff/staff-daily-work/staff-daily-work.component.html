@@ -374,6 +374,38 @@
               {{ getMaterialUsagePreview(item) }}
             </div>
 
+            <!-- Financial Breakdown Panel (Piece Rate, Worker Pay, Per Piece Box Cost, Total Batch Cost, Margin) -->
+            <div *ngIf="item.unitsCompleted > 0 && getFinancialSummary(item) as fin" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 12px; margin: 10px 0;">
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; font-size: 12px;">
+                <div>
+                  <span style="color: #64748b; display: block; font-size: 11px;">Worker Rate</span>
+                  <strong style="color: #0f172a;">₹{{ fin.pieceRate | number: '1.0-2' }}/{{ fin.unit }}</strong>
+                </div>
+                <div>
+                  <span style="color: #64748b; display: block; font-size: 11px;">Total Worker Pay</span>
+                  <strong style="color: #16a34a;">₹{{ fin.workerPay | number: '1.2-2' }}</strong>
+                </div>
+                <div>
+                  <span style="color: #64748b; display: block; font-size: 11px;">Box Cost / Piece</span>
+                  <strong style="color: #2563eb;">₹{{ fin.costPerPiece | number: '1.2-2' }}</strong>
+                </div>
+                <div>
+                  <span style="color: #64748b; display: block; font-size: 11px;">Total Batch Cost</span>
+                  <strong style="color: #475569;">₹{{ fin.totalBatchCost | number: '1.2-2' }}</strong>
+                </div>
+                <div *ngIf="fin.sellPricePerPiece > 0">
+                  <span style="color: #64748b; display: block; font-size: 11px;">Selling Price</span>
+                  <strong style="color: #d97706;">₹{{ fin.sellPricePerPiece | number: '1.2-2' }}/{{ fin.unit }}</strong>
+                </div>
+                <div *ngIf="fin.sellPricePerPiece > 0">
+                  <span style="color: #64748b; display: block; font-size: 11px;">Est. Batch Margin</span>
+                  <strong [style.color]="fin.estimatedBatchMargin >= 0 ? '#16a34a' : '#dc2626'">
+                    {{ fin.estimatedBatchMargin >= 0 ? '+' : '' }}₹{{ fin.estimatedBatchMargin | number: '1.2-2' }}
+                  </strong>
+                </div>
+              </div>
+            </div>
+
             <div class="work-footer">
               <div class="earned-amount">
                 <mat-icon>payments</mat-icon>
