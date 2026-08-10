@@ -510,6 +510,37 @@ export class StaffDailyWorkComponent implements OnInit {
     return parts.join(" · ");
   }
 
+  getProductMetaBadges(item: any): string[] {
+    const fp = item?.factoryProduct || item;
+    const variation = fp?.shopVariation || item?.shopVariation;
+
+    const badges: string[] = [];
+
+    const category = fp?.shopCategory?.name;
+    if (category) badges.push(`Category: ${category}`);
+
+    const brand = fp?.shopBrand?.name;
+    if (brand) badges.push(`Brand: ${brand}`);
+
+    const model = fp?.shopModel?.name;
+    if (model) badges.push(`Model: ${model}`);
+
+    const color = fp?.variationColor || variation?.attributes?.color;
+    if (color && !["NONE", "NETURAL", "NATURAL"].includes(color.toUpperCase())) {
+      badges.push(`Color: ${color}`);
+    }
+
+    const size = fp?.variationSize || variation?.attributes?.size;
+    if (size) badges.push(`Size: ${size}`);
+
+    const rate = fp?.workerPieceRate || item?.pieceRate;
+    if (Number(rate || 0) > 0) {
+      badges.push(`Worker Rate: ₹${rate}/${fp?.unitLabel || item?.unit || "PCS"}`);
+    }
+
+    return badges;
+  }
+
   getActualBoxCostPreview(item: any): number {
     const product = item?.factoryProduct;
     const qty = Number(item?.unitsCompleted || 0);

@@ -151,6 +151,13 @@
           </div>
         </div>
 
+        <!-- Full Product Meta Badges (Category, Brand, Model, Color, Rate) -->
+        <div class="product-meta-chips" *ngIf="getProductMetaBadges(row).length > 0" style="display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 12px 0;">
+          <span *ngFor="let badge of getProductMetaBadges(row)" style="background: #f1f5f9; color: #334155; border: 1px solid #e2e8f0; padding: 3px 8px; border-radius: 6px; font-size: 12px; font-weight: 600;">
+            {{ badge }}
+          </span>
+        </div>
+
         <div class="qty-display">
           <div class="qty-item">
             <span class="qty-label">Completed</span>

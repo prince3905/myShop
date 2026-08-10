@@ -362,6 +362,13 @@
               <span class="work-chip job" *ngIf="item.linkedJob">{{ item.linkedJob }}</span>
             </div>
 
+            <!-- Full Product Meta Badges (Category, Brand, Model, Color, Rate) -->
+            <div class="product-meta-chips" *ngIf="getProductMetaBadges(item).length > 0" style="display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0;">
+              <span *ngFor="let badge of getProductMetaBadges(item)" style="background: #f8fafc; color: #475569; border: 1px solid #e2e8f0; padding: 2px 8px; border-radius: 6px; font-size: 12px; font-weight: 600;">
+                {{ badge }}
+              </span>
+            </div>
+
             <div class="material-info" *ngIf="getMaterialUsagePreview(item)">
               <mat-icon>inventory_2</mat-icon>
               {{ getMaterialUsagePreview(item) }}

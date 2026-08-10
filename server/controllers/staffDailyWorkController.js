@@ -44,11 +44,13 @@ const populateDailyWorkQuery = (query) =>
     .populate("staff", "name phone staffType workType rateType rate active")
     .populate({
       path: "factoryProduct",
-      select: "name unitLabel workerPieceRate standardWasteQtyPerUnit standardWasteUnitLabel standardWasteValuePerUnit standardMaterialLines shopVariation defaultSellingPrice",
-      populate: {
-        path: "shopVariation",
-        select: "sku sellingPrice costPrice attributes",
-      },
+      select: "name code unitLabel workerPieceRate standardLabourCost standardOtherCost standardWasteQtyPerUnit standardWasteUnitLabel standardWasteValuePerUnit standardMaterialLines shopCategory shopBrand shopModel shopVariation variationColor variationSize defaultSellingPrice",
+      populate: [
+        { path: "shopCategory", select: "name" },
+        { path: "shopBrand", select: "name" },
+        { path: "shopModel", select: "name" },
+        { path: "shopVariation", select: "sku sellingPrice costPrice attributes" },
+      ],
     })
     .populate("workItem", "itemName workType pieceRate unit active")
     .populate("createdBy", "email role pFname pLname")

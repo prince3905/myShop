@@ -272,6 +272,37 @@ export class FactoryVerificationComponent implements OnInit {
     return this.getActualBoxCost(row);
   }
 
+  getProductMetaBadges(row: any): string[] {
+    const fp = row?.factoryProduct || row;
+    const variation = fp?.shopVariation || row?.shopVariation;
+
+    const badges: string[] = [];
+
+    const category = fp?.shopCategory?.name;
+    if (category) badges.push(`Category: ${category}`);
+
+    const brand = fp?.shopBrand?.name;
+    if (brand) badges.push(`Brand: ${brand}`);
+
+    const model = fp?.shopModel?.name;
+    if (model) badges.push(`Model: ${model}`);
+
+    const color = fp?.variationColor || variation?.attributes?.color;
+    if (color && !["NONE", "NETURAL", "NATURAL"].includes(color.toUpperCase())) {
+      badges.push(`Color: ${color}`);
+    }
+
+    const size = fp?.variationSize || variation?.attributes?.size;
+    if (size) badges.push(`Size: ${size}`);
+
+    const rate = fp?.workerPieceRate || row?.pieceRate;
+    if (Number(rate || 0) > 0) {
+      badges.push(`Worker Rate: ₹${rate}/${fp?.unitLabel || row?.unit || "PCS"}`);
+    }
+
+    return badges;
+  }
+
   getMaterialPreview(row: any): string {
     const qty = Number(row?.unitsCompleted || 0);
     return (row?.factoryProduct?.standardMaterialLines || [])
