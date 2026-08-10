@@ -346,8 +346,19 @@ export class SidebarComponent implements OnInit, OnDestroy {
     this.router.navigate(["/login"]);
   }
 
-  toggleMenu(menuItem: RouteInfo) {
-    if (this.isCollapsed) return;
+  onNavLinkClick(): void {
+    if (this.isMobileViewport) {
+      this.closeMobileDrawer();
+    }
+  }
+
+  toggleMenu(menuItem: RouteInfo, event?: Event) {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+
+    if (this.isCollapsed && !this.isMobileViewport) return;
 
     this.menuItems.forEach((item) => {
       if (item !== menuItem) {
@@ -356,6 +367,14 @@ export class SidebarComponent implements OnInit, OnDestroy {
     });
 
     menuItem.expanded = !menuItem.expanded;
+  }
+
+  onToggleMenuTouch(menuItem: RouteInfo, event: Event): void {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    this.toggleMenu(menuItem);
   }
 
   toggleSidebar(): void {
