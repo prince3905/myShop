@@ -180,62 +180,75 @@ export class NavbarComponent implements OnInit {
     this.sidebarVisible = false;
     body.classList.remove("nav-open");
   }
-  sidebarToggle() {
-    // const toggleButton = this.toggleButton;
-    // const body = document.getElementsByTagName('body')[0];
-    var $toggle = document.getElementsByClassName("navbar-toggler")[0];
-
-    if (this.sidebarVisible === false) {
-      this.sidebarOpen();
-    } else {
-      this.sidebarClose();
+  onTogglerTouchStart(event: Event): void {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
     }
+    this.sidebarToggle();
+  }
+
+  sidebarToggle(event?: Event) {
+    if (event) {
+      event.stopPropagation();
+    }
+
+    const $toggle = document.getElementsByClassName("navbar-toggler")[0];
     const body = document.getElementsByTagName("body")[0];
 
-    if (this.mobile_menu_visible == 1) {
-      // $('html').removeClass('nav-open');
+    if (this.mobile_menu_visible === 1 || body.classList.contains("nav-open")) {
       body.classList.remove("nav-open");
-      if ($layer) {
-        $layer.remove();
+      const $layer: any = document.getElementsByClassName("close-layer")[0];
+      if ($layer && $layer.parentNode) {
+        $layer.parentNode.removeChild($layer);
       }
-      setTimeout(function () {
+      if ($toggle) {
         $toggle.classList.remove("toggled");
-      }, 400);
-
+      }
       this.mobile_menu_visible = 0;
+      this.sidebarVisible = false;
     } else {
-      setTimeout(function () {
+      if ($toggle) {
         $toggle.classList.add("toggled");
-      }, 430);
-
-      var $layer = document.createElement("div");
-      $layer.setAttribute("class", "close-layer");
-
-      if (body.querySelectorAll(".main-panel")) {
-        document.getElementsByClassName("main-panel")[0].appendChild($layer);
-      } else if (body.classList.contains("off-canvas-sidebar")) {
-        document
-          .getElementsByClassName("wrapper-full-page")[0]
-          .appendChild($layer);
       }
 
-      setTimeout(function () {
-        $layer.classList.add("visible");
-      }, 100);
+      const $layer = document.createElement("div");
+      $layer.setAttribute("class", "close-layer visible");
+      $layer.style.cursor = "pointer";
 
-      $layer.onclick = function () {
-        //asign a function
+      const closeHandler = (e: Event) => {
+        if (e) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
         body.classList.remove("nav-open");
         this.mobile_menu_visible = 0;
-        $layer.classList.remove("visible");
-        setTimeout(function () {
-          $layer.remove();
+        this.sidebarVisible = false;
+        if ($layer && $layer.parentNode) {
+          $layer.parentNode.removeChild($layer);
+        }
+        if ($toggle) {
           $toggle.classList.remove("toggled");
-        }, 400);
-      }.bind(this);
+        }
+      };
+
+      $layer.onclick = closeHandler;
+      $layer.ontouchstart = closeHandler;
+
+      const mainPanel = document.getElementsByClassName("main-panel")[0];
+      const wrapper = document.getElementsByClassName("wrapper-full-page")[0];
+
+      if (mainPanel) {
+        mainPanel.appendChild($layer);
+      } else if (wrapper) {
+        wrapper.appendChild($layer);
+      } else {
+        body.appendChild($layer);
+      }
 
       body.classList.add("nav-open");
       this.mobile_menu_visible = 1;
+      this.sidebarVisible = true;
     }
   }
 

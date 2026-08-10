@@ -152,10 +152,16 @@
   background: rgba(255, 255, 255, 0.15);
   border: 1px solid rgba(255, 255, 255, 0.2);
   flex-shrink: 0;
+  cursor: pointer !important;
+  -webkit-tap-highlight-color: transparent !important;
+  touch-action: manipulation !important;
+  z-index: 1090 !important;
+  position: relative !important;
 }
 
 .navbar-toggler-icon.icon-bar {
   background: #edc948;
+  pointer-events: none !important;
 }
 
 /* Mode Chip */
