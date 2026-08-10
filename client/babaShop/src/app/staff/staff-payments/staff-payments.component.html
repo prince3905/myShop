@@ -220,52 +220,49 @@
         </div>
 
         <div class="payment-cards-grid" *ngIf="!loadingPayments && payments.length > 0">
-          <div class="payment-card-v3" *ngFor="let payment of payments" [class.advance-card]="payment.entryType === 'ADVANCE'" [class.payment-card]="payment.entryType === 'PAYMENT'" [style.borderLeft]="payment.entryType === 'KHORAKI' ? '4px solid #ea580c' : null">
-            <div class="payment-card-top">
-              <div class="staff-avatar" [class.advance]="payment.entryType === 'ADVANCE'" [class.payment]="payment.entryType === 'PAYMENT'" [style.background]="payment.entryType === 'KHORAKI' ? '#ffedd5' : null" [style.color]="payment.entryType === 'KHORAKI' ? '#c2410c' : null">
+          <div class="payment-card-compact" *ngFor="let payment of payments" [class.advance-card]="payment.entryType === 'ADVANCE'" [class.payment-card]="payment.entryType === 'PAYMENT'" [class.khoraki-card]="payment.entryType === 'KHORAKI'">
+            
+            <!-- Compact Header -->
+            <div class="compact-card-header">
+              <div class="staff-avatar-sm" [class.advance]="payment.entryType === 'ADVANCE'" [class.payment]="payment.entryType === 'PAYMENT'" [class.khoraki]="payment.entryType === 'KHORAKI'">
                 {{ (payment.staff?.name || 'S')[0].toUpperCase() }}
               </div>
-              <div class="staff-info">
+              <div class="staff-name-wrap">
                 <div class="staff-name">{{ payment.staff?.name || 'Unknown' }}</div>
-                <div class="staff-type">{{ payment.staff?.workType || '-' }}</div>
+                <div class="staff-sub">{{ payment.staff?.workType || '-' }}</div>
               </div>
-              <div class="type-badge" [class.advance]="payment.entryType === 'ADVANCE'" [class.payment]="payment.entryType === 'PAYMENT'" [style.background]="payment.entryType === 'KHORAKI' ? '#fff7ed' : null" [style.color]="payment.entryType === 'KHORAKI' ? '#c2410c' : null" [style.borderColor]="payment.entryType === 'KHORAKI' ? '#fdba74' : null">
-                {{ payment.entryType === 'ADVANCE' ? 'Advance' : (payment.entryType === 'KHORAKI' ? '🍲 Khoraki' : 'Payment') }}
+              <div class="compact-amount" [class.advance-amt]="payment.entryType === 'ADVANCE'" [class.payment-amt]="payment.entryType === 'PAYMENT'" [class.khoraki-amt]="payment.entryType === 'KHORAKI'">
+                ₹{{ payment.amount | number: '1.0-2' }}
               </div>
             </div>
 
-            <div class="amount-display">
-              <mat-icon [style.color]="payment.entryType === 'KHORAKI' ? '#ea580c' : null">{{ payment.entryType === 'ADVANCE' ? 'call_received' : (payment.entryType === 'KHORAKI' ? 'lunch_dining' : 'payments') }}</mat-icon>
-              <span class="amount-value">₹{{ payment.amount | number: '1.2-2' }}</span>
-            </div>
-
-            <div class="payment-chips">
-              <span class="payment-chip method">{{ payment.paymentMethod }}</span>
-              <span class="payment-chip date">
-                <mat-icon>calendar_today</mat-icon>
-                {{ payment.entryDate | date: 'dd MMM yyyy' }}
+            <!-- Compact Details Badges -->
+            <div class="compact-details-row">
+              <span class="type-badge-sm" [class.advance]="payment.entryType === 'ADVANCE'" [class.payment]="payment.entryType === 'PAYMENT'" [class.khoraki]="payment.entryType === 'KHORAKI'">
+                {{ payment.entryType === 'ADVANCE' ? 'Advance' : (payment.entryType === 'KHORAKI' ? 'Khoraki' : 'Payment') }}
               </span>
+              <span class="method-chip-sm">{{ payment.paymentMethod }}</span>
+              <span class="date-chip-sm">{{ payment.entryDate | date: 'dd MMM yyyy' }}</span>
             </div>
 
-            <div class="payment-note" *ngIf="payment.note">
-              <mat-icon>notes</mat-icon>
-              {{ payment.note }}
-            </div>
-
-            <div class="payment-footer">
-              <div class="payment-meta" *ngIf="payment.createdBy?.pFname || payment.createdBy?.email">
-                <mat-icon>person</mat-icon>
-                {{ payment.createdBy?.pFname || payment.createdBy?.email }}
+            <!-- Note & CreatedBy Footer -->
+            <div class="compact-footer">
+              <div class="compact-note" *ngIf="payment.note" [title]="payment.note">
+                <mat-icon>notes</mat-icon> {{ payment.note }}
               </div>
-              <div class="payment-actions" *ngIf="canManage">
-                <button mat-icon-button color="primary" [disabled]="deletingId === payment._id" (click)="startEdit(payment)" title="Edit">
+              <div class="compact-meta" *ngIf="payment.createdBy?.pFname || payment.createdBy?.email">
+                By {{ payment.createdBy?.pFname || payment.createdBy?.email }}
+              </div>
+              <div class="compact-actions" *ngIf="canManage">
+                <button mat-icon-button class="action-btn-sm" [disabled]="deletingId === payment._id" (click)="startEdit(payment)" title="Edit">
                   <mat-icon>edit</mat-icon>
                 </button>
-                <button mat-icon-button color="warn" [disabled]="deletingId === payment._id" (click)="deletePayment(payment)" title="Delete">
+                <button mat-icon-button class="action-btn-sm warn" [disabled]="deletingId === payment._id" (click)="deletePayment(payment)" title="Delete">
                   <mat-icon>{{ deletingId === payment._id ? 'hourglass_top' : 'delete' }}</mat-icon>
                 </button>
               </div>
             </div>
+
           </div>
         </div>
       </div>

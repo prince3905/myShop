@@ -302,11 +302,190 @@
   font-size: 13px;
 }
 
-/* ── Payment Cards Grid ── */
+/* ── Payment Cards Grid (Compact) ── */
 .payment-cards-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.payment-card-compact {
+  background: #fff;
+  border-radius: 12px;
+  padding: 10px 12px;
+  border: 1px solid #e2e8f0;
+  border-left: 4px solid #cbd5e1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.payment-card-compact:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.07);
+}
+
+.payment-card-compact.advance-card {
+  border-left-color: #f59e0b;
+  background: linear-gradient(135deg, #fffbeb, #fff);
+}
+
+.payment-card-compact.payment-card {
+  border-left-color: #10b981;
+  background: linear-gradient(135deg, #ecfdf5, #fff);
+}
+
+.payment-card-compact.khoraki-card {
+  border-left-color: #ea580c;
+  background: linear-gradient(135deg, #fff7ed, #fff);
+}
+
+.compact-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.staff-avatar-sm {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #fff;
+  background: #64748b;
+}
+
+.staff-avatar-sm.advance { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.staff-avatar-sm.payment { background: linear-gradient(135deg, #059669, #10b981); }
+.staff-avatar-sm.khoraki { background: linear-gradient(135deg, #ea580c, #c2410c); }
+
+.staff-name-wrap {
+  flex: 1;
+  min-width: 0;
+}
+
+.staff-name-wrap .staff-name {
+  font-size: 13px;
+  font-weight: 800;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.staff-name-wrap .staff-sub {
+  font-size: 10px;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.compact-amount {
+  font-size: 15px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.compact-amount.advance-amt { color: #b45309; }
+.compact-amount.payment-amt { color: #047857; }
+.compact-amount.khoraki-amt { color: #c2410c; }
+
+.compact-details-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-size: 11px;
+}
+
+.type-badge-sm {
+  font-size: 9px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.type-badge-sm.advance { background: #fef3c7; color: #92400e; }
+.type-badge-sm.payment { background: #d1fae5; color: #065f46; }
+.type-badge-sm.khoraki { background: #ffedd5; color: #9a3412; }
+
+.method-chip-sm {
+  background: #f1f5f9;
+  color: #475569;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: 10px;
+}
+
+.date-chip-sm {
+  color: #64748b;
+  font-weight: 600;
+  font-size: 10px;
+  margin-left: auto;
+}
+
+.compact-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding-top: 4px;
+  border-top: 1px solid #f1f5f9;
+  font-size: 11px;
+}
+
+.compact-note {
+  color: #475569;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
+}
+
+.compact-note mat-icon {
+  font-size: 13px;
+  width: 13px;
+  height: 13px;
+  color: #94a3b8;
+}
+
+.compact-meta {
+  font-size: 10px;
+  color: #94a3b8;
+  white-space: nowrap;
+}
+
+.compact-actions {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+}
+
+.action-btn-sm {
+  width: 26px !important;
+  height: 26px !important;
+  line-height: 26px !important;
+  padding: 0 !important;
+}
+
+.action-btn-sm mat-icon {
+  font-size: 16px !important;
+  width: 16px !important;
+  height: 16px !important;
 }
 
 .payment-card-v3 {
