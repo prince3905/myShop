@@ -36,7 +36,7 @@
         [routerLink]="[menuItem.path]"
         (click)="onNavLinkClick()"
         [matTooltip]="menuItem.title"
-        [matTooltipDisabled]="!isCollapsed"
+        [matTooltipDisabled]="isMobileViewport || !isCollapsed"
         matTooltipPosition="right"
         [matTooltipShowDelay]="100"
         matTooltipClass="sidebar-tooltip">
@@ -49,11 +49,12 @@
       <a
         *ngIf="menuItem.children"
         class="nav-link"
-        href="javascript:void(0)"
+        role="button"
+        tabindex="0"
         (click)="toggleMenu(menuItem, $event)"
         [class.expanded]="menuItem.expanded"
         [matTooltip]="menuItem.title"
-        [matTooltipDisabled]="!isCollapsed"
+        [matTooltipDisabled]="isMobileViewport || !isCollapsed"
         matTooltipPosition="right"
         [matTooltipShowDelay]="100"
         matTooltipClass="sidebar-tooltip">
@@ -78,7 +79,7 @@
             [routerLink]="[child.path]"
             (click)="onNavLinkClick()"
             [matTooltip]="child.title"
-            [matTooltipDisabled]="!isCollapsed"
+            [matTooltipDisabled]="isMobileViewport || !isCollapsed"
             matTooltipPosition="right"
             [matTooltipShowDelay]="100"
             matTooltipClass="sidebar-tooltip">
