@@ -45,26 +45,20 @@
         <p *ngIf="!isCollapsed || isMobileViewport">{{menuItem.title}}</p>
       </a>
 
-      <!-- Dropdown -->
-      <a
+      <!-- Dropdown Parent Button -->
+      <button
         *ngIf="menuItem.children"
-        class="nav-link"
-        role="button"
-        tabindex="0"
+        type="button"
+        class="nav-link dropdown-toggle-btn"
         (click)="toggleMenu(menuItem, $event)"
-        [class.expanded]="menuItem.expanded"
-        [matTooltip]="menuItem.title"
-        [matTooltipDisabled]="isMobileViewport || !isCollapsed"
-        matTooltipPosition="right"
-        [matTooltipShowDelay]="100"
-        matTooltipClass="sidebar-tooltip">
+        [class.expanded]="menuItem.expanded">
 
         <i class="material-icons">{{menuItem.icon}}</i>
         <p *ngIf="!isCollapsed || isMobileViewport">
           {{menuItem.title}}
           <b class="caret" [class.rotated]="menuItem.expanded"></b>
         </p>
-      </a>
+      </button>
 
       <ul
         *ngIf="menuItem.children && (menuItem.expanded || (isCollapsed && isFlyoutOpen(menuItem, i)))"

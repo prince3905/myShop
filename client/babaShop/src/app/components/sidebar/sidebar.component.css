@@ -76,6 +76,15 @@
   user-select: none;
 }
 
+.dropdown-toggle-btn {
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+  outline: none;
+}
+
 .nav-link * {
   pointer-events: none !important;
 }
