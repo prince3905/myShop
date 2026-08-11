@@ -926,6 +926,24 @@ app-view-distributor .summary-card {
   }
 }
 
+/* iOS WebKit Sidebar Touch & Stacking Context Fix */
+app-sidebar {
+  position: relative !important;
+  z-index: 10 !important;
+  display: block !important;
+}
+
+.sidebar-wrapper {
+  position: relative !important;
+  z-index: 10 !important;
+}
+
+.sidebar-background,
+.sidebar-background:after {
+  z-index: 1 !important;
+  pointer-events: none !important;
+}
+
 /* =========================================
    Angular 17 MDC Component Compatibility
    ========================================= */
