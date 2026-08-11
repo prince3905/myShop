@@ -301,6 +301,16 @@ export class SidebarComponent implements OnInit, OnDestroy {
     this.mainPanelEl = this.document.querySelector(".main-panel");
     this.updateViewportState();
     this.restoreCollapseState();
+    this.expandActiveParentMenu();
+  }
+
+  private expandActiveParentMenu(): void {
+    const currentUrl = this.router.url;
+    this.menuItems.forEach((item) => {
+      if (item.children?.some((child) => child.path && currentUrl.includes(child.path))) {
+        item.expanded = true;
+      }
+    });
   }
 
   ngOnDestroy(): void {
@@ -333,12 +343,14 @@ export class SidebarComponent implements OnInit, OnDestroy {
       return filtered;
     }, []);
   }
+
   isMobileMenu() {
     if ($(window).width() > 991) {
       return false;
     }
     return true;
   }
+
   logout(): void {
     this.auth.removeToken();
     this.auth.removeUser();
@@ -358,7 +370,11 @@ export class SidebarComponent implements OnInit, OnDestroy {
       event.stopPropagation();
     }
 
-    if (this.isCollapsed && !this.isMobileViewport) return;
+    if (this.isCollapsed && !this.isMobileViewport) {
+      return;
+    }
+
+    const nextState = !menuItem.expanded;
 
     this.menuItems.forEach((item) => {
       if (item !== menuItem) {
@@ -366,15 +382,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
       }
     });
 
-    menuItem.expanded = !menuItem.expanded;
-  }
-
-  onToggleMenuTouch(menuItem: RouteInfo, event: Event): void {
-    if (event) {
-      event.preventDefault();
-      event.stopPropagation();
-    }
-    this.toggleMenu(menuItem);
+    menuItem.expanded = nextState;
   }
 
   toggleSidebar(): void {

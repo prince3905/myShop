@@ -51,7 +51,7 @@
         class="nav-link"
         href="javascript:void(0)"
         (click)="toggleMenu(menuItem, $event)"
-        (touchstart)="onToggleMenuTouch(menuItem, $event)"
+        [class.expanded]="menuItem.expanded"
         [matTooltip]="menuItem.title"
         [matTooltipDisabled]="!isCollapsed"
         matTooltipPosition="right"
@@ -61,14 +61,14 @@
         <i class="material-icons">{{menuItem.icon}}</i>
         <p *ngIf="!isCollapsed">
           {{menuItem.title}}
-          <b class="caret"></b>
+          <b class="caret" [class.rotated]="menuItem.expanded"></b>
         </p>
       </a>
 
       <ul
         *ngIf="menuItem.children && ((isCollapsed && !isMobileViewport) ? isFlyoutOpen(menuItem, i) : menuItem.expanded)"
         class="nav child-menu"
-        [class.flyout]="isCollapsed"
+        [class.flyout]="isCollapsed && !isMobileViewport"
         (mouseenter)="openFlyout(menuItem, i)"
         (mouseleave)="closeFlyout(menuItem, i)">
         <li *ngFor="let child of menuItem.children" routerLinkActive="active" class="nav-item">
