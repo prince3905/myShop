@@ -364,14 +364,9 @@ export class SidebarComponent implements OnInit, OnDestroy {
     }
   }
 
-  toggleMenu(menuItem: RouteInfo, event?: Event) {
+  toggleMenu(menuItem: RouteInfo, event?: Event): void {
     if (event) {
-      event.preventDefault();
       event.stopPropagation();
-    }
-
-    if (this.isCollapsed && !this.isMobileViewport) {
-      return;
     }
 
     const nextState = !menuItem.expanded;

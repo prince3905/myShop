@@ -42,7 +42,7 @@
         matTooltipClass="sidebar-tooltip">
 
         <i class="material-icons">{{menuItem.icon}}</i>
-        <p *ngIf="!isCollapsed">{{menuItem.title}}</p>
+        <p *ngIf="!isCollapsed || isMobileViewport">{{menuItem.title}}</p>
       </a>
 
       <!-- Dropdown -->
@@ -59,14 +59,14 @@
         matTooltipClass="sidebar-tooltip">
 
         <i class="material-icons">{{menuItem.icon}}</i>
-        <p *ngIf="!isCollapsed">
+        <p *ngIf="!isCollapsed || isMobileViewport">
           {{menuItem.title}}
           <b class="caret" [class.rotated]="menuItem.expanded"></b>
         </p>
       </a>
 
       <ul
-        *ngIf="menuItem.children && ((isCollapsed && !isMobileViewport) ? isFlyoutOpen(menuItem, i) : menuItem.expanded)"
+        *ngIf="menuItem.children && (menuItem.expanded || (isCollapsed && isFlyoutOpen(menuItem, i)))"
         class="nav child-menu"
         [class.flyout]="isCollapsed && !isMobileViewport"
         (mouseenter)="openFlyout(menuItem, i)"
@@ -84,7 +84,7 @@
             matTooltipClass="sidebar-tooltip">
 
             <i class="material-icons">{{child.icon}}</i>
-            <p *ngIf="!isCollapsed">{{child.title}}</p>
+            <p *ngIf="!isCollapsed || isMobileViewport">{{child.title}}</p>
           </a>
 
         </li>
