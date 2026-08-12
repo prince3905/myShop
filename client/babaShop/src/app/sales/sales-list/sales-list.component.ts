@@ -17,6 +17,8 @@ export class SalesListComponent implements OnInit {
   loading = false;
 
   salesRows: any[] = [];
+  allSalesRows: any[] = [];
+  searchDebounceTimer: any = null;
   totalItems = 0;
   page = 1;
   pageSize = 10;
@@ -166,7 +168,7 @@ export class SalesListComponent implements OnInit {
     });
   }
 
-  loadSales(): void {
+  loadSales(updateAll: boolean = true): void {
     this.loading = true;
 
     const params: any = {
@@ -184,7 +186,11 @@ export class SalesListComponent implements OnInit {
 
     this.salesService.getSales(params).subscribe({
       next: (response: any) => {
-        this.salesRows = Array.isArray(response?.itemResults) ? response.itemResults : [];
+        const fetchedRows = Array.isArray(response?.itemResults) ? response.itemResults : [];
+        if (updateAll || !this.allSalesRows.length) {
+          this.allSalesRows = [...fetchedRows];
+        }
+        this.salesRows = fetchedRows;
         this.totalItems = Number(response?.totalItems || 0);
         this.summary.totalSales = this.totalItems;
         this.summary.totalRevenue = this.salesRows.reduce(
@@ -198,20 +204,46 @@ export class SalesListComponent implements OnInit {
         this.loading = false;
       },
       error: (err) => {
-        this.loading = false;
+        console.error("Failed to load sales:", err);
         this.salesRows = [];
         this.totalItems = 0;
-        this.summary = { totalSales: 0, totalRevenue: 0, totalQty: 0 };
-        this.snackBar.open(err?.error?.message || "Failed to load sales", "Close", {
-          duration: 2800,
-        });
+        this.loading = false;
       },
     });
   }
 
-  applyFilters(): void {
+  onSearchInput(): void {
+    const qInv = (this.filters.invoiceNo || "").trim().toLowerCase();
+    const qCust = (this.filters.customerName || "").trim().toLowerCase();
+    const qItem = (this.filters.itemName || "").trim().toLowerCase();
+
+    if (this.allSalesRows && this.allSalesRows.length > 0) {
+      if (!qInv && !qCust && !qItem) {
+        this.salesRows = [...this.allSalesRows];
+      } else {
+        this.salesRows = this.allSalesRows.filter((r: any) => {
+          const inv = (r.invoiceNo || "").toLowerCase();
+          const cust = (r.customerName || r.customerPhone || "").toLowerCase();
+          const item = (r.itemName || r.productName || r.sku || "").toLowerCase();
+          const matchInv = !qInv || inv.includes(qInv);
+          const matchCust = !qCust || cust.includes(qCust);
+          const matchItem = !qItem || item.includes(qItem);
+          return matchInv && matchCust && matchItem;
+        });
+      }
+    }
+
+    if (this.searchDebounceTimer) {
+      clearTimeout(this.searchDebounceTimer);
+    }
+    this.searchDebounceTimer = setTimeout(() => {
+      this.applyFilters(false);
+    }, 300);
+  }
+
+  applyFilters(updateAll: boolean = true): void {
     this.page = 1;
-    this.loadSales();
+    this.loadSales(updateAll);
     const startDate = this.filters.startDate ? this.formatDateForApi(this.filters.startDate) : undefined;
     const endDate = this.filters.endDate ? this.formatDateForApi(this.filters.endDate) : undefined;
     if (startDate || endDate) {

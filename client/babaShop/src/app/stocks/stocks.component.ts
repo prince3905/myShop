@@ -350,7 +350,10 @@ export class StocksComponent implements OnInit {
     });
   }
 
-  loadStocks(): void {
+  allRows: any[] = [];
+  private searchDebounceTimer: any = null;
+
+  loadStocks(updateAll: boolean = true): void {
     this.loading = true;
 
     const params: any = {
@@ -364,7 +367,11 @@ export class StocksComponent implements OnInit {
 
     this.stocksService.getStocks(params).subscribe({
       next: (res: any) => {
-        this.rows = Array.isArray(res?.stockReport) ? res.stockReport : [];
+        const fetchedRows = Array.isArray(res?.stockReport) ? res.stockReport : [];
+        if (updateAll || !this.allRows.length) {
+          this.allRows = [...fetchedRows];
+        }
+        this.rows = fetchedRows;
         this.totalItems = Number(res?.total || 0);
         this.summary = {
           totalQuantity: Number(res?.summary?.totalQuantity || 0),
@@ -383,9 +390,34 @@ export class StocksComponent implements OnInit {
     });
   }
 
-  onSearch(): void {
+  onSearchInput(): void {
+    const q = (this.search || "").trim().toLowerCase();
+    if (this.allRows && this.allRows.length > 0) {
+      if (!q) {
+        this.rows = [...this.allRows];
+      } else {
+        this.rows = this.allRows.filter((r: any) => {
+          const sku = (r.sku || "").toLowerCase();
+          const pName = (r.productName || "").toLowerCase();
+          const mName = (r.modelName || "").toLowerCase();
+          const color = (r.attributes?.color || "").toLowerCase();
+          const size = (r.attributes?.size || "").toLowerCase();
+          return sku.includes(q) || pName.includes(q) || mName.includes(q) || color.includes(q) || size.includes(q);
+        });
+      }
+    }
+
+    if (this.searchDebounceTimer) {
+      clearTimeout(this.searchDebounceTimer);
+    }
+    this.searchDebounceTimer = setTimeout(() => {
+      this.onSearch(false);
+    }, 300);
+  }
+
+  onSearch(updateAll: boolean = true): void {
     this.page = 1;
-    this.loadStocks();
+    this.loadStocks(updateAll);
   }
 
   onClear(): void {

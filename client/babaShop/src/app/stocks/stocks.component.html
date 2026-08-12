@@ -63,7 +63,7 @@
         <div class="filter-row">
           <mat-form-field appearance="outline" class="filter-field search-field">
             <mat-label>Search SKU / Product / Model</mat-label>
-            <input matInput [(ngModel)]="search" (keyup.enter)="onSearch()" placeholder="e.g. S24-256-BLK or Galaxy M24" />
+            <input matInput [(ngModel)]="search" (input)="onSearchInput()" placeholder="Type SKU, 62, Product, Model..." />
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="filter-field">

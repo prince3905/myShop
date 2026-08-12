@@ -142,19 +142,51 @@ export class DailyExpenseComponent implements OnInit {
     return Math.ceil(this.totalCount / this.filters.limit);
   }
 
-  loadExpenses(): void {
+  allExpenses: any[] = [];
+  private searchDebounceTimer: any = null;
+
+  loadExpenses(updateAll: boolean = true): void {
     this.loadingExpenses = true;
     this.dailyExpenseService.getExpenses(this.filters).subscribe({
       next: (response) => {
-        this.expenses = response?.expenses || [];
+        const fetched = response?.expenses || [];
+        if (updateAll || !this.allExpenses.length) {
+          this.allExpenses = [...fetched];
+        }
+        this.expenses = fetched;
         this.totalCount = response?.totalCount || this.expenses.length;
         this.loadingExpenses = false;
       },
       error: (error) => {
         this.loadingExpenses = false;
-        this.showError(error?.error?.message || "Failed to load daily expenses");
+        this.showError(error?.error?.message || "Failed to load expenses");
       },
     });
+  }
+
+  onSearchInput(): void {
+    const q = (this.filters.search || "").trim().toLowerCase();
+    if (this.allExpenses && this.allExpenses.length > 0) {
+      if (!q) {
+        this.expenses = [...this.allExpenses];
+      } else {
+        this.expenses = this.allExpenses.filter((e: any) => {
+          const cat = (e.category || "").toLowerCase();
+          const dept = (e.department || "").toLowerCase();
+          const head = (e.accountHead || "").toLowerCase();
+          const note = (e.note || "").toLowerCase();
+          const payee = (e.payeeName || "").toLowerCase();
+          return cat.includes(q) || dept.includes(q) || head.includes(q) || note.includes(q) || payee.includes(q);
+        });
+      }
+    }
+
+    if (this.searchDebounceTimer) {
+      clearTimeout(this.searchDebounceTimer);
+    }
+    this.searchDebounceTimer = setTimeout(() => {
+      this.loadExpenses(false);
+    }, 300);
   }
 
   loadSummary(): void {

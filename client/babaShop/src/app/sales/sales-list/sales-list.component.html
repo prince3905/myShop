@@ -121,17 +121,17 @@
       <div class="filter-grid">
         <mat-form-field appearance="outline" class="filter-field">
           <mat-label>Invoice</mat-label>
-          <input matInput [(ngModel)]="filters.invoiceNo" (keyup.enter)="applyFilters()" />
+          <input matInput [(ngModel)]="filters.invoiceNo" (input)="onSearchInput()" placeholder="Type Invoice No..." />
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="filter-field">
           <mat-label>Customer</mat-label>
-          <input matInput [(ngModel)]="filters.customerName" (keyup.enter)="applyFilters()" />
+          <input matInput [(ngModel)]="filters.customerName" (input)="onSearchInput()" placeholder="Type Customer Name / Phone..." />
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="filter-field">
           <mat-label>Item</mat-label>
-          <input matInput [(ngModel)]="filters.itemName" (keyup.enter)="applyFilters()" />
+          <input matInput [(ngModel)]="filters.itemName" (input)="onSearchInput()" placeholder="Type Item / SKU / 62..." />
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="filter-field">
