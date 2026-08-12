@@ -569,23 +569,45 @@ exports.updateFactoryProduct = async (req, res) => {
       await dw.save();
     }
 
-    await logEntityAudit({
-      shop: req.shopId,
-      entityType: "FACTORY_PRODUCT",
-      entityId: product._id,
-      action: "UPDATE_FACTORY_PRODUCT_RECIPE",
-      actor: {
-        id: req.user?._id,
-        name: req.user?.pFname || req.user?.email || "Admin",
-        role: req.user?.role,
-      },
-      meta: {
-        productName: product.name,
-        workerPieceRate: product.workerPieceRate,
-        calculatedRecipeCost,
-        updatedAt: new Date(),
-      },
-    });
+    const User = require("../models/User");
+    const matSummary = (product.standardMaterialLines || [])
+      .map((l) => `${l.materialName || "Material"}: ${l.qtyPerUnit} ${l.unitLabel || "PCS"}`)
+      .join(" | ");
+
+    await Promise.all([
+      logEntityAudit({
+        shop: req.shopId,
+        entityType: "FACTORY_PRODUCT",
+        entityId: product._id,
+        action: "UPDATE_FACTORY_PRODUCT_RECIPE",
+        actor: {
+          _id: req.user?._id,
+          name: req.user?.pFname || req.user?.email || "Admin",
+          role: req.user?.role,
+        },
+        meta: {
+          productName: product.name,
+          workerPieceRate: product.workerPieceRate,
+          calculatedRecipeCost,
+          materialSummary: matSummary,
+          updatedAt: new Date(),
+        },
+      }),
+      User.findByIdAndUpdate(req.user._id, {
+        $push: {
+          auditLogs: {
+            $each: [
+              {
+                action: "UPDATE_FACTORY_PRODUCT_RECIPE",
+                details: `Updated ${product.name} recipe: ${matSummary} (Cost: ₹${calculatedRecipeCost})`,
+                createdAt: new Date(),
+              },
+            ],
+            $slice: -100,
+          },
+        },
+      }),
+    ]);
 
     const populated = await populateFactoryProduct(FactoryProduct.findById(product._id));
     return res.json({ success: true, message: "Factory product updated and daily work rates synced", product: populated });
