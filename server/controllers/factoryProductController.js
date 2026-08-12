@@ -6,6 +6,7 @@ const Product = require("../models/Product");
 const ProductModel = require("../models/ProductModel");
 const ProductVariation = require("../models/ProductVariation");
 const RawMaterial = require("../models/RawMaterial");
+const { logEntityAudit } = require("../utils/entityAudit.service");
 
 const STAFF_ONLY_FILTER = (req) => `${req.user?.role || ""}` === "STAFF";
 const MANAGER_AND_ABOVE = ["SUPER_ADMIN", "ADMIN", "MANAGER"];
@@ -567,6 +568,24 @@ exports.updateFactoryProduct = async (req, res) => {
 
       await dw.save();
     }
+
+    await logEntityAudit({
+      shop: req.shopId,
+      entityType: "FACTORY_PRODUCT",
+      entityId: product._id,
+      action: "UPDATE_FACTORY_PRODUCT_RECIPE",
+      actor: {
+        id: req.user?._id,
+        name: req.user?.pFname || req.user?.email || "Admin",
+        role: req.user?.role,
+      },
+      meta: {
+        productName: product.name,
+        workerPieceRate: product.workerPieceRate,
+        calculatedRecipeCost,
+        updatedAt: new Date(),
+      },
+    });
 
     const populated = await populateFactoryProduct(FactoryProduct.findById(product._id));
     return res.json({ success: true, message: "Factory product updated and daily work rates synced", product: populated });
