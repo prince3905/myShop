@@ -19,25 +19,20 @@
           </div>
         </div>
 
-        <div class="filter-form">
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Filter by</mat-label>
-            <mat-select [(ngModel)]="selectedOption" (ngModelChange)="onFilterModeChange()">
-              <mat-option [value]="null">All</mat-option>
-              <mat-option value="name">Name</mat-option>
-              <mat-option value="category">Category</mat-option>
-              <mat-option value="brand">Brand</mat-option>
-            </mat-select>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" class="full-width" *ngIf="selectedOption === 'name'">
-            <mat-label>Product Name (Type 62, Box, TATA...)</mat-label>
-            <input matInput [(ngModel)]="itemName" (input)="onFilterInputChange()" placeholder="Type 62, Box, TATA to filter..." />
+        <div class="search-bar-hero" style="display: flex; gap: 12px; align-items: center; background: #ffffff; padding: 14px 18px; border-radius: 12px; border: 1px solid #cbd5e1; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+          <mat-form-field appearance="outline" style="flex: 1; margin-bottom: -1.25em;">
+            <mat-label>🔍 Instant Search Product, SKU, Category, Brand (Type 62, Box, TATA...)</mat-label>
+            <input matInput [(ngModel)]="itemName" (input)="onFilterInputChange()" placeholder="Type 62, Box, TATA to filter instantly..." />
             <mat-icon matPrefix>search</mat-icon>
           </mat-form-field>
+          <button mat-stroked-button color="warn" (click)="onClear()" *ngIf="itemName || selectedCategory || selectedBrand" style="height: 48px; border-radius: 8px;">
+            <mat-icon>refresh</mat-icon> Reset
+          </button>
+        </div>
 
-          <mat-form-field appearance="outline" class="full-width" *ngIf="selectedOption === 'name' || selectedOption === 'category'">
-            <mat-label>Category</mat-label>
+        <div class="filter-form" style="display: flex; gap: 12px; align-items: center; margin-bottom: 20px; flex-wrap: wrap;">
+          <mat-form-field appearance="outline" style="width: 220px; margin-bottom: -1.25em;">
+            <mat-label>Category Filter</mat-label>
             <mat-select [(ngModel)]="selectedCategory" (ngModelChange)="onFilterInputChange()">
               <mat-option [value]="null">All Categories</mat-option>
               <mat-option *ngFor="let category of Category" [value]="category._id">
@@ -46,24 +41,15 @@
             </mat-select>
           </mat-form-field>
 
-          <mat-form-field appearance="outline" class="full-width" *ngIf="selectedOption === 'name' || selectedOption === 'category' || selectedOption === 'brand'">
-            <mat-label>Brand</mat-label>
-            <mat-select [(ngModel)]="selectedBrand" (ngModelChange)="onFilterInputChange()" [disabled]="(selectedOption === 'name' || selectedOption === 'category') && !selectedCategory">
+          <mat-form-field appearance="outline" style="width: 220px; margin-bottom: -1.25em;">
+            <mat-label>Brand Filter</mat-label>
+            <mat-select [(ngModel)]="selectedBrand" (ngModelChange)="onFilterInputChange()">
               <mat-option [value]="null">All Brands</mat-option>
               <mat-option *ngFor="let brand of filteredBrands" [value]="brand._id">
                 {{ brand.name }}
               </mat-option>
             </mat-select>
           </mat-form-field>
-
-          <div class="filter-actions">
-            <button mat-raised-button color="warn" *ngIf="selectedOption" (click)="onSearch((paginator?.pageIndex || 0) + 1, paginator?.pageSize || pageSize)">
-              <mat-icon>search</mat-icon> Apply
-            </button>
-            <button mat-stroked-button *ngIf="selectedOption" (click)="onClear()">
-              Reset
-            </button>
-          </div>
 
           <div class="action-buttons">
             <button mat-raised-button color="primary" *hasRole="['SUPER_ADMIN','ADMIN','MANAGER']" (click)="openAddItemModal()">

@@ -156,12 +156,23 @@ exports.createVariation = async (req, res) => {
 ========================= */
 exports.getVariations = async (req, res) => {
   try {
-    const { product, model, sku, barcode, isActive, isQuickAdd, limit = 100, skip = 0, sort = "-createdAt" } = req.query;
+    const { product, model, sku, search, barcode, isActive, isQuickAdd, limit = 100, skip = 0, sort = "-createdAt" } = req.query;
     const filter = isSuperAdminGlobal(req) ? {} : { shop: req.shopId };
 
     if (product) filter.product = product;
     if (model) filter.model = model;
-    if (sku) filter.sku = { $regex: sku, $options: "i" };
+
+    const searchTerm = `${search || sku || ""}`.trim();
+    if (searchTerm) {
+      const regex = new RegExp(escapeRegex(searchTerm), "i");
+      filter.$or = [
+        { sku: regex },
+        { barcode: regex },
+        { "attributes.size": regex },
+        { "attributes.color": regex },
+        { "attributes.material": regex },
+      ];
+    }
     if (barcode) filter.barcode = { $regex: barcode, $options: "i" };
     if (isActive === "true") filter.isActive = true;
     if (isActive === "false") filter.isActive = false;

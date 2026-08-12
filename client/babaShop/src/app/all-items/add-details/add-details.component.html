@@ -183,18 +183,17 @@
           </div>
 
           <div class="filter-row-custom">
-            <mat-form-field appearance="outline">
-              <mat-label>Search SKU / Model</mat-label>
-              <input matInput [(ngModel)]="searchSku" (input)="onSearchInput()" placeholder="Type SKU, Model, 62..." />
+            <mat-form-field appearance="outline" style="flex: 1;">
+              <mat-label>🔍 Instant Search SKU / Model / Size / Color</mat-label>
+              <input matInput [(ngModel)]="searchSku" (input)="onSearchInput()" placeholder="Type 62, Box, Model name..." />
             </mat-form-field>
             <mat-form-field appearance="outline">
               <mat-label>Model</mat-label>
               <mat-select [(ngModel)]="filterModel" (selectionChange)="applyFilters()">
-                <mat-option value="">All</mat-option>
+                <mat-option value="">All Models</mat-option>
                 <mat-option *ngFor="let m of models" [value]="m._id">{{ m.name }}</mat-option>
               </mat-select>
             </mat-form-field>
-            <button mat-stroked-button color="primary" (click)="applyFilters()">Search</button>
             <button mat-stroked-button color="warn" (click)="resetFilters()">Clear</button>
           </div>
         </div>

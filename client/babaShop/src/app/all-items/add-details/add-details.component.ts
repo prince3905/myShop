@@ -134,7 +134,7 @@ export class AddDetailsComponent implements OnInit {
       sort: "-createdAt",
     };
     if (this.searchSku.trim()) {
-      params.sku = this.searchSku.trim();
+      params.search = this.searchSku.trim();
     }
     if (this.filterStatus === "active") {
       params.isActive = "true";

@@ -101,42 +101,47 @@ export class ItemsListComponent implements OnInit {
       perPage,
     };
 
-    if (this.selectedOption === "name") {
-      query.name = this.itemName?.trim() || undefined;
-      query.category = this.selectedCategory || undefined;
-      query.brand = this.selectedBrand || undefined;
-    } else if (this.selectedOption === "category") {
-      query.category = this.selectedCategory || undefined;
-      query.brand = this.selectedBrand || undefined;
-    } else if (this.selectedOption === "brand") {
-      query.brand = this.selectedBrand || undefined;
+    if (this.itemName?.trim()) {
+      query.name = this.itemName.trim();
+    }
+    if (this.selectedCategory) {
+      query.category = this.selectedCategory;
+    }
+    if (this.selectedBrand) {
+      query.brand = this.selectedBrand;
     }
 
-    this.productService.getAllProducts(query).subscribe((res: any) => {
-      this.allItems = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
-      this.items = [...this.allItems];
-      this.summaryCounts.products = Number(res?.totalItems || this.allItems.length);
+    this.productService.getAllProducts(query).subscribe({
+      next: (res: any) => {
+        const fetched = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+        if (!this.allItems.length || !this.itemName) {
+          this.allItems = [...fetched];
+        }
+        this.items = [...fetched];
+        this.summaryCounts.products = Number(res?.totalItems || this.items.length);
 
-      this.items.forEach((item: any) => {
-        item.totalStock =
-          item.variations?.reduce(
-            (sum: number, v: any) => sum + (v.quantity ? v.quantity : 0),
-            0,
-          ) || 0;
-      });
+        this.items.forEach((item: any) => {
+          item.totalStock =
+            item.variations?.reduce(
+              (sum: number, v: any) => sum + (v.quantity ? v.quantity : 0),
+              0,
+            ) || 0;
+        });
 
-      this.totalItems = Number(res?.totalItems || this.items.length);
-      this.paginatedItems = [...this.items];
-      if (this.paginator) {
-        this.paginator.pageIndex = page - 1;
-      }
-      this.loading = false;
-    }, () => {
-      this.allItems = [];
-      this.items = [];
-      this.paginatedItems = [];
-      this.totalItems = 0;
-      this.loading = false;
+        this.totalItems = Number(res?.totalItems || this.items.length);
+        this.paginatedItems = [...this.items];
+        if (this.paginator) {
+          this.paginator.pageIndex = page - 1;
+        }
+        this.loading = false;
+      },
+      error: () => {
+        this.allItems = [];
+        this.items = [];
+        this.paginatedItems = [];
+        this.totalItems = 0;
+        this.loading = false;
+      },
     });
   }
 
