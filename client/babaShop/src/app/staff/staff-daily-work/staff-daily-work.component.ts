@@ -226,13 +226,38 @@ export class StaffDailyWorkComponent implements OnInit {
     });
   }
 
-  loadDailyWorks(): void {
+  productSearchQuery: string = "";
+  filteredFactoryProductOptions: any[] = [];
+  allDailyWorks: any[] = [];
+  private searchDebounceTimer: any = null;
+
+  onProductSearchChange(query: string): void {
+    this.productSearchQuery = query || "";
+    const q = this.productSearchQuery.trim().toLowerCase();
+    if (!q) {
+      this.filteredFactoryProductOptions = [...this.factoryProductOptions];
+    } else {
+      this.filteredFactoryProductOptions = this.factoryProductOptions.filter((item: any) => {
+        const name = (item.name || "").toLowerCase();
+        const sku = (item.shopVariation?.sku || "").toLowerCase();
+        const size = (item.shopVariation?.attributes?.size || "").toLowerCase();
+        const color = (item.shopVariation?.attributes?.color || "").toLowerCase();
+        const code = (item.code || "").toLowerCase();
+        return name.includes(q) || sku.includes(q) || size.includes(q) || color.includes(q) || code.includes(q);
+      });
+    }
+  }
+
+  loadDailyWorks(updateAll: boolean = true): void {
     this.loadingSummary = true;
     this.loadingDailyWorks = true;
     this.staffDailyWorkService.getDailyWorks(this.filters).subscribe({
       next: (response) => {
         this.dailyWorks = response?.dailyWorks || [];
-        this.summary = this.buildSummary(this.dailyWorks);
+        if (updateAll || !this.allDailyWorks.length) {
+          this.allDailyWorks = [...this.dailyWorks];
+        }
+        this.summary = this.buildSummary(this.allDailyWorks.length ? this.allDailyWorks : this.dailyWorks);
         this.loadingSummary = false;
         this.loadingDailyWorks = false;
       },
@@ -244,13 +269,40 @@ export class StaffDailyWorkComponent implements OnInit {
     });
   }
 
+  onSearchInput(): void {
+    const q = (this.filters.search || "").trim().toLowerCase();
+    if (this.allDailyWorks && this.allDailyWorks.length > 0) {
+      if (!q) {
+        this.dailyWorks = [...this.allDailyWorks];
+      } else {
+        this.dailyWorks = this.allDailyWorks.filter((item: any) => {
+          const pName = (item.factoryProductName || "").toLowerCase();
+          const sName = (item.staff?.name || "").toLowerCase();
+          const status = (item.attendanceStatus || "").toLowerCase();
+          const vStatus = (item.verificationStatus || "").toLowerCase();
+          const variation = (this.getVariationLabel(item) || "").toLowerCase();
+          return pName.includes(q) || sName.includes(q) || status.includes(q) || vStatus.includes(q) || variation.includes(q);
+        });
+      }
+    }
+
+    if (this.searchDebounceTimer) {
+      clearTimeout(this.searchDebounceTimer);
+    }
+    this.searchDebounceTimer = setTimeout(() => {
+      this.loadDailyWorks(false);
+    }, 300);
+  }
+
   loadFactoryProducts(): void {
     this.factoryProductService.getProductOptions({ active: true }).subscribe({
       next: (response) => {
         this.factoryProductOptions = response?.products || [];
+        this.filteredFactoryProductOptions = [...this.factoryProductOptions];
       },
       error: () => {
         this.factoryProductOptions = [];
+        this.filteredFactoryProductOptions = [];
       },
     });
   }

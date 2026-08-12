@@ -284,7 +284,7 @@
           <div class="filter-bar">
             <mat-form-field appearance="outline" class="filter-field">
               <mat-label>Search</mat-label>
-              <input matInput [(ngModel)]="filters.search" placeholder="Product, SKU">
+              <input matInput [(ngModel)]="filters.search" (input)="onSearchInput()" placeholder="Type 62, Box, TATA...">
             </mat-form-field>
             <mat-form-field appearance="outline" class="filter-field">
               <mat-label>Status</mat-label>

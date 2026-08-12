@@ -127,18 +127,24 @@ export class FactoryProductMasterComponent implements OnInit {
     this.loadProducts();
   }
 
-  loadProducts(): void {
+  allProducts: any[] = [];
+  private searchDebounceTimer: any = null;
+
+  loadProducts(updateAll: boolean = true): void {
     this.loadingSummary = true;
     this.loadingProducts = true;
     const previousSelectedId = this.selectedProduct?._id || null;
     this.factoryProductService.getProducts(this.filters).subscribe({
       next: (response) => {
         this.products = response?.products || [];
+        if (updateAll || !this.allProducts.length) {
+          this.allProducts = [...this.products];
+        }
         this.selectedProduct =
           this.products.find((row: any) => row?._id === previousSelectedId) ||
           this.products[0] ||
           null;
-        this.summary = this.buildSummary(this.products);
+        this.summary = this.buildSummary(this.allProducts.length ? this.allProducts : this.products);
         this.loadingSummary = false;
         this.loadingProducts = false;
       },
@@ -148,6 +154,32 @@ export class FactoryProductMasterComponent implements OnInit {
         this.showError(error?.error?.message || "Failed to load factory products");
       },
     });
+  }
+
+  onSearchInput(): void {
+    const q = (this.filters.search || "").trim().toLowerCase();
+    if (this.allProducts && this.allProducts.length > 0) {
+      if (!q) {
+        this.products = [...this.allProducts];
+      } else {
+        this.products = this.allProducts.filter((p: any) => {
+          const name = (p.name || "").toLowerCase();
+          const code = (p.code || "").toLowerCase();
+          const note = (p.note || "").toLowerCase();
+          const sku = (p.shopVariation?.sku || "").toLowerCase();
+          const color = (p.variationColor || "").toLowerCase();
+          const size = (p.variationSize || "").toLowerCase();
+          return name.includes(q) || code.includes(q) || note.includes(q) || sku.includes(q) || color.includes(q) || size.includes(q);
+        });
+      }
+    }
+
+    if (this.searchDebounceTimer) {
+      clearTimeout(this.searchDebounceTimer);
+    }
+    this.searchDebounceTimer = setTimeout(() => {
+      this.loadProducts(false);
+    }, 300);
   }
 
   loadRawMaterials(): void {

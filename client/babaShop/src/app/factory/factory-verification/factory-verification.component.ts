@@ -132,18 +132,25 @@ export class FactoryVerificationComponent implements OnInit {
     this.loadPushHistory();
   }
 
-  loadRows(): void {
+  allRows: any[] = [];
+  private searchDebounceTimer: any = null;
+
+  loadRows(updateAll: boolean = true): void {
     this.loading = true;
     this.staffDailyWorkService.getDailyWorks({
       ...this.filters,
       verificationStatus: this.filters.verificationStatus || "",
     }).subscribe({
       next: (response) => {
-        this.rows = (response?.dailyWorks || []).filter(
+        const fetchedRows = (response?.dailyWorks || []).filter(
           (row: any) => !!row?.factoryProduct && Number(row?.unitsCompleted || 0) > 0
         );
+        if (updateAll || !this.allRows.length) {
+          this.allRows = [...fetchedRows];
+        }
+        this.rows = fetchedRows;
         this.rows.forEach((row: any) => this.ensureTargetShopSelection(row));
-        this.summary = this.buildSummary(this.rows);
+        this.summary = this.buildSummary(this.allRows.length ? this.allRows : this.rows);
         this.loading = false;
       },
       error: (error) => {
@@ -151,6 +158,31 @@ export class FactoryVerificationComponent implements OnInit {
         this.snackBar.open(error?.error?.message || "Failed to load verification list", "Close", { duration: 2500 });
       },
     });
+  }
+
+  onSearchInput(): void {
+    const q = (this.filters.search || "").trim().toLowerCase();
+    if (this.allRows && this.allRows.length > 0) {
+      if (!q) {
+        this.rows = [...this.allRows];
+      } else {
+        this.rows = this.allRows.filter((row: any) => {
+          const pName = (row.factoryProductName || row.factoryProduct?.name || "").toLowerCase();
+          const sName = (row.staff?.name || "").toLowerCase();
+          const note = (row.note || "").toLowerCase();
+          const status = (row.verificationStatus || "").toLowerCase();
+          const varLabel = (this.getVariationLabel(row) || "").toLowerCase();
+          return pName.includes(q) || sName.includes(q) || note.includes(q) || status.includes(q) || varLabel.includes(q);
+        });
+      }
+    }
+
+    if (this.searchDebounceTimer) {
+      clearTimeout(this.searchDebounceTimer);
+    }
+    this.searchDebounceTimer = setTimeout(() => {
+      this.loadRows(false);
+    }, 300);
   }
 
   resetFilters(): void {

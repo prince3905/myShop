@@ -132,10 +132,21 @@
 
           <div class="inline-fields">
             <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Factory Product</mat-label>
+              <mat-label>Factory Product (Type 62, Box, TATA...)</mat-label>
               <mat-select [(ngModel)]="dailyWorkForm.factoryProduct" name="factoryProduct" (selectionChange)="onFactoryProductChange()">
+                <div class="select-search-box" style="position: sticky; top: 0; background: white; z-index: 100; padding: 6px 10px; border-bottom: 1px solid #e2e8f0;">
+                  <input
+                    type="text"
+                    class="form-control form-control-sm"
+                    placeholder="🔍 Type 62, Box, TATA to filter..."
+                    [(ngModel)]="productSearchQuery"
+                    [ngModelOptions]="{standalone: true}"
+                    (input)="onProductSearchChange($any($event.target).value)"
+                    (keydown)="$event.stopPropagation()"
+                    style="border-radius: 6px; padding: 6px 10px; font-size: 13px; border: 1px solid #cbd5e1; outline: none; width: 100%;">
+                </div>
                 <mat-option value="">None</mat-option>
-                <mat-option *ngFor="let item of factoryProductOptions" [value]="item._id">
+                <mat-option *ngFor="let item of filteredFactoryProductOptions" [value]="item._id">
                   {{ item.name }} <span *ngIf="item.shopVariation?.sku">· {{ item.shopVariation.sku }}</span> <span *ngIf="item.shopVariation?.attributes?.size">({{ item.shopVariation.attributes.size }})</span> · ₹{{ item.workerPieceRate | number: '1.0-2' }}/{{ item.unitLabel }}
                 </mat-option>
               </mat-select>
@@ -264,7 +275,7 @@
           <div class="filter-bar">
             <mat-form-field appearance="outline" class="filter-field">
               <mat-label>Search</mat-label>
-              <input matInput [(ngModel)]="filters.search" placeholder="Staff, work details">
+              <input matInput [(ngModel)]="filters.search" (input)="onSearchInput()" placeholder="Type 62, Box, Worker name...">
             </mat-form-field>
             <mat-form-field appearance="outline" class="filter-field">
               <mat-label>Staff</mat-label>
