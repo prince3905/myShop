@@ -784,9 +784,11 @@ exports.getAuditLogs = async (req, res) => {
     const formattedEntityLogs = (entityLogs || []).map((l) => ({
       _id: l._id,
       action: l.action,
-      details: l.meta?.materialSummary
-        ? `Updated ${l.meta.productName || "Product"} recipe: ${l.meta.materialSummary} (Cost: ₹${l.meta.calculatedRecipeCost || 0})`
-        : (l.meta?.details || l.action),
+      details: l.meta?.diffSummary
+        ? l.meta.diffSummary
+        : (l.meta?.materialSummary
+          ? `Updated ${l.meta.productName || "Product"} recipe: ${l.meta.materialSummary} (Cost: ₹${l.meta.calculatedRecipeCost || 0})`
+          : (l.meta?.details || l.action)),
       createdAt: l.createdAt,
       actorName: typeof l.actor === "object" ? (l.actor?.name || l.actor?.email || "Admin") : "Admin",
     }));

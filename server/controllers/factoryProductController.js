@@ -439,6 +439,21 @@ exports.updateFactoryProduct = async (req, res) => {
       return res.status(404).json({ success: false, message: "Factory product not found" });
     }
 
+    // Capture Before State for Detailed Recipe & Cost Diff Logging
+    const oldWorkerRate = Number(product.workerPieceRate || 0);
+    const oldMaterialMap = new Map();
+    (product.standardMaterialLines || []).forEach((line) => {
+      const name = `${line.materialName || "Material"}`.trim();
+      oldMaterialMap.set(name, {
+        qty: Number(line.qtyPerUnit || 0),
+        unit: `${line.unitLabel || "PCS"}`.toUpperCase(),
+      });
+    });
+    const oldMatCost = (product.standardMaterialLines || []).reduce((sum, line) => {
+      return sum + (Number(line.qtyPerUnit || 0) * Number(line.rate || 0));
+    }, 0);
+    const oldCalculatedCost = Number((oldMatCost + oldWorkerRate + Number(product.standardLabourCost || 0) + Number(product.standardOtherCost || 0) + Number(product.standardWasteValuePerUnit || 0)).toFixed(2));
+
     product.name = `${req.body?.name ?? product.name ?? ""}`.trim();
     product.code = `${req.body?.code ?? product.code ?? ""}`.trim();
     product.unitLabel = `${req.body?.unitLabel ?? product.unitLabel ?? "PCS"}`.trim().toUpperCase();
@@ -569,6 +584,42 @@ exports.updateFactoryProduct = async (req, res) => {
       await dw.save();
     }
 
+    // Compute Exact Before vs After Recipe & Cost Differences
+    const recipeDiffs = [];
+
+    if (oldWorkerRate !== product.workerPieceRate) {
+      recipeDiffs.push(`Worker Rate: ₹${oldWorkerRate} ➔ ₹${product.workerPieceRate}`);
+    }
+
+    const newMaterialMap = new Map();
+    (product.standardMaterialLines || []).forEach((line) => {
+      const name = `${line.materialName || "Material"}`.trim();
+      const newQty = Number(line.qtyPerUnit || 0);
+      const unit = `${line.unitLabel || "PCS"}`.toUpperCase();
+      newMaterialMap.set(name, { qty: newQty, unit });
+
+      const oldEntry = oldMaterialMap.get(name);
+      if (!oldEntry) {
+        recipeDiffs.push(`Added ${name}: ${newQty} ${unit}`);
+      } else if (oldEntry.qty !== newQty) {
+        recipeDiffs.push(`${name}: ${oldEntry.qty} ${oldEntry.unit} ➔ ${newQty} ${unit}`);
+      }
+    });
+
+    oldMaterialMap.forEach((oldEntry, name) => {
+      if (!newMaterialMap.has(name)) {
+        recipeDiffs.push(`Removed ${name} (was ${oldEntry.qty} ${oldEntry.unit})`);
+      }
+    });
+
+    if (oldCalculatedCost !== calculatedRecipeCost) {
+      recipeDiffs.push(`Box Cost: ₹${oldCalculatedCost} ➔ ₹${calculatedRecipeCost}`);
+    }
+
+    const diffSummary = recipeDiffs.length > 0
+      ? `Updated ${product.name} [${recipeDiffs.join(" | ")}]`
+      : `Updated ${product.name} (Recipe unchanged)`;
+
     const User = require("../models/User");
     const matSummary = (product.standardMaterialLines || [])
       .map((l) => `${l.materialName || "Material"}: ${l.qtyPerUnit} ${l.unitLabel || "PCS"}`)
@@ -590,6 +641,7 @@ exports.updateFactoryProduct = async (req, res) => {
           workerPieceRate: product.workerPieceRate,
           calculatedRecipeCost,
           materialSummary: matSummary,
+          diffSummary: diffSummary,
           updatedAt: new Date(),
         },
       }),
@@ -599,7 +651,7 @@ exports.updateFactoryProduct = async (req, res) => {
             $each: [
               {
                 action: "UPDATE_FACTORY_PRODUCT_RECIPE",
-                details: `Updated ${product.name} recipe: ${matSummary} (Cost: ₹${calculatedRecipeCost})`,
+                details: diffSummary,
                 createdAt: new Date(),
               },
             ],
