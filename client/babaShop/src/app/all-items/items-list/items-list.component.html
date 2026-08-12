@@ -31,8 +31,8 @@
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="full-width" *ngIf="selectedOption === 'name'">
-            <mat-label>Product Name</mat-label>
-            <input matInput [(ngModel)]="itemName" (ngModelChange)="onFilterInputChange()" />
+            <mat-label>Product Name (Type 62, Box, TATA...)</mat-label>
+            <input matInput [(ngModel)]="itemName" (input)="onFilterInputChange()" placeholder="Type 62, Box, TATA to filter..." />
             <mat-icon matPrefix>search</mat-icon>
           </mat-form-field>
 

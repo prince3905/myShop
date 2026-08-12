@@ -184,8 +184,8 @@
 
           <div class="filter-row-custom">
             <mat-form-field appearance="outline">
-              <mat-label>Search SKU</mat-label>
-              <input matInput [(ngModel)]="searchSku" (keyup.enter)="applyFilters()" />
+              <mat-label>Search SKU / Model</mat-label>
+              <input matInput [(ngModel)]="searchSku" (input)="onSearchInput()" placeholder="Type SKU, Model, 62..." />
             </mat-form-field>
             <mat-form-field appearance="outline">
               <mat-label>Model</mat-label>

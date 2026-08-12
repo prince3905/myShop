@@ -122,7 +122,10 @@ export class AddDetailsComponent implements OnInit {
     });
   }
 
-  loadVariations() {
+  allVariations: any[] = [];
+  private searchDebounceTimer: any = null;
+
+  loadVariations(updateAll: boolean = true) {
     this.listLoading = true;
     const params: any = {
       product: this.productId,
@@ -144,7 +147,11 @@ export class AddDetailsComponent implements OnInit {
 
     this.variationService.getVariations(params).subscribe({
       next: (res: any) => {
-        this.variations = Array.isArray(res?.data) ? res.data : [];
+        const fetched = Array.isArray(res?.data) ? res.data : [];
+        if (updateAll || !this.allVariations.length) {
+          this.allVariations = [...fetched];
+        }
+        this.variations = fetched;
         this.totalVariations = Number(res?.total || this.variations.length);
         this.listLoading = false;
       },
@@ -153,6 +160,31 @@ export class AddDetailsComponent implements OnInit {
         this.snackBar.open("Failed to load variations", "Close", { duration: 2500 });
       },
     });
+  }
+
+  onSearchInput(): void {
+    const q = (this.searchSku || "").trim().toLowerCase();
+    if (this.allVariations && this.allVariations.length > 0) {
+      if (!q) {
+        this.variations = [...this.allVariations];
+      } else {
+        this.variations = this.allVariations.filter((v: any) => {
+          const sku = (v.sku || "").toLowerCase();
+          const barcode = (v.barcode || "").toLowerCase();
+          const mName = (v.model?.name || "").toLowerCase();
+          const color = (v.attributes?.color || "").toLowerCase();
+          const size = (v.attributes?.size || "").toLowerCase();
+          return sku.includes(q) || barcode.includes(q) || mName.includes(q) || color.includes(q) || size.includes(q);
+        });
+      }
+    }
+
+    if (this.searchDebounceTimer) {
+      clearTimeout(this.searchDebounceTimer);
+    }
+    this.searchDebounceTimer = setTimeout(() => {
+      this.applyFilters(false);
+    }, 300);
   }
 
   loadVariation(id: string) {
@@ -978,9 +1010,9 @@ export class AddDetailsComponent implements OnInit {
     return "shop";
   }
 
-  applyFilters() {
+  applyFilters(updateAll: boolean = true) {
     this.pageIndex = 0;
-    this.loadVariations();
+    this.loadVariations(updateAll);
   }
 
   resetFilters() {

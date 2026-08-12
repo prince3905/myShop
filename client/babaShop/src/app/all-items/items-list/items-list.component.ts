@@ -224,8 +224,33 @@ export class ItemsListComponent implements OnInit {
     });
   }
 
+  private searchDebounceTimer: any = null;
+
   onFilterInputChange(): void {
     this.updateFilteredBrands();
+
+    const q = (this.itemName || "").trim().toLowerCase();
+    if (this.allItems && this.allItems.length > 0) {
+      if (!q) {
+        this.items = [...this.allItems];
+      } else {
+        this.items = this.allItems.filter((item: any) => {
+          const name = (item.name || "").toLowerCase();
+          const cat = (item.category?.name || "").toLowerCase();
+          const brand = (item.brand?.name || "").toLowerCase();
+          const sku = (item.variations?.[0]?.sku || "").toLowerCase();
+          return name.includes(q) || cat.includes(q) || brand.includes(q) || sku.includes(q);
+        });
+      }
+      this.paginatedItems = [...this.items];
+    }
+
+    if (this.searchDebounceTimer) {
+      clearTimeout(this.searchDebounceTimer);
+    }
+    this.searchDebounceTimer = setTimeout(() => {
+      this.onSearch(1, this.pageSize);
+    }, 300);
   }
 
   onClear() {

@@ -98,13 +98,20 @@ export class RawMaterialRegisterComponent implements OnInit {
     this.loadMaterials();
   }
 
-  loadMaterials(): void {
+  allMaterials: any[] = [];
+  private searchDebounceTimer: any = null;
+
+  loadMaterials(updateAll: boolean = true): void {
     this.loadingSummary = true;
     this.loadingMaterials = true;
     this.rawMaterialService.getMaterials(this.filters).subscribe({
       next: (response) => {
-        this.materials = response?.materials || [];
-        this.summary = this.buildSummary(this.materials);
+        const fetched = response?.materials || [];
+        if (updateAll || !this.allMaterials.length) {
+          this.allMaterials = [...fetched];
+        }
+        this.materials = fetched;
+        this.summary = this.buildSummary(this.allMaterials.length ? this.allMaterials : this.materials);
         this.loadingSummary = false;
         this.loadingMaterials = false;
       },
@@ -114,6 +121,31 @@ export class RawMaterialRegisterComponent implements OnInit {
         this.showError(error?.error?.message || "Failed to load raw materials");
       },
     });
+  }
+
+  onSearchInput(): void {
+    const q = (this.filters.search || "").trim().toLowerCase();
+    if (this.allMaterials && this.allMaterials.length > 0) {
+      if (!q) {
+        this.materials = [...this.allMaterials];
+      } else {
+        this.materials = this.allMaterials.filter((m: any) => {
+          const name = (m.name || "").toLowerCase();
+          const code = (m.code || "").toLowerCase();
+          const note = (m.note || "").toLowerCase();
+          const color = (m.color || "").toLowerCase();
+          const size = (m.size || "").toLowerCase();
+          return name.includes(q) || code.includes(q) || note.includes(q) || color.includes(q) || size.includes(q);
+        });
+      }
+    }
+
+    if (this.searchDebounceTimer) {
+      clearTimeout(this.searchDebounceTimer);
+    }
+    this.searchDebounceTimer = setTimeout(() => {
+      this.loadMaterials(false);
+    }, 300);
   }
 
   get packPriceLabel(): string {

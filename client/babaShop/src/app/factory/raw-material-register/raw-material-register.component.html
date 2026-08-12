@@ -164,7 +164,7 @@
           <div class="filter-bar">
             <mat-form-field appearance="outline" class="filter-field">
               <mat-label>Search</mat-label>
-              <input matInput [(ngModel)]="filters.search" placeholder="Name, code, size or color">
+              <input matInput [(ngModel)]="filters.search" (input)="onSearchInput()" placeholder="Name, code, size, color...">
             </mat-form-field>
             <mat-form-field appearance="outline" class="filter-field">
               <mat-label>Status</mat-label>
