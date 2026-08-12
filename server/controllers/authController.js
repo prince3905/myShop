@@ -763,14 +763,42 @@ exports.runBackupNow = async (req, res) => {
 
 exports.getAuditLogs = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).select("auditLogs");
-    const logs = (user.auditLogs || []).sort(
+    const EntityAuditLog = require("../models/EntityAuditLog");
+
+    const [user, entityLogs] = await Promise.all([
+      User.findById(req.user._id).select("auditLogs"),
+      EntityAuditLog.find({ shop: req.shopId || req.user.shop })
+        .sort({ createdAt: -1 })
+        .limit(100)
+        .lean(),
+    ]);
+
+    const userLogs = (user?.auditLogs || []).map((l) => ({
+      _id: l._id,
+      action: l.action,
+      details: l.details,
+      createdAt: l.createdAt,
+      actorName: req.user?.pFname || req.user?.email || "Admin",
+    }));
+
+    const formattedEntityLogs = (entityLogs || []).map((l) => ({
+      _id: l._id,
+      action: l.action,
+      details: l.meta?.materialSummary
+        ? `Updated ${l.meta.productName || "Product"} recipe: ${l.meta.materialSummary} (Cost: ₹${l.meta.calculatedRecipeCost || 0})`
+        : (l.meta?.details || l.action),
+      createdAt: l.createdAt,
+      actorName: typeof l.actor === "object" ? (l.actor?.name || l.actor?.email || "Admin") : "Admin",
+    }));
+
+    const combined = [...userLogs, ...formattedEntityLogs].sort(
       (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
     );
+
     return res.status(200).json({
       success: true,
-      logs,
-      count: logs.length,
+      logs: combined,
+      count: combined.length,
     });
   } catch (error) {
     return res.status(500).json({
