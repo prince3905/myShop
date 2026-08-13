@@ -440,14 +440,44 @@
         </div>
 
         <!-- ── TAB 2: DEDICATED KHORAKI INFORMATION CARDS GRID ── -->
-        <div class="work-cards-grid" *ngIf="activeTab === 'KHORAKI' && !loadingDailyWorks">
+        <div *ngIf="activeTab === 'KHORAKI' && !loadingDailyWorks">
+          <!-- Khoraki Summary Banner (Total Khoraki & Worker Summary) -->
+          <div *ngIf="khorakiList.length > 0" style="background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%); border: 1.5px solid #fdba74; padding: 16px 20px; border-radius: 16px; margin-bottom: 20px; box-shadow: 0 4px 14px rgba(234, 88, 12, 0.08);">
+            <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px; border-bottom: 1px dashed #fdba74; padding-bottom: 12px;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <mat-icon style="font-size: 32px; width: 32px; height: 32px; color: #ea580c;">lunch_dining</mat-icon>
+                <div>
+                  <h3 style="margin: 0; color: #9a3412; font-size: 18px; font-weight: 800;">Daily Khan Khoraki Total Summary</h3>
+                  <span style="font-size: 13px; color: #c2410c; font-weight: 600;">Total {{ khorakiList.length }} khoraki entries issued</span>
+                </div>
+              </div>
+              <div style="background: #ffffff; border: 2px solid #ea580c; color: #ea580c; padding: 8px 18px; border-radius: 12px; font-weight: 900; font-size: 20px; box-shadow: 0 2px 8px rgba(234, 88, 12, 0.15);">
+                Total Khoraki: ₹{{ getKhorakiTotalSum() | number: '1.2-2' }}
+              </div>
+            </div>
+
+            <!-- Worker-wise Total Breakdown Chips -->
+            <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+              <div *ngFor="let workerSummary of getWorkerKhorakiSummaries()" style="background: #ffffff; border: 1px solid #fed7aa; padding: 8px 14px; border-radius: 10px; display: flex; align-items: center; gap: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.03);">
+                <span style="background: #ea580c; color: white; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px;">
+                  {{ workerSummary.name[0].toUpperCase() }}
+                </span>
+                <div>
+                  <strong style="color: #9a3412; font-size: 13px; display: block;">{{ workerSummary.name }}</strong>
+                  <span style="font-size: 12px; color: #c2410c; font-weight: 700;">{{ workerSummary.count }} Days · ₹{{ workerSummary.total | number: '1.0-0' }} Khoraki</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div *ngIf="khorakiList.length === 0" style="text-align: center; padding: 40px; background: #fff; border-radius: 16px; border: 1px dashed #fdba74;">
             <mat-icon style="font-size: 48px; width: 48px; height: 48px; color: #ea580c;">lunch_dining</mat-icon>
             <p style="margin-top: 10px; color: #9a3412; font-weight: 700;">No Daily Khoraki records found for selected filters.</p>
             <span style="font-size: 13px; color: #c2410c;">Turn on "Daily Khoraki" toggle in the form to issue khana khoraki!</span>
           </div>
 
-          <div class="work-card-v3" *ngFor="let item of khorakiList" style="border-left: 5px solid #ea580c; background: #fff8f6; border-radius: 16px; box-shadow: 0 4px 14px rgba(234, 88, 12, 0.08);">
+          <div class="work-cards-grid" *ngIf="khorakiList.length > 0">
+            <div class="work-card-v3" *ngFor="let item of khorakiList" style="border-left: 5px solid #ea580c; background: #fff8f6; border-radius: 16px; box-shadow: 0 4px 14px rgba(234, 88, 12, 0.08);">
             
             <!-- Khoraki Card Header -->
             <div class="work-card-top" style="border-bottom: 1px solid #ffedd5; padding-bottom: 10px;">

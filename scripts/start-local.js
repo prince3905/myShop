@@ -56,7 +56,7 @@ function waitForFreshBuild(filePath, buildStartedAt, timeoutMs = 120000) {
   });
 }
 
-function waitForHealth(url, timeoutMs = 30000) {
+function waitForHealth(url, timeoutMs = 90000) {
   const start = Date.now();
 
   return new Promise((resolve, reject) => {

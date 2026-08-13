@@ -704,6 +704,27 @@ export class StaffDailyWorkComponent implements OnInit {
     return this.editingDailyWorkId ? "Update Daily Work" : "Save Daily Work";
   }
 
+  getKhorakiTotalSum(): number {
+    return (this.khorakiList || []).reduce((sum, item) => {
+      const amt = Number(item.khorakiAmount || (item.attendanceStatus === "HALF_DAY" ? 50 : 100));
+      return sum + amt;
+    }, 0);
+  }
+
+  getWorkerKhorakiSummaries(): Array<{ name: string; count: number; total: number }> {
+    const map: Record<string, { name: string; count: number; total: number }> = {};
+    (this.khorakiList || []).forEach((item) => {
+      const name = item.staff?.name || "Unknown Staff";
+      if (!map[name]) {
+        map[name] = { name, count: 0, total: 0 };
+      }
+      const amt = Number(item.khorakiAmount || (item.attendanceStatus === "HALF_DAY" ? 50 : 100));
+      map[name].count += 1;
+      map[name].total += amt;
+    });
+    return Object.values(map).sort((a, b) => b.total - a.total);
+  }
+
   trackBySummary(index: number, item: any): string {
     return `${item?._id || item?.label || "row"}-${index}`;
   }
