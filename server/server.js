@@ -1,3 +1,7 @@
+if (process.stdin && process.stdin.on) {
+  process.stdin.on('error', () => {});
+}
+
 const mongoose = require('mongoose');
 require("dotenv").config();
 const app = require("./app");
