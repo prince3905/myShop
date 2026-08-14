@@ -37,49 +37,23 @@
   flex-shrink: 0;
 }
 
-.shop-select-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  height: 30px;
-  padding: 0 10px;
-  border-radius: 20px;
-  background: rgba(0, 0, 0, 0.45);
-  border: 1px solid rgba(237, 201, 72, 0.45);
-  color: #edc948;
-  cursor: pointer;
+.clickable-shop-chip {
+  cursor: pointer !important;
   user-select: none;
   transition: all 0.2s ease;
-  flex-shrink: 0;
-  margin-left: 2px;
 }
 
-.shop-select-pill:hover,
-.shop-select-pill:active {
-  background: rgba(237, 201, 72, 0.2);
-  border-color: #edc948;
+.clickable-shop-chip:hover,
+.clickable-shop-chip:active {
+  background: rgba(237, 201, 72, 0.2) !important;
+  border-color: #edc948 !important;
   transform: translateY(-1px);
 }
 
-.shop-select-pill .pill-icon {
-  font-size: 16px;
+.shop-chip-arrow {
+  font-size: 18px;
   color: #edc948 !important;
-}
-
-.shop-select-pill .pill-shop-name {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  max-width: 120px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  color: #ffffff;
-}
-
-.shop-select-pill .pill-arrow {
-  font-size: 16px;
-  color: #edc948 !important;
+  margin-left: -2px;
 }
 
 .title-back-btn {
@@ -412,12 +386,8 @@
 }
 
 @media (max-width: 640px) {
-  .shop-select-pill .pill-shop-name {
-    max-width: 90px;
-  }
-
   .navbar-breadcrumb {
-    max-width: 120px;
+    max-width: 140px;
     font-size: 11px;
     color: #edc948;
   }

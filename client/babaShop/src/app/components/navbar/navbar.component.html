@@ -29,17 +29,6 @@
                     </a>
                 </ng-container>
             </div>
-
-            <!-- Sleek Responsive Shop Switcher Pill -->
-            <div
-                *ngIf="isSuperAdmin"
-                class="shop-select-pill"
-                [matMenuTriggerFor]="shopsMenu"
-                title="Switch Active Shop">
-                <i class="material-icons pill-icon">storefront</i>
-                <span class="pill-shop-name">{{ getCurrentShopLabel() }}</span>
-                <i class="material-icons pill-arrow">arrow_drop_down</i>
-            </div>
         </div>
         <button
             mat-raised-button
@@ -62,7 +51,17 @@
                 Read Only
             </div>
 
-            <div class="shop-chip">
+            <div
+                *ngIf="isSuperAdmin"
+                class="shop-chip clickable-shop-chip"
+                [matMenuTriggerFor]="shopsMenu"
+                title="Click to switch shop">
+                <span class="shop-chip-label">Shop:</span>
+                <span class="shop-chip-value">{{ getCurrentShopLabel() }}</span>
+                <i class="material-icons shop-chip-arrow">arrow_drop_down</i>
+            </div>
+
+            <div *ngIf="!isSuperAdmin" class="shop-chip">
                 <span class="shop-chip-label">Shop:</span>
                 <span class="shop-chip-value">{{ getCurrentShopLabel() }}</span>
             </div>
