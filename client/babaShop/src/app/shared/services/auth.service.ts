@@ -265,8 +265,9 @@ export class AuthService {
 }
 
   isGlobalReadOnlyMode(): boolean {
-    const user = this.getCurrentUser() || {};
-    return user.role === "SUPER_ADMIN" && !user.shop;
+    const role = this.getUserRole();
+    const shopId = this.getShopId();
+    return role === "SUPER_ADMIN" && !shopId;
   }
 
   canViewSensitivePricing(): boolean {
