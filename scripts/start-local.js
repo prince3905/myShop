@@ -123,7 +123,7 @@ async function main() {
   console.log("[local] starting backend with nodemon on http://localhost:3000 ...");
   startCommand("server", "npm", ["run", "dev"], serverDir);
 
-  await waitForHealth("http://localhost:3000/api/health");
+  await waitForHealth("http://127.0.0.1:3000/api/health");
   console.log("[local] app ready on http://localhost:3000");
 }
 
