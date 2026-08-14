@@ -33,8 +33,52 @@
 .navbar-wrapper {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   flex-shrink: 0;
+}
+
+.mobile-shop-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  height: 32px;
+  padding: 0 10px;
+  border-radius: 20px;
+  background: rgba(0, 0, 0, 0.65) !important;
+  border: 1px solid rgba(237, 201, 72, 0.6) !important;
+  color: #edc948 !important;
+  cursor: pointer;
+  outline: none;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.mobile-shop-btn:active,
+.mobile-shop-btn:focus {
+  background: rgba(237, 201, 72, 0.25) !important;
+  border-color: #edc948 !important;
+}
+
+.mobile-shop-icon {
+  font-size: 16px;
+  color: #edc948 !important;
+}
+
+.mobile-shop-text {
+  font-size: 11px;
+  font-weight: 700;
+  color: #ffffff;
+  max-width: 100px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mobile-shop-arrow {
+  font-size: 16px;
+  color: #edc948 !important;
+  margin-left: -2px;
 }
 
 .clickable-shop-chip {

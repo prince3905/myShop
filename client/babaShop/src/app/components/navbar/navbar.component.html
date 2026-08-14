@@ -29,6 +29,18 @@
                     </a>
                 </ng-container>
             </div>
+
+            <!-- ALWAYS VISIBLE ON MOBILE TOP BAR ONLY (<= 991px) -->
+            <button
+                *ngIf="isSuperAdmin"
+                type="button"
+                class="mobile-shop-btn d-lg-none"
+                [matMenuTriggerFor]="shopsMenu"
+                aria-label="Switch active shop">
+                <i class="material-icons mobile-shop-icon">storefront</i>
+                <span class="mobile-shop-text">{{ getCurrentShopLabel() }}</span>
+                <i class="material-icons mobile-shop-arrow">arrow_drop_down</i>
+            </button>
         </div>
         <button
             mat-raised-button
