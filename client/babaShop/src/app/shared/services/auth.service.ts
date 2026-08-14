@@ -152,6 +152,11 @@ export class AuthService {
           this.showLoader = false;
         }),
         tap(({ user }) => {
+          const currentLocalUser = this.getCurrentUser();
+          if (currentLocalUser && currentLocalUser.role === "SUPER_ADMIN" && Object.prototype.hasOwnProperty.call(currentLocalUser, "shop")) {
+            user.shop = currentLocalUser.shop;
+            user.shopCode = currentLocalUser.shopCode;
+          }
           this.user = user;
         }),
         catchError((err) => {
