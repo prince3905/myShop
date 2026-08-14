@@ -131,11 +131,12 @@ export class NavbarComponent implements OnInit {
   }
 
   getCurrentShopLabel(): string {
-    if (!this.selectedShop) {
+    const activeShopId = this.selectedShop || this.shopService.getSelectedShop();
+    if (!activeShopId || activeShopId === "null" || activeShopId === "undefined") {
       return this.isSuperAdmin ? "Global View" : "No Shop";
     }
-    const selected = this.shops.find((shop: any) => shop._id === this.selectedShop);
-    if (!selected) return this.selectedShop;
+    const selected = this.shops.find((shop: any) => shop._id === activeShopId);
+    if (!selected) return this.isSuperAdmin ? "Global View" : "No Shop";
     return `${selected.name}${selected.shopCode ? ` (${selected.shopCode})` : ""}`;
   }
 

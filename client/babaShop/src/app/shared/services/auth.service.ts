@@ -130,15 +130,21 @@ export class AuthService {
   setActiveShop(shopId: string | null, shopCode: string | null = null) {
     const user = this.getCurrentUser();
     if (!user) return;
-    user.shop = shopId || null;
-    user.shopCode = shopCode || null;
+    const cleanShopId = shopId && shopId !== "null" && shopId !== "undefined" ? shopId : null;
+    const cleanShopCode = shopCode && shopCode !== "null" && shopCode !== "undefined" ? shopCode : null;
+    user.shop = cleanShopId;
+    user.shopCode = cleanShopCode;
     this.user = user;
-    this.currentShopSubject.next(shopId || null);
+    this.currentShopSubject.next(cleanShopId);
   }
 
   getShopId(): string | null {
     const user = this.getCurrentUser();
-    return user?.shop || null;
+    const shop = user?.shop;
+    if (!shop || shop === "null" || shop === "undefined") {
+      return null;
+    }
+    return shop;
   }
   getUserRole(): string | null {
     return this.getCurrentUser()?.role || null;
