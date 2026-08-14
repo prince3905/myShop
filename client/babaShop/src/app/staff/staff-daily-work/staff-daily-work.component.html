@@ -409,9 +409,10 @@
                   <strong style="color: #d97706;">₹{{ fin.sellPricePerPiece | number: '1.2-2' }}/{{ fin.unit }}</strong>
                 </div>
                 <div *ngIf="fin.sellPricePerPiece > 0">
-                  <span style="color: #64748b; display: block; font-size: 11px;">Est. Batch Margin</span>
+                  <span style="color: #64748b; display: block; font-size: 11px;">Est. Batch Profit (Munafa)</span>
                   <strong [style.color]="fin.estimatedBatchMargin >= 0 ? '#16a34a' : '#dc2626'">
                     {{ fin.estimatedBatchMargin >= 0 ? '+' : '' }}₹{{ fin.estimatedBatchMargin | number: '1.2-2' }}
+                    <span style="font-size: 11px; font-weight: 700;">({{ fin.marginPercentage | number: '1.0-1' }}%)</span>
                   </strong>
                 </div>
               </div>

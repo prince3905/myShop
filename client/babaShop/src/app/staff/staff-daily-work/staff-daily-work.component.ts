@@ -611,6 +611,7 @@ export class StaffDailyWorkComponent implements OnInit {
     const sellPricePerPiece = Number(fp?.shopVariation?.sellingPrice || fp?.defaultSellingPrice || 0);
     const totalSellingValue = qty * sellPricePerPiece;
     const estimatedBatchMargin = totalSellingValue - totalBatchCost;
+    const marginPercentage = totalSellingValue > 0 ? ((estimatedBatchMargin / totalSellingValue) * 100) : 0;
 
     return {
       qty,
@@ -621,6 +622,7 @@ export class StaffDailyWorkComponent implements OnInit {
       sellPricePerPiece,
       totalSellingValue,
       estimatedBatchMargin,
+      marginPercentage,
       unit: item?.unit || fp?.unitLabel || "PCS",
     };
   }
