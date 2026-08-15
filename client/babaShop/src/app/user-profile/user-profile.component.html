@@ -1,169 +1,173 @@
-<div class="main-content">
+<div class="main-content profile-page">
   <div class="container-fluid">
-    <div class="row">
-      <div class="col-md-8">
-        <div class="card">
-          <div class="card-header card-header-danger">
-            <h4 class="card-title">Profile</h4>
-            <p class="card-category">Manage your account details</p>
+
+    <!-- ── Hero Bar ── -->
+    <div class="profile-hero-bar">
+      <div class="profile-avatar-lg">
+        {{ initials }}
+      </div>
+      <div class="profile-info">
+        <h2 class="profile-name">{{ displayName }}</h2>
+        <p class="profile-role">
+          <span class="role-badge">{{ profileForm.get('role')?.value || '-' }}</span>
+          <span class="shop-badge" *ngIf="profileForm.get('shopName')?.value">
+            <mat-icon>store</mat-icon>
+            {{ profileForm.get('shopName')?.value }}
+          </span>
+        </p>
+        <span class="status-pill" [class.active]="profileForm.get('isActive')?.value === 'Active'">
+          {{ profileForm.get('isActive')?.value || 'Unknown' }}
+        </span>
+      </div>
+    </div>
+
+    <!-- ── Profile Layout ── -->
+    <div class="profile-layout">
+
+      <!-- Left: Edit Form -->
+      <div class="profile-form-panel">
+        <div class="panel-card">
+          <div class="panel-header">
+            <mat-icon>person</mat-icon>
+            <span>Personal Information</span>
           </div>
-          <div class="card-body">
-            <div *ngIf="profileLoading" class="text-center loading-block">
+          <div class="panel-body">
+            <form *ngIf="!profileLoading" [formGroup]="profileForm" (ngSubmit)="onSubmit()">
+
+              <div class="form-row-2">
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>First Name</mat-label>
+                  <input matInput formControlName="pFname" appCapitalizeFirst>
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Last Name</mat-label>
+                  <input matInput formControlName="pLname" appCapitalizeFirst>
+                </mat-form-field>
+              </div>
+
+              <div class="form-row-2">
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Primary Email</mat-label>
+                  <input matInput formControlName="email" readonly>
+                  <mat-icon matPrefix>email</mat-icon>
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Profile Email</mat-label>
+                  <input matInput formControlName="pEmail" type="email">
+                  <mat-icon matPrefix>mail_outline</mat-icon>
+                  <mat-error *ngIf="profileForm.get('pEmail')?.invalid">Enter a valid email</mat-error>
+                </mat-form-field>
+              </div>
+
+              <div class="form-row-2">
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Primary Phone</mat-label>
+                  <input matInput formControlName="phoneNo">
+                  <mat-icon matPrefix>phone</mat-icon>
+                  <mat-error *ngIf="profileForm.get('phoneNo')?.invalid">Enter valid phone</mat-error>
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Alternate Phone</mat-label>
+                  <input matInput formControlName="pPhoneNo">
+                  <mat-icon matPrefix>phone_android</mat-icon>
+                  <mat-error *ngIf="profileForm.get('pPhoneNo')?.invalid">Enter valid phone</mat-error>
+                </mat-form-field>
+              </div>
+
+              <div class="form-actions">
+                <button mat-raised-button color="primary" type="submit" [disabled]="profileForm.invalid || saveLoading">
+                  <mat-icon>{{ saveLoading ? 'hourglass_top' : 'save' }}</mat-icon>
+                  {{ saveLoading ? 'Updating...' : 'Update Profile' }}
+                </button>
+              </div>
+            </form>
+
+            <div *ngIf="profileLoading" class="loading-state">
+              <mat-spinner diameter="24"></mat-spinner>
               Loading profile...
             </div>
-
-            <form *ngIf="!profileLoading" [formGroup]="profileForm" (ngSubmit)="onSubmit()">
-              <div class="row">
-                <div class="col-md-6">
-                  <mat-form-field class="example-full-width">
-                    <mat-label>First Name</mat-label>
-                    <input matInput formControlName="pFname" appCapitalizeFirst />
-                  </mat-form-field>
-                </div>
-                <div class="col-md-6">
-                  <mat-form-field class="example-full-width">
-                    <mat-label>Last Name</mat-label>
-                    <input matInput formControlName="pLname" appCapitalizeFirst />
-                  </mat-form-field>
-                </div>
-              </div>
-
-              <div class="row">
-                <div class="col-md-6">
-                  <mat-form-field class="example-full-width">
-                    <mat-label>Primary Email</mat-label>
-                    <input matInput formControlName="email" readonly />
-                  </mat-form-field>
-                </div>
-                <div class="col-md-6">
-                  <mat-form-field class="example-full-width">
-                    <mat-label>Profile Email</mat-label>
-                    <input matInput formControlName="pEmail" type="email" />
-                    <mat-error *ngIf="profileForm.get('pEmail')?.invalid">
-                      Enter a valid email
-                    </mat-error>
-                  </mat-form-field>
-                </div>
-              </div>
-
-              <div class="row">
-                <div class="col-md-6">
-                  <mat-form-field class="example-full-width">
-                    <mat-label>Primary Phone</mat-label>
-                    <input matInput formControlName="phoneNo" />
-                    <mat-error *ngIf="profileForm.get('phoneNo')?.invalid">
-                      Enter valid phone (10-15 digits)
-                    </mat-error>
-                  </mat-form-field>
-                </div>
-                <div class="col-md-6">
-                  <mat-form-field class="example-full-width">
-                    <mat-label>Alternate Phone</mat-label>
-                    <input matInput formControlName="pPhoneNo" />
-                    <mat-error *ngIf="profileForm.get('pPhoneNo')?.invalid">
-                      Enter valid phone (10-15 digits)
-                    </mat-error>
-                  </mat-form-field>
-                </div>
-              </div>
-
-              <div class="row">
-                <div class="col-md-4">
-                  <mat-form-field class="example-full-width">
-                    <mat-label>Role</mat-label>
-                    <input matInput formControlName="role" readonly />
-                  </mat-form-field>
-                </div>
-                <div class="col-md-4">
-                  <mat-form-field class="example-full-width">
-                    <mat-label>Shop ID</mat-label>
-                    <input matInput formControlName="shop" readonly />
-                  </mat-form-field>
-                </div>
-                <div class="col-md-4">
-                  <mat-form-field class="example-full-width">
-                    <mat-label>Shop Name</mat-label>
-                    <input matInput formControlName="shopName" readonly />
-                  </mat-form-field>
-                </div>
-              </div>
-
-              <div class="row">
-                <div class="col-md-4">
-                  <mat-form-field class="example-full-width">
-                    <mat-label>Shop Code</mat-label>
-                    <input matInput formControlName="shopCode" readonly />
-                  </mat-form-field>
-                </div>
-                <div class="col-md-4">
-                  <mat-form-field class="example-full-width">
-                    <mat-label>Current Mode</mat-label>
-                    <input matInput formControlName="mode" readonly />
-                  </mat-form-field>
-                </div>
-                <div class="col-md-4">
-                  <mat-form-field class="example-full-width">
-                    <mat-label>Status</mat-label>
-                    <input matInput formControlName="isActive" readonly />
-                  </mat-form-field>
-                </div>
-              </div>
-
-              <div class="row">
-                <div class="col-md-6">
-                  <mat-form-field class="example-full-width">
-                    <mat-label>Last Login</mat-label>
-                    <input matInput formControlName="lastLogin" readonly />
-                  </mat-form-field>
-                </div>
-                <div class="col-md-6">
-                  <mat-form-field class="example-full-width">
-                    <mat-label>Joined At</mat-label>
-                    <input matInput formControlName="createdAt" readonly />
-                  </mat-form-field>
-                </div>
-              </div>
-
-              <div class="row">
-                <div class="col-md-12">
-                  <mat-form-field class="example-full-width">
-                    <mat-label>Permissions Summary</mat-label>
-                    <textarea matInput formControlName="permissions" rows="2" readonly></textarea>
-                  </mat-form-field>
-                </div>
-              </div>
-
-              <button
-                mat-raised-button
-                type="submit"
-                class="btn btn-danger pull-right"
-                [disabled]="profileForm.invalid || saveLoading"
-              >
-                {{ saveLoading ? "Updating..." : "Update Profile" }}
-              </button>
-              <div class="clearfix"></div>
-            </form>
           </div>
         </div>
       </div>
 
-      <div class="col-md-4">
-        <div class="card card-profile">
-          <div class="profile-initials">
-            {{ initials }}
+      <!-- Right: Account Info -->
+      <div class="profile-info-panel">
+
+        <!-- Account Details Card -->
+        <div class="panel-card">
+          <div class="panel-header">
+            <mat-icon>account_circle</mat-icon>
+            <span>Account Details</span>
           </div>
-          <div class="card-body">
-            <h6 class="card-category text-gray">{{ profileForm.get("role")?.value || "-" }}</h6>
-            <h4 class="card-title">{{ displayName }}</h4>
-            <p class="card-description">
-              Keep your profile details updated so your account, permissions, and shop context stay accurate.
-            </p>
-            <span class="badge-status" [class.active]="profileForm.get('isActive')?.value === 'Active'">
-              {{ profileForm.get("isActive")?.value || "Unknown" }}
-            </span>
+          <div class="panel-body">
+            <div class="info-grid">
+              <div class="info-item">
+                <span class="info-label">Role</span>
+                <span class="info-value role">{{ profileForm.get('role')?.value || '-' }}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Shop ID</span>
+                <span class="info-value">{{ profileForm.get('shop')?.value || '-' }}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Shop Code</span>
+                <span class="info-value">{{ profileForm.get('shopCode')?.value || '-' }}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Mode</span>
+                <span class="info-value" [class.highlight]="profileForm.get('mode')?.value === 'global'">
+                  {{ profileForm.get('mode')?.value || '-' }}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
+
+        <!-- Activity Card -->
+        <div class="panel-card">
+          <div class="panel-header">
+            <mat-icon>history</mat-icon>
+            <span>Activity</span>
+          </div>
+          <div class="panel-body">
+            <div class="activity-list">
+              <div class="activity-item">
+                <div class="activity-icon">
+                  <mat-icon>login</mat-icon>
+                </div>
+                <div class="activity-info">
+                  <span class="activity-label">Last Login</span>
+                  <span class="activity-value">{{ profileForm.get('lastLogin')?.value || '-' }}</span>
+                </div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-icon">
+                  <mat-icon>calendar_today</mat-icon>
+                </div>
+                <div class="activity-info">
+                  <span class="activity-label">Joined At</span>
+                  <span class="activity-value">{{ profileForm.get('createdAt')?.value | date:'medium' }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Permissions Card -->
+        <div class="panel-card">
+          <div class="panel-header">
+            <mat-icon>security</mat-icon>
+            <span>Permissions</span>
+          </div>
+          <div class="panel-body">
+            <div class="permissions-box">
+              <textarea class="permissions-text" readonly rows="3">{{ profileForm.get('permissions')?.value || 'No permissions' }}</textarea>
+            </div>
+          </div>
+        </div>
+
       </div>
+
     </div>
   </div>
 </div>

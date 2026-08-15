@@ -1,4 +1,5 @@
 const EntityAuditLog = require("../models/EntityAuditLog");
+const logger = require("./logger");
 
 const logEntityAudit = async ({
   shop = null,
@@ -19,7 +20,7 @@ const logEntityAudit = async ({
       meta,
     });
   } catch (err) {
-    // Audit should not block business flow
+    logger.error("logEntityAudit Error:", err);
   }
 };
 

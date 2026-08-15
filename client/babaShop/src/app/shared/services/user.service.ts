@@ -23,4 +23,8 @@ export class UserService {
   updateUser(userId: string, payload: any) {
     return this.http.put<any>(`${this.baseURL}/api/users/${userId}`, payload);
   }
+
+  deleteUser(userId: string) {
+    return this.http.delete<any>(`${this.baseURL}/api/users/${userId}`);
+  }
 }

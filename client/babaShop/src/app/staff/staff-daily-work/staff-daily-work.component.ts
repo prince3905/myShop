@@ -31,6 +31,8 @@ export class StaffDailyWorkComponent implements OnInit {
     linkedJob: "",
     unitsCompleted: 0,
     earnedAmount: 0,
+    isKhorakiIncluded: false,
+    khorakiAmount: 100,
     note: "",
   };
 
@@ -66,6 +68,25 @@ export class StaffDailyWorkComponent implements OnInit {
   userRole: string | null = null;
   currentUserId: string | null = null;
   currentShopLabel = "-";
+  activeTab: 'WORK' | 'KHORAKI' = 'WORK';
+
+  get defaultKhorakiAmount(): number {
+    const status = this.dailyWorkForm.attendanceStatus;
+    if (status === "HALF_DAY") return 50;
+    if (status === "ABSENT") return 0;
+    return 100;
+  }
+
+  get productionWorkList(): any[] {
+    return (this.dailyWorks || []).filter((dw: any) => {
+      const isPureKhoraki = dw.isKhorakiIncluded && (!dw.unitsCompleted || dw.unitsCompleted === 0) && (!dw.earnedAmount || dw.earnedAmount === 0);
+      return !isPureKhoraki;
+    });
+  }
+
+  get khorakiList(): any[] {
+    return (this.dailyWorks || []).filter((dw: any) => dw.isKhorakiIncluded === true || Number(dw.khorakiAmount || 0) > 0);
+  }
 
   constructor(
     private staffService: StaffService,
@@ -106,6 +127,9 @@ export class StaffDailyWorkComponent implements OnInit {
   }
 
   canDeleteRow(dailyWork: any): boolean {
+    if (dailyWork?.stockPushStatus === "PUSHED") {
+      return false;
+    }
     return this.canManage && !!dailyWork?._id;
   }
 
@@ -160,10 +184,18 @@ export class StaffDailyWorkComponent implements OnInit {
         const rawMaterialId = `${line?.rawMaterial?._id || line?.rawMaterial || ""}`.trim();
         const material = this.rawMaterialOptions.find((row) => row?._id === rawMaterialId);
         const requiredQty = Number(line?.qtyPerUnit || 0) * qty;
-        const availableQty = Number(material?.currentBalanceQty || 0);
+
+        let availableQty = Number(material?.currentBalanceQty || 0);
+        const matUnit = `${material?.unitLabel || ""}`.toUpperCase();
+        const pcsPerPack = Number(material?.pcsPerPack || 0);
+
+        if (matUnit === "BAG" && pcsPerPack > 0) {
+          availableQty = availableQty * pcsPerPack;
+        }
+
         return {
           materialName: line?.materialName || material?.name || "Raw Material",
-          unitLabel: line?.unitLabel || material?.unitLabel || "PCS",
+          unitLabel: "PCS",
           requiredQty,
           availableQty,
           shortageQty: Math.max(0, requiredQty - availableQty),
@@ -194,13 +226,38 @@ export class StaffDailyWorkComponent implements OnInit {
     });
   }
 
-  loadDailyWorks(): void {
+  productSearchQuery: string = "";
+  filteredFactoryProductOptions: any[] = [];
+  allDailyWorks: any[] = [];
+  private searchDebounceTimer: any = null;
+
+  onProductSearchChange(query: string): void {
+    this.productSearchQuery = query || "";
+    const q = this.productSearchQuery.trim().toLowerCase();
+    if (!q) {
+      this.filteredFactoryProductOptions = [...this.factoryProductOptions];
+    } else {
+      this.filteredFactoryProductOptions = this.factoryProductOptions.filter((item: any) => {
+        const name = (item.name || "").toLowerCase();
+        const sku = (item.shopVariation?.sku || "").toLowerCase();
+        const size = (item.shopVariation?.attributes?.size || "").toLowerCase();
+        const color = (item.shopVariation?.attributes?.color || "").toLowerCase();
+        const code = (item.code || "").toLowerCase();
+        return name.includes(q) || sku.includes(q) || size.includes(q) || color.includes(q) || code.includes(q);
+      });
+    }
+  }
+
+  loadDailyWorks(updateAll: boolean = true): void {
     this.loadingSummary = true;
     this.loadingDailyWorks = true;
     this.staffDailyWorkService.getDailyWorks(this.filters).subscribe({
       next: (response) => {
         this.dailyWorks = response?.dailyWorks || [];
-        this.summary = this.buildSummary(this.dailyWorks);
+        if (updateAll || !this.allDailyWorks.length) {
+          this.allDailyWorks = [...this.dailyWorks];
+        }
+        this.summary = this.buildSummary(this.allDailyWorks.length ? this.allDailyWorks : this.dailyWorks);
         this.loadingSummary = false;
         this.loadingDailyWorks = false;
       },
@@ -212,13 +269,40 @@ export class StaffDailyWorkComponent implements OnInit {
     });
   }
 
+  onSearchInput(): void {
+    const q = (this.filters.search || "").trim().toLowerCase();
+    if (this.allDailyWorks && this.allDailyWorks.length > 0) {
+      if (!q) {
+        this.dailyWorks = [...this.allDailyWorks];
+      } else {
+        this.dailyWorks = this.allDailyWorks.filter((item: any) => {
+          const pName = (item.factoryProductName || "").toLowerCase();
+          const sName = (item.staff?.name || "").toLowerCase();
+          const status = (item.attendanceStatus || "").toLowerCase();
+          const vStatus = (item.verificationStatus || "").toLowerCase();
+          const variation = (this.getVariationLabel(item) || "").toLowerCase();
+          return pName.includes(q) || sName.includes(q) || status.includes(q) || vStatus.includes(q) || variation.includes(q);
+        });
+      }
+    }
+
+    if (this.searchDebounceTimer) {
+      clearTimeout(this.searchDebounceTimer);
+    }
+    this.searchDebounceTimer = setTimeout(() => {
+      this.loadDailyWorks(false);
+    }, 300);
+  }
+
   loadFactoryProducts(): void {
     this.factoryProductService.getProductOptions({ active: true }).subscribe({
       next: (response) => {
         this.factoryProductOptions = response?.products || [];
+        this.filteredFactoryProductOptions = [...this.factoryProductOptions];
       },
       error: () => {
         this.factoryProductOptions = [];
+        this.filteredFactoryProductOptions = [];
       },
     });
   }
@@ -248,6 +332,10 @@ export class StaffDailyWorkComponent implements OnInit {
 
   onAttendanceChange(): void {
     this.dailyWorkForm.earnedAmount = this.earnedAmountPreview;
+    this.dailyWorkForm.khorakiAmount = this.defaultKhorakiAmount;
+    if (this.dailyWorkForm.attendanceStatus === "ABSENT") {
+      this.dailyWorkForm.isKhorakiIncluded = false;
+    }
   }
 
   onFactoryProductChange(): void {
@@ -289,6 +377,9 @@ export class StaffDailyWorkComponent implements OnInit {
           { duration: 2500 },
         );
         this.cancelEdit(form);
+        if (payload.isKhorakiIncluded && this.activeTab === 'KHORAKI') {
+          this.activeTab = 'KHORAKI';
+        }
         this.loadAll();
       },
       error: (error) => {
@@ -319,6 +410,8 @@ export class StaffDailyWorkComponent implements OnInit {
       linkedJob: dailyWork.linkedJob || "",
       unitsCompleted: Number(dailyWork.unitsCompleted || 0),
       earnedAmount: Number(dailyWork.earnedAmount || 0),
+      isKhorakiIncluded: dailyWork.isKhorakiIncluded === true,
+      khorakiAmount: Number(dailyWork.khorakiAmount || 100),
       note: dailyWork.note || "",
     };
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -341,6 +434,8 @@ export class StaffDailyWorkComponent implements OnInit {
       linkedJob: "",
       unitsCompleted: 0,
       earnedAmount: 0,
+      isKhorakiIncluded: false,
+      khorakiAmount: 100,
       note: "",
     };
     if (form) {
@@ -440,6 +535,98 @@ export class StaffDailyWorkComponent implements OnInit {
     return "";
   }
 
+  getVariationLabel(item: any): string {
+    if (!item) return "";
+    const fp = item?.factoryProduct || item;
+    const variation = fp?.shopVariation || item?.shopVariation;
+
+    const sku = item?.factoryProductSku || fp?.code || variation?.sku || "";
+    const size = fp?.variationSize || variation?.attributes?.size || "";
+    const color = fp?.variationColor || variation?.attributes?.color || "";
+    const modelName = fp?.shopModel?.name || variation?.model?.name || "";
+
+    const parts: string[] = [];
+    if (modelName && modelName.toUpperCase() !== (fp?.name || "").toUpperCase()) {
+      parts.push(modelName);
+    }
+    if (size) {
+      parts.push(size);
+    }
+    if (color && !["NONE", "NETURAL", "NATURAL"].includes(color.toUpperCase())) {
+      parts.push(color);
+    }
+    if (sku) {
+      parts.push(sku);
+    }
+
+    return parts.join(" · ");
+  }
+
+  getProductMetaBadges(item: any): string[] {
+    const fp = item?.factoryProduct || item;
+    const variation = fp?.shopVariation || item?.shopVariation;
+
+    const badges: string[] = [];
+
+    const category = fp?.shopCategory?.name;
+    if (category) badges.push(`Category: ${category}`);
+
+    const brand = fp?.shopBrand?.name;
+    if (brand) badges.push(`Brand: ${brand}`);
+
+    const model = fp?.shopModel?.name;
+    if (model) badges.push(`Model: ${model}`);
+
+    const color = fp?.variationColor || variation?.attributes?.color;
+    if (color && !["NONE", "NETURAL", "NATURAL"].includes(color.toUpperCase())) {
+      badges.push(`Color: ${color}`);
+    }
+
+    const size = fp?.variationSize || variation?.attributes?.size;
+    if (size) badges.push(`Size: ${size}`);
+
+    const rate = fp?.workerPieceRate || item?.pieceRate;
+    if (Number(rate || 0) > 0) {
+      badges.push(`Worker Rate: ₹${rate}/${fp?.unitLabel || item?.unit || "PCS"}`);
+    }
+
+    return badges;
+  }
+
+  getFinancialSummary(item: any): any {
+    const qty = Number(item?.unitsCompleted || 0);
+    const pieceRate = Number(item?.factoryProduct?.workerPieceRate || item?.pieceRate || 0);
+    const workerPay = Number(item?.earnedAmount ?? (qty * pieceRate));
+
+    const fp = item?.factoryProduct || {};
+    const matCostPerUnit = (fp?.standardMaterialLines || []).reduce((sum: number, line: any) => {
+      return sum + (Number(line?.qtyPerUnit || 0) * Number(line?.rate || 0));
+    }, 0);
+    const otherCostPerUnit = Number(fp?.standardOtherCost || 0);
+    const wasteValuePerUnit = Number(fp?.standardWasteValuePerUnit || 0);
+
+    const costPerPiece = matCostPerUnit + (qty > 0 ? (workerPay / qty) : pieceRate) + otherCostPerUnit + wasteValuePerUnit;
+    const totalBatchCost = qty * costPerPiece;
+
+    const sellPricePerPiece = Number(fp?.shopVariation?.sellingPrice || fp?.defaultSellingPrice || 0);
+    const totalSellingValue = qty * sellPricePerPiece;
+    const estimatedBatchMargin = totalSellingValue - totalBatchCost;
+    const marginPercentage = totalSellingValue > 0 ? ((estimatedBatchMargin / totalSellingValue) * 100) : 0;
+
+    return {
+      qty,
+      pieceRate,
+      workerPay,
+      costPerPiece,
+      totalBatchCost,
+      sellPricePerPiece,
+      totalSellingValue,
+      estimatedBatchMargin,
+      marginPercentage,
+      unit: item?.unit || fp?.unitLabel || "PCS",
+    };
+  }
+
   getActualBoxCostPreview(item: any): number {
     const product = item?.factoryProduct;
     const qty = Number(item?.unitsCompleted || 0);
@@ -480,6 +667,34 @@ export class StaffDailyWorkComponent implements OnInit {
     });
   }
 
+  deleteKhorakiCard(dailyWork: any): void {
+    if (!dailyWork?._id || this.deletingId) {
+      return;
+    }
+
+    const hasWork = Number(dailyWork.unitsCompleted || 0) > 0 || Number(dailyWork.earnedAmount || 0) > 0;
+    const msg = hasWork
+      ? `Remove Khoraki for ${dailyWork.staff?.name || "worker"}? (Production work will remain safe)`
+      : `Delete Khoraki entry for ${dailyWork.staff?.name || "worker"}?`;
+
+    if (!window.confirm(msg)) {
+      return;
+    }
+
+    this.deletingId = dailyWork._id;
+    this.staffDailyWorkService.removeKhoraki(dailyWork._id).subscribe({
+      next: (response) => {
+        this.deletingId = null;
+        this.snackBar.open(response?.message || "Khoraki removed", "Close", { duration: 2500 });
+        this.loadAll();
+      },
+      error: (error) => {
+        this.deletingId = null;
+        this.showError(error?.error?.message || "Failed to remove Khoraki");
+      },
+    });
+  }
+
   getFormTitle(): string {
     return this.editingDailyWorkId ? "Edit Daily Work" : "Add Daily Work";
   }
@@ -489,6 +704,27 @@ export class StaffDailyWorkComponent implements OnInit {
       return this.editingDailyWorkId ? "Updating..." : "Saving...";
     }
     return this.editingDailyWorkId ? "Update Daily Work" : "Save Daily Work";
+  }
+
+  getKhorakiTotalSum(): number {
+    return (this.khorakiList || []).reduce((sum, item) => {
+      const amt = Number(item.khorakiAmount || (item.attendanceStatus === "HALF_DAY" ? 50 : 100));
+      return sum + amt;
+    }, 0);
+  }
+
+  getWorkerKhorakiSummaries(): Array<{ name: string; count: number; total: number }> {
+    const map: Record<string, { name: string; count: number; total: number }> = {};
+    (this.khorakiList || []).forEach((item) => {
+      const name = item.staff?.name || "Unknown Staff";
+      if (!map[name]) {
+        map[name] = { name, count: 0, total: 0 };
+      }
+      const amt = Number(item.khorakiAmount || (item.attendanceStatus === "HALF_DAY" ? 50 : 100));
+      map[name].count += 1;
+      map[name].total += amt;
+    });
+    return Object.values(map).sort((a, b) => b.total - a.total);
   }
 
   trackBySummary(index: number, item: any): string {

@@ -79,13 +79,30 @@ const productVariationSchema = new mongoose.Schema({
   isActive: {
     type: Boolean,
     default: true
-  }
+  },
+
+  isQuickAdd: {
+    type: Boolean,
+    default: false
+  },
+
+  priceHistory: [
+    {
+      oldSellingPrice: Number,
+      newSellingPrice: Number,
+      oldCostPrice: Number,
+      newCostPrice: Number,
+      reason: String,
+      changedAt: { type: Date, default: Date.now },
+      updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" }
+    }
+  ]
 
 }, { timestamps: true });
 
-/* Unique SKU per shop */
+/* Unique SKU per shop and product (same product can have same SKU only once, but diff product can reuse SKU) */
 productVariationSchema.index(
-  { shop: 1, sku: 1 },
+  { shop: 1, product: 1, sku: 1 },
   { unique: true }
 );
 productVariationSchema.index({ shop: 1, product: 1, createdAt: -1 });
@@ -97,7 +114,7 @@ productVariationSchema.index(
   {
     unique: true,
     partialFilterExpression: { barcode: { $type: "string", $ne: "" } },
-  },
+  }
 );
 
 module.exports = mongoose.model("ProductVariation", productVariationSchema);

@@ -18,6 +18,34 @@
     </a>
   </div>
 
+  <!-- Mobile Shop Switcher Box -->
+  <div *ngIf="isSuperAdmin && isMobileViewport" class="mobile-sidebar-shop-box">
+    <div class="mobile-sidebar-shop-label">ACTIVE SHOP</div>
+    <button type="button" class="mobile-sidebar-shop-btn" [matMenuTriggerFor]="sidebarShopsMenu">
+      <i class="material-icons">storefront</i>
+      <span class="mobile-sidebar-shop-name">{{ getCurrentShopLabel() }}</span>
+      <i class="material-icons">arrow_drop_down</i>
+    </button>
+    <mat-menu #sidebarShopsMenu="matMenu">
+      <button mat-menu-item (click)="clearShopSelection()">
+        <i class="material-icons">public</i>
+        <span>All Shops (Global)</span>
+      </button>
+      <button mat-menu-item (click)="navigateTo('/shops')">
+        <i class="material-icons">add_business</i>
+        <span>Add Shop</span>
+      </button>
+      <button mat-menu-item (click)="openShopSyncModal()">
+        <i class="material-icons">sync_alt</i>
+        <span>Clone / Sync Shop Data</span>
+      </button>
+      <button mat-menu-item *ngFor="let shop of shops" (click)="onShopChange(shop._id)">
+        <i class="material-icons">storefront</i>
+        <span>{{ shop.name }} ({{ shop.shopCode }})</span>
+      </button>
+    </mat-menu>
+  </div>
+
   <!-- Menu -->
   <ul class="nav">
     <li
@@ -34,38 +62,36 @@
         class="nav-link"
         routerLinkActive="active"
         [routerLink]="[menuItem.path]"
+        (click)="onNavLinkClick()"
         [matTooltip]="menuItem.title"
-        [matTooltipDisabled]="!isCollapsed"
+        [matTooltipDisabled]="isMobileViewport || !isCollapsed"
         matTooltipPosition="right"
         [matTooltipShowDelay]="100"
         matTooltipClass="sidebar-tooltip">
 
         <i class="material-icons">{{menuItem.icon}}</i>
-        <p *ngIf="!isCollapsed">{{menuItem.title}}</p>
+        <p *ngIf="!isCollapsed || isMobileViewport">{{menuItem.title}}</p>
       </a>
 
-      <!-- Dropdown -->
-      <a
+      <!-- Dropdown Parent Button -->
+      <button
         *ngIf="menuItem.children"
-        class="nav-link"
-        (click)="toggleMenu(menuItem)"
-        [matTooltip]="menuItem.title"
-        [matTooltipDisabled]="!isCollapsed"
-        matTooltipPosition="right"
-        [matTooltipShowDelay]="100"
-        matTooltipClass="sidebar-tooltip">
+        type="button"
+        class="nav-link dropdown-toggle-btn"
+        (click)="toggleMenu(menuItem, $event)"
+        [class.expanded]="menuItem.expanded">
 
         <i class="material-icons">{{menuItem.icon}}</i>
-        <p *ngIf="!isCollapsed">
+        <p *ngIf="!isCollapsed || isMobileViewport">
           {{menuItem.title}}
-          <b class="caret"></b>
+          <b class="caret" [class.rotated]="menuItem.expanded"></b>
         </p>
-      </a>
+      </button>
 
       <ul
-        *ngIf="menuItem.children && (isCollapsed ? isFlyoutOpen(menuItem, i) : menuItem.expanded)"
+        *ngIf="menuItem.children && (menuItem.expanded || (isCollapsed && isFlyoutOpen(menuItem, i)))"
         class="nav child-menu"
-        [class.flyout]="isCollapsed"
+        [class.flyout]="isCollapsed && !isMobileViewport"
         (mouseenter)="openFlyout(menuItem, i)"
         (mouseleave)="closeFlyout(menuItem, i)">
         <li *ngFor="let child of menuItem.children" routerLinkActive="active" class="nav-item">
@@ -73,14 +99,15 @@
           <a
             class="nav-link"
             [routerLink]="[child.path]"
+            (click)="onNavLinkClick()"
             [matTooltip]="child.title"
-            [matTooltipDisabled]="!isCollapsed"
+            [matTooltipDisabled]="isMobileViewport || !isCollapsed"
             matTooltipPosition="right"
             [matTooltipShowDelay]="100"
             matTooltipClass="sidebar-tooltip">
 
             <i class="material-icons">{{child.icon}}</i>
-            <p *ngIf="!isCollapsed">{{child.title}}</p>
+            <p *ngIf="!isCollapsed || isMobileViewport">{{child.title}}</p>
           </a>
 
         </li>

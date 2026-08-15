@@ -25,6 +25,7 @@ exports.applyStockTransaction = async ({
   sku,
   type,
   quantity,
+  purchasePrice = null,
   referenceType = "MANUAL",
   referenceId = null,
   note = "",
@@ -60,12 +61,16 @@ exports.applyStockTransaction = async ({
 
   if (isDeductOperation) {
     // Atomic deduct: only succeed if sufficient stock exists
+    const updateObj = {
+      $inc: { quantity: delta },
+      $set: { product, model, sku }
+    };
+    if (purchasePrice != null && Number(purchasePrice) > 0) {
+      updateObj.$set.lastPurchasePrice = Number(purchasePrice);
+    }
     const updatedStock = await Stock.findOneAndUpdate(
       { shop, variation, quantity: { $gte: absQty } },
-      {
-        $inc: { quantity: delta },
-        $set: { product, model, sku }
-      },
+      updateObj,
       { new: true, session }
     );
 
@@ -102,6 +107,9 @@ exports.applyStockTransaction = async ({
   stock.model = model;
   stock.sku = sku;
   stock.quantity = nextQuantity;
+  if (purchasePrice != null && Number(purchasePrice) > 0) {
+    stock.lastPurchasePrice = Number(purchasePrice);
+  }
   await stock.save({ session });
 
   await ProductVariation.findByIdAndUpdate(variation, { quantity: nextQuantity }, { session });

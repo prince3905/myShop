@@ -37,6 +37,65 @@ textarea,
   font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif !important;
 }
 
+.main-panel {
+  padding-top: 0 !important;
+}
+
+.main-panel > * {
+  margin-top: 0 !important;
+}
+
+/* Remove all gaps */
+.main-content {
+  padding-top: 0 !important;
+  margin-top: 0 !important;
+}
+
+.main-content > * {
+  margin-top: 0 !important;
+}
+
+.main-content .container-fluid {
+  padding-top: 0 !important;
+  margin-top: 0 !important;
+}
+
+.main-content .container-fluid > * {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+.main-content .container-fluid > div:first-child,
+.main-content .container-fluid > .container-fluid:first-child {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+/* Force hero bars to be full width and consistent */
+.expense-hero-bar,
+.sales-hero-bar,
+.returns-hero-bar,
+.report-hero-bar,
+.material-hero-bar,
+.purchase-hero-bar,
+.verify-hero-bar,
+.product-hero-bar,
+.payable-hero-bar,
+.payment-hero-bar,
+.work-hero-bar,
+.staff-hero-bar,
+.profile-hero-bar,
+.settings-hero-bar,
+.dashboard-hero-bar,
+.orders-hero-bar,
+.stock-hero-bar,
+.sales-report-hero-bar,
+.hero-bar,
+[class*="hero-bar"] {
+  margin: 0 -12px 16px -12px !important;
+  padding: 16px 24px !important;
+}
+
   padding-right: 24px !important;
   padding-left: 24px !important;
 }
@@ -865,6 +924,24 @@ app-view-distributor .summary-card {
     backdrop-filter: blur(1px);
     z-index: 1035;
   }
+}
+
+/* iOS WebKit Sidebar Touch & Stacking Context Fix */
+app-sidebar {
+  position: relative !important;
+  z-index: 10 !important;
+  display: block !important;
+}
+
+.sidebar-wrapper {
+  position: relative !important;
+  z-index: 10 !important;
+}
+
+.sidebar-background,
+.sidebar-background:after {
+  z-index: 1 !important;
+  pointer-events: none !important;
 }
 
 /* =========================================

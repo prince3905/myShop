@@ -1,336 +1,539 @@
-<div class="main-content">
+<div class="main-content settings-page">
   <div class="container-fluid">
-    <div class="row">
-      <div class="col-md-3">
-        <div class="card settings-nav-card">
-          <div class="card-header card-header-danger">
-            <h4 class="card-title">Settings</h4>
-          </div>
-          <div class="card-body settings-nav">
-            <button
-              *ngFor="let section of sections"
-              mat-button
-              class="section-btn"
-              [class.active]="activeSection === section"
-              (click)="setSection(section)"
-            >
-              {{ section }}
-            </button>
-          </div>
+
+    <!-- ── Hero Bar ── -->
+    <div class="settings-hero-bar">
+      <div>
+        <h2 class="hero-title">Settings</h2>
+        <p class="hero-sub">Manage your account, security, and preferences</p>
+      </div>
+    </div>
+
+    <!-- ── Settings Layout ── -->
+    <div class="settings-layout">
+
+      <!-- ── Sidebar Nav ── -->
+      <div class="settings-nav-panel">
+        <div class="nav-card">
+          <button
+            *ngFor="let section of sections"
+            class="nav-btn"
+            [class.active]="activeSection === section"
+            (click)="setSection(section)"
+          >
+            <mat-icon>{{ getSectionIcon(section) }}</mat-icon>
+            <span>{{ section }}</span>
+          </button>
         </div>
       </div>
 
-      <div class="col-md-9">
-        <div class="card">
-          <div class="card-header card-header-danger">
-            <h4 class="card-title">{{ activeSection }}</h4>
-          </div>
-          <div class="card-body">
-            <div *ngIf="loadingOverview" class="loading-block">Loading settings...</div>
+      <!-- ── Content Area ── -->
+      <div class="settings-content">
 
-            <ng-container *ngIf="!loadingOverview">
-              <div *ngIf="activeSection === 'Profile Settings'">
-                <form [formGroup]="profileForm" (ngSubmit)="saveProfileSettings()">
-                  <div class="row">
-                    <div class="col-md-6">
-                      <mat-form-field class="example-full-width">
-                        <mat-label>First Name</mat-label>
-                        <input matInput formControlName="pFname" appCapitalizeFirst />
-                      </mat-form-field>
-                    </div>
-                    <div class="col-md-6">
-                      <mat-form-field class="example-full-width">
-                        <mat-label>Last Name</mat-label>
-                        <input matInput formControlName="pLname" appCapitalizeFirst />
-                      </mat-form-field>
-                    </div>
-                  </div>
-                  <div class="row">
-                    <div class="col-md-6">
-                      <mat-form-field class="example-full-width">
-                        <mat-label>Profile Email</mat-label>
-                        <input matInput formControlName="pEmail" />
-                      </mat-form-field>
-                    </div>
-                    <div class="col-md-6">
-                      <mat-form-field class="example-full-width">
-                        <mat-label>Primary Phone</mat-label>
-                        <input matInput formControlName="phoneNo" />
-                      </mat-form-field>
-                    </div>
-                  </div>
-                  <button mat-raised-button class="btn btn-danger" [disabled]="savingProfile">
-                    {{ savingProfile ? "Saving..." : "Save Profile Settings" }}
+        <div *ngIf="loadingOverview" class="loading-state">
+          <mat-spinner diameter="24"></mat-spinner>
+          Loading settings...
+        </div>
+
+        <ng-container *ngIf="!loadingOverview">
+
+          <!-- Profile Settings -->
+          <div class="content-card" *ngIf="activeSection === 'Profile Settings'">
+            <div class="card-header-row">
+              <div class="card-icon"><mat-icon>person</mat-icon></div>
+              <div>
+                <h3 class="card-title">Profile Settings</h3>
+                <p class="card-sub">Update your personal information</p>
+              </div>
+            </div>
+            <div class="card-body">
+              <form [formGroup]="profileForm" (ngSubmit)="saveProfileSettings()">
+                <div class="form-grid-2">
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>First Name</mat-label>
+                    <input matInput formControlName="pFname" appCapitalizeFirst>
+                  </mat-form-field>
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Last Name</mat-label>
+                    <input matInput formControlName="pLname" appCapitalizeFirst>
+                  </mat-form-field>
+                </div>
+                <div class="form-grid-2">
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Profile Email</mat-label>
+                    <input matInput formControlName="pEmail" type="email">
+                  </mat-form-field>
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Primary Phone</mat-label>
+                    <input matInput formControlName="phoneNo">
+                  </mat-form-field>
+                </div>
+                <div class="form-actions">
+                  <button mat-raised-button color="primary" [disabled]="savingProfile">
+                    <mat-icon>{{ savingProfile ? 'hourglass_top' : 'save' }}</mat-icon>
+                    {{ savingProfile ? 'Saving...' : 'Save Profile' }}
                   </button>
-                </form>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- Account Security -->
+          <div class="content-card" *ngIf="activeSection === 'Account Security'">
+            <div class="card-header-row">
+              <div class="card-icon"><mat-icon>security</mat-icon></div>
+              <div>
+                <h3 class="card-title">Account Security</h3>
+                <p class="card-sub">Manage password and 2FA</p>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="toggle-row">
+                <div class="toggle-info">
+                  <span class="toggle-label">Two-Factor Authentication</span>
+                  <span class="toggle-desc">Add extra security to your account</span>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" [checked]="twoFactorEnabled" (change)="twoFactorEnabled = !twoFactorEnabled; onToggle2FA()" [disabled]="updating2FA">
+                  <span class="slider"></span>
+                </label>
               </div>
 
-              <div *ngIf="activeSection === 'Account Security'">
-                <div class="toggle-row">
-                  <label class="toggle-label">Two-Factor Authentication</label>
-                  <label class="switch">
-                    <input
-                      type="checkbox"
-                      [checked]="twoFactorEnabled"
-                      (change)="twoFactorEnabled = !twoFactorEnabled; onToggle2FA()"
-                      [disabled]="updating2FA"
-                    />
-                    <span class="slider"></span>
+              <div class="section-divider"></div>
+
+              <h4 class="section-title">Change Password</h4>
+              <form [formGroup]="passwordForm" (ngSubmit)="onChangePassword()">
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Current Password</mat-label>
+                  <input matInput type="password" formControlName="currentPassword">
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>New Password</mat-label>
+                  <input matInput type="password" formControlName="newPassword">
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Confirm Password</mat-label>
+                  <input matInput type="password" formControlName="confirmPassword">
+                </mat-form-field>
+                <div class="form-actions">
+                  <button mat-raised-button color="primary" [disabled]="changingPassword || passwordForm.invalid">
+                    <mat-icon>{{ changingPassword ? 'hourglass_top' : 'lock_reset' }}</mat-icon>
+                    {{ changingPassword ? 'Changing...' : 'Change Password' }}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- Shop Settings -->
+          <div class="content-card" *ngIf="activeSection === 'Shop Settings'">
+            <div class="card-header-row">
+              <div class="card-icon"><mat-icon>store</mat-icon></div>
+              <div>
+                <h3 class="card-title">Shop Settings</h3>
+                <p class="card-sub">Configure your shop details</p>
+              </div>
+            </div>
+            <div class="card-body">
+              <form [formGroup]="shopForm" (ngSubmit)="saveShopSettings()">
+                <div class="form-grid-2">
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Shop Name</mat-label>
+                    <input matInput formControlName="name" appCapitalizeFirst>
+                  </mat-form-field>
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Shop Code</mat-label>
+                    <input matInput formControlName="shopCode" placeholder="e.g. BVTH001" [readonly]="!canEditUpiSettings" style="text-transform: uppercase; font-weight: 700; color: #0284c7;">
+                    <mat-hint *ngIf="!canEditUpiSettings">Only Super Admin can change Shop Code</mat-hint>
+                  </mat-form-field>
+                </div>
+                <div class="form-grid-2">
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Contact</mat-label>
+                    <input matInput formControlName="contactNumber">
+                  </mat-form-field>
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Shop Email</mat-label>
+                    <input matInput formControlName="email">
+                  </mat-form-field>
+                </div>
+                <div class="form-grid-2">
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>UPI ID</mat-label>
+                    <input matInput formControlName="upiId" placeholder="shop@upi" [readonly]="!canEditUpiSettings">
+                    <mat-hint *ngIf="!canEditUpiSettings">Only Super Admin can edit</mat-hint>
+                  </mat-form-field>
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>UPI Display Name</mat-label>
+                    <input matInput formControlName="upiDisplayName" placeholder="Shop Billing" [readonly]="!canEditUpiSettings">
+                  </mat-form-field>
+                </div>
+                <div class="form-actions">
+                  <button mat-raised-button color="primary" [disabled]="savingShop">
+                    <mat-icon>{{ savingShop ? 'hourglass_top' : 'save' }}</mat-icon>
+                    {{ savingShop ? 'Saving...' : 'Save Shop Settings' }}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- Role & Permissions -->
+          <div class="content-card wide" *ngIf="activeSection === 'Role & Permissions'">
+            <div class="card-header-row">
+              <div class="card-icon"><mat-icon>admin_panel_settings</mat-icon></div>
+              <div>
+                <h3 class="card-title">Role & Permissions</h3>
+                <p class="card-sub">Manage feature access for roles</p>
+              </div>
+              <div class="header-actions" *ngIf="profile?.role === 'SUPER_ADMIN'">
+                <button mat-stroked-button (click)="resetRoleFeaturePolicy()" [disabled]="savingRoleAccess">Reset</button>
+                <button mat-raised-button color="primary" (click)="saveRoleFeaturePolicy()" [disabled]="savingRoleAccess">
+                  {{ savingRoleAccess ? 'Saving...' : 'Save Changes' }}
+                </button>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="role-meta-badges">
+                <div class="role-badge-card primary">
+                  <span class="badge-label">Current Role</span>
+                  <span class="badge-value">{{ profile?.role || '-' }}</span>
+                </div>
+                <div class="role-badge-card">
+                  <span class="badge-label">Legacy Permissions</span>
+                  <div class="permission-chips" *ngIf="rolePermissions.length > 0; else noPerm">
+                    <span class="perm-chip" *ngFor="let p of rolePermissions">{{ p }}</span>
+                  </div>
+                  <ng-template #noPerm><span class="no-perm">No permissions</span></ng-template>
+                </div>
+              </div>
+
+              <div class="alert-info" *ngIf="profile?.role !== 'SUPER_ADMIN'">
+                <mat-icon>info</mat-icon>
+                Only Super Admin can change role access policy.
+              </div>
+
+              <div class="table-section">
+                <h4 class="section-title">Effective Access Matrix</h4>
+                <div class="table-wrapper" *ngIf="featureRegistry.length > 0">
+                  <table class="data-table">
+                    <thead>
+                      <tr>
+                        <th>Module</th>
+                        <th>Feature</th>
+                        <th *ngFor="let role of policyRoles">{{ role }}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <ng-container *ngFor="let group of featureRegistry">
+                        <tr *ngFor="let feature of group.features; let first = first">
+                          <td *ngIf="first" [attr.rowspan]="group.features.length" class="module-cell">{{ group.module | titlecase }}</td>
+                          <td>
+                            <span class="feature-name">{{ feature.label }}</span>
+                            <span class="feature-key">{{ feature.key }}</span>
+                          </td>
+                          <td *ngFor="let role of policyRoles" class="text-center">
+                            <span class="access-chip yes" *ngIf="hasFeature(role, feature.key); else noAcc">Yes</span>
+                            <ng-template #noAcc><span class="access-chip no">No</span></ng-template>
+                          </td>
+                        </tr>
+                      </ng-container>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div class="table-section">
+                <h4 class="section-title">Editable Override Matrix</h4>
+                <p class="table-note">STAFF, MANAGER aur ADMIN ko yahan se control karo. SUPER_ADMIN fixed full access rahega.</p>
+                <div class="table-wrapper editable" *ngIf="featureRegistry.length > 0">
+                  <table class="data-table">
+                    <thead>
+                      <tr>
+                        <th>Module</th>
+                        <th>Feature</th>
+                        <th *ngFor="let role of policyRoles">{{ role }}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <ng-container *ngFor="let group of featureRegistry">
+                        <tr *ngFor="let feature of group.features; let first = first">
+                          <td *ngIf="first" [attr.rowspan]="group.features.length" class="module-cell">{{ group.module | titlecase }}</td>
+                          <td>
+                            <span class="feature-name">{{ feature.label }}</span>
+                            <span class="feature-key">{{ feature.key }}</span>
+                          </td>
+                          <td *ngFor="let role of policyRoles" class="text-center">
+                            <ng-container *ngIf="isEditableRole(role); else fixedCell">
+                              <mat-checkbox
+                                [checked]="hasEditableFeature(role, feature.key)"
+                                (change)="toggleFeature(role, feature.key, $event.checked)"
+                                [disabled]="savingRoleAccess || profile?.role !== 'SUPER_ADMIN'">
+                              </mat-checkbox>
+                            </ng-container>
+                            <ng-template #fixedCell>
+                              <span class="access-chip yes" *ngIf="hasFeature(role, feature.key); else fixedNo">Fixed Yes</span>
+                              <ng-template #fixedNo><span class="access-chip no">Fixed No</span></ng-template>
+                            </ng-template>
+                          </td>
+                        </tr>
+                      </ng-container>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Notification Settings -->
+          <div class="content-card" *ngIf="activeSection === 'Notification Settings'">
+            <div class="card-header-row">
+              <div class="card-icon"><mat-icon>notifications</mat-icon></div>
+              <div>
+                <h3 class="card-title">Notifications</h3>
+                <p class="card-sub">Choose how you receive alerts</p>
+              </div>
+            </div>
+            <div class="card-body">
+              <form [formGroup]="notificationForm" (ngSubmit)="saveNotificationSettings()">
+                <div class="checkbox-grid">
+                  <label class="checkbox-card">
+                    <mat-checkbox formControlName="email">Email Notifications</mat-checkbox>
+                  </label>
+                  <label class="checkbox-card">
+                    <mat-checkbox formControlName="sms">SMS Notifications</mat-checkbox>
+                  </label>
+                  <label class="checkbox-card">
+                    <mat-checkbox formControlName="whatsapp">WhatsApp Notifications</mat-checkbox>
+                  </label>
+                  <label class="checkbox-card">
+                    <mat-checkbox formControlName="inApp">In-app Notifications</mat-checkbox>
                   </label>
                 </div>
-                <form [formGroup]="passwordForm" (ngSubmit)="onChangePassword()">
-                  <mat-form-field class="example-full-width">
-                    <mat-label>Current Password</mat-label>
-                    <input matInput type="password" formControlName="currentPassword" />
-                  </mat-form-field>
-                  <mat-form-field class="example-full-width">
-                    <mat-label>New Password</mat-label>
-                    <input matInput type="password" formControlName="newPassword" />
-                  </mat-form-field>
-                  <mat-form-field class="example-full-width">
-                    <mat-label>Confirm Password</mat-label>
-                    <input matInput type="password" formControlName="confirmPassword" />
-                  </mat-form-field>
-                  <button mat-raised-button class="btn btn-danger" [disabled]="changingPassword || passwordForm.invalid">
-                    {{ changingPassword ? "Changing..." : "Change Password" }}
+                <div class="form-actions">
+                  <button mat-raised-button color="primary" [disabled]="savingNotifications">
+                    {{ savingNotifications ? 'Saving...' : 'Save Notifications' }}
                   </button>
-                </form>
-              </div>
+                </div>
+              </form>
+            </div>
+          </div>
 
-              <div *ngIf="activeSection === 'Shop Settings'">
-                <form [formGroup]="shopForm" (ngSubmit)="saveShopSettings()">
-                  <div class="row">
-                    <div class="col-md-6"><mat-form-field class="example-full-width"><mat-label>Shop Name</mat-label><input matInput formControlName="name" appCapitalizeFirst></mat-form-field></div>
-                    <div class="col-md-6"><mat-form-field class="example-full-width"><mat-label>Contact</mat-label><input matInput formControlName="contactNumber"></mat-form-field></div>
-                  </div>
-                  <div class="row">
-                    <div class="col-md-6"><mat-form-field class="example-full-width"><mat-label>Shop Email</mat-label><input matInput formControlName="email"></mat-form-field></div>
-                    <div class="col-md-6"><mat-form-field class="example-full-width"><mat-label>Address Line 1</mat-label><input matInput formControlName="addressLine1" appCapitalizeFirst></mat-form-field></div>
-                  </div>
-                  <div class="row">
-                    <div class="col-md-6">
-                      <mat-form-field class="example-full-width">
-                        <mat-label>UPI ID</mat-label>
-                        <input
-                          matInput
-                          formControlName="upiId"
-                          placeholder="shop@upi"
-                          [readonly]="!canEditUpiSettings"
-                        >
-                      </mat-form-field>
-                    </div>
-                    <div class="col-md-6">
-                      <mat-form-field class="example-full-width">
-                        <mat-label>UPI Display Name</mat-label>
-                        <input
-                          matInput
-                          formControlName="upiDisplayName"
-                          placeholder="Shop Billing"
-                          [readonly]="!canEditUpiSettings"
-                        >
-                      </mat-form-field>
-                    </div>
-                  </div>
-                  <p class="text-muted" style="margin-top:-4px; font-size:12px;">
-                    POS split payment me QR isi UPI ID par generate hoga.
-                    <ng-container *ngIf="!canEditUpiSettings">
-                      Sirf Super Admin UPI details change kar sakta hai.
-                    </ng-container>
-                  </p>
-                  <button mat-raised-button class="btn btn-danger" [disabled]="savingShop">
-                    {{ savingShop ? "Saving..." : "Save Shop Settings" }}
+          <!-- App Preferences -->
+          <div class="content-card" *ngIf="activeSection === 'App Preferences'">
+            <div class="card-header-row">
+              <div class="card-icon"><mat-icon>tune</mat-icon></div>
+              <div>
+                <h3 class="card-title">App Preferences</h3>
+                <p class="card-sub">Customize your experience</p>
+              </div>
+            </div>
+            <div class="card-body">
+              <form [formGroup]="preferencesForm" (ngSubmit)="savePreferences()">
+                <div class="form-grid-2">
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Language</mat-label>
+                    <mat-select formControlName="language">
+                      <mat-option value="en">English</mat-option>
+                      <mat-option value="hi">Hindi</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Timezone</mat-label>
+                    <mat-select formControlName="timezone">
+                      <mat-option value="Asia/Kolkata">Asia/Kolkata</mat-option>
+                      <mat-option value="UTC">UTC</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+                <div class="form-grid-2">
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Currency</mat-label>
+                    <mat-select formControlName="currency">
+                      <mat-option value="INR">INR</mat-option>
+                      <mat-option value="USD">USD</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Date Format</mat-label>
+                    <mat-select formControlName="dateFormat">
+                      <mat-option value="DD/MM/YYYY">DD/MM/YYYY</mat-option>
+                      <mat-option value="MM/DD/YYYY">MM/DD/YYYY</mat-option>
+                      <mat-option value="YYYY-MM-DD">YYYY-MM-DD</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+                <div class="form-actions">
+                  <button mat-raised-button color="primary" [disabled]="savingPreferences">
+                    {{ savingPreferences ? 'Saving...' : 'Save Preferences' }}
                   </button>
-                </form>
-              </div>
+                </div>
+              </form>
 
-              <div *ngIf="activeSection === 'Role & Permissions'">
-                <div class="role-access-shell">
-                  <div class="role-access-topbar">
+              <div class="section-divider"></div>
+
+              <div class="api-panel">
+                <div class="api-header">
+                  <div class="api-title">
+                    <mat-icon>api</mat-icon>
                     <div>
-                      <h5 class="role-access-title">Role Feature Access Plan</h5>
-                      <p class="role-access-subtitle">
-                        Default policy code me safe rahegi. Yahan se editable overrides save honge.
-                      </p>
-                    </div>
-                    <div class="role-access-actions" *ngIf="profile?.role === 'SUPER_ADMIN'">
-                      <button mat-stroked-button type="button" class="btn btn-outline-danger mr-2" (click)="resetRoleFeaturePolicy()" [disabled]="savingRoleAccess">
-                        Reset Changes
-                      </button>
-                      <button mat-raised-button type="button" class="btn btn-danger" (click)="saveRoleFeaturePolicy()" [disabled]="savingRoleAccess">
-                        {{ savingRoleAccess ? "Saving..." : "Save Role Access" }}
-                      </button>
+                      <h4>API Connection</h4>
+                      <p>Switch between local, ngrok, or custom backend</p>
                     </div>
                   </div>
+                  <span class="status-pill" [class.online]="serverReachable === true" [class.offline]="serverReachable === false">
+                    {{ serverReachable === true ? 'Connected' : serverReachable === false ? 'Offline' : 'Checking' }}
+                  </span>
+                </div>
+                <div class="form-grid-2">
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>API Mode</mat-label>
+                    <mat-select [(ngModel)]="apiMode" [ngModelOptions]="{ standalone: true }">
+                      <mat-option *ngFor="let option of apiModeOptions" [value]="option.value">{{ option.label }}</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                  <mat-form-field appearance="outline" class="full-width" *ngIf="apiMode === 'custom' || apiMode === 'ngrok'">
+                    <mat-label>{{ apiMode === 'ngrok' ? 'ngrok URL' : 'Custom API URL' }}</mat-label>
+                    <input matInput [(ngModel)]="customApiURL" [ngModelOptions]="{ standalone: true }">
+                  </mat-form-field>
+                </div>
+                <div class="api-active">Active: {{ activeApiURL }}</div>
+                <div class="api-actions">
+                  <button mat-raised-button color="primary" (click)="applyApiSettings()">Apply</button>
+                  <button mat-stroked-button (click)="retryApiConnection()">Retry</button>
+                  <button mat-stroked-button color="warn" (click)="resetApiSettings()">Reset</button>
+                </div>
+              </div>
+            </div>
+          </div>
 
-                  <div class="role-meta-grid">
-                    <div class="role-meta-card primary">
-                      <div class="role-meta-label">Current Role</div>
-                      <div class="role-meta-value">{{ profile?.role || "-" }}</div>
-                    </div>
-                    <div class="role-meta-card">
-                      <div class="role-meta-label">Legacy Permissions</div>
-                      <div class="role-chip-list" *ngIf="rolePermissions.length > 0; else noPermissions">
-                        <span class="role-chip" *ngFor="let permission of rolePermissions">{{ permission }}</span>
-                      </div>
-                      <ng-template #noPermissions>
-                        <div class="role-meta-empty">No legacy permissions found</div>
-                      </ng-template>
-                    </div>
-                  </div>
-
-                  <div class="alert alert-info role-access-alert" *ngIf="profile?.role !== 'SUPER_ADMIN'">
-                    Sirf Super Admin role access policy change kar sakta hai.
-                  </div>
-
-                  <div class="role-section-card mt-3">
-                    <div class="role-section-header">
-                      <div>
-                        <h6>Effective Access Matrix</h6>
-                        <p>Ye current effective access hai jo app me abhi chal raha hai.</p>
-                      </div>
-                    </div>
-
-                    <div class="table-responsive role-table-wrap" *ngIf="featureRegistry.length > 0">
-                      <table class="table table-sm table-bordered role-access-table">
-                        <thead>
-                          <tr>
-                            <th>Module</th>
-                            <th>Feature</th>
-                            <th *ngFor="let role of policyRoles">{{ role }}</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <ng-container *ngFor="let group of featureRegistry">
-                            <tr *ngFor="let feature of group.features; let first = first">
-                              <td *ngIf="first" [attr.rowspan]="group.features.length" class="module-cell">
-                                {{ group.module | titlecase }}
-                              </td>
-                              <td>
-                                <div class="feature-cell-title">{{ feature.label }}</div>
-                                <small class="feature-cell-key">{{ feature.key }}</small>
-                              </td>
-                              <td *ngFor="let role of policyRoles" class="text-center role-badge-cell">
-                                <span class="access-badge yes" *ngIf="hasFeature(role, feature.key); else noAccess">
-                                  Yes
-                                </span>
-                                <ng-template #noAccess>
-                                  <span class="access-badge no">No</span>
-                                </ng-template>
-                              </td>
-                            </tr>
-                          </ng-container>
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-
-                  <div class="role-section-card mt-4">
-                    <div class="role-section-header">
-                      <div>
-                        <h6>Editable Override Matrix</h6>
-                        <p>STAFF, MANAGER aur ADMIN ko yahan se control karo. SUPER_ADMIN fixed full access rahega.</p>
-                      </div>
-                    </div>
-
-                    <p class="role-section-note">
-                      Save ke baad current session refresh hota hai aur naya access turant apply ho jata hai.
-                    </p>
-
-                    <div class="table-responsive role-table-wrap" *ngIf="featureRegistry.length > 0">
-                      <table class="table table-sm table-bordered role-access-table editable">
-                        <thead>
-                          <tr>
-                            <th>Module</th>
-                            <th>Feature</th>
-                            <th *ngFor="let role of policyRoles">{{ role }}</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <ng-container *ngFor="let group of featureRegistry">
-                            <tr *ngFor="let feature of group.features; let first = first">
-                              <td *ngIf="first" [attr.rowspan]="group.features.length" class="module-cell">
-                                {{ group.module | titlecase }}
-                              </td>
-                              <td>
-                                <div class="feature-cell-title">{{ feature.label }}</div>
-                                <small class="feature-cell-key">{{ feature.key }}</small>
-                              </td>
-                              <td *ngFor="let role of policyRoles" class="text-center role-badge-cell">
-                                <ng-container *ngIf="isEditableRole(role); else fixedRoleCell">
-                                  <mat-checkbox
-                                    [checked]="hasEditableFeature(role, feature.key)"
-                                    (change)="toggleFeature(role, feature.key, $event.checked)"
-                                    [disabled]="savingRoleAccess || profile?.role !== 'SUPER_ADMIN'"
-                                  >
-                                  </mat-checkbox>
-                                </ng-container>
-                                <ng-template #fixedRoleCell>
-                                  <span class="access-badge fixed" *ngIf="hasFeature(role, feature.key); else fixedNo">
-                                    Fixed Yes
-                                  </span>
-                                  <ng-template #fixedNo>
-                                    <span class="access-badge no">Fixed No</span>
-                                  </ng-template>
-                                </ng-template>
-                              </td>
-                            </tr>
-                          </ng-container>
-                        </tbody>
-                      </table>
-                    </div>
+          <!-- Session Management -->
+          <div class="content-card" *ngIf="activeSection === 'Session Management'">
+            <div class="card-header-row">
+              <div class="card-icon"><mat-icon>devices</mat-icon></div>
+              <div>
+                <h3 class="card-title">Sessions</h3>
+                <p class="card-sub">Manage active sessions</p>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="loading-state" *ngIf="loadingSessions">
+                <mat-spinner diameter="24"></mat-spinner>
+              </div>
+              <div class="empty-state" *ngIf="!loadingSessions && sessions.length === 0">No active sessions</div>
+              <div class="session-cards" *ngIf="!loadingSessions && sessions.length > 0">
+                <div class="session-card" *ngFor="let session of sessions">
+                  <mat-icon>computer</mat-icon>
+                  <div class="session-info">
+                    <span class="session-device">{{ session.userAgent || 'Unknown Device' }}</span>
+                    <span class="session-meta">IP: {{ session.ip || 'Unknown' }}</span>
+                    <span class="session-meta">Last seen: {{ session.lastSeenAt | date:'medium' }}</span>
                   </div>
                 </div>
               </div>
+              <button mat-raised-button color="warn" (click)="onLogoutAllDevices()" [disabled]="loggingOutAll" *ngIf="sessions.length > 0">
+                {{ loggingOutAll ? 'Processing...' : 'Logout All Devices' }}
+              </button>
+            </div>
+          </div>
 
-              <div *ngIf="activeSection === 'Notification Settings'">
-                <form [formGroup]="notificationForm" (ngSubmit)="saveNotificationSettings()">
-                  <div class="checkbox-group">
-                    <mat-checkbox formControlName="email">Email Notifications</mat-checkbox>
-                    <mat-checkbox formControlName="sms">SMS Notifications</mat-checkbox>
-                    <mat-checkbox formControlName="whatsapp">WhatsApp Notifications</mat-checkbox>
-                    <mat-checkbox formControlName="inApp">In-app Notifications</mat-checkbox>
+          <!-- Billing & Subscription -->
+          <div class="content-card" *ngIf="activeSection === 'Billing & Subscription'">
+            <div class="card-header-row">
+              <div class="card-icon"><mat-icon>credit_card</mat-icon></div>
+              <div>
+                <h3 class="card-title">Billing & Subscription</h3>
+                <p class="card-sub">Your current plan and subscription details</p>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="billing-grid">
+                <div class="billing-card">
+                  <mat-icon>workspace_premium</mat-icon>
+                  <div class="billing-info">
+                    <span class="billing-label">Plan</span>
+                    <span class="billing-value">{{ billing?.subscriptionPlan || 'N/A' }}</span>
                   </div>
-                  <button mat-raised-button class="btn btn-danger" [disabled]="savingNotifications">
-                    {{ savingNotifications ? "Saving..." : "Save Notification Settings" }}
-                  </button>
-                </form>
+                </div>
+                <div class="billing-card">
+                  <mat-icon>event</mat-icon>
+                  <div class="billing-info">
+                    <span class="billing-label">Expiry</span>
+                    <span class="billing-value">{{ billing?.subscriptionExpiry ? (billing.subscriptionExpiry | date:'dd/MM/yyyy') : 'N/A' }}</span>
+                  </div>
+                </div>
+                <div class="billing-card">
+                  <mat-icon>check_circle</mat-icon>
+                  <div class="billing-info">
+                    <span class="billing-label">Shop Status</span>
+                    <span class="billing-value" [class.active]="billing?.isActive">{{ billing?.isActive ? 'Active' : 'Inactive' }}</span>
+                  </div>
+                </div>
               </div>
+            </div>
+          </div>
 
-              <div *ngIf="activeSection === 'Billing & Subscription'">
-                <p><strong>Plan:</strong> {{ billing?.subscriptionPlan || "N/A" }}</p>
-                <p><strong>Expiry:</strong> {{ billing?.subscriptionExpiry ? (billing.subscriptionExpiry | date: "dd/MM/yyyy") : "N/A" }}</p>
-                <p><strong>Shop Active:</strong> {{ billing?.isActive ? "Yes" : "No" }}</p>
+          <!-- Integrations -->
+          <div class="content-card" *ngIf="activeSection === 'Integrations'">
+            <div class="card-header-row">
+              <div class="card-icon"><mat-icon>link</mat-icon></div>
+              <div>
+                <h3 class="card-title">Integrations</h3>
+                <p class="card-sub">Connect third-party services</p>
               </div>
-
-              <div *ngIf="activeSection === 'Integrations'">
-                <form [formGroup]="integrationForm" (ngSubmit)="saveIntegrations()">
-                  <div class="checkbox-group">
-                    <mat-checkbox formControlName="gstEnabled">GST</mat-checkbox>
+            </div>
+            <div class="card-body">
+              <form [formGroup]="integrationForm" (ngSubmit)="saveIntegrations()">
+                <div class="checkbox-grid">
+                  <label class="checkbox-card">
+                    <mat-checkbox formControlName="gstEnabled">GST Integration</mat-checkbox>
+                  </label>
+                  <label class="checkbox-card">
                     <mat-checkbox formControlName="whatsappEnabled">WhatsApp</mat-checkbox>
+                  </label>
+                  <label class="checkbox-card">
                     <mat-checkbox formControlName="smsEnabled">SMS</mat-checkbox>
+                  </label>
+                  <label class="checkbox-card">
                     <mat-checkbox formControlName="emailEnabled">Email</mat-checkbox>
-                  </div>
-                  <mat-form-field class="example-full-width">
-                    <mat-label>Payment Gateway</mat-label>
-                    <mat-select formControlName="paymentGateway">
-                      <mat-option value="NONE">None</mat-option>
-                      <mat-option value="RAZORPAY">Razorpay</mat-option>
-                      <mat-option value="STRIPE">Stripe</mat-option>
-                      <mat-option value="PAYU">PayU</mat-option>
-                    </mat-select>
-                  </mat-form-field>
-                  <button mat-raised-button class="btn btn-danger" [disabled]="savingIntegrations">
-                    {{ savingIntegrations ? "Saving..." : "Save Integrations" }}
+                  </label>
+                </div>
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Payment Gateway</mat-label>
+                  <mat-select formControlName="paymentGateway">
+                    <mat-option value="NONE">None</mat-option>
+                    <mat-option value="RAZORPAY">Razorpay</mat-option>
+                    <mat-option value="STRIPE">Stripe</mat-option>
+                    <mat-option value="PAYU">PayU</mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <div class="form-actions">
+                  <button mat-raised-button color="primary" [disabled]="savingIntegrations">
+                    {{ savingIntegrations ? 'Saving...' : 'Save Integrations' }}
                   </button>
-                </form>
-              </div>
+                </div>
+              </form>
+            </div>
+          </div>
 
-              <div *ngIf="activeSection === 'Data & Backup'">
-                <form [formGroup]="backupForm" (ngSubmit)="saveBackupSettings()">
-                  <div class="checkbox-group">
+          <!-- Data & Backup -->
+          <div class="content-card" *ngIf="activeSection === 'Data & Backup'">
+            <div class="card-header-row">
+              <div class="card-icon"><mat-icon>backup</mat-icon></div>
+              <div>
+                <h3 class="card-title">Data & Backup</h3>
+                <p class="card-sub">Manage backup settings</p>
+              </div>
+            </div>
+            <div class="card-body">
+              <form [formGroup]="backupForm" (ngSubmit)="saveBackupSettings()">
+                <div class="checkbox-grid single">
+                  <label class="checkbox-card">
                     <mat-checkbox formControlName="autoBackup">Enable Auto Backup</mat-checkbox>
-                  </div>
-                  <mat-form-field class="example-full-width">
+                  </label>
+                </div>
+                <div class="form-grid-2">
+                  <mat-form-field appearance="outline" class="full-width">
                     <mat-label>Frequency</mat-label>
                     <mat-select formControlName="frequency">
                       <mat-option value="DAILY">Daily</mat-option>
@@ -338,160 +541,86 @@
                       <mat-option value="MONTHLY">Monthly</mat-option>
                     </mat-select>
                   </mat-form-field>
-                  <mat-form-field class="example-full-width">
+                  <mat-form-field appearance="outline" class="full-width">
                     <mat-label>Last Backup</mat-label>
-                    <input matInput formControlName="lastBackupAt" readonly />
+                    <input matInput formControlName="lastBackupAt" readonly>
                   </mat-form-field>
-                  <button mat-raised-button class="btn btn-danger" [disabled]="savingBackup">
-                    {{ savingBackup ? "Saving..." : "Save Backup Settings" }}
-                  </button>
-                  <button type="button" mat-raised-button class="btn btn-outline-danger ml-2" [disabled]="runningBackup" (click)="runBackupNowAction()">
-                    {{ runningBackup ? "Running..." : "Run Backup Now" }}
-                  </button>
-                </form>
-              </div>
-
-              <div *ngIf="activeSection === 'Audit Logs'">
-                <div *ngIf="loadingAudit" class="loading-block">Loading logs...</div>
-                <div *ngIf="!loadingAudit && auditLogs.length === 0">No audit logs yet.</div>
-                <div class="session-list" *ngIf="!loadingAudit && auditLogs.length > 0">
-                  <div class="session-item" *ngFor="let log of auditLogs">
-                    <div class="session-device">{{ log.action }}</div>
-                    <div class="session-meta">{{ log.details || "-" }}</div>
-                    <div class="session-meta">{{ log.createdAt | date: "dd/MM/yyyy hh:mm a" }}</div>
-                  </div>
                 </div>
-              </div>
-
-              <div *ngIf="activeSection === 'Session Management'">
-                <div *ngIf="loadingSessions" class="loading-block">Loading sessions...</div>
-                <div *ngIf="!loadingSessions && sessions.length === 0" class="loading-block">No active sessions found.</div>
-                <div *ngIf="!loadingSessions && sessions.length > 0" class="session-list">
-                  <div class="session-item" *ngFor="let session of sessions">
-                    <div class="session-device">{{ session.userAgent || "Unknown Device" }}</div>
-                    <div class="session-meta">IP: {{ session.ip || "Unknown" }}</div>
-                    <div class="session-meta">Created: {{ session.createdAt | date: "dd/MM/yyyy hh:mm a" }}</div>
-                    <div class="session-meta">Last Seen: {{ session.lastSeenAt | date: "dd/MM/yyyy hh:mm a" }}</div>
-                  </div>
-                </div>
-                <button mat-raised-button class="btn btn-danger mt-3" (click)="onLogoutAllDevices()" [disabled]="loggingOutAll">
-                  {{ loggingOutAll ? "Processing..." : "Logout All Devices" }}
-                </button>
-              </div>
-
-              <div *ngIf="activeSection === 'App Preferences'">
-                <form [formGroup]="preferencesForm" (ngSubmit)="savePreferences()">
-                  <div class="row">
-                    <div class="col-md-6">
-                      <mat-form-field class="example-full-width">
-                        <mat-label>Language</mat-label>
-                        <mat-select formControlName="language">
-                          <mat-option value="en">English</mat-option>
-                          <mat-option value="hi">Hindi</mat-option>
-                        </mat-select>
-                      </mat-form-field>
-                    </div>
-                    <div class="col-md-6">
-                      <mat-form-field class="example-full-width">
-                        <mat-label>Timezone</mat-label>
-                        <mat-select formControlName="timezone">
-                          <mat-option value="Asia/Kolkata">Asia/Kolkata</mat-option>
-                          <mat-option value="UTC">UTC</mat-option>
-                        </mat-select>
-                      </mat-form-field>
-                    </div>
-                  </div>
-                  <div class="row">
-                    <div class="col-md-6">
-                      <mat-form-field class="example-full-width">
-                        <mat-label>Currency</mat-label>
-                        <mat-select formControlName="currency">
-                          <mat-option value="INR">INR</mat-option>
-                          <mat-option value="USD">USD</mat-option>
-                        </mat-select>
-                      </mat-form-field>
-                    </div>
-                    <div class="col-md-6">
-                      <mat-form-field class="example-full-width">
-                        <mat-label>Date Format</mat-label>
-                        <mat-select formControlName="dateFormat">
-                          <mat-option value="DD/MM/YYYY">DD/MM/YYYY</mat-option>
-                          <mat-option value="MM/DD/YYYY">MM/DD/YYYY</mat-option>
-                          <mat-option value="YYYY-MM-DD">YYYY-MM-DD</mat-option>
-                        </mat-select>
-                      </mat-form-field>
-                    </div>
-                  </div>
-                  <button mat-raised-button class="btn btn-danger" [disabled]="savingPreferences">
-                    {{ savingPreferences ? "Saving..." : "Save Preferences" }}
+                <div class="form-actions">
+                  <button mat-raised-button color="primary" [disabled]="savingBackup">
+                    {{ savingBackup ? 'Saving...' : 'Save Backup Settings' }}
                   </button>
-                </form>
-
-                <div class="api-settings-panel">
-                  <div class="api-settings-header">
-                    <div>
-                      <h5>API Connection</h5>
-                      <p>Switch local, emulator, ngrok, or custom backend without editing files.</p>
-                    </div>
-                    <span class="api-status-chip" [ngClass]="serverReachable === true ? 'online' : (serverReachable === false ? 'offline' : 'checking')">
-                      {{ serverReachable === true ? "Connected" : (serverReachable === false ? "Offline" : "Checking") }}
-                    </span>
-                  </div>
-
-                  <div class="row">
-                    <div class="col-md-6">
-                      <mat-form-field class="example-full-width">
-                        <mat-label>API Mode</mat-label>
-                        <mat-select [(ngModel)]="apiMode" [ngModelOptions]="{ standalone: true }" (selectionChange)="onApiModeChange()">
-                          <mat-option *ngFor="let option of apiModeOptions" [value]="option.value">
-                            {{ option.label }}
-                          </mat-option>
-                        </mat-select>
-                      </mat-form-field>
-                    </div>
-                    <div class="col-md-6" *ngIf="apiMode === 'custom' || apiMode === 'ngrok'">
-                      <mat-form-field class="example-full-width">
-                        <mat-label>{{ apiMode === 'ngrok' ? 'ngrok URL' : 'Custom API URL' }}</mat-label>
-                        <input matInput [(ngModel)]="customApiURL" [ngModelOptions]="{ standalone: true }" placeholder="https://api.example.com" />
-                      </mat-form-field>
-                    </div>
-                  </div>
-
-                  <div class="api-current-url">Active API: {{ activeApiURL }}</div>
-
-                  <div class="api-settings-actions">
-                    <button mat-raised-button class="btn btn-danger" type="button" (click)="applyApiSettings()">
-                      Apply API Mode
-                    </button>
-                    <button mat-stroked-button color="primary" type="button" (click)="retryApiConnection()">
-                      Retry Connection
-                    </button>
-                    <button mat-stroked-button color="warn" type="button" (click)="resetApiSettings()">
-                      Reset To Auto
-                    </button>
-                  </div>
-
-                  <div class="diagnostics-grid">
-                    <div class="diagnostic-row" *ngFor="let row of diagnosticsRows">
-                      <span class="diagnostic-label">{{ row.label }}</span>
-                      <span class="diagnostic-value" [ngClass]="row.tone || ''">{{ row.value }}</span>
-                    </div>
-                  </div>
+                  <button type="button" mat-stroked-button color="warn" [disabled]="runningBackup" (click)="runBackupNowAction()">
+                    {{ runningBackup ? 'Running...' : 'Run Backup Now' }}
+                  </button>
                 </div>
-              </div>
-
-              <div *ngIf="activeSection === 'Danger Zone'" class="danger-zone">
-                <p>These actions are irreversible. Use carefully.</p>
-                <button mat-raised-button class="btn btn-danger mr-2" [disabled]="deactivatingAccount" (click)="deactivateAccount()">
-                  {{ deactivatingAccount ? "Deactivating..." : "Deactivate Account" }}
-                </button>
-                <button mat-raised-button class="btn btn-outline-danger" [disabled]="deactivatingShop" (click)="deactivateShop()">
-                  {{ deactivatingShop ? "Deactivating..." : "Deactivate Current Shop" }}
-                </button>
-              </div>
-            </ng-container>
+              </form>
+            </div>
           </div>
-        </div>
+
+          <!-- Audit Logs -->
+          <div class="content-card" *ngIf="activeSection === 'Audit Logs'">
+            <div class="card-header-row">
+              <div class="card-icon"><mat-icon>history</mat-icon></div>
+              <div>
+                <h3 class="card-title">Audit Logs</h3>
+                <p class="card-sub">Track account changes and activity</p>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="loading-state" *ngIf="loadingAudit">
+                <mat-spinner diameter="24"></mat-spinner>
+              </div>
+              <div class="empty-state" *ngIf="!loadingAudit && auditLogs.length === 0">No audit logs found</div>
+              <div class="audit-list" *ngIf="!loadingAudit && auditLogs.length > 0">
+                <div class="audit-card" *ngFor="let log of auditLogs">
+                  <div class="audit-icon">
+                    <mat-icon>{{ getAuditIcon(log.action) }}</mat-icon>
+                  </div>
+                  <div class="audit-info">
+                    <span class="audit-action">{{ log.action }}</span>
+                    <span class="audit-meta">{{ log.details || '-' }}</span>
+                    <span class="audit-date">{{ log.createdAt | date:'medium' }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Danger Zone -->
+          <div class="content-card danger" *ngIf="activeSection === 'Danger Zone'">
+            <div class="card-header-row">
+              <div class="card-icon"><mat-icon>warning</mat-icon></div>
+              <div>
+                <h3 class="card-title">Danger Zone</h3>
+                <p class="card-sub">Irreversible actions - use with caution</p>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="danger-actions">
+                <div class="danger-item">
+                  <div class="danger-info">
+                    <span class="danger-label">Deactivate Account</span>
+                    <span class="danger-desc">Your account will be permanently disabled</span>
+                  </div>
+                  <button mat-raised-button color="warn" [disabled]="deactivatingAccount" (click)="deactivateAccount()">
+                    {{ deactivatingAccount ? 'Deactivating...' : 'Deactivate' }}
+                  </button>
+                </div>
+                <div class="danger-item">
+                  <div class="danger-info">
+                    <span class="danger-label">Deactivate Shop</span>
+                    <span class="danger-desc">Current shop will be deactivated</span>
+                  </div>
+                  <button mat-raised-button color="warn" [disabled]="deactivatingShop" (click)="deactivateShop()">
+                    {{ deactivatingShop ? 'Deactivating...' : 'Deactivate Shop' }}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </ng-container>
       </div>
     </div>
   </div>

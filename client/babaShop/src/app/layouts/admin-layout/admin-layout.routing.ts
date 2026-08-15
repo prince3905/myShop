@@ -1,9 +1,8 @@
 import { Routes } from "@angular/router";
 
-import { DashboardComponent } from "../../dashboard/dashboard.component";
-import { UserProfileComponent } from "../../user-profile/user-profile.component";
+import { DashboardComponent } from "app/dashboard/dashboard.component";
+import { UserProfileComponent } from "app/user-profile/user-profile.component";
 import { SecurePageGuardGuard } from "app/shared/guard/secure-page-guard.guard";
-import { LoginComponent } from "app/login/login.component";
 import { ItemsListComponent } from "app/all-items/items-list/items-list.component";
 import { AddItemsComponent } from "app/all-items/add-items/add-items.component";
 import { ItemDetailsComponent } from "app/all-items/item-details/item-details.component";
@@ -37,6 +36,8 @@ import { FactoryVerificationComponent } from "app/factory/factory-verification/f
 import { RawMaterialPurchaseComponent } from "app/factory/raw-material-purchase/raw-material-purchase.component";
 import { RawMaterialRegisterComponent } from "app/factory/raw-material-register/raw-material-register.component";
 import { FactoryReportComponent } from "app/factory/factory-report/factory-report.component";
+import { FraudDetectionComponent } from "app/fraud-detection/fraud-detection.component";
+import { BarcodeCatalogComponent } from "app/all-items/barcode-catalog/barcode-catalog.component";
 
 const ALL_ROLES = ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"];
 const MANAGER_AND_ABOVE = ["SUPER_ADMIN", "ADMIN", "MANAGER"];
@@ -49,7 +50,6 @@ export const AdminLayoutRoutes: Routes = [
     canActivate: [SecurePageGuardGuard, RoleGuard],
     data: { roles: ALL_ROLES, feature: "dashboard.basic" },
   },
-  { path: "login", component: LoginComponent },
   { path: "profile", component: UserProfileComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ALL_ROLES, feature: "settings.profile" } },
   { path: "user-profile", component: UserProfileComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ALL_ROLES, feature: "settings.profile" } },
   { path: "item-list", component: ItemsListComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ALL_ROLES, requireShop: true, allowGlobalRead: true, feature: "inventory.products" } },
@@ -68,6 +68,7 @@ export const AdminLayoutRoutes: Routes = [
   { path: "order", component: OrdersComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: MANAGER_AND_ABOVE, requireShop: true, allowGlobalRead: true, feature: "sales.orders" } },
   { path: "order/create", component: CreateOrderComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ALL_ROLES, requireShop: true, feature: "sales.orders.manage" } },
   { path: "order/edit/:id", component: CreateOrderComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ALL_ROLES, requireShop: true, feature: "sales.orders.manage" } },
+  { path: "sale/edit/:id", component: AddSalesComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ADMIN_AND_ABOVE, requireShop: true, feature: "sales.edit" } },
   { path: "order/:id", component: OrderDetailsComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: MANAGER_AND_ABOVE, requireShop: true, allowGlobalRead: true, feature: "sales.orders" } },
   { path: "customer", component: CustomersComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ALL_ROLES, requireShop: true, allowGlobalRead: true, feature: "people.customers" } },
   { path: "customer/:id", component: CustomerDetailsComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ALL_ROLES, requireShop: true, allowGlobalRead: true, feature: "people.customers" } },
@@ -86,4 +87,6 @@ export const AdminLayoutRoutes: Routes = [
   { path: "users", component: UserComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ADMIN_AND_ABOVE, feature: "people.users" } },
   { path: "shops", component: ManageShopsComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ["SUPER_ADMIN"] } },
   { path: "settings", component: SettingsComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ADMIN_AND_ABOVE, feature: "settings.permissions" } },
+  { path: "fraud-detection", component: FraudDetectionComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ADMIN_AND_ABOVE, feature: "fraud.detection" } },
+  { path: "barcode-catalog", component: BarcodeCatalogComponent, canActivate: [SecurePageGuardGuard, RoleGuard], data: { roles: ADMIN_AND_ABOVE, requireShop: true, feature: "inventory.product_details" } },
 ];

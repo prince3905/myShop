@@ -31,6 +31,27 @@ export class AddItemsComponent implements OnInit {
 
   showConfirmationDialog = false;
   isEditMode: boolean = false;
+  generating = false;
+
+  generateDescription(): void {
+    if (!this.product.name?.trim()) {
+      this.snackBar.open("Please enter product name first", "Close", { duration: 2500 });
+      return;
+    }
+
+    this.generating = true;
+    const adj = ["premium", "high-quality", "durable", "reliable", "best-in-class"];
+    const randomAdj = adj[Math.floor(Math.random() * adj.length)];
+    const generated = randomAdj.charAt(0).toUpperCase() + randomAdj.slice(1) + " " + this.product.name.trim() + " with excellent build quality. Perfect for everyday use.";
+    
+    if (this.product.description) {
+      this.product.description = this.product.description + " " + generated;
+    } else {
+      this.product.description = generated;
+    }
+    this.generating = false;
+    this.snackBar.open("Description added", "Close", { duration: 2000 });
+  }
 
   constructor(
     private category: CategoryService,
@@ -148,11 +169,11 @@ export class AddItemsComponent implements OnInit {
               queryParams: this.returnTo ? { refresh: Date.now(), productName: this.product.name } : undefined,
             });
           },
-          error: () => {
+          error: (err: any) => {
             this.isLoading = false;
 
-            this.snackBar.open("Failed to update product", "Close", {
-              duration: 3000,
+            this.snackBar.open(err?.error?.message || "Failed to update product", "Close", {
+              duration: 3500,
               panelClass: ["snackbar-error"]
             });
           }
@@ -187,11 +208,11 @@ export class AddItemsComponent implements OnInit {
               queryParams: this.returnTo ? { refresh: Date.now(), productName: this.product.name } : undefined,
             });
           },
-          error: () => {
+          error: (err: any) => {
             this.isLoading = false;
 
-            this.snackBar.open("Failed to add product", "Close", {
-              duration: 3000,
+            this.snackBar.open(err?.error?.message || "Failed to add product", "Close", {
+              duration: 3500,
               panelClass: ["snackbar-error"]
             });
           }

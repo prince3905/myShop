@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ChangeDetectorRef } from "@angular/core";
+import { Component, OnInit, ViewChild } from "@angular/core";
 import { MatDialog } from "@angular/material/dialog";
 
 import { AddItemsComponent } from "../add-items/add-items.component";
@@ -12,7 +12,7 @@ import { ProductService } from "app/shared/services/product.service";
 import { CategoryService } from "app/shared/services/category.service";
 import { BrandService } from "app/shared/services/brand.service";
 import { AuthService } from "app/shared/services/auth.service";
-import { StocksService } from "app/shared/services/stocks.service";
+import { ShopSyncModalComponent } from "app/shops/shop-sync-modal/shop-sync-modal.component";
 @Component({
   selector: "items-list",
   templateUrl: "./items-list.component.html",
@@ -38,9 +38,6 @@ export class ItemsListComponent implements OnInit {
     products: 0,
     categories: 0,
     brands: 0,
-    totalQuantity: 0,
-    totalReserved: 0,
-    lowStockCount: 0,
   };
 
   productId: string;
@@ -63,11 +60,9 @@ export class ItemsListComponent implements OnInit {
     private productService: ProductService,
     private categoryService: CategoryService,
     private brandService: BrandService,
-    private stocksService: StocksService,
     public authService: AuthService,
     private router: Router,
     private Router: ActivatedRoute,
-    private cdr: ChangeDetectorRef,
   ) {}
 
   private navigateWithQuery(queryParams: any): void {
@@ -106,42 +101,47 @@ export class ItemsListComponent implements OnInit {
       perPage,
     };
 
-    if (this.selectedOption === "name") {
-      query.name = this.itemName?.trim() || undefined;
-      query.category = this.selectedCategory || undefined;
-      query.brand = this.selectedBrand || undefined;
-    } else if (this.selectedOption === "category") {
-      query.category = this.selectedCategory || undefined;
-      query.brand = this.selectedBrand || undefined;
-    } else if (this.selectedOption === "brand") {
-      query.brand = this.selectedBrand || undefined;
+    if (this.itemName?.trim()) {
+      query.name = this.itemName.trim();
+    }
+    if (this.selectedCategory) {
+      query.category = this.selectedCategory;
+    }
+    if (this.selectedBrand) {
+      query.brand = this.selectedBrand;
     }
 
-    this.productService.getAllProducts(query).subscribe((res: any) => {
-      this.allItems = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
-      this.items = [...this.allItems];
-      this.summaryCounts.products = Number(res?.totalItems || this.allItems.length);
+    this.productService.getAllProducts(query).subscribe({
+      next: (res: any) => {
+        const fetched = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+        if (!this.allItems.length || !this.itemName) {
+          this.allItems = [...fetched];
+        }
+        this.items = [...fetched];
+        this.summaryCounts.products = Number(res?.totalItems || this.items.length);
 
-      this.items.forEach((item: any) => {
-        item.totalStock =
-          item.variations?.reduce(
-            (sum: number, v: any) => sum + (v.quantity ? v.quantity : 0),
-            0,
-          ) || 0;
-      });
+        this.items.forEach((item: any) => {
+          item.totalStock =
+            item.variations?.reduce(
+              (sum: number, v: any) => sum + (v.quantity ? v.quantity : 0),
+              0,
+            ) || 0;
+        });
 
-      this.totalItems = Number(res?.totalItems || this.items.length);
-      this.paginatedItems = [...this.items];
-      if (this.paginator) {
-        this.paginator.pageIndex = page - 1;
-      }
-      this.loading = false;
-    }, () => {
-      this.allItems = [];
-      this.items = [];
-      this.paginatedItems = [];
-      this.totalItems = 0;
-      this.loading = false;
+        this.totalItems = Number(res?.totalItems || this.items.length);
+        this.paginatedItems = [...this.items];
+        if (this.paginator) {
+          this.paginator.pageIndex = page - 1;
+        }
+        this.loading = false;
+      },
+      error: () => {
+        this.allItems = [];
+        this.items = [];
+        this.paginatedItems = [];
+        this.totalItems = 0;
+        this.loading = false;
+      },
     });
   }
 
@@ -190,7 +190,6 @@ export class ItemsListComponent implements OnInit {
     forkJoin({
       categories: this.categoryService.getAllCategories({ page: 1, limit: 500 }),
       brands: this.brandService.getAllBrands({ page: 1, limit: 500 }),
-      stocks: this.stocksService.getStocks({ page: 1, limit: 1 }),
     }).subscribe({
       next: (response: any) => {
         this.Category = this.extractList(response?.categories);
@@ -198,12 +197,8 @@ export class ItemsListComponent implements OnInit {
         this.updateFilteredBrands();
         this.summaryCounts.categories = this.Category.length;
         this.summaryCounts.brands = this.Brands.length;
-        this.summaryCounts.totalQuantity = Number(response?.stocks?.summary?.totalQuantity || 0);
-        this.summaryCounts.totalReserved = Number(response?.stocks?.summary?.totalReserved || 0);
-        this.summaryCounts.lowStockCount = Number(response?.stocks?.summary?.lowStockCount || 0);
-        this.cdr.detectChanges();
       },
-      error: (error) => console.error("Error retrieving category/brand/stock summary:", error),
+      error: (error) => console.error("Error retrieving category/brand:", error),
     });
   }
 
@@ -234,8 +229,33 @@ export class ItemsListComponent implements OnInit {
     });
   }
 
+  private searchDebounceTimer: any = null;
+
   onFilterInputChange(): void {
     this.updateFilteredBrands();
+
+    const q = (this.itemName || "").trim().toLowerCase();
+    if (this.allItems && this.allItems.length > 0) {
+      if (!q) {
+        this.items = [...this.allItems];
+      } else {
+        this.items = this.allItems.filter((item: any) => {
+          const name = (item.name || "").toLowerCase();
+          const cat = (item.category?.name || "").toLowerCase();
+          const brand = (item.brand?.name || "").toLowerCase();
+          const sku = (item.variations?.[0]?.sku || "").toLowerCase();
+          return name.includes(q) || cat.includes(q) || brand.includes(q) || sku.includes(q);
+        });
+      }
+      this.paginatedItems = [...this.items];
+    }
+
+    if (this.searchDebounceTimer) {
+      clearTimeout(this.searchDebounceTimer);
+    }
+    this.searchDebounceTimer = setTimeout(() => {
+      this.onSearch(1, this.pageSize);
+    }, 300);
   }
 
   onClear() {
@@ -303,6 +323,19 @@ export class ItemsListComponent implements OnInit {
     if (this.selectedBrand && !isSelectedBrandValid) {
       this.selectedBrand = null;
     }
+  }
+
+  openShopSyncModal(): void {
+    const dialogRef = this.dialog.open(ShopSyncModalComponent, {
+      width: "580px",
+      disableClose: true,
+    });
+
+    dialogRef.afterClosed().subscribe((didSync) => {
+      if (didSync) {
+        this.loadProducts((this.paginator?.pageIndex || 0) + 1, this.pageSize);
+      }
+    });
   }
 
   openAddItemModal(): void {
@@ -374,10 +407,6 @@ export class ItemsListComponent implements OnInit {
   onSummaryBrandFilter(): void {
     this.selectedOption = "brand";
     this.onFilterModeChange();
-  }
-
-  goToStocks(): void {
-    this.router.navigateByUrl("/stocks");
   }
 
   editProduct(id: string) {

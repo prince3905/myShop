@@ -131,7 +131,7 @@
                 </div>
             </div>
         </div>
-        <div class="row" *ngIf="showTopAnalyticsFirst && canShowRangeSnapshotCards && (canOpenReturns || (canViewFinancialDashboard && canOpenPurchase))">
+        <div class="row" *ngIf="showTopAnalyticsFirst && canShowRangeSnapshotCards && (canOpenReturns || (canViewFinancialDashboard && canOpenPurchase) || canOpenFactoryRawMaterial)">
             <div class="col-12">
                 <div class="analytics-strip">
                     <div class="analytics-card dashboard-click-card" *ngIf="canViewFinancialDashboard && canOpenPurchase" (click)="openPurchase()">
@@ -141,6 +141,15 @@
                             Paid: ₹ {{ selectedPurchaseAnalytics?.totalPaid | number:'1.2-2' }} |
                             Due: ₹ {{ selectedPurchaseAnalytics?.totalDue | number:'1.2-2' }} |
                             Count: {{ selectedPurchaseAnalytics?.count || 0 }}
+                        </div>
+                    </div>
+                    <div class="analytics-card raw-material-card dashboard-click-card" *ngIf="canOpenFactoryRawMaterial" (click)="openFactoryRawMaterial()">
+                        <div class="title">{{ selectedRangeSnapshotTitle }} Raw Material</div>
+                        <div class="amount">₹ {{ kpis?.todayRawMaterialPurchase | number:'1.2-2' }}</div>
+                        <div class="meta">
+                            Paid: ₹ {{ kpis?.todayRawMaterialPurchasePaid | number:'1.2-2' }} |
+                            Due: ₹ {{ kpis?.todayRawMaterialPurchaseDue | number:'1.2-2' }} |
+                            Count: {{ kpis?.todayRawMaterialPurchaseCount || 0 }}
                         </div>
                     </div>
                     <div class="analytics-card return-card dashboard-click-card" *ngIf="canOpenReturns" (click)="openReturns()">

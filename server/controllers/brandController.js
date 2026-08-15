@@ -3,8 +3,11 @@ const Product = require("../models/Product");
 const Category = require("../models/Category");
 const mongoose = require("mongoose");
 
-const isSuperAdminGlobal = (req) =>
-  req.user?.role === "SUPER_ADMIN" && !req.shopId;
+const generateAutoDescription = (name) => {
+  const adj = ["trusted", "popular", "premium", "leading", "quality"];
+  const randomAdj = adj[Math.floor(Math.random() * adj.length)];
+  return `${randomAdj.charAt(0).toUpperCase() + randomAdj.slice(1)} ${name} brand known for quality and reliability.`;
+};
 
 const normalizeName = (name = "") => name.trim().replace(/\s+/g, " ");
 
@@ -22,7 +25,7 @@ const parsePagination = (query) => {
 ========================= */
 exports.createBrand = async (req, res) => {
   try {
-    const { name, description, logo } = req.body;
+    const { name, description, logo, shops } = req.body;
 
     if (!req.shopId) {
       return res.status(400).json({
@@ -39,23 +42,28 @@ exports.createBrand = async (req, res) => {
       });
     }
 
+    // Default shops - agar nahi diya toh sirf creator ko access
+    const brandShops = shops && shops.length > 0 ? shops : [req.shopId];
+
+    // Check duplicate in creator's shop only
     const duplicate = await Brand.findOne({
-      shop: req.shopId,
       name: { $regex: `^${cleanName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, $options: "i" },
+      ownerShop: req.shopId,
     });
 
     if (duplicate) {
       return res.status(400).json({
         success: false,
-        message: "Brand already exists for this shop",
+        message: "Brand already exists in your shop",
       });
     }
 
     const brand = await Brand.create({
       name: cleanName,
-      description,
+      description: description || generateAutoDescription(cleanName),
       logo,
-      shop: req.shopId,
+      shops: brandShops,
+      ownerShop: req.shopId,
     });
 
     res.status(201).json({
@@ -68,7 +76,7 @@ exports.createBrand = async (req, res) => {
     if (error.code === 11000) {
       return res.status(400).json({
         success: false,
-        message: "Brand already exists for this shop"
+        message: "Brand already exists"
       });
     }
 
@@ -82,13 +90,15 @@ exports.createBrand = async (req, res) => {
 
 
 /* =========================
-   GET ALL BRANDS (SHOP WISE)
-========================= */
+   GET ALL BRANDS (ALL)
+======================= */
 exports.getBrands = async (req, res) => {
   try {
     const { sort = "-createdAt", search, isActive } = req.query;
     const { limit, skip } = parsePagination(req.query);
-    const query = isSuperAdminGlobal(req) ? {} : { shop: req.shopId };
+    
+    // Show ALL brands - global + all shops
+    const query = {};
 
     if (search) {
       query.name = { $regex: search, $options: "i" };
@@ -135,17 +145,24 @@ exports.getBrands = async (req, res) => {
 exports.updateBrand = async (req, res) => {
   try {
     const { id } = req.params;
-    if (!req.shopId) {
-      return res.status(400).json({
-        success: false,
-        message: "Please select a shop first",
-      });
-    }
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
         success: false,
         message: "Invalid brand id",
+      });
+    }
+
+    // Sirf owner edit kar sakta hai
+    const brand = await Brand.findOne({
+      _id: id,
+      ownerShop: req.shopId,
+    });
+
+    if (!brand) {
+      return res.status(404).json({
+        success: false,
+        message: "Brand not found or you don't have permission to edit"
       });
     }
 
@@ -170,35 +187,28 @@ exports.updateBrand = async (req, res) => {
 
       const duplicate = await Brand.findOne({
         _id: { $ne: id },
-        shop: req.shopId,
         name: { $regex: `^${cleanName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, $options: "i" },
+        ownerShop: req.shopId,
       });
 
       if (duplicate) {
         return res.status(400).json({
           success: false,
-          message: "Brand already exists for this shop",
+          message: "Brand already exists in your shop",
         });
       }
     }
 
-    const brand = await Brand.findOneAndUpdate(
-      { _id: id, shop: req.shopId },
+    const updatedBrand = await Brand.findByIdAndUpdate(
+      id,
       updateData,
       { new: true, runValidators: true }
     );
 
-    if (!brand) {
-      return res.status(404).json({
-        success: false,
-        message: "Brand not found"
-      });
-    }
-
     res.status(200).json({
       success: true,
       message: "Brand updated successfully",
-      data: brand
+      data: updatedBrand
     });
 
   } catch (error) {
@@ -216,12 +226,6 @@ exports.updateBrand = async (req, res) => {
 exports.deleteBrand = async (req, res) => {
   try {
     const { id } = req.params;
-    if (!req.shopId) {
-      return res.status(400).json({
-        success: false,
-        message: "Please select a shop first",
-      });
-    }
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
@@ -230,6 +234,20 @@ exports.deleteBrand = async (req, res) => {
       });
     }
 
+    // Sirf owner delete kar sakta hai
+    const brand = await Brand.findOne({
+      _id: id,
+      ownerShop: req.shopId,
+    });
+
+    if (!brand) {
+      return res.status(404).json({
+        success: false,
+        message: "Brand not found or you don't have permission to delete"
+      });
+    }
+
+    // Check if used in products
     const productUsingBrand = await Product.findOne({
       brand: id,
       shop: req.shopId,
@@ -242,6 +260,7 @@ exports.deleteBrand = async (req, res) => {
       });
     }
 
+    // Check if mapped in categories
     const categoryUsingBrand = await Category.findOne({
       shop: req.shopId,
       brands: id,
@@ -254,17 +273,7 @@ exports.deleteBrand = async (req, res) => {
       });
     }
 
-    const brand = await Brand.findOneAndDelete({
-      _id: id,
-      shop: req.shopId,
-    });
-
-    if (!brand) {
-      return res.status(404).json({
-        success: false,
-        message: "Brand not found"
-      });
-    }
+    await brand.deleteOne();
 
     res.status(200).json({
       success: true,

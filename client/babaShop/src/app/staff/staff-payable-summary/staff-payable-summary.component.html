@@ -1,61 +1,289 @@
-<div class="main-content report-page staff-payable-page">
+<div class="main-content payable-page">
   <div class="container-fluid">
-    <div class="page-header-card">
+
+    <!-- ── Hero Header ── -->
+    <div class="payable-hero-bar">
       <div>
-        <h2>Staff Payable / Summary</h2>
-        <p>Earned amount, advance, payment aur net payable worker-wise.</p>
-        <p class="page-filter-note">{{ filterSummary }}</p>
+        <h2 class="hero-title">Staff Payable Summary</h2>
+        <p class="hero-sub">Earned amount, advance, payment aur net payable worker-wise.</p>
+      </div>
+      <div class="filter-note" *ngIf="filterSummary">{{ filterSummary }}</div>
+    </div>
+
+    <!-- ── Summary KPI Cards ── -->
+    <div class="summary-kpi-row">
+      <div class="kpi-card earned">
+        <div class="kpi-icon"><mat-icon>work_history</mat-icon></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Total Earned</div>
+          <div class="kpi-value">₹{{ summary.totalEarned | number: '1.0-0' }}</div>
+          <div class="kpi-meta">wages earned</div>
+        </div>
+      </div>
+      <div class="kpi-card advance">
+        <div class="kpi-icon"><mat-icon>call_received</mat-icon></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Total Advance</div>
+          <div class="kpi-value">₹{{ summary.totalAdvance | number: '1.0-0' }}</div>
+          <div class="kpi-meta">money given</div>
+        </div>
+      </div>
+      <div class="kpi-card payment">
+        <div class="kpi-icon"><mat-icon>payments</mat-icon></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Total Payment</div>
+          <div class="kpi-value">₹{{ summary.totalPayment | number: '1.0-0' }}</div>
+          <div class="kpi-meta">settlements</div>
+        </div>
+      </div>
+      <div class="kpi-card payable">
+        <div class="kpi-icon"><mat-icon>account_balance_wallet</mat-icon></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Net Payable</div>
+          <div class="kpi-value">₹{{ summary.totalPayable | number: '1.0-0' }}</div>
+          <div class="kpi-meta">to pay workers</div>
+        </div>
       </div>
     </div>
 
-    <div class="card filter-card">
-      <div class="card-header card-header-danger"><h4 class="card-title">Filters</h4></div>
-      <div class="card-body">
-        <div class="filter-grid">
-          <mat-form-field class="example-full-width"><mat-label>Search</mat-label><input matInput [(ngModel)]="filters.search" name="search"></mat-form-field>
-          <mat-form-field class="example-full-width"><mat-label>Staff</mat-label><mat-select [(ngModel)]="filters.staff" name="staff"><mat-option value="">All</mat-option><mat-option *ngFor="let staff of staffOptions" [value]="staff._id">{{ staff.name }}</mat-option></mat-select></mat-form-field>
-          <mat-form-field class="example-full-width"><mat-label>From Date</mat-label><input matInput type="date" [(ngModel)]="filters.dateFrom" name="dateFrom"></mat-form-field>
-          <mat-form-field class="example-full-width"><mat-label>To Date</mat-label><input matInput type="date" [(ngModel)]="filters.dateTo" name="dateTo"></mat-form-field>
-        </div>
-        <div class="filter-actions">
-          <button mat-raised-button class="btn btn-danger" (click)="loadReport()">Apply Filters</button>
-          <button mat-stroked-button class="btn btn-outline-danger" (click)="showToday()">Today</button>
-          <button mat-stroked-button class="btn btn-outline-danger" (click)="viewAll()">View All</button>
-          <button mat-stroked-button class="btn btn-outline-danger" (click)="resetFilters()">Reset</button>
-        </div>
+    <!-- ── Filters ── -->
+    <div class="filters-panel">
+      <div class="filter-bar">
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>Search</mat-label>
+          <input matInput [(ngModel)]="filters.search" placeholder="Staff name">
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>Staff</mat-label>
+          <mat-select [(ngModel)]="filters.staff">
+            <mat-option value="">All</mat-option>
+            <mat-option *ngFor="let staff of staffOptions" [value]="staff._id">{{ staff.name }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>From</mat-label>
+          <input matInput [matDatepicker]="fromPayablePicker" [(ngModel)]="filters.dateFrom">
+          <mat-datepicker-toggle matSuffix [for]="fromPayablePicker"></mat-datepicker-toggle>
+          <mat-datepicker #fromPayablePicker></mat-datepicker>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>To</mat-label>
+          <input matInput [matDatepicker]="toPayablePicker" [(ngModel)]="filters.dateTo">
+          <mat-datepicker-toggle matSuffix [for]="toPayablePicker"></mat-datepicker-toggle>
+          <mat-datepicker #toPayablePicker></mat-datepicker>
+        </mat-form-field>
+      </div>
+      <div class="filter-actions">
+        <button mat-raised-button color="primary" (click)="loadReport()">Apply</button>
+        <button mat-stroked-button (click)="showToday()">Today</button>
+        <button mat-stroked-button (click)="viewAll()">View All</button>
+        <button mat-stroked-button (click)="resetFilters()">Reset</button>
       </div>
     </div>
 
-    <div class="summary-grid">
-      <div class="summary-card"><span class="summary-label">Total Earned</span><strong>Rs {{ summary.totalEarned | number: '1.2-2' }}</strong></div>
-      <div class="summary-card"><span class="summary-label">Total Advance</span><strong>Rs {{ summary.totalAdvance | number: '1.2-2' }}</strong></div>
-      <div class="summary-card"><span class="summary-label">Total Payment</span><strong>Rs {{ summary.totalPayment | number: '1.2-2' }}</strong></div>
-      <div class="summary-card highlight"><span class="summary-label">Net Payable</span><strong>Rs {{ summary.totalPayable | number: '1.2-2' }}</strong></div>
+    <!-- ── Loading State ── -->
+    <div class="state-row" *ngIf="loading">
+      <mat-spinner diameter="24"></mat-spinner> Loading staff summary...
     </div>
 
-    <div *ngIf="loading" class="table-empty">Loading staff summary...</div>
+    <!-- ── Empty State ── -->
+    <div class="empty-state-bento" *ngIf="!loading && rows.length === 0">
+      <mat-icon>people_outline</mat-icon>
+      <p>No staff summary found.</p>
+    </div>
 
-    <div class="card" *ngIf="!loading">
-      <div class="card-header card-header-danger"><h4 class="card-title">Worker-wise Summary</h4></div>
-      <div class="card-body">
-        <div *ngIf="rows.length === 0" class="table-empty">No staff summary found.</div>
-        <div class="table-wrap" *ngIf="rows.length > 0">
-          <table class="table report-table">
-            <thead><tr><th>Staff</th><th>Work Type</th><th>Last Work</th><th>Last Payment</th><th>Work Entries</th><th>Earned</th><th>Advance</th><th>Payment</th><th>Payable</th></tr></thead>
-            <tbody>
-              <tr *ngFor="let row of rows; trackBy: trackByRow">
-                <td class="table-primary">{{ row.name }}</td>
-                <td>{{ row.workType || '-' }}</td>
-                <td>{{ row.lastWorkDate || '-' }}</td>
-                <td>{{ row.lastPaymentDate || '-' }}</td>
-                <td>{{ row.workEntries }}</td>
-                <td class="amount-cell">Rs {{ row.earned | number: '1.2-2' }}</td>
-                <td class="amount-cell">Rs {{ row.advance | number: '1.2-2' }}</td>
-                <td class="amount-cell">Rs {{ row.payment | number: '1.2-2' }}</td>
-                <td class="amount-cell" [class.negative]="row.payable < 0">Rs {{ row.payable | number: '1.2-2' }}</td>
-              </tr>
-            </tbody>
-          </table>
+    <!-- ── Staff Cards Grid ── -->
+    <div class="payable-cards-grid" *ngIf="!loading && rows.length > 0">
+      <div class="payable-card-v3" *ngFor="let row of rows; trackBy: trackByRow" (click)="openStaffLedger(row.staffId)" style="cursor: pointer;">
+        <div class="payable-card-header">
+          <div class="staff-avatar">
+            {{ (row.name || 'S')[0].toUpperCase() }}
+          </div>
+          <div class="staff-info">
+            <div class="staff-name">{{ row.name }}</div>
+            <div class="staff-type">{{ row.workType || 'Worker' }}</div>
+          </div>
+          <div class="work-entries-badge">
+            {{ row.workEntries }} works
+          </div>
+        </div>
+
+        <div class="balance-grid">
+          <div class="balance-item earned">
+            <div class="balance-icon"><mat-icon>work</mat-icon></div>
+            <div class="balance-content">
+              <div class="balance-label">Earned</div>
+              <div class="balance-value" [title]="'₹' + (row.earned | number: '1.0-0')">₹{{ row.earned | number: '1.0-0' }}</div>
+            </div>
+          </div>
+          <div class="balance-item advance">
+            <div class="balance-icon"><mat-icon>call_received</mat-icon></div>
+            <div class="balance-content">
+              <div class="balance-label">Advance</div>
+              <div class="balance-value" [title]="'₹' + (row.advance | number: '1.0-0')">₹{{ row.advance | number: '1.0-0' }}</div>
+            </div>
+          </div>
+          <div class="balance-item payment">
+            <div class="balance-icon"><mat-icon>payments</mat-icon></div>
+            <div class="balance-content">
+              <div class="balance-label">Payment</div>
+              <div class="balance-value" [title]="'₹' + (row.payment | number: '1.0-0')">₹{{ row.payment | number: '1.0-0' }}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="payable-result" [class.positive]="row.payable > 0" [class.negative]="row.payable < 0" [class.zero]="row.payable === 0">
+          <div class="payable-label">Net Payable</div>
+          <div class="payable-value" [title]="'₹' + (row.payable | number: '1.0-0')">₹{{ row.payable | number: '1.0-0' }}</div>
+        </div>
+
+        <div class="payable-meta-row">
+          <div class="meta-item" *ngIf="row.lastWorkDate">
+            <mat-icon>work_history</mat-icon>
+            Last Work: {{ row.lastWorkDate | date: 'dd MMM' }}
+          </div>
+          <div class="meta-item" *ngIf="row.lastPaymentDate">
+            <mat-icon>payment</mat-icon>
+            Last Pay: {{ row.lastPaymentDate | date: 'dd MMM' }}
+          </div>
+        </div>
+
+        <button mat-raised-button color="primary" style="width: 100%; margin-top: 12px; background: linear-gradient(60deg, #0284c7, #0369a1); font-weight: 600;" (click)="openStaffLedger(row.staffId); $event.stopPropagation();">
+          <mat-icon>menu_book</mat-icon> View Full Ledger & History
+        </button>
+      </div>
+    </div>
+
+    <!-- ── Staff Ledger Modal (Distributor Ledger Style) ── -->
+    <div class="modal-backdrop-custom" *ngIf="showLedgerModal" (click)="closeLedgerModal()">
+      <div class="modal-card-custom" (click)="$event.stopPropagation()">
+        
+        <!-- Modal Header -->
+        <div class="modal-header-custom" style="background: linear-gradient(60deg, #0f172a, #1e293b); color: white; padding: 18px 24px; display: flex; justify-content: space-between; align-items: center;">
+          <div style="display: flex; align-items: center; gap: 14px;">
+            <div style="width: 44px; height: 44px; border-radius: 12px; background: #0284c7; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 20px;">
+              {{ (activeLedgerStaff?.name || 'S')[0].toUpperCase() }}
+            </div>
+            <div>
+              <h3 style="margin: 0; font-size: 20px; font-weight: 700; color: white;">{{ activeLedgerStaff?.name || 'Staff Member' }} Ledger</h3>
+              <p style="margin: 2px 0 0 0; font-size: 13px; color: #94a3b8;">
+                {{ activeLedgerStaff?.workType || 'Worker' }} • Phone: {{ activeLedgerStaff?.phone || 'N/A' }} • Shop: {{ activeLedgerStaff?.shopCode || 'Global' }}
+              </p>
+            </div>
+          </div>
+          <button mat-icon-button (click)="closeLedgerModal()" style="color: #94a3b8;">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="modal-body-custom" style="padding: 20px; max-height: 78vh; overflow-y: auto;">
+          <div class="loading-state" *ngIf="ledgerLoading" style="text-align: center; padding: 40px;">
+            <mat-spinner diameter="36" style="margin: 0 auto;"></mat-spinner>
+            <p style="margin-top: 12px; color: #64748b;">Loading transaction ledger history...</p>
+          </div>
+
+          <ng-container *ngIf="!ledgerLoading">
+            
+            <!-- Summary KPI Cards Bar -->
+            <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 20px;">
+              <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 12px; border-radius: 10px;">
+                <span style="font-size: 11px; font-weight: 600; color: #166534; text-transform: uppercase;">Total Earned (+)</span>
+                <div style="font-size: 18px; font-weight: 700; color: #15803d; margin-top: 4px;">₹{{ activeLedgerSummary?.totalEarned | number: '1.2-2' }}</div>
+              </div>
+              <div style="background: #fff7ed; border: 1px solid #fed7aa; padding: 12px; border-radius: 10px;">
+                <span style="font-size: 11px; font-weight: 600; color: #c2410c; text-transform: uppercase;">Total Advance (-)</span>
+                <div style="font-size: 18px; font-weight: 700; color: #c2410c; margin-top: 4px;">₹{{ activeLedgerSummary?.totalAdvance | number: '1.2-2' }}</div>
+              </div>
+              <div style="background: #f0f9ff; border: 1px solid #bae6fd; padding: 12px; border-radius: 10px;">
+                <span style="font-size: 11px; font-weight: 600; color: #0369a1; text-transform: uppercase;">Total Payment (-)</span>
+                <div style="font-size: 18px; font-weight: 700; color: #0284c7; margin-top: 4px;">₹{{ activeLedgerSummary?.totalPayment | number: '1.2-2' }}</div>
+              </div>
+              <div style="background: #fff7ed; border: 1px dashed #fdba74; padding: 12px; border-radius: 10px;">
+                <span style="font-size: 11px; font-weight: 700; color: #ea580c; text-transform: uppercase;">Total Khoraki 🍲</span>
+                <div style="font-size: 18px; font-weight: 700; color: #ea580c; margin-top: 4px;">₹{{ activeLedgerSummary?.totalKhoraki | number: '1.2-2' }}</div>
+                <span style="font-size: 10px; color: #9a3412; font-weight: 600;">(Extra Shop Expense)</span>
+              </div>
+              <div style="padding: 12px; border-radius: 10px; border: 1px solid;" [style.background]="(activeLedgerSummary?.netBalance || 0) >= 0 ? '#f0fdf4' : '#fef2f2'" [style.borderColor]="(activeLedgerSummary?.netBalance || 0) >= 0 ? '#86efac' : '#fca5a5'">
+                <span style="font-size: 11px; font-weight: 600; text-transform: uppercase;" [style.color]="(activeLedgerSummary?.netBalance || 0) >= 0 ? '#15803d' : '#b91c1c'">Net Payable</span>
+                <div style="font-size: 18px; font-weight: 700; margin-top: 4px;" [style.color]="(activeLedgerSummary?.netBalance || 0) >= 0 ? '#15803d' : '#b91c1c'">
+                  ₹{{ activeLedgerSummary?.netBalance | number: '1.2-2' }}
+                  <span style="font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 600;" [style.background]="(activeLedgerSummary?.netBalance || 0) >= 0 ? '#dcfce7' : '#fee2e2'" [style.color]="(activeLedgerSummary?.netBalance || 0) >= 0 ? '#15803d' : '#b91c1c'">
+                    {{ (activeLedgerSummary?.netBalance || 0) >= 0 ? 'DUE TO PAY' : 'ADVANCE DEBT' }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Empty State -->
+            <div *ngIf="activeLedgerRows.length === 0" style="text-align: center; padding: 40px; background: #f8fafc; border-radius: 12px; border: 1px dashed #cbd5e1;">
+              <mat-icon style="font-size: 48px; width: 48px; height: 48px; color: #94a3b8;">receipt_long</mat-icon>
+              <p style="margin-top: 10px; color: #64748b; font-weight: 600;">No transactions recorded for this staff member yet.</p>
+            </div>
+
+            <!-- Ledger Table -->
+            <div class="table-responsive" *ngIf="activeLedgerRows.length > 0" style="border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+              <table class="table" style="margin: 0; font-size: 13px;">
+                <thead style="background: #f8fafc; border-bottom: 2px solid #e2e8f0;">
+                  <tr>
+                    <th style="padding: 12px; font-weight: 700; color: #475569;">Date & Time</th>
+                    <th style="padding: 12px; font-weight: 700; color: #475569;">Type</th>
+                    <th style="padding: 12px; font-weight: 700; color: #475569;">Transaction Details</th>
+                    <th style="padding: 12px; font-weight: 700; color: #15803d; text-align: right;">Earned (+)</th>
+                    <th style="padding: 12px; font-weight: 700; color: #b91c1c; text-align: right;">Paid / Advance (-)</th>
+                    <th style="padding: 12px; font-weight: 700; color: #0284c7; text-align: right;">Running Balance</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let row of activeLedgerRows" style="border-bottom: 1px solid #f1f5f9;">
+                    <td style="padding: 12px; font-weight: 500; color: #334155; white-space: nowrap;">
+                      {{ row.date | date: 'dd MMM yyyy, hh:mm a' }}
+                    </td>
+                    <td style="padding: 12px;">
+                      <span [ngSwitch]="row.type">
+                        <span *ngSwitchCase="'DAILY_WORK'" style="background: #dcfce7; color: #15803d; font-weight: 700; font-size: 11px; padding: 3px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
+                          <mat-icon style="font-size: 14px; width: 14px; height: 14px;">work</mat-icon> DAILY WORK
+                        </span>
+                        <span *ngSwitchCase="'ADVANCE'" style="background: #ffedd5; color: #c2410c; font-weight: 700; font-size: 11px; padding: 3px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
+                          <mat-icon style="font-size: 14px; width: 14px; height: 14px;">call_received</mat-icon> ADVANCE
+                        </span>
+                        <span *ngSwitchCase="'PAYMENT'" style="background: #e0f2fe; color: #0369a1; font-weight: 700; font-size: 11px; padding: 3px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
+                          <mat-icon style="font-size: 14px; width: 14px; height: 14px;">payments</mat-icon> PAYMENT
+                        </span>
+                        <span *ngSwitchCase="'KHORAKI'" style="background: #fff7ed; color: #ea580c; border: 1px solid #fdba74; font-weight: 700; font-size: 11px; padding: 3px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
+                          <mat-icon style="font-size: 14px; width: 14px; height: 14px;">lunch_dining</mat-icon> KHORAKI
+                        </span>
+                      </span>
+                    </td>
+                    <td style="padding: 12px; color: #1e293b;">
+                      <div style="font-weight: 600; color: #0f172a;">{{ row.title }}</div>
+                      <div style="font-size: 12px; color: #64748b;" *ngIf="row.description">{{ row.description }}</div>
+                    </td>
+                    <td style="padding: 12px; text-align: right; font-weight: 700; color: #15803d;">
+                      <span *ngIf="row.earned > 0">+₹{{ row.earned | number: '1.2-2' }}</span>
+                      <span *ngIf="row.earned === 0" style="color: #cbd5e1;">-</span>
+                    </td>
+                    <td style="padding: 12px; text-align: right; font-weight: 700;">
+                      <span *ngIf="row.type === 'KHORAKI'" style="color: #ea580c; font-size: 12px; font-weight: 800;">
+                        ₹{{ row.paid | number: '1.2-2' }} <span style="font-size: 10px; color: #9a3412;">(Shop Expense)</span>
+                      </span>
+                      <span *ngIf="row.type !== 'KHORAKI' && row.paid > 0" style="color: #b91c1c;">-₹{{ row.paid | number: '1.2-2' }}</span>
+                      <span *ngIf="row.paid === 0" style="color: #cbd5e1;">-</span>
+                    </td>
+                    <td style="padding: 12px; text-align: right; font-weight: 700;" [style.color]="row.runningBalance >= 0 ? '#15803d' : '#b91c1c'">
+                      ₹{{ row.runningBalance | number: '1.2-2' }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+          </ng-container>
+        </div>
+
+        <!-- Modal Footer -->
+        <div style="padding: 14px 24px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 10px;">
+          <button mat-stroked-button (click)="closeLedgerModal()">Close Ledger</button>
         </div>
       </div>
     </div>

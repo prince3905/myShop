@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const logger = require("../utils/logger");
 const Stock = require("../models/Stock");
 const ProductVariation = require("../models/ProductVariation");
 const Product = require("../models/Product");
@@ -154,9 +155,25 @@ exports.getStockReport = async (req, res) => {
         .populate("shop", "name shopCode")
         .populate("product", "name")
         .populate("model", "name")
-        .populate("variation", "sku attributes"),
+        .populate("variation", "sku attributes costPrice")
+        .lean(),
       Stock.countDocuments(query),
     ]);
+
+    const rowsWithAvailable = rows.map((row) => {
+      const qty = Number(row?.quantity || 0);
+      const reserved = Number(row?.reservedQuantity || 0);
+      const damaged = Number(row?.damagedQuantity || 0);
+      const stockCost = Number(row?.lastPurchasePrice || 0);
+      const variationCost = Number(row?.variation?.costPrice || 0);
+      const effectiveCost = stockCost > 0 ? stockCost : variationCost;
+      return {
+        ...row,
+        availableQuantity: Math.max(0, qty - reserved - damaged),
+        lastPurchasePrice: effectiveCost,
+        effectiveCostPrice: effectiveCost,
+      };
+    });
 
     const summaryRows = await Stock.aggregate([
       { $match: query },
@@ -166,7 +183,6 @@ exports.getStockReport = async (req, res) => {
           totalQuantity: { $sum: "$quantity" },
           totalReserved: { $sum: "$reservedQuantity" },
           totalDamaged: { $sum: "$damagedQuantity" },
-          totalCostValue: { $sum: { $multiply: ["$quantity", "$lastPurchasePrice"] } },
           lowStockCount: {
             $sum: {
               $cond: [{ $lte: ["$quantity", "$reorderLevel"] }, 1, 0],
@@ -176,13 +192,16 @@ exports.getStockReport = async (req, res) => {
       },
     ]);
     const summary = summaryRows[0] || {};
+    summary.totalCostValue = rowsWithAvailable.reduce((acc, row) => {
+      return acc + (Number(row.quantity || 0) * Number(row.lastPurchasePrice || 0));
+    }, 0);
 
     return res.status(200).json({
       success: true,
       page: safePage,
       limit: safeLimit,
       total,
-      stockReport: rows.map((row) => sanitizeStockRow(row, req)),
+      stockReport: rowsWithAvailable.map((row) => sanitizeStockRow(row, req)),
       summary: {
         totalQuantity: Number(summary.totalQuantity || 0),
         totalReserved: Number(summary.totalReserved || 0),
@@ -366,14 +385,122 @@ exports.manualAdjust = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "Stock adjusted successfully",
-      data: { stock, transaction: tx },
     });
   } catch (error) {
+    logger.error("Manual Stock Adjust Error:", error);
     return res.status(500).json({
       success: false,
-      message: "Error adjusting stock",
-      error: "Internal server error",
+      message: "Failed to adjust stock",
     });
+  }
+};
+
+exports.transferStockBetweenShops = async (req, res) => {
+  try {
+    const { sourceShopId, targetShopId, variationId, transferQty, note } = req.body;
+
+    const fromShopId = sourceShopId || req.shopId;
+    if (!fromShopId || !targetShopId || !variationId) {
+      return res.status(400).json({ success: false, message: "Source Shop, Target Shop and Variation are required" });
+    }
+
+    if (`${fromShopId}` === `${targetShopId}`) {
+      return res.status(400).json({ success: false, message: "Source Shop and Target Shop cannot be the same" });
+    }
+
+    const qty = Number(transferQty || 0);
+    if (!Number.isFinite(qty) || qty <= 0) {
+      return res.status(400).json({ success: false, message: "Transfer quantity must be greater than 0" });
+    }
+
+    const [sourceShop, targetShop, sourceVariation] = await Promise.all([
+      mongoose.model("Shop").findById(fromShopId),
+      mongoose.model("Shop").findById(targetShopId),
+      ProductVariation.findById(variationId),
+    ]);
+
+    if (!sourceShop || !targetShop || !sourceVariation) {
+      return res.status(404).json({ success: false, message: "Shop or Variation not found" });
+    }
+
+    const availableQty = Number(sourceVariation.quantity || 0);
+    if (qty > availableQty) {
+      return res.status(400).json({
+        success: false,
+        message: `Insufficient stock in ${sourceShop.shopCode || sourceShop.name}. Available: ${availableQty} Pcs, Requested: ${qty} Pcs`,
+      });
+    }
+
+    // 1. Deduct Stock from Source Shop (OUT)
+    await applyStockTransaction({
+      shop: sourceShop._id,
+      product: sourceVariation.product,
+      model: sourceVariation.model,
+      variation: sourceVariation._id,
+      sku: sourceVariation.sku,
+      type: "OUT",
+      quantity: qty,
+      referenceType: "TRANSFER",
+      referenceId: targetShop._id,
+      note: note || `Inter-shop stock transfer sent to ${targetShop.shopCode || targetShop.name}`,
+      createdBy: req.user._id,
+    });
+
+    // 2. Find or Create matching Target Shop Variation
+    let targetVariation = await ProductVariation.findOne({
+      shop: targetShop._id,
+      sku: sourceVariation.sku,
+    });
+
+    if (!targetVariation) {
+      targetVariation = await ProductVariation.create({
+        shop: targetShop._id,
+        product: sourceVariation.product,
+        model: sourceVariation.model,
+        sku: sourceVariation.sku,
+        barcode: sourceVariation.barcode || "",
+        attributes: sourceVariation.attributes,
+        costPrice: sourceVariation.costPrice || 0,
+        sellingPrice: sourceVariation.sellingPrice || 0,
+        quantity: 0,
+        isActive: true,
+      });
+
+      await Stock.updateOne(
+        { shop: targetShop._id, variation: targetVariation._id },
+        {
+          $setOnInsert: { shop: targetShop._id, variation: targetVariation._id, quantity: 0 },
+          $set: { product: sourceVariation.product, model: sourceVariation.model, sku: targetVariation.sku },
+        },
+        { upsert: true }
+      );
+    } else if (sourceVariation.sellingPrice > 0 && targetVariation.sellingPrice === 0) {
+      targetVariation.sellingPrice = sourceVariation.sellingPrice;
+      await targetVariation.save();
+    }
+
+    // 3. Add Stock to Target Shop (IN)
+    await applyStockTransaction({
+      shop: targetShop._id,
+      product: targetVariation.product,
+      model: targetVariation.model,
+      variation: targetVariation._id,
+      sku: targetVariation.sku,
+      type: "IN",
+      quantity: qty,
+      referenceType: "TRANSFER",
+      referenceId: sourceShop._id,
+      note: note || `Inter-shop stock transfer received from ${sourceShop.shopCode || sourceShop.name}`,
+      createdBy: req.user._id,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: `Successfully transferred ${qty} Pcs of ${sourceVariation.sku} from ${sourceShop.shopCode || sourceShop.name} to ${targetShop.shopCode || targetShop.name}!`,
+    });
+  } catch (error) {
+    logger.error("Transfer Stock Error:", error);
+    return res.status(500).json({ success: false, message: "Failed to complete inter-shop stock transfer" });
   }
 };
 

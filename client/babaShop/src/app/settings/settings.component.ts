@@ -147,6 +147,7 @@ export class SettingsComponent implements OnInit {
 
     this.shopForm = this.fb.group({
       name: [""],
+      shopCode: [""],
       contactNumber: [""],
       email: [""],
       upiId: [""],
@@ -188,6 +189,34 @@ export class SettingsComponent implements OnInit {
 
   setSection(section: string) {
     this.activeSection = section;
+  }
+
+  getSectionIcon(section: string): string {
+    const icons: Record<string, string> = {
+      'Profile Settings': 'person',
+      'Account Security': 'security',
+      'Shop Settings': 'store',
+      'Role & Permissions': 'admin_panel_settings',
+      'Notification Settings': 'notifications',
+      'Billing & Subscription': 'credit_card',
+      'Integrations': 'link',
+      'Data & Backup': 'backup',
+      'Audit Logs': 'history',
+      'Session Management': 'devices',
+      'App Preferences': 'tune',
+      'Danger Zone': 'warning',
+    };
+    return icons[section] || 'settings';
+  }
+
+  getAuditIcon(action: string): string {
+    const actionLower = (action || '').toLowerCase();
+    if (actionLower.includes('login') || actionLower.includes('auth')) return 'login';
+    if (actionLower.includes('update') || actionLower.includes('edit')) return 'edit';
+    if (actionLower.includes('delete') || actionLower.includes('remove')) return 'delete';
+    if (actionLower.includes('create') || actionLower.includes('add')) return 'add_circle';
+    if (actionLower.includes('password') || actionLower.includes('auth')) return 'lock';
+    return 'info';
   }
 
   loadApiSettings(): void {
@@ -290,6 +319,7 @@ export class SettingsComponent implements OnInit {
         this.preferencesForm.patchValue(data.preferences || {});
         this.shopForm.patchValue({
           name: data.shop?.name || "",
+          shopCode: data.shop?.shopCode || "",
           contactNumber: data.shop?.contactNumber || "",
           email: data.shop?.email || "",
           upiId: data.shop?.paymentSettings?.upiId || "",
@@ -350,6 +380,7 @@ export class SettingsComponent implements OnInit {
   saveShopSettings() {
     const payload = {
       name: this.shopForm.value.name,
+      shopCode: this.shopForm.value.shopCode,
       contactNumber: this.shopForm.value.contactNumber,
       email: this.shopForm.value.email,
       address: {

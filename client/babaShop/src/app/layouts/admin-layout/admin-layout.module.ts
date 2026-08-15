@@ -1,10 +1,11 @@
-import { NgModule } from "@angular/core";
+import { NgModule, CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA } from "@angular/core";
 import { RouterModule } from "@angular/router";
 import { CommonModule } from "@angular/common";
 import { FormsModule, ReactiveFormsModule } from "@angular/forms";
 import { AdminLayoutRoutes } from "./admin-layout.routing";
-import { DashboardComponent } from "../../dashboard/dashboard.component";
-import { UserProfileComponent } from "../../user-profile/user-profile.component";
+import { ComponentsModule } from "app/components/components.module";
+import { DashboardComponent } from "app/dashboard/dashboard.component";
+import { UserProfileComponent } from "app/user-profile/user-profile.component";
 import { MatButtonModule } from "@angular/material/button";
 import { MatRippleModule } from "@angular/material/core";
 import { MatFormFieldModule } from "@angular/material/form-field";
@@ -72,10 +73,13 @@ import { FactoryVerificationComponent } from "app/factory/factory-verification/f
 import { RawMaterialPurchaseComponent } from "app/factory/raw-material-purchase/raw-material-purchase.component";
 import { RawMaterialRegisterComponent } from "app/factory/raw-material-register/raw-material-register.component";
 import { FactoryReportComponent } from "app/factory/factory-report/factory-report.component";
+import { FraudDetectionComponent } from "app/fraud-detection/fraud-detection.component";
+import { BarcodeCatalogComponent } from "app/all-items/barcode-catalog/barcode-catalog.component";
 
 @NgModule({
   imports: [
     CommonModule,
+    ComponentsModule,
     RouterModule.forChild(AdminLayoutRoutes),
     FormsModule,
     ReactiveFormsModule,
@@ -148,9 +152,12 @@ import { FactoryReportComponent } from "app/factory/factory-report/factory-repor
     RawMaterialPurchaseComponent,
     RawMaterialRegisterComponent,
     FactoryReportComponent,
+    FraudDetectionComponent,
+    BarcodeCatalogComponent,
     HasRoleDirective,
     CapitalizeFirstDirective,
   ],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA],
 })
 export class AdminLayoutModule {
   panelOpenState = false;

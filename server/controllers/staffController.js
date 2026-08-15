@@ -1,6 +1,9 @@
+const mongoose = require("mongoose");
 const logger = require("../utils/logger");
 const Staff = require("../models/Staff");
 const StaffWorkType = require("../models/StaffWorkType");
+const StaffDailyWork = require("../models/StaffDailyWork");
+const StaffPayment = require("../models/StaffPayment");
 const MANAGER_AND_ABOVE = ["SUPER_ADMIN", "ADMIN", "MANAGER"];
 const escapeRegex = (value = "") => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
@@ -321,5 +324,129 @@ exports.deleteStaff = async (req, res) => {
   } catch (error) {
     logger.error("Delete Staff Error:", error);
     return res.status(500).json({ success: false, message: "Failed to delete staff" });
+  }
+};
+
+exports.getStaffLedger = async (req, res) => {
+  try {
+    const staffId = req.params.id;
+    if (!mongoose.Types.ObjectId.isValid(staffId)) {
+      return res.status(400).json({ success: false, message: "Invalid staff ID" });
+    }
+
+    const staff = await Staff.findById(staffId).populate("shop", "name shopCode");
+    if (!staff || staff.isDeleted) {
+      return res.status(404).json({ success: false, message: "Staff not found" });
+    }
+
+    const [dailyWorks, payments] = await Promise.all([
+      StaffDailyWork.find({
+        staff: staff._id,
+        isDeleted: false,
+        verificationStatus: { $in: ["APPROVED", "PARTIAL"] },
+      }).lean(),
+      StaffPayment.find({
+        staff: staff._id,
+        isDeleted: { $ne: true },
+      }).lean(),
+    ]);
+
+    const rawRows = [];
+
+    dailyWorks.forEach((dw) => {
+      const earned = Number(dw.earnedAmount || 0);
+      const units = Number(dw.unitsCompleted || 0);
+      const rate = Number(dw.pieceRate || 0);
+      const productName = dw.factoryProductName || "Factory Product";
+      rawRows.push({
+        date: new Date(dw.entryDate || dw.createdAt || new Date()),
+        type: "DAILY_WORK",
+        title: `${productName} (${units} Pcs @ ₹${rate}/pc)`,
+        description: dw.note || "Verified production daily work",
+        verificationStatus: dw.verificationStatus,
+        earned,
+        paid: 0,
+        referenceId: dw._id,
+      });
+    });
+
+    payments.forEach((sp) => {
+      const amount = Number(sp.amount || 0);
+      const entryType = sp.entryType || "ADVANCE";
+      let title = "Advance Given";
+      if (entryType === "PAYMENT") title = "Payment Settlement";
+      if (entryType === "KHORAKI") title = "Daily Khoraki (Food Allowance)";
+
+      rawRows.push({
+        date: new Date(sp.entryDate || sp.createdAt || new Date()),
+        type: entryType,
+        title,
+        description: sp.note || (entryType === "KHORAKI" ? "Daily food expense payout" : (entryType === "ADVANCE" ? "Cash advance payment" : "Salary settlement payment")),
+        paymentMethod: sp.paymentMethod || "CASH",
+        earned: 0,
+        paid: amount,
+        referenceId: sp._id,
+      });
+    });
+
+    // Sort chronologically ascending to compute running balance
+    rawRows.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+    let runningBalance = 0;
+    let totalEarned = 0;
+    let totalAdvance = 0;
+    let totalPayment = 0;
+    let totalKhoraki = 0;
+
+    const ledger = rawRows.map((row) => {
+      if (row.type === "DAILY_WORK") {
+        totalEarned += row.earned;
+        runningBalance += row.earned;
+      } else if (row.type === "ADVANCE") {
+        totalAdvance += row.paid;
+        runningBalance -= row.paid;
+      } else if (row.type === "PAYMENT") {
+        totalPayment += row.paid;
+        runningBalance -= row.paid;
+      } else if (row.type === "KHORAKI") {
+        totalKhoraki += row.paid;
+        // Khoraki is extra food expense paid by shop, DOES NOT deduct from worker balance!
+      }
+
+      return {
+        ...row,
+        runningBalance,
+      };
+    });
+
+    // Return chronological descending for ledger table view (newest first)
+    ledger.reverse();
+
+    return res.json({
+      success: true,
+      staff: {
+        _id: staff._id,
+        name: staff.name,
+        phone: staff.phone,
+        staffType: staff.staffType,
+        workType: staff.workType,
+        rateType: staff.rateType,
+        rate: staff.rate,
+        shopCode: staff.shop?.shopCode || "",
+        shopName: staff.shop?.name || "",
+      },
+      summary: {
+        totalEarned,
+        totalAdvance,
+        totalPayment,
+        totalKhoraki,
+        totalPaid: totalAdvance + totalPayment,
+        netBalance: runningBalance,
+      },
+      ledger,
+    });
+  } catch (error) {
+    logger.error("Get Staff Ledger Error:", error);
+    return res.status(500).json({ success: false, message: "Failed to fetch staff ledger" });
   }
 };

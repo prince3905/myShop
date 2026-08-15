@@ -71,6 +71,7 @@ import { BrandService } from './shared/services/brand.service';
     MatAutocompleteModule,
     MatDialogModule,
     MatIconModule,
+<<<<<<< HEAD
     MatSelectModule,
     MatCheckboxModule,
     MatRadioModule,
@@ -92,6 +93,10 @@ import { BrandService } from './shared/services/brand.service';
     MatBottomSheetModule,
     IonicModule.forRoot({ mode: 'md', hardwareBackButton: true })
   ],
+=======
+    MatPaginatorModule
+],
+>>>>>>> shopV3
   declarations: [
     AppComponent,
     AdminLayoutComponent,
@@ -100,8 +105,12 @@ import { BrandService } from './shared/services/brand.service';
   ],
   exports: [
     MatMenuModule,
+<<<<<<< HEAD
     MatSelectModule,
     MatCheckboxModule,
+=======
+    MatPaginatorModule
+>>>>>>> shopV3
   ],
   providers: [
     {

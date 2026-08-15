@@ -1,0 +1,434 @@
+<div class="fraud-detection-container">
+  <!-- Header Section -->
+  <div class="header-section">
+    <div class="header-content">
+      <div class="header-text">
+        <h1><mat-icon>security</mat-icon> Fraud Detection Dashboard</h1>
+        <p class="subtitle">AI-Powered Staff Theft Prevention System</p>
+      </div>
+      <div class="header-actions">
+        <button mat-raised-button color="primary" (click)="loadReport()" [disabled]="loading">
+          <mat-icon>refresh</mat-icon> Generate Report
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters Card -->
+  <mat-card class="filter-card">
+    <mat-card-content>
+      <div class="filters-row">
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>Date Range (Optional)</mat-label>
+          <mat-date-range-input [rangePicker]="picker">
+            <input matStartDate placeholder="Start Date" [(ngModel)]="startDate">
+            <input matEndDate placeholder="End Date" [(ngModel)]="endDate">
+          </mat-date-range-input>
+          <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+          <mat-date-range-picker #picker></mat-date-range-picker>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>Quick Select</mat-label>
+          <mat-select [(value)]="days" (selectionChange)="onDaysChange()">
+            <mat-option [value]="7">Last 7 Days</mat-option>
+            <mat-option [value]="15">Last 15 Days</mat-option>
+            <mat-option [value]="30">Last 30 Days</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field *ngIf="authService.isSuperAdmin()" appearance="outline" class="filter-field">
+          <mat-label>Select Shop</mat-label>
+          <mat-select [(ngModel)]="selectedShopId" (selectionChange)="onShopChange()">
+            <mat-option value="">All Shops (Global View)</mat-option>
+            <mat-option *ngFor="let shop of shops" [value]="shop._id">
+              {{ shop.name }} ({{ shop.shopCode }})
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>Filter by Severity</mat-label>
+          <mat-select [(ngModel)]="selectedSeverity" (selectionChange)="filterAlerts()">
+            <mat-option value="ALL">All Alerts</mat-option>
+            <mat-option value="HIGH">High Only</mat-option>
+            <mat-option value="MEDIUM">Medium Only</mat-option>
+            <mat-option value="LOW">Low Only</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <button mat-icon-button (click)="clearDates()" matTooltip="Clear custom dates">
+          <mat-icon>clear</mat-icon>
+        </button>
+      </div>
+      <div class="date-info" *ngIf="startDate && endDate">
+        <mat-icon>event</mat-icon>
+        <span>Custom Range: {{ startDate | date:'mediumDate' }} - {{ endDate | date:'mediumDate' }}</span>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-container">
+    <mat-spinner diameter="50"></mat-spinner>
+    <p>Analyzing transactions and detecting anomalies...</p>
+  </div>
+
+  <!-- Report Content -->
+  <div *ngIf="!loading && report" class="report-content">
+    <!-- Global Summary (Super Admin) -->
+    <div *ngIf="authService.isSuperAdmin() && !selectedShopId" class="global-summary-section">
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title><mat-icon>dashboard</mat-icon> Global Overview</mat-card-title>
+          <mat-card-subtitle>Cross-shop fraud detection summary</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="summary-stats">
+            <div class="stat-card">
+              <mat-icon class="stat-icon">store</mat-icon>
+              <span class="stat-value">{{ report.globalSummary?.totalShops || 0 }}</span>
+              <span class="stat-label">Active Shops</span>
+            </div>
+            <div class="stat-card alert-high">
+              <mat-icon class="stat-icon">warning</mat-icon>
+              <span class="stat-value">{{ report.globalSummary?.highSeverityAlerts || 0 }}</span>
+              <span class="stat-label">High Priority Alerts</span>
+            </div>
+            <div class="stat-card alert-total">
+              <mat-icon class="stat-icon">notifications</mat-icon>
+              <span class="stat-value">{{ report.globalSummary?.totalAlerts || 0 }}</span>
+              <span class="stat-label">Total Alerts</span>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Shop Reports -->
+    <div *ngFor="let shopReport of report.shops" class="shop-report-section">
+      <mat-card class="shop-card" [class.shop-high-risk]="shopReport.riskLevel === 'HIGH'">
+        <mat-card-header>
+          <mat-card-title>
+            <div class="title-row">
+              <span class="shop-name">{{ shopReport.shop?.name || 'Unknown Shop' }}</span>
+              <span class="shop-code-badge">{{ shopReport.shop?.code || 'N/A' }}</span>
+              <div class="risk-score-badge" [class]="'risk-' + shopReport.riskLevel">
+                <mat-icon>speed</mat-icon>
+                <span class="risk-score-value">{{ shopReport.riskScore || 0 }}</span>
+                <span class="risk-score-label">/100</span>
+                <span class="risk-level">{{ shopReport.riskLevel }}</span>
+              </div>
+            </div>
+          </mat-card-title>
+          <mat-card-subtitle>
+            <div class="subtitle-row">
+              <span class="alert-count"><mat-icon>error_outline</mat-icon> {{ shopReport.summary?.totalAlerts || 0 }} Alerts</span>
+              <span class="alert-high"><mat-icon>warning</mat-icon> {{ shopReport.summary?.highSeverity || 0 }} High</span>
+              <span class="alert-medium"><mat-icon>info</mat-icon> {{ shopReport.summary?.mediumSeverity || 0 }} Medium</span>
+              <span class="alert-low"><mat-icon>check_circle</mat-icon> {{ shopReport.summary?.lowSeverity || 0 }} Low</span>
+            </div>
+          </mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <!-- Risk Score Visualization -->
+          <div class="risk-visualization" *ngIf="shopReport.riskScore > 0">
+            <div class="risk-header">
+              <mat-icon [color]="shopReport.riskLevel === 'HIGH' ? 'warn' : 'primary'">shield</mat-icon>
+              <span>Theft Risk Assessment (AI Analysis)</span>
+            </div>
+            <div class="risk-bar-container">
+              <div class="risk-bar">
+                <div class="risk-fill" [style.width.%]="shopReport.riskScore" 
+                     [class]="'risk-fill-' + shopReport.riskLevel"></div>
+              </div>
+              <div class="risk-labels">
+                <span>Low</span>
+                <span>Medium</span>
+                <span>High</span>
+              </div>
+            </div>
+            <div class="risk-factors-list" *ngIf="shopReport.riskFactors?.length > 0">
+              <div class="factors-header"><mat-icon>list</mat-icon> Contributing Factors:</div>
+              <mat-chip-listbox>
+                <mat-chip *ngFor="let factor of shopReport.riskFactors" [class]="'chip-' + shopReport.riskLevel">
+                  <mat-icon>warning</mat-icon> {{ factor }}
+                </mat-chip>
+              </mat-chip-listbox>
+            </div>
+            <div class="risk-warning-banner" *ngIf="shopReport.riskLevel === 'HIGH'">
+              <mat-icon>error</mat-icon>
+              <div>
+                <strong>HIGH THEFT RISK DETECTED!</strong>
+                <p>Immediately verify physical cash and inventory with staff. Statistical anomalies indicate potential theft.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- No Alerts State -->
+          <div *ngIf="shopReport.alerts?.length === 0" class="no-alerts-state">
+            <mat-icon class="success-icon">verified</mat-icon>
+            <h3>All Clear!</h3>
+            <p>No suspicious activities detected. Staff operations appear normal.</p>
+          </div>
+
+          <!-- Alerts Accordion -->
+          <mat-accordion *ngIf="shopReport.alerts?.length > 0" class="alerts-accordion">
+            <mat-expansion-panel *ngFor="let alert of shopReport.alerts" [class]="'alert-panel-' + alert.severity">
+              <mat-expansion-panel-header>
+                <mat-panel-title>
+                  <div class="alert-title-row">
+                    <mat-icon [color]="getSeverityColor(alert.severity)">
+                      {{ getSeverityIcon(alert.type) }}
+                    </mat-icon>
+                    <span class="alert-title">{{ alert.title }}</span>
+                    <mat-chip [class]="'severity-chip-' + alert.severity">{{ alert.severity }}</mat-chip>
+                  </div>
+                </mat-panel-title>
+                <mat-panel-description>
+                  <span class="alert-type-badge">{{ alert.type | titlecase }}</span>
+                </mat-panel-description>
+              </mat-expansion-panel-header>
+
+              <div class="alert-content">
+                <p class="alert-description">
+                  <mat-icon>info</mat-icon> {{ alert.description }}
+                </p>
+
+                <!-- CASH_MISMATCH Alert -->
+                <div *ngIf="alert.type === 'CASH_MISMATCH'" class="alert-data-section">
+                  <div class="info-box info-blue">
+                    <mat-icon>info</mat-icon>
+                    <span>{{ alert.data?.note }}</span>
+                  </div>
+                  <div class="data-grid">
+                    <div class="data-item"><span class="data-label">Total Sales</span><span class="data-value">₹{{ alert.data?.totalSales | number:'1.2-2' }}</span></div>
+                    <div class="data-item"><span class="data-label">Cash Collected</span><span class="data-value">₹{{ alert.data?.totalCash | number:'1.2-2' }}</span></div>
+                    <div class="data-item"><span class="data-label">Card Sales</span><span class="data-value">₹{{ alert.data?.totalCard | number:'1.2-2' }}</span></div>
+                    <div class="data-item"><span class="data-label">Online Sales</span><span class="data-value">₹{{ alert.data?.totalOnline | number:'1.2-2' }}</span></div>
+                    <div class="data-item"><span class="data-label">Cash Refunds</span><span class="data-value">₹{{ alert.data?.cashRefunds | number:'1.2-2' }}</span></div>
+                    <div class="data-item data-highlight"><span class="data-label">Expected in Register</span><span class="data-value">₹{{ alert.data?.expectedCash | number:'1.2-2' }}</span></div>
+                    <div class="data-item"><span class="data-label">Transactions</span><span class="data-value">{{ alert.data?.transactionCount || 0 }}</span></div>
+                  </div>
+
+                  <div class="anomaly-result" *ngIf="alert.data?.anomalyCheck" [class]="alert.data.anomalyCheck.isAnomaly ? 'anomaly-yes' : 'anomaly-no'">
+                    <mat-icon>{{ alert.data.anomalyCheck.isAnomaly ? 'warning' : 'check_circle' }}</mat-icon>
+                    <div>
+                      <strong>{{ alert.data.anomalyCheck.message }}</strong>
+                      <div class="anomaly-stats" *ngIf="alert.data.anomalyCheck.isAnomaly">
+                        <span>Z-Score: {{ alert.data.anomalyCheck.zScore }}</span>
+                        <span>Historical Avg: ₹{{ alert.data.anomalyCheck.historicalMean }}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="action-box action-warning">
+                    <mat-icon>priority_high</mat-icon>
+                    <div>
+                      <strong>Action Required:</strong> Count physical cash and compare with expected amount. Investigate discrepancies immediately!
+                      <br><span class="hindi-text" style="color: #666; font-size: 0.9em;">(गल्ले का असली कैश गिनें और सिस्टम के कैश से मिलाएँ। किसी भी गड़बड़ी की तुरंत जांच करें!)</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- SUSPICIOUS_RETURNS Alert -->
+                <div *ngIf="alert.type === 'SUSPICIOUS_RETURNS'" class="alert-data-section">
+                  <div *ngFor="let cust of alert.data?.customers" class="customer-card">
+                    <div class="customer-header">
+                      <mat-icon>person</mat-icon>
+                      <div>
+                        <strong>{{ cust.customer?.name }}</strong>
+                        <span>{{ cust.customer?.phone }}</span>
+                      </div>
+                    </div>
+                    <div class="customer-body">
+                      <mat-chip class="chip-warn">Return Count: {{ cust.returnCount }} times</mat-chip>
+                      <p class="warning-text"><mat-icon>warning</mat-icon> Suspicious return pattern detected</p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- STOCK_DISCREPANCY Alert -->
+                <div *ngIf="alert.type === 'STOCK_DISCREPANCY'" class="alert-data-section">
+                  <div class="info-box info-blue">
+                    <mat-icon>info</mat-icon>
+                    <span>{{ alert.data?.note }}</span>
+                  </div>
+                  <div class="data-grid">
+                    <div class="data-item"><span class="data-label">Missing Items</span><span class="data-value">{{ alert.data?.totalMissingItems || 0 }}</span></div>
+                    <div class="data-item data-highlight"><span class="data-label">Total Missing Qty</span><span class="data-value">{{ alert.data?.totalMissingQty || 0 }} units</span></div>
+                  </div>
+                 
+                  <div class="action-box action-danger">
+                    <mat-icon>error</mat-icon>
+                    <div>
+                      <strong>CRITICAL: Possible Inventory Theft!</strong> Staff may have stolen items. Perform immediate stock audit.
+                      <br><span class="hindi-text" style="color: #666; font-size: 0.9em;">(संभावित चोरी! हो सकता है स्टाफ ने सामान चुराया हो। तुरंत स्टॉक की जांच करें।)</span>
+                    </div>
+                  </div>
+
+                  <h4 class="section-header"><mat-icon>inventory_2</mat-icon> Missing Inventory Items</h4>
+                  <div class="stock-list">
+                    <div *ngFor="let item of alert.data?.discrepancies" class="stock-item">
+                      <div class="stock-info">
+                        <strong>{{ item.productName }}</strong>
+                        <span class="model-name">{{ item.modelName }}</span>
+                        <span class="sku">SKU: {{ item.sku }}</span>
+                      </div>
+                      <div class="stock-numbers">
+                        <span>System: {{ item.systemQty }}</span>
+                        <span>Counted: {{ item.countedQty }}</span>
+                        <span class="missing">Missing: {{ item.missingQty }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- VOIDED_TRANSACTIONS Alert -->
+                <div *ngIf="alert.type === 'VOIDED_TRANSACTIONS'" class="alert-data-section">
+                  <div class="data-grid">
+                    <div class="data-item"><span class="data-label">Cancelled Bills</span><span class="data-value">{{ alert.data?.cancelledSales?.length || 0 }}</span></div>
+                    <div class="data-item data-highlight"><span class="data-label">Total Amount</span><span class="data-value">₹{{ alert.data?.totalCancelledAmount | number:'1.2-2' }}</span></div>
+                  </div>
+
+                  <div class="anomaly-result" *ngIf="alert.data?.anomalyCheck" [class]="alert.data.anomalyCheck.isAnomaly ? 'anomaly-yes' : 'anomaly-no'">
+                    <mat-icon>{{ alert.data.anomalyCheck.isAnomaly ? 'warning' : 'check_circle' }}</mat-icon>
+                    <div>
+                      <strong>{{ alert.data.anomalyCheck.message }}</strong>
+                    </div>
+                  </div>
+
+                  <div class="action-box action-warning">
+                    <mat-icon>priority_high</mat-icon>
+                    <div>
+                      <strong>Common Theft Trick:</strong> Staff collects cash, then cancels bill to hide transaction. Verify all cancellations!
+                      <br><span class="hindi-text" style="color: #666; font-size: 0.9em;">(चोरी का आम तरीका: स्टाफ कैश लेकर बिल कैंसिल कर देता है। इन सभी कैंसिल बिलों की जांच करें!)</span>
+                    </div>
+                  </div>
+
+                  <h4 class="section-header"><mat-icon>receipt</mat-icon> Cancelled Transactions</h4>
+                  <div class="transaction-list">
+                    <div *ngFor="let sale of alert.data?.cancelledSales" class="transaction-item">
+                      <span class="invoice">#{{ sale.invoiceNo }}</span>
+                      <span class="amount">₹{{ sale.amount | number:'1.2-2' }}</span>
+                      <span class="date">{{ sale.date | date:'mediumDate' }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- DISCOUNT_ABUSE Alert -->
+                <div *ngIf="alert.type === 'DISCOUNT_ABUSE'" class="alert-data-section">
+                  <div class="data-grid">
+                    <div class="data-item"><span class="data-label">High-Discount Sales</span><span class="data-value">{{ alert.data?.sales?.length || 0 }}</span></div>
+                    <div class="data-item data-highlight"><span class="data-label">Total Discount</span><span class="data-value">₹{{ alert.data?.totalDiscountAmount | number:'1.2-2' }}</span></div>
+                  </div>
+
+                  <div class="action-box action-warning">
+                    <mat-icon>priority_high</mat-icon>
+                    <div>
+                      <strong>Unauthorized Discounts:</strong> Staff giving excessive discounts to friends/family. Verify authorization!
+                      <br><span class="hindi-text" style="color: #666; font-size: 0.9em;">(बिना परमिशन के डिस्काउंट: स्टाफ अपने दोस्तों/रिश्तेदारों को बहुत ज्यादा छूट दे रहा है। इसकी जांच करें!)</span>
+                    </div>
+                  </div>
+
+                  <h4 class="section-header"><mat-icon>local_offer</mat-icon> Suspicious Sales</h4>
+                  <div class="transaction-list">
+                    <div *ngFor="let sale of alert.data?.sales" class="transaction-item">
+                      <span class="invoice">#{{ sale.invoiceNo }}</span>
+                      <span class="amount">₹{{ sale.totalAmount | number:'1.2-2' }}</span>
+                      <span class="discount">Disc: ₹{{ sale.billDiscount }}</span>
+                      <span class="date">{{ sale.date | date:'mediumDate' }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- ANOMALY_DETECTED (AI) Alert -->
+                <div *ngIf="alert.type === 'ANOMALY_DETECTED'" class="alert-data-section">
+                  <div class="ai-header">
+                    <mat-icon>smart_toy</mat-icon>
+                    <span>AI Statistical Analysis - Z-Score Based Detection</span>
+                  </div>
+                 
+                  <div class="action-box action-danger">
+                    <mat-icon>error</mat-icon>
+                    <div>
+                      <strong>AI DETECTED ANOMALIES!</strong><br>
+                      Statistical analysis found patterns significantly deviating from historical norms. High probability of manipulation or theft!
+                      <br><span class="hindi-text" style="color: #666; font-size: 0.9em;">(AI ने गड़बड़ी पकड़ी! ये आंकड़े पहले के मुकाबले बहुत अलग हैं। हेराफेरी या चोरी की बहुत अधिक संभावना है!)</span>
+                    </div>
+                  </div>
+
+                  <h4 class="section-header"><mat-icon>analytics</mat-icon> Detected Anomalies</h4>
+                  <div *ngFor="let anomaly of alert.data?.anomalies" class="anomaly-card">
+                    <div class="anomaly-header">
+                      <mat-icon>warning</mat-icon>
+                      <strong>{{ anomaly.metric }}</strong>
+                    </div>
+                    <div class="anomaly-body">
+                      <div class="anomaly-stat"><span>Current:</span> {{ anomaly.current }}</div>
+                      <div class="anomaly-stat"><span>Historical Avg:</span> {{ anomaly.historicalMean }}</div>
+                      <div class="anomaly-stat"><span>Z-Score:</span> {{ anomaly.zScore }} (Anomaly if >2)</div>
+                    </div>
+                    <div class="anomaly-message">{{ anomaly.message }}</div>
+                  </div>
+                </div>
+
+                <!-- UNUSUAL_TIMING Alert -->
+                <div *ngIf="alert.type === 'UNUSUAL_TIMING'" class="alert-data-section">
+                  <div class="data-grid">
+                    <div class="data-item"><span class="data-label">Night Sales</span><span class="data-value">{{ alert.data?.sales?.length || 0 }} transactions</span></div>
+                    <div class="data-item data-highlight"><span class="data-label">Total Amount</span><span class="data-value">₹{{ alert.data?.totalNightSales | number:'1.2-2' }}</span></div>
+                  </div>
+
+                  <div class="action-box action-warning">
+                    <mat-icon>priority_high</mat-icon>
+                    <div>
+                      <strong>Unusual Hour Activity:</strong> Sales occurred between 11 PM - 5 AM when supervision is low. Verify these transactions!
+                      <br><span class="hindi-text" style="color: #666; font-size: 0.9em;">(अजीब समय पर सेल: रात 11 बजे से सुबह 5 बजे के बीच सेल हुई है जब कोई निगरानी नहीं होती। इन बिलों की जांच करें!)</span>
+                    </div>
+                  </div>
+
+                  <h4 class="section-header"><mat-icon>access_time</mat-icon> Night Transactions</h4>
+                  <div class="transaction-list">
+                    <div *ngFor="let sale of alert.data?.sales" class="transaction-item">
+                      <span class="invoice">#{{ sale.invoiceNo }}</span>
+                      <span class="amount">₹{{ sale.amount | number:'1.2-2' }}</span>
+                      <span class="date">{{ sale.time | date:'shortTime' }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- RAPID_RETURNS Alert -->
+                <div *ngIf="alert.type === 'RAPID_RETURNS'" class="alert-data-section">
+                  <div class="action-box action-danger">
+                    <mat-icon>error</mat-icon>
+                    <div>
+                      <strong>Rapid Returns Detected!</strong><br>
+                      Multiple returns by same customer within 24 hours indicate possible return fraud or staff collusion.
+                      <br><span class="hindi-text" style="color: #666; font-size: 0.9em;">(बार-बार रिटर्न! एक ही कस्टमर द्वारा 24 घंटे में कई बार सामान वापस करना रिटर्न फ्रॉड या मिलीभगत का संकेत है।)</span>
+                    </div>
+                  </div>
+
+                  <h4 class="section-header"><mat-icon>repeat</mat-icon> Rapid Returns</h4>
+                  <div *ngFor="let ret of alert.data?.rapidReturns" class="customer-card">
+                    <div class="customer-header">
+                      <mat-icon>person</mat-icon>
+                      <div>
+                        <strong>{{ ret.customer?.name }}</strong>
+                        <span>{{ ret.customer?.phone }}</span>
+                      </div>
+                    </div>
+                    <div class="customer-body">
+                      <mat-chip class="chip-warn">Return Count: {{ ret.returnCount }} in 24hrs</mat-chip>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </mat-expansion-panel>
+          </mat-accordion>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+</div>

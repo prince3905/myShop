@@ -35,12 +35,34 @@ export class SalesService {
     return this.http.get(`${this.baseURL}/api/sales/${id}`);
   }
 
+  updateSale(id: string, data: any): Observable<any> {
+    return this.http.put(`${this.baseURL}/api/sales/${id}`, data);
+  }
+
+  deleteSale(id: string): Observable<any> {
+    return this.http.delete(`${this.baseURL}/api/sales/${id}`);
+  }
+
   getSaleReturns(id: string): Observable<any> {
     return this.http.get(`${this.baseURL}/api/sales/${id}/returns`);
   }
 
   getSaleLedger(id: string): Observable<any> {
     return this.http.get(`${this.baseURL}/api/sales/${id}/ledger`);
+  }
+
+  getSaleAudit(id: string): Observable<any> {
+    return this.http.get(`${this.baseURL}/api/sales/${id}/audit`);
+  }
+
+  getAllSaleAudit(params?: any): Observable<any> {
+    let query = new HttpParams();
+    Object.keys(params || {}).forEach((key) => {
+      const value = params[key];
+      if (value === null || value === undefined || value === "") return;
+      query = query.set(key, String(value));
+    });
+    return this.http.get(`${this.baseURL}/api/sales/audit/all`, { params: query });
   }
 
   getAllSaleReturns(params?: any): Observable<any> {

@@ -61,4 +61,16 @@ export class ProductModelService {
     this.inflightCache.clear();
     return this.http.post(`${this.baseURL}/api/product-models`, payload);
   }
+
+  updateModel(id: string, payload: any): Observable<any> {
+    this.responseCache.clear();
+    this.inflightCache.clear();
+    return this.http.put(`${this.baseURL}/api/product-models/${id}`, payload);
+  }
+
+  deleteModel(id: string): Observable<any> {
+    this.responseCache.clear();
+    this.inflightCache.clear();
+    return this.http.delete(`${this.baseURL}/api/product-models/${id}`);
+  }
 }

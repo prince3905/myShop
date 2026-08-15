@@ -6,6 +6,7 @@ const Product = require("../models/Product");
 const ProductModel = require("../models/ProductModel");
 const ProductVariation = require("../models/ProductVariation");
 const RawMaterial = require("../models/RawMaterial");
+const { logEntityAudit } = require("../utils/entityAudit.service");
 
 const STAFF_ONLY_FILTER = (req) => `${req.user?.role || ""}` === "STAFF";
 const MANAGER_AND_ABOVE = ["SUPER_ADMIN", "ADMIN", "MANAGER"];
@@ -55,28 +56,27 @@ const validateShopMapping = async (req, payload = {}) => {
   let variationDoc = null;
 
   if (mapping.shopCategory) {
-    categoryDoc = await Category.findOne({ _id: mapping.shopCategory, shop: req.shopId });
+    categoryDoc = await Category.findById(mapping.shopCategory);
     if (!categoryDoc) {
-      return { error: "Selected category not found for current shop" };
+      return { error: "Selected category not found" };
     }
   }
 
   if (mapping.shopBrand) {
-    brandDoc = await Brand.findOne({ _id: mapping.shopBrand, shop: req.shopId });
+    brandDoc = await Brand.findById(mapping.shopBrand);
     if (!brandDoc) {
-      return { error: "Selected brand not found for current shop" };
+      return { error: "Selected brand not found" };
     }
   }
 
   if (mapping.shopProduct) {
     productDoc = await Product.findOne({
       _id: mapping.shopProduct,
-      shop: req.shopId,
       isDeleted: { $ne: true },
     }).select("_id category brand name");
 
     if (!productDoc) {
-      return { error: "Selected shop product not found for current shop" };
+      return { error: "Selected shop product not found" };
     }
 
     if (mapping.shopCategory && `${productDoc.category || ""}` !== `${mapping.shopCategory}`) {
@@ -91,12 +91,11 @@ const validateShopMapping = async (req, payload = {}) => {
   if (mapping.shopModel) {
     modelDoc = await ProductModel.findOne({
       _id: mapping.shopModel,
-      shop: req.shopId,
       isDeleted: { $ne: true },
     }).select("_id product name");
 
     if (!modelDoc) {
-      return { error: "Selected shop model not found for current shop" };
+      return { error: "Selected shop model not found" };
     }
 
     if (mapping.shopProduct && `${modelDoc.product || ""}` !== `${mapping.shopProduct}`) {
@@ -107,11 +106,11 @@ const validateShopMapping = async (req, payload = {}) => {
   if (mapping.shopVariation) {
     variationDoc = await ProductVariation.findOne({
       _id: mapping.shopVariation,
-      shop: req.shopId,
-    }).select("_id product model sku sellingPrice attributes");
+      isDeleted: { $ne: true },
+    }).select("_id product model sku attributes sellingPrice");
 
     if (!variationDoc) {
-      return { error: "Selected shop variation not found for current shop" };
+      return { error: "Selected shop variation not found" };
     }
 
     if (mapping.shopProduct && `${variationDoc.product || ""}` !== `${mapping.shopProduct}`) {
@@ -167,8 +166,7 @@ const normalizeMaterialLines = async (req, lines = []) => {
     if (rawMaterialId) {
       const rawMaterialDoc = await RawMaterial.findOne({
         _id: rawMaterialId,
-        shop: req.shopId,
-        isDeleted: false,
+        isDeleted: { $ne: true },
       }).lean();
 
       if (!rawMaterialDoc) {
@@ -260,14 +258,40 @@ exports.createFactoryProduct = async (req, res) => {
 
     const existingProduct = await FactoryProduct.findOne({
       shop: req.shopId,
-      isDeleted: false,
+      isDeleted: { $ne: true },
       name: new RegExp(`^${escapeRegex(payload.name)}$`, "i"),
-    }).select("_id name");
+    }).select("_id name shopVariation");
+    
     if (existingProduct) {
-      return res.status(409).json({ success: false, message: `Factory product "${existingProduct.name}" already exists` });
+      const sameVariation = !payload.shopVariation ? !existingProduct.shopVariation : `${existingProduct.shopVariation || ""}` === `${payload.shopVariation || ""}`;
+      if (sameVariation) {
+        return res.status(409).json({ success: false, message: `Factory product "${existingProduct.name}" already exists` });
+      }
     }
 
     const product = await FactoryProduct.create(payload);
+
+    const matCostPerUnit = (product.standardMaterialLines || []).reduce((sum, line) => {
+      return sum + (Number(line.qtyPerUnit || 0) * Number(line.rate || 0));
+    }, 0);
+    const workerRate = Number(product.workerPieceRate || 0);
+    const labourCost = Number(product.standardLabourCost || 0);
+    const otherCost = Number(product.standardOtherCost || 0);
+    const wasteValue = Number(product.standardWasteValuePerUnit || 0);
+    const calculatedRecipeCost = Number((matCostPerUnit + workerRate + labourCost + otherCost + wasteValue).toFixed(2));
+
+    if (product.shopVariation) {
+      const updatePayload = {};
+      if (Number(product.defaultSellingPrice || 0) > 0) {
+        updatePayload.sellingPrice = Number(product.defaultSellingPrice);
+      }
+      if (calculatedRecipeCost > 0) {
+        updatePayload.costPrice = calculatedRecipeCost;
+      }
+      if (Object.keys(updatePayload).length > 0) {
+        await ProductVariation.findByIdAndUpdate(product.shopVariation, updatePayload);
+      }
+    }
     const populated = await populateFactoryProduct(FactoryProduct.findById(product._id));
 
     return res.status(201).json({ success: true, message: "Factory product added", product: populated });
@@ -285,7 +309,7 @@ exports.getFactoryProducts = async (req, res) => {
 
     const filter = {
       shop: req.shopId,
-      isDeleted: false,
+      isDeleted: { $ne: true },
     };
 
     if (STAFF_ONLY_FILTER(req)) {
@@ -322,7 +346,7 @@ exports.getFactoryProductOptions = async (req, res) => {
 
     const filter = {
       shop: req.shopId,
-      isDeleted: false,
+      isDeleted: { $ne: true },
     };
 
     const { search, active } = req.query || {};
@@ -355,7 +379,7 @@ exports.getFactoryProductSummary = async (req, res) => {
 
     const baseMatch = {
       shop: req.shopId,
-      isDeleted: false,
+      isDeleted: { $ne: true },
     };
 
     if (STAFF_ONLY_FILTER(req)) {
@@ -410,10 +434,25 @@ exports.updateFactoryProduct = async (req, res) => {
       return res.status(403).json({ success: false, message: "You do not have permission to update products" });
     }
 
-    const product = await FactoryProduct.findOne({ _id: req.params.id, shop: req.shopId, isDeleted: false });
+    const product = await FactoryProduct.findOne({ _id: req.params.id, shop: req.shopId, isDeleted: { $ne: true } });
     if (!product) {
       return res.status(404).json({ success: false, message: "Factory product not found" });
     }
+
+    // Capture Before State for Detailed Recipe & Cost Diff Logging
+    const oldWorkerRate = Number(product.workerPieceRate || 0);
+    const oldMaterialMap = new Map();
+    (product.standardMaterialLines || []).forEach((line) => {
+      const name = `${line.materialName || "Material"}`.trim();
+      oldMaterialMap.set(name, {
+        qty: Number(line.qtyPerUnit || 0),
+        unit: `${line.unitLabel || "PCS"}`.toUpperCase(),
+      });
+    });
+    const oldMatCost = (product.standardMaterialLines || []).reduce((sum, line) => {
+      return sum + (Number(line.qtyPerUnit || 0) * Number(line.rate || 0));
+    }, 0);
+    const oldCalculatedCost = Number((oldMatCost + oldWorkerRate + Number(product.standardLabourCost || 0) + Number(product.standardOtherCost || 0) + Number(product.standardWasteValuePerUnit || 0)).toFixed(2));
 
     product.name = `${req.body?.name ?? product.name ?? ""}`.trim();
     product.code = `${req.body?.code ?? product.code ?? ""}`.trim();
@@ -484,16 +523,146 @@ exports.updateFactoryProduct = async (req, res) => {
     const existingProduct = await FactoryProduct.findOne({
       _id: { $ne: product._id },
       shop: req.shopId,
-      isDeleted: false,
+      isDeleted: { $ne: true },
       name: new RegExp(`^${escapeRegex(product.name)}$`, "i"),
-    }).select("_id name");
+    }).select("_id name shopVariation");
     if (existingProduct) {
-      return res.status(409).json({ success: false, message: `Factory product "${existingProduct.name}" already exists` });
+      const sameVariation = !product.shopVariation ? !existingProduct.shopVariation : `${existingProduct.shopVariation || ""}` === `${product.shopVariation || ""}`;
+      if (sameVariation) {
+        return res.status(409).json({ success: false, message: `Factory product "${existingProduct.name}" already exists` });
+      }
     }
 
     await product.save();
+
+    const matCostPerUnit = (product.standardMaterialLines || []).reduce((sum, line) => {
+      return sum + (Number(line.qtyPerUnit || 0) * Number(line.rate || 0));
+    }, 0);
+    const workerRate = Number(product.workerPieceRate || 0);
+    const labourCost = Number(product.standardLabourCost || 0);
+    const otherCost = Number(product.standardOtherCost || 0);
+    const wasteValue = Number(product.standardWasteValuePerUnit || 0);
+    const calculatedRecipeCost = Number((matCostPerUnit + workerRate + labourCost + otherCost + wasteValue).toFixed(2));
+
+    if (product.shopVariation) {
+      const updatePayload = {};
+      if (Number(product.defaultSellingPrice || 0) > 0) {
+        updatePayload.sellingPrice = Number(product.defaultSellingPrice);
+      }
+      if (calculatedRecipeCost > 0) {
+        updatePayload.costPrice = calculatedRecipeCost;
+      }
+      if (Object.keys(updatePayload).length > 0) {
+        await ProductVariation.findByIdAndUpdate(product.shopVariation, updatePayload);
+      }
+    }
+
+    // Auto-sync ONLY PENDING (unapproved) StaffDailyWork entries for this factory product
+    // Approved historical entries remain permanently locked for financial audit integrity
+    const StaffDailyWork = require("../models/StaffDailyWork");
+    const dailyWorks = await StaffDailyWork.find({
+      shop: req.shopId,
+      factoryProduct: product._id,
+      verificationStatus: "PENDING",
+      isDeleted: { $ne: true },
+    });
+
+    for (const dw of dailyWorks) {
+      const units = Number(dw.unitsCompleted || 0);
+      dw.pieceRate = product.workerPieceRate;
+      dw.earnedAmount = units * product.workerPieceRate;
+
+      const qty = units;
+      const materialCost = (product.standardMaterialLines || []).reduce((sum, line) => {
+        return sum + (Number(line.qtyPerUnit || 0) * qty * Number(line.rate || 0));
+      }, 0);
+      const otherCost = Number(product.standardOtherCost || 0) * qty;
+      const workerCost = dw.earnedAmount;
+      dw.actualBatchCost = materialCost + workerCost + otherCost;
+      dw.actualCostPerUnit = qty > 0 ? dw.actualBatchCost / qty : 0;
+
+      await dw.save();
+    }
+
+    // Compute Exact Before vs After Recipe & Cost Differences
+    const recipeDiffs = [];
+
+    if (oldWorkerRate !== product.workerPieceRate) {
+      recipeDiffs.push(`Worker Rate: ₹${oldWorkerRate} ➔ ₹${product.workerPieceRate}`);
+    }
+
+    const newMaterialMap = new Map();
+    (product.standardMaterialLines || []).forEach((line) => {
+      const name = `${line.materialName || "Material"}`.trim();
+      const newQty = Number(line.qtyPerUnit || 0);
+      const unit = `${line.unitLabel || "PCS"}`.toUpperCase();
+      newMaterialMap.set(name, { qty: newQty, unit });
+
+      const oldEntry = oldMaterialMap.get(name);
+      if (!oldEntry) {
+        recipeDiffs.push(`Added ${name}: ${newQty} ${unit}`);
+      } else if (oldEntry.qty !== newQty) {
+        recipeDiffs.push(`${name}: ${oldEntry.qty} ${oldEntry.unit} ➔ ${newQty} ${unit}`);
+      }
+    });
+
+    oldMaterialMap.forEach((oldEntry, name) => {
+      if (!newMaterialMap.has(name)) {
+        recipeDiffs.push(`Removed ${name} (was ${oldEntry.qty} ${oldEntry.unit})`);
+      }
+    });
+
+    if (oldCalculatedCost !== calculatedRecipeCost) {
+      recipeDiffs.push(`Box Cost: ₹${oldCalculatedCost} ➔ ₹${calculatedRecipeCost}`);
+    }
+
+    const diffSummary = recipeDiffs.length > 0
+      ? `Updated ${product.name} [${recipeDiffs.join(" | ")}]`
+      : `Updated ${product.name} (Recipe unchanged)`;
+
+    const User = require("../models/User");
+    const matSummary = (product.standardMaterialLines || [])
+      .map((l) => `${l.materialName || "Material"}: ${l.qtyPerUnit} ${l.unitLabel || "PCS"}`)
+      .join(" | ");
+
+    await Promise.all([
+      logEntityAudit({
+        shop: req.shopId,
+        entityType: "FACTORY_PRODUCT",
+        entityId: product._id,
+        action: "UPDATE_FACTORY_PRODUCT_RECIPE",
+        actor: {
+          _id: req.user?._id,
+          name: req.user?.pFname || req.user?.email || "Admin",
+          role: req.user?.role,
+        },
+        meta: {
+          productName: product.name,
+          workerPieceRate: product.workerPieceRate,
+          calculatedRecipeCost,
+          materialSummary: matSummary,
+          diffSummary: diffSummary,
+          updatedAt: new Date(),
+        },
+      }),
+      User.findByIdAndUpdate(req.user._id, {
+        $push: {
+          auditLogs: {
+            $each: [
+              {
+                action: "UPDATE_FACTORY_PRODUCT_RECIPE",
+                details: diffSummary,
+                createdAt: new Date(),
+              },
+            ],
+            $slice: -100,
+          },
+        },
+      }),
+    ]);
+
     const populated = await populateFactoryProduct(FactoryProduct.findById(product._id));
-    return res.json({ success: true, message: "Factory product updated", product: populated });
+    return res.json({ success: true, message: "Factory product updated and daily work rates synced", product: populated });
   } catch (error) {
     logger.error("Update Factory Product Error:", error);
     return res.status(500).json({ success: false, message: "Failed to update factory product" });
@@ -511,7 +680,7 @@ exports.deleteFactoryProduct = async (req, res) => {
     }
 
     const product = await FactoryProduct.findOneAndUpdate(
-      { _id: req.params.id, shop: req.shopId, isDeleted: false },
+      { _id: req.params.id, shop: req.shopId, isDeleted: { $ne: true } },
       { $set: { isDeleted: true, updatedBy: req.user._id } },
       { new: true },
     );

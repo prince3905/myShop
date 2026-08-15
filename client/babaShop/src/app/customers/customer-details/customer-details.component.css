@@ -1,3 +1,68 @@
+/* ── Hero Bar ── */
+.customer-hero-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  background: linear-gradient(135deg, #ef4444, #f97316);
+  border-radius: 18px;
+  padding: 20px 24px;
+  margin-bottom: 20px;
+  color: #fff;
+}
+
+.hero-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.hero-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.hero-sub {
+  margin: 4px 0 0;
+  font-size: 12px;
+  opacity: 0.9;
+  color: rgba(255,255,255,0.9);
+}
+
+.hero-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.back-btn {
+  background: rgba(255,255,255,0.15) !important;
+  border: 1px solid rgba(255,255,255,0.3) !important;
+  color: #fff !important;
+  min-width: 44px;
+  height: 44px;
+  border-radius: 10px;
+}
+
+.back-btn .mat-icon {
+  color: #fff;
+}
+
+.edit-btn {
+  background: rgba(255,255,255,0.15) !important;
+  border: 1px solid rgba(255,255,255,0.3) !important;
+  color: #fff !important;
+  height: 44px;
+  border-radius: 10px;
+  font-weight: 700;
+}
+
+.edit-btn .mat-icon {
+  color: #fff;
+}
+
+/* ── Spacing ── */
 .mb-3 {
   margin-bottom: 0.75rem;
 }
@@ -6,8 +71,9 @@
   margin-top: 1rem;
 }
 
+/* ── Info Section ── */
 .info-section {
-  padding: 10px;
+  padding: 16px;
 }
 
 .info-section h5 {
@@ -25,17 +91,83 @@
 }
 
 .info-table th {
-  padding: 10px;
+  padding: 12px;
   text-align: left;
-  font-weight: 500;
-  color: #666;
+  font-weight: 600;
+  color: #64748b;
   width: 40%;
 }
 
 .info-table td {
-  padding: 10px;
+  padding: 12px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+/* Datepicker Toggle */
+.date-filter-section .mat-datepicker-toggle {
+  color: #7c3aed;
+}
+
+.date-filter-section .mat-mdc-form-field-subscript-wrapper {
+  display: none;
+}
+
+.date-filter-section .filter-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.date-filter-section .date-inputs {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.date-filter-section .date-field {
+  min-width: 160px;
+}
+
+.date-filter-section .date-field .mat-mdc-form-field-subscript-wrapper {
+  display: none;
+}
+
+.date-filter-section .filter-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.date-filter-section .filter-actions button {
+  min-height: 42px;
+  border-radius: 10px;
+  font-size: 13px;
   font-weight: 600;
-  color: #333;
+}
+
+.filtered-summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  border-radius: 10px;
+  border: 1px solid #fcd34d;
+}
+
+.filtered-summary .summary-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #92400e;
+}
+
+.filtered-summary .summary-amount {
+  font-size: 16px;
+  font-weight: 800;
+  color: #b45309;
 }
 
 .summary-cards {

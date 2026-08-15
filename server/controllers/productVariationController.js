@@ -63,6 +63,7 @@ exports.createVariation = async (req, res) => {
       discount,
       images,
       isActive,
+      isQuickAdd,
     } = req.body;
 
     const productExists = await Product.findOne({ _id: product, shop: req.shopId });
@@ -79,6 +80,18 @@ exports.createVariation = async (req, res) => {
       });
     }
 
+    const existingWithModel = await ProductVariation.findOne({
+      shop: req.shopId,
+      product,
+      model,
+    });
+    if (existingWithModel) {
+      return res.status(409).json({
+        success: false,
+        message: "Variation already exists for this model. Please edit existing variation.",
+      });
+    }
+
     const variation = await ProductVariation.create({
       product,
       model,
@@ -91,6 +104,7 @@ exports.createVariation = async (req, res) => {
       discount,
       images,
       isActive,
+      isQuickAdd,
       shop: req.shopId,
     });
 
@@ -142,19 +156,31 @@ exports.createVariation = async (req, res) => {
 ========================= */
 exports.getVariations = async (req, res) => {
   try {
-    const { product, model, sku, barcode, isActive, limit = 100, skip = 0, sort = "-createdAt" } = req.query;
+    const { product, model, sku, search, barcode, isActive, isQuickAdd, limit = 100, skip = 0, sort = "-createdAt" } = req.query;
     const filter = isSuperAdminGlobal(req) ? {} : { shop: req.shopId };
 
     if (product) filter.product = product;
     if (model) filter.model = model;
-    if (sku) filter.sku = { $regex: sku, $options: "i" };
+
+    const searchTerm = `${search || sku || ""}`.trim();
+    if (searchTerm) {
+      const regex = new RegExp(escapeRegex(searchTerm), "i");
+      filter.$or = [
+        { sku: regex },
+        { barcode: regex },
+        { "attributes.size": regex },
+        { "attributes.color": regex },
+        { "attributes.material": regex },
+      ];
+    }
     if (barcode) filter.barcode = { $regex: barcode, $options: "i" };
     if (isActive === "true") filter.isActive = true;
     if (isActive === "false") filter.isActive = false;
+    if (isQuickAdd === "true") filter.isQuickAdd = true;
 
     const [variations, total] = await Promise.all([
       ProductVariation.find(filter)
-        .select("product model sku barcode attributes quantity costPrice sellingPrice isActive createdAt")
+        .select("product model sku barcode attributes quantity costPrice sellingPrice isActive isQuickAdd createdAt")
         .populate("product", "name")
         .populate("model", "name")
         .sort(sort)
@@ -242,6 +268,8 @@ exports.updateVariation = async (req, res) => {
       "discount",
       "images",
       "isActive",
+      "model",
+      "isQuickAdd",
     ];
     const updateData = {};
 

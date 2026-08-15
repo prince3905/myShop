@@ -85,7 +85,17 @@ export class AuthInterceptor implements HttpInterceptor {
       if (backendMessage.includes('read-only')) {
         return backendMessage;
       }
+      if (backendMessage.includes('phone') || backendMessage.includes('Phone')) {
+        return 'Invalid phone number. Use 10 digit number.';
+      }
       return backendMessage;
+    }
+
+    const errors = err?.error?.errors;
+    if (Array.isArray(errors) && errors.length > 0) {
+      const firstError = errors[0];
+      if (firstError?.msg) return firstError.msg;
+      if (firstError?.path === 'customerPhone') return 'Invalid phone number. Use 10 digit number.';
     }
 
     if (err.status === 0) {

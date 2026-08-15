@@ -1,245 +1,348 @@
-<div class="main-content">
+<div class="main-content returns-page">
   <div class="container-fluid">
-    <div class="card returns-card">
-      <div class="card-header card-header-danger">
-        <h4 class="card-title">Customer Return Console</h4>
-        <p class="card-category">Customer se maal wapas lena, stock reverse karna, aur refund/credit track karna</p>
-      </div>
-      <div class="card-body">
-        <div class="load-row">
-          <mat-form-field appearance="outline" class="invoice-field">
-            <mat-label>Sale Invoice</mat-label>
-            <input matInput [(ngModel)]="invoiceId" placeholder="Enter invoice no or sale id" (keyup.enter)="loadSale()" />
-          </mat-form-field>
-          <button mat-raised-button color="primary" (click)="loadSale()" [disabled]="loading">
-            Load Invoice
-          </button>
-        </div>
 
-        <div class="loading-wrap" *ngIf="loading">
-          <mat-spinner diameter="36"></mat-spinner>
-        </div>
-
-        <div class="empty-state" *ngIf="!loading && !sale">
-          <mat-icon>assignment_return</mat-icon>
-          <h5>No Invoice Loaded</h5>
-          <p>
-            Customer return dekhne ke liye Sales List me kisi invoice ka
-            <strong>Return from Customer</strong> button click karo, ya upar invoice id daal kar
-            <strong>Load Invoice</strong> karo.
-          </p>
-          <button mat-stroked-button color="primary" routerLink="/sale-list">Go to Sales List</button>
-        </div>
-
-        <ng-container *ngIf="sale && !loading">
-          <div class="summary-chips">
-            <div class="chip">Invoice: {{ sale?.invoiceNo || sale?._id }}</div>
-            <div class="chip">Customer: {{ sale?.customerName || 'Walk-in' }}</div>
-            <div class="chip">Sale Total: Rs {{ sale?.totalAmount | number:'1.2-2' }}</div>
-            <div class="chip">Returned Qty: {{ sale?.returnedQuantity || 0 }}</div>
-            <div class="chip">Returned Amount: Rs {{ sale?.returnedAmount | number:'1.2-2' }}</div>
-          </div>
-
-          <div class="lock-banner" *ngIf="!hasAnyReturnableItem()">
-            Is invoice ka sara maal customer se wapas aa chuka hai. Naya customer return nahi ban sakta.
-          </div>
-
-          <div class="table-responsive">
-            <table class="table return-table">
-              <thead>
-                <tr>
-                  <th>Item</th>
-                  <th>SKU</th>
-                  <th>Sold</th>
-                  <th>Returned</th>
-                  <th>Remaining</th>
-                  <th>Price</th>
-                  <th>Customer Return Qty</th>
-                  <th>Reason</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let it of sale?.items || []" [class.row-locked]="isItemReturnClosed(it)">
-                  <td>{{ it?.itemName || '-' }} <span class="sub">{{ it?.model || '-' }}</span></td>
-                  <td>{{ it?.variationSku || '-' }}</td>
-                  <td>{{ it?.quantity || 0 }}</td>
-                  <td>{{ it?.returnedQuantity || 0 }}</td>
-                  <td>{{ it?.remainingQty || 0 }}</td>
-                  <td>Rs {{ it?.sellingPrice || 0 | number:'1.2-2' }}</td>
-                  <td class="qty-col">
-                    <mat-form-field appearance="outline">
-                      <input
-                        matInput
-                        type="number"
-                        min="0"
-                        [max]="it?.remainingQty || 0"
-                        [disabled]="isItemReturnClosed(it)"
-                        [(ngModel)]="it.returnQty"
-                        (ngModelChange)="onReturnQtyChange(it)" />
-                    </mat-form-field>
-                  </td>
-                  <td>
-                    <mat-form-field appearance="outline">
-                      <mat-select [(ngModel)]="it.returnReason" [disabled]="isItemReturnClosed(it)">
-                        <mat-option *ngFor="let reason of reasons" [value]="reason">{{ reason }}</mat-option>
-                      </mat-select>
-                    </mat-form-field>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <div class="submit-row">
-            <mat-form-field appearance="outline" class="small-field">
-              <mat-label>Refund to Customer</mat-label>
-              <mat-select [(ngModel)]="refundMethod">
-                <mat-option *ngFor="let method of refundMethods" [value]="method">{{ method }}</mat-option>
-              </mat-select>
-            </mat-form-field>
-
-            <mat-form-field appearance="outline" class="small-field">
-              <mat-label>Refund Amount to Customer</mat-label>
-              <input
-                matInput
-                type="number"
-                min="0"
-                [max]="getRefundableMax()"
-                [(ngModel)]="refundAmount"
-                (input)="onRefundAmountInput(refundAmount)" />
-            </mat-form-field>
-
-            <mat-form-field appearance="outline" class="note-field">
-              <mat-label>Note</mat-label>
-              <input matInput [(ngModel)]="note" appCapitalizeFirst />
-            </mat-form-field>
-
-            <div class="total-box">Customer Return Total: Rs {{ calculateReturnTotal() | number:'1.2-2' }}</div>
-            <div class="total-box info">Due Adjust: Rs {{ getDueAdjustPreview() | number:'1.2-2' }}</div>
-            <div class="total-box info">Max Refund to Customer: Rs {{ getRefundableMax() | number:'1.2-2' }}</div>
-            <div class="total-box info">Customer Credit Note: Rs {{ getCreditPreview() | number:'1.2-2' }}</div>
-
-            <button mat-raised-button color="primary" [disabled]="submitting || !hasAnyReturnableItem()" (click)="submitReturn()">
-              Return from Customer
-            </button>
-          </div>
-
-          <div class="history-block">
-            <h5>Customer Return History</h5>
-            <div class="summary-line" *ngIf="returnsSummary">
-              Count: {{ returnsSummary?.count || 0 }} |
-              Qty: {{ returnsSummary?.totalReturnedQty || 0 }} |
-              Amount: Rs {{ returnsSummary?.totalReturnedAmount || 0 | number:'1.2-2' }} |
-              Refunded to Customer: Rs {{ returnsSummary?.totalRefundedAmount || 0 | number:'1.2-2' }} |
-              Customer Credit: Rs {{ returnsSummary?.totalCreditAmount || 0 | number:'1.2-2' }}
-            </div>
-            <div class="table-responsive">
-              <table class="table history-table">
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>Qty</th>
-                    <th>Total</th>
-                    <th>Due Adj</th>
-                    <th>Refund to Customer</th>
-                    <th>Credit</th>
-                    <th>Method</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let row of returns">
-                    <td>{{ row?.createdAt | date:'dd MMM yyyy, hh:mm a' }}</td>
-                    <td>{{ row?.totalQuantity || 0 }}</td>
-                    <td>Rs {{ row?.totalAmount || 0 | number:'1.2-2' }}</td>
-                    <td>Rs {{ row?.dueAdjustedAmount || 0 | number:'1.2-2' }}</td>
-                    <td>Rs {{ row?.refundAmount || 0 | number:'1.2-2' }}</td>
-                    <td>Rs {{ row?.creditAmount || 0 | number:'1.2-2' }}</td>
-                    <td>{{ row?.refundMethod || '-' }}</td>
-                  </tr>
-                  <tr *ngIf="(returns || []).length === 0">
-                    <td colspan="7" class="empty">No customer returns yet</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <div class="history-block">
-            <h5>Invoice Ledger</h5>
-            <div class="table-responsive">
-              <table class="table history-table">
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>Type</th>
-                    <th>Amount</th>
-                    <th>Method</th>
-                    <th>Outstanding</th>
-                    <th>Note</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let row of saleLedger">
-                    <td>{{ row?.createdAt | date:'dd MMM yyyy, hh:mm a' }}</td>
-                    <td>{{ row?.type || '-' }}</td>
-                    <td>Rs {{ row?.amount || 0 | number:'1.2-2' }}</td>
-                    <td>{{ row?.paymentMethod || '-' }}</td>
-                    <td>Rs {{ row?.balanceAfterTransaction || 0 | number:'1.2-2' }}</td>
-                    <td>{{ row?.note || '-' }}</td>
-                  </tr>
-                  <tr *ngIf="(saleLedger || []).length === 0">
-                    <td colspan="6" class="empty">No ledger entries</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </ng-container>
-
-        <div class="history-block">
-          <h5>All Customer Returns</h5>
-          <div class="loading-wrap" *ngIf="returnsLoading">
-            <mat-spinner diameter="28"></mat-spinner>
-          </div>
-          <div class="table-responsive" *ngIf="!returnsLoading">
-            <table class="table history-table">
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Invoice</th>
-                  <th>Customer</th>
-                  <th>Qty</th>
-                  <th>Total</th>
-                  <th>Due Adj</th>
-                  <th>Refund to Customer</th>
-                  <th>Credit</th>
-                  <th>Method</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let row of allReturns">
-                  <td>{{ row?.createdAt | date:'dd MMM yyyy, hh:mm a' }}</td>
-                  <td>{{ row?.sale?.invoiceNo || row?.sale?._id || '-' }}</td>
-                  <td>{{ row?.customerName || 'Walk-in' }}</td>
-                  <td>{{ row?.totalQuantity || 0 }}</td>
-                  <td>Rs {{ row?.totalAmount || 0 | number:'1.2-2' }}</td>
-                  <td>Rs {{ row?.dueAdjustedAmount || 0 | number:'1.2-2' }}</td>
-                  <td>Rs {{ row?.refundAmount || 0 | number:'1.2-2' }}</td>
-                  <td>Rs {{ row?.creditAmount || 0 | number:'1.2-2' }}</td>
-                  <td>{{ row?.refundMethod || '-' }}</td>
-                  <td>
-                    <button mat-stroked-button color="primary" (click)="openReturnFromList(row)">Open</button>
-                  </td>
-                </tr>
-                <tr *ngIf="(allReturns || []).length === 0">
-                  <td colspan="10" class="empty">No customer returns found</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
+    <!-- ── Hero Header ── -->
+    <div class="returns-hero-bar">
+      <div class="hero-left">
+        <h2 class="hero-title">Customer Return Console</h2>
+        <p class="hero-sub">Customer se maal wapas lena, stock reverse karna, aur refund/credit track karna</p>
       </div>
     </div>
+
+    <!-- ── Load Invoice Section ── -->
+    <div class="load-panel">
+      <div class="load-panel-header">
+        <mat-icon>receipt_long</mat-icon>
+        <span>Load Invoice</span>
+      </div>
+      <div class="load-row">
+        <mat-form-field appearance="outline" class="invoice-field">
+          <mat-label>Sale Invoice</mat-label>
+          <input matInput [(ngModel)]="invoiceId" placeholder="Enter invoice no or sale id" (keyup.enter)="loadSale()" />
+          <mat-icon matPrefix>search</mat-icon>
+        </mat-form-field>
+        <button mat-raised-button color="warn" (click)="loadSale()" [disabled]="loading">
+          <mat-icon>{{ loading ? 'hourglass_top' : 'download' }}</mat-icon>
+          Load Invoice
+        </button>
+        <button mat-stroked-button routerLink="/sale-list">
+          <mat-icon>list</mat-icon> Go to Sales List
+        </button>
+      </div>
+    </div>
+
+    <!-- ── Loading ── -->
+    <div class="loading-wrap" *ngIf="loading">
+      <mat-spinner diameter="32"></mat-spinner> Loading invoice...
+    </div>
+
+    <!-- ── Empty State ── -->
+    <div class="empty-state" *ngIf="!loading && !sale">
+      <mat-icon>assignment_return</mat-icon>
+      <h5>No Invoice Loaded</h5>
+      <p>
+        Customer return dekhne ke liye Sales List me kisi invoice ka
+        <strong>Return from Customer</strong> button click karo, ya upar invoice id daal kar
+        <strong>Load Invoice</strong> karo.
+      </p>
+    </div>
+
+    <!-- ── Sale Details + Return Form ── -->
+    <ng-container *ngIf="sale && !loading">
+
+      <!-- ── Summary Chips ── -->
+      <div class="summary-kpi-row">
+        <div class="kpi-card invoice">
+          <div class="kpi-icon"><mat-icon>receipt</mat-icon></div>
+          <div class="kpi-body">
+            <div class="kpi-label">Invoice</div>
+            <div class="kpi-value small">{{ sale?.invoiceNo || sale?._id }}</div>
+          </div>
+        </div>
+        <div class="kpi-card customer">
+          <div class="kpi-icon"><mat-icon>person</mat-icon></div>
+          <div class="kpi-body">
+            <div class="kpi-label">Customer</div>
+            <div class="kpi-value small">{{ sale?.customerName || 'Walk-in' }}</div>
+          </div>
+        </div>
+        <div class="kpi-card total">
+          <div class="kpi-icon"><mat-icon>payments</mat-icon></div>
+          <div class="kpi-body">
+            <div class="kpi-label">Sale Total</div>
+            <div class="kpi-value">₹{{ sale?.totalAmount | number:'1.0-0' }}</div>
+          </div>
+        </div>
+        <div class="kpi-card returned">
+          <div class="kpi-icon"><mat-icon>undo</mat-icon></div>
+          <div class="kpi-body">
+            <div class="kpi-label">Returned Qty</div>
+            <div class="kpi-value">{{ sale?.returnedQuantity || 0 }}</div>
+          </div>
+        </div>
+        <div class="kpi-card refund">
+          <div class="kpi-icon"><mat-icon>currency_exchange</mat-icon></div>
+          <div class="kpi-body">
+            <div class="kpi-label">Returned Amount</div>
+            <div class="kpi-value">₹{{ sale?.returnedAmount | number:'1.0-0' }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Lock Banner ── -->
+      <div class="lock-banner" *ngIf="!hasAnyReturnableItem()">
+        <mat-icon>lock</mat-icon>
+        Is invoice ka sara maal customer se wapas aa chuka hai. Naya customer return nahi ban sakta.
+      </div>
+
+      <!-- ── Return Table ── -->
+      <div class="table-panel">
+        <div class="table-header-row">
+          <span class="panel-title">Return Items</span>
+          <span class="panel-count">{{ (sale?.items || []).length }} items</span>
+        </div>
+
+        <div class="table-responsive">
+          <table class="return-table">
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th>SKU</th>
+                <th>Sold</th>
+                <th>Returned</th>
+                <th>Remaining</th>
+                <th>Price</th>
+                <th>Return Qty</th>
+                <th>Reason</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let it of sale?.items || []" [class.row-locked]="isItemReturnClosed(it)">
+                <td>
+                  <span class="item-name">{{ it?.itemName || '-' }}</span>
+                  <span class="item-sub">{{ it?.model || '-' }}</span>
+                </td>
+                <td class="mono">{{ it?.variationSku || '-' }}</td>
+                <td class="center">{{ it?.quantity || 0 }}</td>
+                <td class="center">{{ it?.returnedQuantity || 0 }}</td>
+                <td class="center">
+                  <span class="remaining-badge" [class.zero]="(it?.remainingQty || 0) === 0">{{ it?.remainingQty || 0 }}</span>
+                </td>
+                <td class="mono">₹{{ it?.sellingPrice || 0 | number:'1.0-0' }}</td>
+                <td class="qty-col">
+                  <mat-form-field appearance="outline">
+                    <input
+                      matInput
+                      type="number"
+                      min="0"
+                      [max]="it?.remainingQty || 0"
+                      [disabled]="isItemReturnClosed(it)"
+                      [(ngModel)]="it.returnQty"
+                      (ngModelChange)="onReturnQtyChange(it)" />
+                  </mat-form-field>
+                </td>
+                <td>
+                  <mat-form-field appearance="outline">
+                    <mat-select [(ngModel)]="it.returnReason" [disabled]="isItemReturnClosed(it)">
+                      <mat-option *ngFor="let reason of reasons" [value]="reason">{{ reason }}</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── Submit Row ── -->
+      <div class="submit-panel">
+        <div class="submit-grid">
+          <mat-form-field appearance="outline" class="submit-field">
+            <mat-label>Refund Method</mat-label>
+            <mat-select [(ngModel)]="refundMethod">
+              <mat-option *ngFor="let method of refundMethods" [value]="method">{{ method }}</mat-option>
+            </mat-select>
+            <mat-icon matPrefix>payments</mat-icon>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="submit-field">
+            <mat-label>Refund Amount</mat-label>
+            <input
+              matInput
+              type="number"
+              min="0"
+              [max]="getRefundableMax()"
+              [(ngModel)]="refundAmount"
+              (input)="onRefundAmountInput(refundAmount)" />
+            <mat-icon matPrefix>currency_rupee</mat-icon>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="submit-field note">
+            <mat-label>Note</mat-label>
+            <input matInput [(ngModel)]="note" appCapitalizeFirst />
+            <mat-icon matPrefix>notes</mat-icon>
+          </mat-form-field>
+        </div>
+
+        <div class="summary-row">
+          <div class="summary-card highlight">
+            <span class="summary-label">Customer Return Total</span>
+            <span class="summary-value">₹{{ calculateReturnTotal() | number:'1.2-2' }}</span>
+          </div>
+          <div class="summary-card">
+            <span class="summary-label">Due Adjust</span>
+            <span class="summary-value">₹{{ getDueAdjustPreview() | number:'1.2-2' }}</span>
+          </div>
+          <div class="summary-card">
+            <span class="summary-label">Max Refund to Customer</span>
+            <span class="summary-value">₹{{ getRefundableMax() | number:'1.2-2' }}</span>
+          </div>
+          <div class="summary-card">
+            <span class="summary-label">Customer Credit Note</span>
+            <span class="summary-value">₹{{ getCreditPreview() | number:'1.2-2' }}</span>
+          </div>
+          <button mat-raised-button color="warn" class="submit-btn" [disabled]="submitting || !hasAnyReturnableItem()" (click)="submitReturn()">
+            <mat-icon>assignment_return</mat-icon>
+            Return from Customer
+          </button>
+        </div>
+      </div>
+
+      <!-- ── Return History ── -->
+      <div class="history-panel" *ngIf="returnsSummary || (returns || []).length > 0">
+        <div class="panel-header">
+          <mat-icon>history</mat-icon>
+          <span>Customer Return History</span>
+        </div>
+
+        <div class="history-summary" *ngIf="returnsSummary">
+          <div class="hist-chip">Count: {{ returnsSummary?.count || 0 }}</div>
+          <div class="hist-chip">Qty: {{ returnsSummary?.totalReturnedQty || 0 }}</div>
+          <div class="hist-chip">Amount: ₹{{ returnsSummary?.totalReturnedAmount || 0 | number:'1.0-0' }}</div>
+          <div class="hist-chip">Refunded: ₹{{ returnsSummary?.totalRefundedAmount || 0 | number:'1.0-0' }}</div>
+          <div class="hist-chip">Credit: ₹{{ returnsSummary?.totalCreditAmount || 0 | number:'1.0-0' }}</div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="history-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Qty</th>
+                <th>Total</th>
+                <th>Due Adj</th>
+                <th>Refund</th>
+                <th>Credit</th>
+                <th>Method</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let row of returns">
+                <td class="date-cell">{{ row?.createdAt | date:'dd MMM yyyy, hh:mm a' }}</td>
+                <td class="center">{{ row?.totalQuantity || 0 }}</td>
+                <td class="mono">₹{{ row?.totalAmount || 0 | number:'1.2-2' }}</td>
+                <td class="mono">₹{{ row?.dueAdjustedAmount || 0 | number:'1.2-2' }}</td>
+                <td class="mono">₹{{ row?.refundAmount || 0 | number:'1.2-2' }}</td>
+                <td class="mono">₹{{ row?.creditAmount || 0 | number:'1.2-2' }}</td>
+                <td><span class="method-badge">{{ row?.refundMethod || '-' }}</span></td>
+              </tr>
+              <tr *ngIf="(returns || []).length === 0">
+                <td colspan="7" class="empty-row">No customer returns yet</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── Invoice Ledger ── -->
+      <div class="history-panel">
+        <div class="panel-header">
+          <mat-icon>account_balance</mat-icon>
+          <span>Invoice Ledger</span>
+        </div>
+
+        <div class="table-responsive">
+          <table class="history-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Amount</th>
+                <th>Method</th>
+                <th>Outstanding</th>
+                <th>Note</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let row of saleLedger">
+                <td class="date-cell">{{ row?.createdAt | date:'dd MMM yyyy, hh:mm a' }}</td>
+                <td><span class="type-badge" [ngClass]="row?.type?.toLowerCase()">{{ row?.type || '-' }}</span></td>
+                <td class="mono">₹{{ row?.amount || 0 | number:'1.2-2' }}</td>
+                <td>{{ row?.paymentMethod || '-' }}</td>
+                <td class="mono">₹{{ row?.balanceAfterTransaction || 0 | number:'1.2-2' }}</td>
+                <td>{{ row?.note || '-' }}</td>
+              </tr>
+              <tr *ngIf="(saleLedger || []).length === 0">
+                <td colspan="6" class="empty-row">No ledger entries</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </ng-container>
+
+    <!-- ── All Returns ── -->
+    <div class="all-returns-panel">
+      <div class="panel-header">
+        <mat-icon>list_alt</mat-icon>
+        <span>All Customer Returns</span>
+      </div>
+
+      <div class="loading-wrap" *ngIf="returnsLoading">
+        <mat-spinner diameter="28"></mat-spinner> Loading returns...
+      </div>
+
+      <div class="table-responsive" *ngIf="!returnsLoading">
+        <table class="all-returns-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Invoice</th>
+              <th>Customer</th>
+              <th>Qty</th>
+              <th>Total</th>
+              <th>Due Adj</th>
+              <th>Refund</th>
+              <th>Credit</th>
+              <th>Method</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let row of allReturns">
+              <td class="date-cell">{{ row?.createdAt | date:'dd MMM yyyy' }}</td>
+              <td class="mono invoice-cell">{{ row?.sale?.invoiceNo || row?.sale?._id || '-' }}</td>
+              <td>{{ row?.customerName || 'Walk-in' }}</td>
+              <td class="center">{{ row?.totalQuantity || 0 }}</td>
+              <td class="mono">₹{{ row?.totalAmount || 0 | number:'1.2-2' }}</td>
+              <td class="mono">₹{{ row?.dueAdjustedAmount || 0 | number:'1.2-2' }}</td>
+              <td class="mono">₹{{ row?.refundAmount || 0 | number:'1.2-2' }}</td>
+              <td class="mono">₹{{ row?.creditAmount || 0 | number:'1.2-2' }}</td>
+              <td><span class="method-badge">{{ row?.refundMethod || '-' }}</span></td>
+              <td>
+                <button mat-stroked-button color="primary" class="open-btn" (click)="openReturnFromList(row)">
+                  <mat-icon>open_in_new</mat-icon> Open
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="(allReturns || []).length === 0">
+              <td colspan="10" class="empty-row">No customer returns found</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
   </div>
 </div>

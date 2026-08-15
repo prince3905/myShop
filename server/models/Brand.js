@@ -12,7 +12,13 @@ const brandSchema = new mongoose.Schema(
 
     logo: String,
 
-    shop: {
+    shops: {
+      type: [mongoose.Schema.Types.ObjectId],
+      ref: "Shop",
+      required: true,
+    },
+
+    ownerShop: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Shop",
       required: true,
@@ -23,10 +29,11 @@ const brandSchema = new mongoose.Schema(
       default: true,
     },
   },
-  { timestamps: true },
+  { timestamps: true }
 );
 
-brandSchema.index({ shop: 1, name: 1 }, { unique: true });
-brandSchema.index({ shop: 1 });
+brandSchema.index({ name: 1 });
+brandSchema.index({ ownerShop: 1 });
+brandSchema.index({ shops: 1 });
 
 module.exports = mongoose.model("Brand", brandSchema);

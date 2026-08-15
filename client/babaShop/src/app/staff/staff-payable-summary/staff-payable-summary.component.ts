@@ -28,6 +28,12 @@ export class StaffPayableSummaryComponent implements OnInit {
     totalPayable: 0,
   };
 
+  showLedgerModal = false;
+  ledgerLoading = false;
+  activeLedgerStaff: any = null;
+  activeLedgerSummary: any = null;
+  activeLedgerRows: any[] = [];
+
   constructor(
     private staffService: StaffService,
     private staffDailyWorkService: StaffDailyWorkService,
@@ -37,6 +43,32 @@ export class StaffPayableSummaryComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadReport();
+  }
+
+  openStaffLedger(staffId: string): void {
+    if (!staffId) return;
+    this.showLedgerModal = true;
+    this.ledgerLoading = true;
+    this.activeLedgerStaff = null;
+    this.activeLedgerSummary = null;
+    this.activeLedgerRows = [];
+
+    this.staffService.getStaffLedger(staffId).subscribe({
+      next: (res: any) => {
+        this.ledgerLoading = false;
+        this.activeLedgerStaff = res?.staff || null;
+        this.activeLedgerSummary = res?.summary || null;
+        this.activeLedgerRows = Array.isArray(res?.ledger) ? res.ledger : [];
+      },
+      error: (err: any) => {
+        this.ledgerLoading = false;
+        this.snackBar.open(err?.error?.message || "Failed to load staff ledger", "Close", { duration: 3000 });
+      },
+    });
+  }
+
+  closeLedgerModal(): void {
+    this.showLedgerModal = false;
   }
 
   loadReport(): void {

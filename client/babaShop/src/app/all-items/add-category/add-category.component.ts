@@ -16,10 +16,12 @@ import { BrandService } from "app/shared/services/brand.service";
 export class AddCategoryComponent {
   name: string = "";
   description: string = "";
+  icon: string = "folder";
   isLoading = false;
   isEditMode = false;
   categoryId: string = "";
   isGlobalSuperAdmin = false;
+  generating = false;
 
   categories: any[] = [];
   loadingList = false;
@@ -51,6 +53,26 @@ export class AddCategoryComponent {
 
     this.loadCategories();
     this.loadBrands();
+  }
+
+  generateDescription(): void {
+    if (!this.name?.trim()) {
+      this.snackBar.open("Please enter category name first", "Close", { duration: 2500 });
+      return;
+    }
+
+    this.generating = true;
+    const adj = ["wide range of", "premium", "quality", "durable", "popular"];
+    const randomAdj = adj[Math.floor(Math.random() * adj.length)];
+    const generated = randomAdj.charAt(0).toUpperCase() + randomAdj.slice(1) + " " + this.name.trim() + " collection for every need. Browse our best selection.";
+    
+    if (this.description) {
+      this.description = this.description + " " + generated;
+    } else {
+      this.description = generated;
+    }
+    this.generating = false;
+    this.snackBar.open("Description added", "Close", { duration: 2000 });
   }
 
   loadBrands(): void {
@@ -107,6 +129,7 @@ export class AddCategoryComponent {
     this.categoryId = category?._id;
     this.name = category?.name || "";
     this.description = category?.description || "";
+    this.icon = category?.icon || "folder";
     this.selectedBrands = Array.isArray(category?.brands)
       ? category.brands.map((brand: any) => (typeof brand === "string" ? brand : `${brand?._id || ""}`))
       : [];
@@ -117,6 +140,7 @@ export class AddCategoryComponent {
     this.categoryId = "";
     this.name = "";
     this.description = "";
+    this.icon = "folder";
     this.selectedBrands = [];
   }
 
@@ -179,6 +203,7 @@ export class AddCategoryComponent {
     const payload = {
       name: this.name.trim(),
       description: this.description?.trim(),
+      icon: this.icon?.trim() || "folder",
       brands: this.selectedBrands,
     };
 

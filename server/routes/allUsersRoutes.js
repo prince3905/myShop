@@ -37,4 +37,13 @@ router.put(
   userController.updateUser
 );
 
+// DELETE USER (Protected + Role Based)
+router.delete(
+  "/:id",
+  protect,
+  authorizeFeature("people.users"),
+  authorizeRoles("SUPER_ADMIN", "ADMIN"),
+  userController.deleteUser
+);
+
 module.exports = router;

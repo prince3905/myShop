@@ -1,116 +1,390 @@
-.header-main {
-  margin-bottom: 8px;
+.card-plain {
+  margin-top: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
-.header-filters {
-  display: grid;
-  grid-template-columns: 180px minmax(220px, 1fr) minmax(180px, 240px) auto;
-  gap: 10px;
+.customer-header {
+  display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+  padding: 20px 24px;
+  background: linear-gradient(135deg, #0891b2, #06b6d4);
+  color: #fff;
+  border-radius: 18px;
+  margin-bottom: 20px;
 }
 
-.header-field {
+.card-title {
   margin: 0;
-}
-
-.header-filters .mat-form-field-wrapper {
-  padding-bottom: 0 !important;
-}
-
-.card-header .card-title,
-.card-header .card-category {
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.2;
   color: #fff;
 }
 
-.filter-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  align-items: center;
+.card-category {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: rgba(255,255,255,0.9) !important;
+  opacity: 1;
 }
 
-.chip-row {
-  margin: 10px 0 12px;
-}
-
-.loading-wrap {
-  display: flex;
-  justify-content: center;
-  padding: 24px 0;
-}
-
-.distributor-table {
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.distributor-table tbody tr {
-  cursor: pointer;
-}
-
-.distributor-table tbody tr:hover {
-  background: #fafafa;
-}
-
-.action-col {
+.toolbar {
   display: flex;
   align-items: center;
-  gap: 8px;
-  white-space: nowrap;
+  gap: 10px;
+  flex-wrap: wrap;
+  vertical-align: middle;
+  line-height: 1;
 }
 
-.status-badge {
+.search-field {
+  min-width: 280px;
+  flex-shrink: 0;
+}
+
+.search-field .mat-mdc-form-field-subscript-wrapper {
+  display: none;
+}
+
+.toolbar .mat-mdc-form-field {
+  --mdc-outlined-text-field-container-shape: 10px;
+  vertical-align: middle;
+}
+
+.toolbar .mat-mdc-text-field-wrapper {
+  min-height: 42px !important;
+  background: #fff !important;
+  border-radius: 10px;
+  vertical-align: middle !important;
+}
+
+.toolbar .mat-mdc-form-field-infix {
+  min-height: 42px !important;
+  padding-top: 10px !important;
+  padding-bottom: 10px !important;
+  vertical-align: middle !important;
+}
+
+.toolbar .mat-mdc-form-field .mat-mdc-input-element,
+.toolbar .mat-mdc-form-field .mdc-floating-label {
+  font-size: 13px !important;
+  color: #333 !important;
+}
+
+.toolbar .mat-mdc-form-field .mdc-floating-label {
+  color: #64748b !important;
+}
+
+.toolbar button[mat-stroked-button],
+.toolbar button[mat-raised-button] {
+  min-height: 42px !important;
+  height: 42px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  vertical-align: middle;
+  line-height: 1;
+}
+
+.toolbar button[mat-stroked-button] {
+  background: rgba(255,255,255,0.15) !important;
+  border-color: rgba(255,255,255,0.3) !important;
+  color: #fff !important;
+}
+
+.toolbar button[mat-raised-button] {
+  background: #fff !important;
+  color: #0891b2 !important;
+}
+
+.toolbar .search-btn,
+.toolbar .clear-btn {
   display: inline-flex;
   align-items: center;
-  padding: 4px 10px;
-  border-radius: 999px;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 18px;
+  min-height: 42px;
+  height: 42px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  vertical-align: middle;
+  border: none;
+}
+
+.toolbar .search-btn {
+  background: rgba(255,255,255,0.25) !important;
+  border: 1px solid rgba(255,255,255,0.4) !important;
+  color: #fff !important;
+}
+
+.toolbar .clear-btn {
+  background: rgba(0,0,0,0.2) !important;
+  border: 1px solid rgba(0,0,0,0.3) !important;
+  color: #fff !important;
+}
+
+.toolbar .clear-btn:hover {
+  background: rgba(0,0,0,0.35) !important;
+}
+
+.toolbar .clear-btn .mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  padding: 40px 0;
+}
+
+/* ── Bento Grid ── */
+.customers-bento-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 18px;
+  margin-top: 16px;
+}
+
+.customer-card-v3 {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 18px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.05);
+  border: 1px solid #f1f5f9;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.customer-card-v3:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.09);
+  border-color: #e2e8f0;
+}
+
+/* ── Card Top ── */
+.card-top-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.avatar-circle {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0891b2, #06b6d4);
+  color: #fff;
+  font-size: 18px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.customer-name-block {
+  flex: 1;
+  min-width: 0;
+}
+
+.cust-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cust-phone {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   font-size: 12px;
+  color: #64748b;
+  margin-top: 3px;
+}
+
+.cust-phone mat-icon {
+  font-size: 13px;
+  width: 13px;
+  height: 13px;
+}
+
+/* ── Shop Tag ── */
+.shop-tag {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  color: #64748b;
+  background: #f8fafc;
+  padding: 5px 10px;
+  border-radius: 8px;
+}
+
+.shop-tag mat-icon {
+  font-size: 14px;
+  width: 14px;
+  height: 14px;
+}
+
+/* ── GST Tag ── */
+.gst-tag {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10.5px;
+  color: #0891b2;
+  background: #e0f2fe;
+  padding: 4px 8px;
+  border-radius: 6px;
   font-weight: 600;
 }
 
-.status-badge.active {
-  background: #e8f5e9;
-  color: #1b5e20;
+.gst-tag mat-icon {
+  font-size: 12px;
+  width: 12px;
+  height: 12px;
 }
 
-.status-badge.disabled {
-  background: #ffebee;
-  color: #b71c1c;
+/* ── Financials Grid ── */
+.financials-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  background: #f8fafc;
+  border-radius: 14px;
+  padding: 12px;
 }
 
-.status-btn {
-  min-width: 105px;
-  display: inline-flex;
+.fin-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.fin-label {
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #94a3b8;
+}
+
+.fin-value {
+  font-size: 16px;
+  font-weight: 800;
+  color: #1e293b;
+}
+
+.fin-value.paid {
+  color: #10b981;
+}
+
+.fin-value.due {
+  color: #ef4444;
+}
+
+.fin-value.wallet {
+  color: #3b82f6;
+}
+
+/* ── Footer ── */
+.card-footer-meta {
+  display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 4px;
+  padding-top: 8px;
+  border-top: 1px dashed #e2e8f0;
 }
 
-.status-btn.active {
-  color: #b71c1c;
-  border-color: #ef9a9a;
+.purchases-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
 }
 
-.status-btn.disabled {
-  color: #1b5e20;
-  border-color: #a5d6a7;
+.purchases-badge mat-icon {
+  font-size: 15px;
+  width: 15px;
+  height: 15px;
+  color: #94a3b8;
 }
 
-.empty-row {
-  text-align: center;
-  color: #666;
-  padding: 14px;
+.joined-date {
+  font-size: 11px;
+  color: #94a3b8;
 }
 
+/* ── Empty State ── */
+.empty-state-bento {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: #94a3b8;
+  background: #f8fafc;
+  border-radius: 20px;
+  margin-top: 16px;
+}
+
+.empty-state-bento mat-icon {
+  font-size: 48px;
+  width: 48px;
+  height: 48px;
+  margin-bottom: 12px;
+  opacity: 0.5;
+}
+
+.empty-state-bento p {
+  font-size: 14px;
+  margin: 0;
+}
+
+/* ── Responsive ── */
 @media (max-width: 768px) {
-  .header-filters {
+  .customer-header {
+    flex-direction: column;
+    padding: 14px;
+  }
+
+  .toolbar {
+    width: 100%;
+  }
+
+  .search-field {
+    width: 100%;
+  }
+
+  .customers-bento-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .customers-bento-grid {
     grid-template-columns: 1fr;
   }
 
-  .filter-actions {
-    justify-content: flex-start;
-  }
-
-  .action-col {
-    flex-wrap: wrap;
+  .financials-grid {
+    grid-template-columns: 1fr 1fr;
   }
 }

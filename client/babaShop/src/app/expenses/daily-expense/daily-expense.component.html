@@ -1,230 +1,255 @@
 <div class="main-content daily-expense-page">
   <div class="container-fluid">
-    <div class="card page-hero-card">
-      <div class="card-header card-header-danger expense-hero">
-        <div class="expense-hero-copy">
-          <h2 class="expense-hero-title">Daily Expense</h2>
-          <p class="expense-hero-subtitle">Shop-wise daily expense register with simple summary and recent entries.</p>
+
+    <!-- ── Hero Header ── -->
+    <div class="expense-hero-bar">
+      <div>
+        <h2 class="hero-title">Daily Expense</h2>
+        <p class="hero-sub">Shop-wise daily expense register with simple summary and recent entries.</p>
+      </div>
+    </div>
+
+    <!-- ── Summary KPI Cards ── -->
+    <div class="summary-kpi-row">
+      <div class="kpi-card today">
+        <div class="kpi-icon"><mat-icon>today</mat-icon></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Today Expense</div>
+          <div class="kpi-value">₹{{ summary.todayAmount || 0 | number: '1.0-0' }}</div>
+          <div class="kpi-meta">{{ summary.todayEntries || 0 }} entries today</div>
+        </div>
+      </div>
+      <div class="kpi-card total">
+        <div class="kpi-icon"><mat-icon>receipt_long</mat-icon></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Total Expense</div>
+          <div class="kpi-value">₹{{ summary.totalAmount || 0 | number: '1.0-0' }}</div>
+          <div class="kpi-meta">{{ summary.totalEntries || 0 }} total entries</div>
+        </div>
+      </div>
+      <div class="kpi-card category" *ngIf="summary.byCategory?.length">
+        <div class="kpi-icon"><mat-icon>category</mat-icon></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Top Category</div>
+          <div class="kpi-value small">{{ summary.byCategory[0]?._id || 'N/A' }}</div>
+          <div class="kpi-meta">₹{{ summary.byCategory[0]?.totalAmount || 0 | number: '1.0-0' }}</div>
+        </div>
+      </div>
+      <div class="kpi-card dept" *ngIf="summary.byDepartment?.length">
+        <div class="kpi-icon"><mat-icon>business</mat-icon></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Top Department</div>
+          <div class="kpi-value small">{{ summary.byDepartment[0]?._id || 'N/A' }}</div>
+          <div class="kpi-meta">₹{{ summary.byDepartment[0]?.totalAmount || 0 | number: '1.0-0' }}</div>
         </div>
       </div>
     </div>
 
-    <div class="row summary-row">
-      <div class="col-md-6 col-sm-6">
-        <div class="card summary-card">
-          <div class="card-body">
-            <div class="summary-label">Today Expense</div>
-            <div class="summary-value">Rs {{ summary.todayAmount || 0 | number: '1.2-2' }}</div>
-            <div class="summary-meta">{{ summary.todayEntries || 0 }} entries today</div>
+    <!-- ── Main Two-Column Layout ── -->
+    <div class="expense-layout">
+
+      <!-- ── Left: Add/Edit Form ── -->
+      <div class="form-panel">
+        <div class="form-panel-header">
+          <mat-icon>{{ editingExpenseId ? 'edit_note' : 'add_circle' }}</mat-icon>
+          <div>
+            <div class="panel-title">{{ getFormTitle() }}</div>
+            <div class="panel-sub" *ngIf="editingExpenseId">Editing selected entry</div>
           </div>
         </div>
+
+        <form #expenseNgForm="ngForm" (ngSubmit)="submitExpense(expenseNgForm)" class="expense-form">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Expense Date</mat-label>
+            <input matInput [matDatepicker]="expenseDatePicker" [(ngModel)]="expenseForm.expenseDate" name="expenseDate" required>
+            <mat-datepicker-toggle matSuffix [for]="expenseDatePicker"></mat-datepicker-toggle>
+            <mat-datepicker #expenseDatePicker></mat-datepicker>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Category</mat-label>
+            <mat-select [(ngModel)]="expenseForm.category" name="category" (selectionChange)="onCategoryChange()" required>
+              <mat-option *ngFor="let category of categories" [value]="category">{{ category }}</mat-option>
+            </mat-select>
+            <mat-icon matPrefix>category</mat-icon>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Department</mat-label>
+            <mat-select [(ngModel)]="expenseForm.department" name="department" (selectionChange)="onDepartmentChange()" required>
+              <mat-option *ngFor="let department of departmentOptions" [value]="department">{{ department }}</mat-option>
+            </mat-select>
+            <mat-icon matPrefix>business</mat-icon>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Account Head</mat-label>
+            <mat-select [(ngModel)]="expenseForm.accountHead" name="accountHead" required>
+              <mat-option *ngFor="let head of accountHeadOptions" [value]="head">{{ head }}</mat-option>
+            </mat-select>
+            <mat-icon matPrefix>account_tree</mat-icon>
+          </mat-form-field>
+
+          <div class="inline-fields">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Amount</mat-label>
+              <input matInput type="number" min="1" [(ngModel)]="expenseForm.amount" name="amount" required>
+              <mat-icon matPrefix>currency_rupee</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Payment Method</mat-label>
+              <mat-select [(ngModel)]="expenseForm.paymentMethod" name="paymentMethod" required>
+                <mat-option *ngFor="let method of paymentMethods" [value]="method">{{ method }}</mat-option>
+              </mat-select>
+              <mat-icon matPrefix>payment</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Note</mat-label>
+            <textarea matInput rows="3" [(ngModel)]="expenseForm.note" name="note"></textarea>
+            <mat-icon matPrefix>notes</mat-icon>
+          </mat-form-field>
+
+          <div class="form-actions">
+            <button mat-raised-button color="warn" type="submit" [disabled]="savingExpense || expenseNgForm.invalid">
+              <mat-icon>{{ savingExpense ? 'hourglass_top' : 'save' }}</mat-icon>
+              {{ getSubmitLabel() }}
+            </button>
+            <button *ngIf="editingExpenseId" type="button" mat-stroked-button (click)="cancelEdit(expenseNgForm)">
+              Cancel
+            </button>
+          </div>
+        </form>
       </div>
-      <div class="col-md-6 col-sm-6">
-        <div class="card summary-card">
-          <div class="card-body">
-            <div class="summary-label">Total Expense</div>
-            <div class="summary-value">Rs {{ summary.totalAmount || 0 | number: '1.2-2' }}</div>
-            <div class="summary-meta">{{ summary.totalEntries || 0 }} total entries</div>
+
+      <!-- ── Right: Recent Expenses ── -->
+      <div class="list-panel">
+        <div class="list-panel-header">
+          <div class="list-header-row">
+            <div class="panel-title">Recent Expenses</div>
+            <div class="panel-count" *ngIf="!loadingExpenses">{{ totalCount }} entries</div>
+          </div>
+          <div class="filter-bar">
+            <mat-form-field appearance="outline" class="filter-field">
+              <mat-label>Search</mat-label>
+              <input matInput [(ngModel)]="filters.search" (input)="onSearchInput()" placeholder="Type Category, Head, Note, Payee...">
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="filter-field">
+              <mat-label>Category</mat-label>
+              <mat-select [(ngModel)]="filters.category">
+                <mat-option value="">All</mat-option>
+                <mat-option *ngFor="let category of categories" [value]="category">{{ category }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="filter-field">
+              <mat-label>Department</mat-label>
+              <mat-select [(ngModel)]="filters.department">
+                <mat-option value="">All</mat-option>
+                <mat-option value="Factory">Factory</mat-option>
+                <mat-option value="Office">Office</mat-option>
+                <mat-option value="Shop">Shop</mat-option>
+                <mat-option value="Staff">Staff</mat-option>
+                <mat-option value="Transport">Transport</mat-option>
+                <mat-option value="Maintenance">Maintenance</mat-option>
+                <mat-option value="General">General</mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="filter-field">
+              <mat-label>From</mat-label>
+              <input matInput [matDatepicker]="fromExpensePicker" [(ngModel)]="filters.dateFrom">
+              <mat-datepicker-toggle matSuffix [for]="fromExpensePicker"></mat-datepicker-toggle>
+              <mat-datepicker #fromExpensePicker></mat-datepicker>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="filter-field">
+              <mat-label>To</mat-label>
+              <input matInput [matDatepicker]="toExpensePicker" [(ngModel)]="filters.dateTo">
+              <mat-datepicker-toggle matSuffix [for]="toExpensePicker"></mat-datepicker-toggle>
+              <mat-datepicker #toExpensePicker></mat-datepicker>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="filter-field">
+              <mat-label>Payment</mat-label>
+              <mat-select [(ngModel)]="filters.paymentMethod">
+                <mat-option value="">All</mat-option>
+                <mat-option *ngFor="let method of paymentMethods" [value]="method">{{ method }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+          <div class="filter-actions">
+            <button mat-raised-button color="warn" (click)="loadExpenses()">Apply</button>
+            <button mat-stroked-button (click)="showTodayExpenses()">Today</button>
+            <button mat-stroked-button (click)="clearFilters()">All</button>
+            <button mat-stroked-button color="primary" (click)="exportExpenses()">
+              <mat-icon>download</mat-icon> Export
+            </button>
           </div>
         </div>
-      </div>
-    </div>
 
-    <div class="row">
-      <div class="col-lg-4">
-        <div class="card">
-          <div class="card-header card-header-danger">
-            <h4 class="card-title">{{ getFormTitle() }}</h4>
-          </div>
-          <div class="card-body">
-            <form #expenseNgForm="ngForm" (ngSubmit)="submitExpense(expenseNgForm)">
-              <div class="edit-banner" *ngIf="editingExpenseId">
-                Editing selected expense entry.
+        <!-- Pagination -->
+        <div class="pagination-row" *ngIf="totalCount > filters.limit">
+          <button mat-stroked-button [disabled]="filters.page <= 1" (click)="onPageChange(filters.page - 1)">
+            <mat-icon>chevron_left</mat-icon>
+          </button>
+          <span class="page-info">Page {{ filters.page }} of {{ totalPages }}</span>
+          <button mat-stroked-button [disabled]="filters.page >= totalPages" (click)="onPageChange(filters.page + 1)">
+            <mat-icon>chevron_right</mat-icon>
+          </button>
+        </div>
+
+        <div class="state-row" *ngIf="loadingExpenses">
+          <mat-spinner diameter="24"></mat-spinner> Loading expenses...
+        </div>
+
+        <div class="empty-state-bento" *ngIf="!loadingExpenses && expenses.length === 0">
+          <mat-icon>money_off</mat-icon>
+          <p>No expenses found for current filters.</p>
+        </div>
+
+        <div class="expense-cards-grid" *ngIf="!loadingExpenses && expenses.length > 0">
+          <div class="expense-card-v3" [class.cancelled]="expense.status === 'CANCELLED'" *ngFor="let expense of expenses">
+            <div class="exp-card-top">
+              <div class="exp-cat-badge">{{ expense.category }}</div>
+              <div class="exp-status-badge" [class.active]="expense.status === 'ACTIVE'" [class.cancelled]="expense.status === 'CANCELLED'">
+                {{ expense.status === 'CANCELLED' ? 'Cancelled' : 'Active' }}
               </div>
-              <mat-form-field class="example-full-width">
-                <mat-label>Expense Date</mat-label>
-                <input matInput type="date" [(ngModel)]="expenseForm.expenseDate" name="expenseDate" required>
-              </mat-form-field>
+              <div class="exp-amount">₹{{ expense.amount | number:'1.0-0' }}</div>
+            </div>
 
-              <mat-form-field class="example-full-width">
-                <mat-label>Category</mat-label>
-                <mat-select [(ngModel)]="expenseForm.category" name="category" (selectionChange)="onCategoryChange()" required>
-                  <mat-option *ngFor="let category of categories" [value]="category">{{ category }}</mat-option>
-                </mat-select>
-              </mat-form-field>
+            <div class="exp-chips">
+              <span class="exp-chip dept">{{ expense.department }}</span>
+              <span class="exp-chip head">{{ expense.accountHead }}</span>
+              <span class="exp-chip pay">{{ expense.paymentMethod }}</span>
+            </div>
 
-              <mat-form-field class="example-full-width">
-                <mat-label>Department</mat-label>
-                <mat-select [(ngModel)]="expenseForm.department" name="department" (selectionChange)="onDepartmentChange()" required>
-                  <mat-option *ngFor="let department of departmentOptions" [value]="department">{{ department }}</mat-option>
-                </mat-select>
-              </mat-form-field>
+            <div class="exp-note" *ngIf="expense.note">{{ expense.note }}</div>
 
-              <mat-form-field class="example-full-width">
-                <mat-label>Account Head</mat-label>
-                <mat-select [(ngModel)]="expenseForm.accountHead" name="accountHead" required>
-                  <mat-option *ngFor="let head of accountHeadOptions" [value]="head">{{ head }}</mat-option>
-                </mat-select>
-              </mat-form-field>
-
-              <div class="row">
-                <div class="col-md-6">
-                  <mat-form-field class="example-full-width">
-                    <mat-label>Amount</mat-label>
-                    <input matInput type="number" min="1" [(ngModel)]="expenseForm.amount" name="amount" required>
-                  </mat-form-field>
-                </div>
-                <div class="col-md-6">
-                  <mat-form-field class="example-full-width">
-                    <mat-label>Payment Method</mat-label>
-                    <mat-select [(ngModel)]="expenseForm.paymentMethod" name="paymentMethod" required>
-                      <mat-option *ngFor="let method of paymentMethods" [value]="method">{{ method }}</mat-option>
-                    </mat-select>
-                  </mat-form-field>
-                </div>
+            <div class="exp-footer">
+              <div class="exp-meta">
+                <mat-icon>calendar_today</mat-icon>
+                {{ expense.expenseDate | date:'dd MMM yyyy' }}
               </div>
-
-              <mat-form-field class="example-full-width">
-                <mat-label>Note</mat-label>
-                <textarea matInput rows="3" [(ngModel)]="expenseForm.note" name="note"></textarea>
-              </mat-form-field>
-
-              <div class="form-actions">
-                <button mat-raised-button class="btn btn-danger submit-btn" [disabled]="savingExpense || expenseNgForm.invalid">
-                  {{ getSubmitLabel() }}
+              <div class="exp-meta" *ngIf="expense.createdBy?.pFname || expense.createdBy?.email">
+                <mat-icon>person</mat-icon>
+                {{ expense.createdBy?.pFname || expense.createdBy?.email }}
+              </div>
+              <div class="exp-actions" *ngIf="canManage">
+                <button mat-icon-button [color]="expense.status === 'CANCELLED' ? 'accent' : 'warn'" 
+                        (click)="toggleStatus(expense)" [title]="expense.status === 'CANCELLED' ? 'Mark Active' : 'Cancel'">
+                  <mat-icon>{{ expense.status === 'CANCELLED' ? 'undo' : 'cancel' }}</mat-icon>
                 </button>
-                <button
-                  *ngIf="editingExpenseId"
-                  type="button"
-                  mat-stroked-button
-                  class="btn btn-outline-danger submit-btn"
-                  (click)="cancelEdit(expenseNgForm)"
-                >
-                  Cancel Edit
+                <button mat-icon-button color="primary" [disabled]="deletingId === expense._id" (click)="startEdit(expense)">
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button mat-icon-button color="warn" [disabled]="deletingId === expense._id" (click)="deleteExpense(expense)">
+                  <mat-icon>{{ deletingId === expense._id ? 'hourglass_top' : 'delete' }}</mat-icon>
                 </button>
               </div>
-            </form>
-          </div>
-        </div>
-      </div>
-
-      <div class="col-lg-8">
-        <div class="card">
-          <div class="card-header card-header-danger">
-            <h4 class="card-title">Recent Expenses</h4>
-          </div>
-          <div class="card-body">
-            <div class="filter-grid">
-              <mat-form-field class="example-full-width">
-                <mat-label>Search</mat-label>
-                <input matInput [(ngModel)]="filters.search" name="search" placeholder="Category, note, head">
-              </mat-form-field>
-              <mat-form-field class="example-full-width">
-                <mat-label>Category</mat-label>
-                <mat-select [(ngModel)]="filters.category" name="filterCategory">
-                  <mat-option value="">All</mat-option>
-                  <mat-option *ngFor="let category of categories" [value]="category">{{ category }}</mat-option>
-                </mat-select>
-              </mat-form-field>
-              <mat-form-field class="example-full-width">
-                <mat-label>Department</mat-label>
-                <mat-select [(ngModel)]="filters.department" name="filterDepartment">
-                  <mat-option value="">All</mat-option>
-                  <mat-option value="Factory">Factory</mat-option>
-                  <mat-option value="Office">Office</mat-option>
-                  <mat-option value="Shop">Shop</mat-option>
-                  <mat-option value="Staff">Staff</mat-option>
-                  <mat-option value="Transport">Transport</mat-option>
-                  <mat-option value="Maintenance">Maintenance</mat-option>
-                  <mat-option value="General">General</mat-option>
-                </mat-select>
-              </mat-form-field>
-              <mat-form-field class="example-full-width">
-                <mat-label>From Date</mat-label>
-                <input matInput type="date" [(ngModel)]="filters.dateFrom" name="dateFrom">
-              </mat-form-field>
-              <mat-form-field class="example-full-width">
-                <mat-label>To Date</mat-label>
-                <input matInput type="date" [(ngModel)]="filters.dateTo" name="dateTo">
-              </mat-form-field>
-              <mat-form-field class="example-full-width">
-                <mat-label>Payment Method</mat-label>
-                <mat-select [(ngModel)]="filters.paymentMethod" name="filterPaymentMethod">
-                  <mat-option value="">All</mat-option>
-                  <mat-option *ngFor="let method of paymentMethods" [value]="method">{{ method }}</mat-option>
-                </mat-select>
-              </mat-form-field>
-            </div>
-
-            <div class="filter-actions">
-              <button mat-raised-button class="btn btn-danger" (click)="loadExpenses()">Apply Filters</button>
-              <button mat-stroked-button class="btn btn-outline-danger" (click)="showTodayExpenses()">Today</button>
-              <button mat-stroked-button class="btn btn-outline-danger" (click)="clearFilters()">View All</button>
-            </div>
-
-            <div *ngIf="loadingExpenses" class="table-empty">Loading expenses...</div>
-
-            <div *ngIf="!loadingExpenses && expenses.length === 0" class="table-empty">
-              No expenses found for current filters.
-            </div>
-
-            <div class="expense-table-wrap" *ngIf="!loadingExpenses && expenses.length > 0">
-              <table class="table expense-table">
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>Category</th>
-                    <th>Department</th>
-                    <th>Head</th>
-                    <th>Mode</th>
-                    <th>Amount</th>
-                    <th>By</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let expense of expenses">
-                    <td>{{ expense.expenseDate | date: 'dd/MM/yyyy' }}</td>
-                    <td>
-                      <div class="table-category">{{ expense.category }}</div>
-                      <div class="table-note" *ngIf="expense.note">{{ expense.note }}</div>
-                    </td>
-                    <td>{{ expense.department }}</td>
-                    <td>{{ expense.accountHead }}</td>
-                    <td>{{ expense.paymentMethod }}</td>
-                    <td class="amount-cell">Rs {{ expense.amount | number: '1.2-2' }}</td>
-                    <td>{{ expense.createdBy?.pFname || expense.createdBy?.email || '-' }}</td>
-                    <td>
-                      <div class="table-actions" *ngIf="canManage">
-                        <button
-                          mat-button
-                          class="table-edit-btn"
-                          [disabled]="deletingId === expense._id"
-                          (click)="startEdit(expense)"
-                          aria-label="Edit expense"
-                          title="Edit"
-                        >
-                          <mat-icon>edit</mat-icon>
-                        </button>
-                        <button
-                          mat-button
-                          class="table-delete-btn"
-                          [disabled]="deletingId === expense._id"
-                          (click)="deleteExpense(expense)"
-                          aria-label="Delete expense"
-                          title="Delete"
-                        >
-                          <mat-icon>{{ deletingId === expense._id ? 'hourglass_top' : 'delete' }}</mat-icon>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
             </div>
           </div>
         </div>
       </div>
+
     </div>
   </div>
 </div>

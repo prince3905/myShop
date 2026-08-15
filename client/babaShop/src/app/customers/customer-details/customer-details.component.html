@@ -1,22 +1,22 @@
-<div class="main-content">
+<div class="main-content customer-details-page">
   <div class="container-fluid">
-    
-    <!-- Back Button -->
-    <div class="mb-3">
-      <button mat-raised-button color="primary" (click)="goBack()">
-        <mat-icon>arrow_back</mat-icon>
-        Back to Customers
-      </button>
-      <button
-        mat-stroked-button
-        color="primary"
-        class="ml-2"
-        *ngIf="canManageCustomers"
-        (click)="editCustomer()"
-      >
-        <mat-icon>edit</mat-icon>
-        Edit Customer
-      </button>
+
+    <!-- Hero Header -->
+    <div class="customer-hero-bar">
+      <div class="hero-left">
+        <button mat-stroked-button class="back-btn" (click)="goBack()">
+          <mat-icon>arrow_back</mat-icon>
+        </button>
+        <div>
+          <h2 class="hero-title">{{ customer?.name || 'Customer Details' }}</h2>
+          <p class="hero-sub">Full purchase history and ledger</p>
+        </div>
+      </div>
+      <div class="hero-actions">
+        <button mat-stroked-button *ngIf="canManageCustomers" (click)="editCustomer()" class="edit-btn">
+          <mat-icon>edit</mat-icon> Edit Customer
+        </button>
+      </div>
     </div>
 
     <!-- Loading Spinner -->
@@ -131,25 +131,25 @@
           
           <!-- Date Filter -->
           <div class="date-filter-section">
-            <div class="row align-items-end">
-              <div class="col-md-3">
-                <mat-form-field appearance="outline" class="full-width">
+            <div class="filter-row">
+              <div class="date-inputs">
+                <mat-form-field appearance="outline" class="date-field">
                   <mat-label>From Date</mat-label>
-                  <input matInput type="date" [(ngModel)]="startDate" (change)="applyDateFilter()">
+                  <input matInput [matDatepicker]="startDatePicker" [(ngModel)]="startDate" (dateChange)="applyDateFilter()">
+                  <mat-datepicker-toggle matSuffix [for]="startDatePicker"></mat-datepicker-toggle>
+                  <mat-datepicker #startDatePicker></mat-datepicker>
                 </mat-form-field>
-              </div>
-              <div class="col-md-3">
-                <mat-form-field appearance="outline" class="full-width">
+                <mat-form-field appearance="outline" class="date-field">
                   <mat-label>To Date</mat-label>
-                  <input matInput type="date" [(ngModel)]="endDate" (change)="applyDateFilter()">
+                  <input matInput [matDatepicker]="endDatePicker" [(ngModel)]="endDate" (dateChange)="applyDateFilter()">
+                  <mat-datepicker-toggle matSuffix [for]="endDatePicker"></mat-datepicker-toggle>
+                  <mat-datepicker #endDatePicker></mat-datepicker>
                 </mat-form-field>
               </div>
-              <div class="col-md-3">
-                <button mat-stroked-button color="primary" (click)="clearFilters()">
-                  <mat-icon>clear</mat-icon> Clear
+              <div class="filter-actions">
+                <button mat-stroked-button (click)="clearFilters()">
+                  <mat-icon>refresh</mat-icon> Clear
                 </button>
-              </div>
-              <div class="col-md-3 text-right">
                 <div class="filtered-summary">
                   <span class="summary-label">Due Balance:</span>
                   <span class="summary-amount">Rs {{ statementSummary.closingBalance | number:'1.2-2' }}</span>

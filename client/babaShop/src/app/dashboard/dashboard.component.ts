@@ -446,6 +446,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return this.authService.can("sales.return");
   }
 
+  get canOpenFactoryRawMaterial(): boolean {
+    return this.authService.can("factory.raw_material_purchase");
+  }
+
   get canUseDashboardRangeControls(): boolean {
     return this.isSuperAdmin || this.userRole === "ADMIN";
   }
@@ -982,6 +986,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
   openPurchase(): void {
     if (!this.canOpenPurchase) return;
     this.goToRoute("/purchase");
+  }
+
+  openFactoryRawMaterial(): void {
+    if (!this.canOpenFactoryRawMaterial) return;
+    this.goToRoute("/raw-material-purchase");
   }
 
   openOrders(): void {

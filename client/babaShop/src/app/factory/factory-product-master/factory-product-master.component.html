@@ -1,420 +1,416 @@
-<div class="main-content factory-page factory-product-page">
+<div class="main-content factory-product-page">
   <div class="container-fluid">
-    <div class="card page-hero-card">
-      <div class="card-header card-header-danger factory-hero">
-        <div>
-          <h2 class="factory-hero-title">Factory Product Master</h2>
-          <p class="factory-hero-subtitle">Ready maal ki fixed list, worker rate, material template aur waste rule yahin set karo. Daily work isi se auto factory hisab banayega.</p>
+
+    <!-- ── Hero Header ── -->
+    <div class="product-hero-bar">
+      <div>
+        <h2 class="hero-title">Factory Product Master</h2>
+        <p class="hero-sub">Ready maal ki fixed list, worker rate, material template aur waste rule yahin set karo.</p>
+      </div>
+    </div>
+
+    <!-- ── Summary KPI Cards ── -->
+    <div class="summary-kpi-row">
+      <div class="kpi-card total">
+        <div class="kpi-icon"><mat-icon>inventory</mat-icon></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Total Products</div>
+          <div class="kpi-value">{{ summary.totalProducts || 0 }}</div>
+          <div class="kpi-meta">factory products</div>
+        </div>
+      </div>
+      <div class="kpi-card active">
+        <div class="kpi-icon"><mat-icon>check_circle</mat-icon></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Active</div>
+          <div class="kpi-value">{{ summary.activeProducts || 0 }}</div>
+          <div class="kpi-meta">products active</div>
+        </div>
+      </div>
+      <div class="kpi-card inactive">
+        <div class="kpi-icon"><mat-icon>pause_circle</mat-icon></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Inactive</div>
+          <div class="kpi-value">{{ summary.inactiveProducts || 0 }}</div>
+          <div class="kpi-meta">products paused</div>
         </div>
       </div>
     </div>
 
-    <div class="row summary-row">
-      <div class="col-md-4 col-sm-6"><div class="card summary-card"><div class="card-body"><div class="summary-label">Total Products</div><div class="summary-value">{{ summary.totalProducts || 0 }}</div></div></div></div>
-      <div class="col-md-4 col-sm-6"><div class="card summary-card"><div class="card-body"><div class="summary-label">Active</div><div class="summary-value">{{ summary.activeProducts || 0 }}</div></div></div></div>
-      <div class="col-md-4 col-sm-6"><div class="card summary-card"><div class="card-body"><div class="summary-label">Inactive</div><div class="summary-value">{{ summary.inactiveProducts || 0 }}</div></div></div></div>
+    <!-- ── Unit Breakdown ── -->
+    <div class="breakdown-row" *ngIf="!loadingSummary && summary.byUnit?.length > 0">
+      <div class="breakdown-card" *ngFor="let row of summary.byUnit; trackBy: trackBySummary">
+        <div class="breakdown-label">{{ row._id }}</div>
+        <div class="breakdown-count">{{ row.count }} products</div>
+      </div>
     </div>
 
-    <div class="row breakdown-row">
-      <div class="col-md-12">
-        <div class="card breakdown-card">
-          <div class="card-body">
-            <div class="breakdown-title">Unit Breakdown</div>
-            <div *ngIf="loadingSummary" class="breakdown-empty">Loading breakdown...</div>
-            <div *ngIf="!loadingSummary && summary.byUnit?.length === 0" class="breakdown-empty">No products added yet.</div>
-            <div class="breakdown-grid" *ngIf="!loadingSummary && summary.byUnit?.length > 0">
-              <div class="breakdown-item" *ngFor="let row of summary.byUnit; trackBy: trackBySummary">
-                <div class="breakdown-name">{{ row._id }}</div>
-                <div class="breakdown-meta">{{ row.count }} products</div>
-              </div>
-            </div>
+    <!-- ── Main Two-Column Layout ── -->
+    <div class="product-layout">
+
+      <!-- ── Left: Add/Edit Form ── -->
+      <div class="form-panel">
+        <div class="form-panel-header">
+          <mat-icon>{{ editingProductId ? 'edit_note' : 'add_box' }}</mat-icon>
+          <div>
+            <div class="panel-title">{{ getFormTitle() }}</div>
+            <div class="panel-sub" *ngIf="editingProductId">Editing selected product</div>
           </div>
         </div>
-      </div>
-    </div>
 
-    <div class="row">
-      <div class="col-lg-4">
-        <div class="card">
-          <div class="card-header card-header-danger"><h4 class="card-title">{{ getFormTitle() }}</h4></div>
-          <div class="card-body">
-            <form #productNgForm="ngForm" (ngSubmit)="submitProduct(productNgForm)">
-              <mat-form-field class="example-full-width">
-                <mat-label>Product Name</mat-label>
-                <mat-select [(ngModel)]="productForm.shopProduct" name="shopProduct" (selectionChange)="onShopProductChange()" required>
-                  <mat-option value="">Select shop product</mat-option>
-                  <mat-option *ngFor="let product of shopProductOptions" [value]="product._id">
-                    {{ product.name }}
+        <form #productNgForm="ngForm" (ngSubmit)="submitProduct(productNgForm)" class="product-form">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Shop Product</mat-label>
+            <mat-select [(ngModel)]="productForm.shopProduct" name="shopProduct" (selectionChange)="onShopProductChange()" required>
+              <mat-option value="">Select shop product</mat-option>
+              <mat-option *ngFor="let product of shopProductOptions" [value]="product._id">
+                {{ product.name }}
+              </mat-option>
+            </mat-select>
+            <mat-icon matPrefix>store</mat-icon>
+          </mat-form-field>
+
+          <div class="inline-fields">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Unit</mat-label>
+              <mat-select [(ngModel)]="productForm.unitLabel" name="unitLabel" required>
+                <mat-option *ngFor="let unit of unitOptions" [value]="unit">{{ unit }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Worker Rate / Piece</mat-label>
+              <input matInput type="number" min="0" [(ngModel)]="productForm.workerPieceRate" name="workerPieceRate">
+              <mat-icon matPrefix>currency_rupee</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <!-- Shop Mapping Section -->
+          <div class="section-card">
+            <div class="section-header">
+              <mat-icon>link</mat-icon>
+              <span>Shop Product Mapping</span>
+            </div>
+
+            <div class="inline-fields">
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Category</mat-label>
+                <mat-select [(ngModel)]="productForm.shopCategory" name="shopCategory" (selectionChange)="onCategoryChange()">
+                  <mat-option value="">Auto from product</mat-option>
+                  <mat-option *ngFor="let cat of categoryOptions" [value]="cat._id">
+                    {{ cat.name }}
                   </mat-option>
                 </mat-select>
-                <mat-hint *ngIf="productForm.name">{{ productForm.name }}</mat-hint>
+                <mat-icon matPrefix>category</mat-icon>
               </mat-form-field>
-
-              <div class="row">
-                <div class="col-md-12">
-                  <mat-form-field class="example-full-width">
-                    <mat-label>Unit</mat-label>
-                    <mat-select [(ngModel)]="productForm.unitLabel" name="unitLabel" required>
-                      <mat-option *ngFor="let unit of unitOptions" [value]="unit">{{ unit }}</mat-option>
-                    </mat-select>
-                  </mat-form-field>
-                </div>
-              </div>
-
-              <div class="template-block">
-                <div class="template-header">
-                  <div>
-                    <h5>Shop Product Mapping</h5>
-                    <p>Product, model aur variation select karo. Category, brand, color aur selling price jitna ho sake auto aa jayega.</p>
-                  </div>
-                </div>
-
-                <div class="row compact-map-row">
-                  <div class="col-md-6">
-                    <mat-form-field class="example-full-width">
-                      <mat-label>Category</mat-label>
-                      <input matInput [value]="currentCategoryName" readonly>
-                    </mat-form-field>
-                  </div>
-                  <div class="col-md-6">
-                    <mat-form-field class="example-full-width">
-                      <mat-label>Brand</mat-label>
-                      <input matInput [value]="currentBrandName" readonly>
-                    </mat-form-field>
-                  </div>
-                </div>
-
-                <div class="row">
-                  <div class="col-md-6">
-                    <mat-form-field class="example-full-width">
-                      <mat-label>Shop Model</mat-label>
-                      <mat-select [(ngModel)]="productForm.shopModel" name="shopModel" (selectionChange)="onShopModelChange()">
-                        <mat-option value="">None</mat-option>
-                        <mat-option *ngFor="let model of filteredShopModelOptions" [value]="model._id">
-                          {{ model.name }}
-                        </mat-option>
-                      </mat-select>
-                    </mat-form-field>
-                  </div>
-                </div>
-
-                <div class="row compact-map-row">
-                  <div class="col-md-12">
-                    <mat-form-field class="example-full-width">
-                      <mat-label>Shop Variation</mat-label>
-                      <mat-select [(ngModel)]="productForm.shopVariation" name="shopVariation" (selectionChange)="onShopVariationChange()">
-                        <mat-option value="">None</mat-option>
-                        <mat-option *ngFor="let variation of filteredShopVariationOptions" [value]="variation._id">
-                          {{ variation.sku }} · {{ variation.attributes?.color || 'No color' }} · {{ variation.attributes?.size || 'No size' }}
-                        </mat-option>
-                      </mat-select>
-                    </mat-form-field>
-                  </div>
-                </div>
-
-                <div class="row compact-map-row">
-                  <div class="col-md-12">
-                    <mat-form-field class="example-full-width">
-                      <mat-label>Final Selling Price</mat-label>
-                      <input matInput type="number" min="0" [(ngModel)]="productForm.defaultSellingPrice" name="defaultSellingPrice">
-                      <mat-hint>Shop me final box kis price par jayega</mat-hint>
-                    </mat-form-field>
-                  </div>
-                </div>
-
-                <div class="row compact-map-row">
-                  <div class="col-md-4">
-                    <mat-form-field class="example-full-width">
-                      <mat-label>Color</mat-label>
-                      <input matInput [(ngModel)]="productForm.variationColor" name="variationColor" placeholder="Natural, Red, Blue">
-                    </mat-form-field>
-                  </div>
-                  <div class="col-md-4">
-                    <mat-form-field class="example-full-width">
-                      <mat-label>Size</mat-label>
-                      <input matInput [(ngModel)]="productForm.variationSize" name="variationSize" placeholder='Small, Big, 72"'>
-                    </mat-form-field>
-                  </div>
-                  <div class="col-md-4">
-                    <mat-form-field class="example-full-width">
-                      <mat-label>Karigar Rate / Piece</mat-label>
-                      <input matInput type="number" min="0" [(ngModel)]="productForm.workerPieceRate" name="workerPieceRate">
-                    </mat-form-field>
-                  </div>
-                </div>
-
-                <div class="field-helper-note">Worker ko 1 piece banane par kitna dena hai</div>
-
-                <div class="row waste-config-row">
-                  <div class="col-md-4">
-                    <mat-form-field class="example-full-width">
-                      <mat-label>Waste Qty / Box</mat-label>
-                      <input matInput type="number" min="0" [(ngModel)]="productForm.standardWasteQtyPerUnit" name="standardWasteQtyPerUnit">
-                    </mat-form-field>
-                  </div>
-                  <div class="col-md-4">
-                    <mat-form-field class="example-full-width">
-                      <mat-label>Waste Unit</mat-label>
-                      <mat-select [(ngModel)]="productForm.standardWasteUnitLabel" name="standardWasteUnitLabel">
-                        <mat-option *ngFor="let unit of wasteUnitOptions" [value]="unit">{{ unit }}</mat-option>
-                      </mat-select>
-                    </mat-form-field>
-                  </div>
-                  <div class="col-md-4">
-                    <mat-form-field class="example-full-width">
-                      <mat-label>Waste Value / Box</mat-label>
-                      <input matInput type="number" min="0" [(ngModel)]="productForm.standardWasteValuePerUnit" name="standardWasteValuePerUnit">
-                    </mat-form-field>
-                  </div>
-                </div>
-              </div>
-
-              <div class="template-block">
-                <div class="template-header">
-                  <div>
-                    <h5>Standard Material Template</h5>
-                    <p>1 piece/product banane me kitna material lagta hai.</p>
-                  </div>
-                  <button type="button" mat-stroked-button class="btn btn-outline-danger btn-sm" (click)="addMaterialLine()">
-                    Add Material
-                  </button>
-                </div>
-
-                <div class="template-empty" *ngIf="productForm.standardMaterialLines.length === 0">
-                  No material template added yet.
-                </div>
-
-                <div class="template-line" *ngFor="let line of productForm.standardMaterialLines; let i = index">
-                  <div class="row">
-                    <div class="col-md-4">
-                      <mat-form-field class="example-full-width">
-                        <mat-label>Raw Material</mat-label>
-                        <mat-select [(ngModel)]="line.rawMaterial" [name]="'rawMaterial' + i" (selectionChange)="onMaterialChange(i)">
-                          <mat-option *ngFor="let material of rawMaterialOptions" [value]="material._id">
-                            {{ material.name }}
-                          </mat-option>
-                        </mat-select>
-                      </mat-form-field>
-                    </div>
-                    <div class="col-md-3">
-                      <mat-form-field class="example-full-width">
-                        <mat-label>Qty / Unit</mat-label>
-                        <input matInput type="number" min="0" [(ngModel)]="line.qtyPerUnit" [name]="'qtyPerUnit' + i">
-                      </mat-form-field>
-                    </div>
-                    <div class="col-md-2">
-                      <mat-form-field class="example-full-width">
-                        <mat-label>Unit</mat-label>
-                        <input matInput [(ngModel)]="line.unitLabel" [name]="'unitLabel' + i">
-                      </mat-form-field>
-                    </div>
-                    <div class="col-md-2">
-                      <mat-form-field class="example-full-width">
-                        <mat-label>Rate</mat-label>
-                        <input matInput type="number" min="0" [(ngModel)]="line.rate" [name]="'rate' + i">
-                      </mat-form-field>
-                    </div>
-                    <div class="col-md-1 template-remove-col">
-                      <button type="button" mat-icon-button class="table-delete-btn" (click)="removeMaterialLine(i)" title="Remove">
-                        <mat-icon>delete</mat-icon>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <mat-form-field class="example-full-width">
-                <mat-label>Note</mat-label>
-                <textarea matInput rows="2" [(ngModel)]="productForm.note" name="note"></textarea>
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Brand</mat-label>
+                <mat-select [(ngModel)]="productForm.shopBrand" name="shopBrand">
+                  <mat-option value="">Auto from product</mat-option>
+                  <mat-option *ngFor="let brand of filteredBrandOptions" [value]="brand._id">
+                    {{ brand.name }}
+                  </mat-option>
+                </mat-select>
+                <mat-icon matPrefix>branding_watermark</mat-icon>
               </mat-form-field>
+            </div>
 
-              <mat-checkbox [(ngModel)]="productForm.active" name="active">Active product</mat-checkbox>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Shop Model</mat-label>
+              <mat-select [(ngModel)]="productForm.shopModel" name="shopModel" (selectionChange)="onShopModelChange()">
+                <mat-option value="">None</mat-option>
+                <mat-option *ngFor="let model of filteredShopModelOptions" [value]="model._id">
+                  {{ model.name }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>layers</mat-icon>
+            </mat-form-field>
 
-              <div class="form-actions">
-                <button mat-raised-button class="btn btn-danger submit-btn" [disabled]="savingProduct || productNgForm.invalid">{{ getSubmitLabel() }}</button>
-                <button *ngIf="editingProductId" type="button" mat-stroked-button class="btn btn-outline-danger submit-btn" (click)="cancelEdit(productNgForm)">Cancel Edit</button>
-              </div>
-            </form>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Shop Variation</mat-label>
+              <mat-select [(ngModel)]="productForm.shopVariation" name="shopVariation" (selectionChange)="onShopVariationChange()">
+                <mat-option value="">None</mat-option>
+                <mat-option *ngFor="let variation of filteredShopVariationOptions" [value]="variation._id">
+                  {{ variation.sku }} · {{ variation.attributes?.color || 'No color' }} · {{ variation.attributes?.size || 'No size' }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <div class="inline-fields">
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Selling Price</mat-label>
+                <input matInput type="number" min="0" [(ngModel)]="productForm.defaultSellingPrice" name="defaultSellingPrice">
+                <mat-icon matPrefix>currency_rupee</mat-icon>
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Color</mat-label>
+                <input matInput [(ngModel)]="productForm.variationColor" name="variationColor">
+              </mat-form-field>
+            </div>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Size</mat-label>
+              <input matInput [(ngModel)]="productForm.variationSize" name="variationSize">
+            </mat-form-field>
           </div>
-        </div>
-      </div>
 
-      <div class="col-lg-8">
-        <div class="card">
-          <div class="card-header card-header-danger"><h4 class="card-title">Factory Product List</h4></div>
-          <div class="card-body">
-            <div class="filter-grid two-col-grid">
-              <mat-form-field class="example-full-width">
-                <mat-label>Search</mat-label>
-                <input matInput [(ngModel)]="filters.search" name="search" placeholder="Product, SKU, note">
+          <!-- Waste Config Section -->
+          <div class="section-card">
+            <div class="section-header">
+              <mat-icon>delete_outline</mat-icon>
+              <span>Waste Configuration</span>
+            </div>
+
+            <div class="inline-fields three-col">
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Waste Qty</mat-label>
+                <input matInput type="number" min="0" [(ngModel)]="productForm.standardWasteQtyPerUnit" name="standardWasteQtyPerUnit">
               </mat-form-field>
-              <mat-form-field class="example-full-width">
-                <mat-label>Status</mat-label>
-                <mat-select [(ngModel)]="filters.active" name="active">
-                  <mat-option value="">All</mat-option>
-                  <mat-option value="true">Active</mat-option>
-                  <mat-option value="false">Inactive</mat-option>
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Waste Unit</mat-label>
+                <mat-select [(ngModel)]="productForm.standardWasteUnitLabel" name="standardWasteUnitLabel">
+                  <mat-option *ngFor="let unit of wasteUnitOptions" [value]="unit">{{ unit }}</mat-option>
                 </mat-select>
               </mat-form-field>
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Waste Value</mat-label>
+                <input matInput type="number" min="0" [(ngModel)]="productForm.standardWasteValuePerUnit" name="standardWasteValuePerUnit">
+              </mat-form-field>
+            </div>
+          </div>
+
+          <!-- Interactive Bulk Sheet Calculator Tool -->
+          <div class="section-card calculator-card" style="background: #f0f9ff; border: 1px solid #bae6fd; padding: 12px; border-radius: 8px; margin-bottom: 16px;">
+            <div class="section-header" style="color: #0369a1; font-weight: 700; margin-bottom: 4px;">
+              <mat-icon style="color: #0284c7;">calculate</mat-icon>
+              <span>Bulk Sheet-to-Box Calculator (Auto Recipe Helper)</span>
+            </div>
+            <div class="calc-subtext" style="font-size: 0.82rem; color: #0369a1; margin-bottom: 10px;">
+              Agar aapne bulk me chadarein kaat kar boxes banaye hain (jaise 5 chadar me 8 box), toh yahan bharein:
+            </div>
+            <div class="inline-fields three-col" style="display: flex; gap: 8px; align-items: center;">
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Total Sheets Cut (Kitni Chadar Kati)</mat-label>
+                <input matInput type="number" min="0" [(ngModel)]="bulkCalc.totalSheets" name="bulkTotalSheets" (ngModelChange)="calculateBulkPerBox()" placeholder="e.g. 5">
+                <mat-icon matPrefix>content_cut</mat-icon>
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Total Boxes Made (Kitne Box Bane)</mat-label>
+                <input matInput type="number" min="0" [(ngModel)]="bulkCalc.totalBoxes" name="bulkTotalBoxes" (ngModelChange)="calculateBulkPerBox()" placeholder="e.g. 8">
+                <mat-icon matPrefix>inventory</mat-icon>
+              </mat-form-field>
+              <div class="calc-result-box" style="display: flex; flex-direction: column; justify-content: center; align-items: center; background: #ffffff; border-radius: 8px; border: 1px solid #7dd3fc; padding: 6px 12px; height: 56px;">
+                <div style="font-size: 0.7rem; color: #64748b; font-weight: 600; text-transform: uppercase;">1 Box Sheet Qty</div>
+                <div style="font-size: 1.05rem; color: #0284c7; font-weight: 800;">{{ bulkCalc.resultPerBox | number: '1.3-3' }} Sheet</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Material Template Section -->
+          <div class="section-card">
+            <div class="section-header">
+              <mat-icon>list_alt</mat-icon>
+              <span>Standard Material Template</span>
+              <button type="button" mat-stroked-button class="add-mat-btn" (click)="addMaterialLine()">
+                <mat-icon>add</mat-icon> Add
+              </button>
+            </div>
+            <div class="template-empty" *ngIf="productForm.standardMaterialLines.length === 0">
+              No material template added. Click "Add" to add materials.
             </div>
 
-            <div class="filter-actions">
-              <button mat-raised-button class="btn btn-danger" (click)="loadProducts()">Apply Filters</button>
-              <button mat-stroked-button class="btn btn-outline-danger" (click)="clearFilters()">Reset</button>
+            <div class="material-lines">
+              <div class="material-line" *ngFor="let line of productForm.standardMaterialLines; let i = index">
+                <div class="material-line-header">
+                  <span>Material {{ i + 1 }}</span>
+                  <button type="button" mat-icon-button class="remove-btn" (click)="removeMaterialLine(i)">
+                    <mat-icon>close</mat-icon>
+                  </button>
+                </div>
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Raw Material</mat-label>
+                  <mat-select [(ngModel)]="line.rawMaterial" [name]="'rawMaterial' + i" (selectionChange)="onMaterialChange(i)">
+                    <mat-option *ngFor="let material of rawMaterialOptions" [value]="material._id">
+                      {{ material.name }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <div class="inline-fields three-col">
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Qty / Unit</mat-label>
+                    <input matInput type="number" min="0" [(ngModel)]="line.qtyPerUnit" [name]="'qtyPerUnit' + i">
+                  </mat-form-field>
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Unit</mat-label>
+                    <input matInput [(ngModel)]="line.unitLabel" [name]="'unitLabel' + i">
+                  </mat-form-field>
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Rate</mat-label>
+                    <input matInput type="number" min="0" [(ngModel)]="line.rate" [name]="'rate' + i">
+                  </mat-form-field>
+                </div>
+                <div *ngIf="bulkCalc.resultPerBox > 0" style="margin-top: 4px; margin-bottom: 8px;">
+                  <button type="button" mat-stroked-button color="primary" style="font-size: 0.78rem;" (click)="applyBulkToMaterialLine(line)">
+                    <mat-icon>auto_fix_high</mat-icon> Apply {{ bulkCalc.resultPerBox }} Sheet Qty To This Line
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Note</mat-label>
+            <textarea matInput rows="2" [(ngModel)]="productForm.note" name="note"></textarea>
+            <mat-icon matPrefix>notes</mat-icon>
+          </mat-form-field>
+
+          <mat-checkbox [(ngModel)]="productForm.active" name="active">Active product</mat-checkbox>
+
+          <div class="form-actions">
+            <button mat-raised-button color="warn" type="submit" [disabled]="savingProduct || productNgForm.invalid">
+              <mat-icon>{{ savingProduct ? 'hourglass_top' : 'save' }}</mat-icon>
+              {{ getSubmitLabel() }}
+            </button>
+            <button *ngIf="editingProductId" type="button" mat-stroked-button (click)="cancelEdit(productNgForm)">
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- ── Right: Product List ── -->
+      <div class="list-panel">
+        <div class="list-panel-header">
+          <div class="panel-title">Factory Product List</div>
+          <div class="filter-bar">
+            <mat-form-field appearance="outline" class="filter-field">
+              <mat-label>Search</mat-label>
+              <input matInput [(ngModel)]="filters.search" (input)="onSearchInput()" placeholder="Type 62, Box, TATA...">
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="filter-field">
+              <mat-label>Status</mat-label>
+              <mat-select [(ngModel)]="filters.active">
+                <mat-option value="">All</mat-option>
+                <mat-option value="true">Active</mat-option>
+                <mat-option value="false">Inactive</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+          <div class="filter-actions">
+            <button mat-raised-button color="warn" (click)="loadProducts()">Apply</button>
+            <button mat-stroked-button (click)="clearFilters()">Reset</button>
+          </div>
+        </div>
+
+        <div class="state-row" *ngIf="loadingProducts">
+          <mat-spinner diameter="24"></mat-spinner> Loading products...
+        </div>
+
+        <div class="empty-state-bento" *ngIf="!loadingProducts && products.length === 0">
+          <mat-icon>inventory_2</mat-icon>
+          <p>No factory products found.</p>
+        </div>
+
+        <div class="product-cards-grid" *ngIf="!loadingProducts && products.length > 0">
+          <div class="product-card-v3" *ngFor="let product of products" [class.inactive]="!product.active" [class.selected]="selectedProduct?._id === product._id" (click)="selectProduct(product)">
+            <div class="product-card-header">
+              <div class="product-avatar">
+                {{ (product.name || 'P')[0].toUpperCase() }}
+              </div>
+              <div class="product-info">
+                <div class="product-name">{{ product.name }}</div>
+                <div class="product-meta">
+                  {{ product.unitLabel }} · SKU {{ product.shopVariation?.sku || 'N/A' }}
+                </div>
+              </div>
+              <div class="product-status" [class.active]="product.active" [class.inactive]="!product.active">
+                {{ product.active ? 'Active' : 'Inactive' }}
+              </div>
             </div>
 
-            <div *ngIf="loadingProducts" class="table-empty">Loading factory products...</div>
-            <div *ngIf="!loadingProducts && products.length === 0" class="table-empty">No factory products found.</div>
-
-            <div class="table-wrap" *ngIf="!loadingProducts && products.length > 0">
-              <table class="table item-table factory-product-table">
-                <thead>
-                  <tr>
-                    <th>Product</th>
-                    <th>Shop Link</th>
-                    <th>Unit</th>
-                    <th>Worker Rate</th>
-                    <th>Materials</th>
-                    <th>Waste</th>
-                    <th>Status</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let product of products">
-                    <td class="cell-product">
-                      <div class="table-primary clickable-text" (click)="selectProduct(product)">{{ product.name }}</div>
-                      <div class="table-note" *ngIf="product.shopVariation?.sku">SKU {{ product.shopVariation?.sku }}</div>
-                      <div class="table-note" *ngIf="product.note">{{ product.note }}</div>
-                    </td>
-                    <td class="cell-link">
-                      <div class="table-note">{{ product.shopProduct?.name || '-' }}</div>
-                      <div class="table-note" *ngIf="product.shopModel?.name">{{ product.shopModel?.name }}</div>
-                    </td>
-                    <td>{{ product.unitLabel }}</td>
-                    <td>Rs {{ product.workerPieceRate | number: '1.0-2' }}</td>
-                    <td>{{ product.standardMaterialLines?.length || 0 }} lines</td>
-                    <td>{{ product.standardWasteQtyPerUnit | number: '1.0-2' }} {{ product.standardWasteUnitLabel || 'KG' }}</td>
-                    <td><span class="status-chip" [class.inactive]="!product.active">{{ product.active ? 'Active' : 'Inactive' }}</span></td>
-                    <td>
-                      <div class="table-actions" *ngIf="canManage">
-                        <button mat-icon-button class="table-edit-btn" [disabled]="deletingId === product._id" (click)="startEdit(product)" aria-label="Edit product" title="Edit"><mat-icon>edit</mat-icon></button>
-                        <button mat-icon-button class="table-delete-btn" [disabled]="deletingId === product._id" (click)="deleteProduct(product)" aria-label="Delete product" title="Delete"><mat-icon>{{ deletingId === product._id ? 'hourglass_top' : 'delete' }}</mat-icon></button>
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+            <div class="product-chips">
+              <span class="product-chip worker-rate">
+                <mat-icon>person</mat-icon>
+                ₹{{ product.workerPieceRate | number: '1.0-2' }}/{{ product.unitLabel }}
+              </span>
+              <span class="product-chip materials">
+                {{ product.standardMaterialLines?.length || 0 }} materials
+              </span>
+              <span class="product-chip waste" *ngIf="product.standardWasteQtyPerUnit">
+                {{ product.standardWasteQtyPerUnit | number: '1.0-2' }} {{ product.standardWasteUnitLabel || 'KG' }} waste
+              </span>
             </div>
 
-            <div class="product-detail-card" *ngIf="selectedProduct">
-              <div class="product-detail-header">
-                <div>
-                  <div class="product-detail-title">{{ selectedProduct.name }}</div>
-                  <div class="table-note">
-                    {{ selectedProduct.unitLabel }}
-                    <span *ngIf="selectedProduct.shopVariation?.sku"> · SKU {{ selectedProduct.shopVariation?.sku }}</span>
-                    <span *ngIf="selectedProduct.active"> · Active</span>
-                    <span *ngIf="!selectedProduct.active"> · Inactive</span>
-                  </div>
-                </div>
-                <div class="product-detail-rate">Worker Rate: Rs {{ selectedProduct.workerPieceRate | number: '1.0-2' }}</div>
-              </div>
+            <div class="product-shop-link" *ngIf="product.shopProduct?.name">
+              <mat-icon>store</mat-icon>
+              {{ product.shopProduct?.name }}
+              <span *ngIf="product.shopModel?.name">· {{ product.shopModel?.name }}</span>
+            </div>
 
-              <div class="product-detail-grid compact-detail-grid">
-                <div class="detail-pill">
-                  <span>Material Lines</span>
-                  <strong>{{ selectedProduct.standardMaterialLines?.length || 0 }}</strong>
-                </div>
-                <div class="detail-pill">
-                  <span>Template Material Cost</span>
-                  <strong>Rs {{ selectedProductTemplateCost | number: '1.2-2' }}</strong>
-                </div>
-                <div class="detail-pill">
-                  <span>Waste Qty</span>
-                  <strong>{{ selectedProduct.standardWasteQtyPerUnit | number: '1.0-2' }} {{ selectedProduct.standardWasteUnitLabel || 'KG' }}</strong>
-                </div>
-                <div class="detail-pill">
-                  <span>Waste Value</span>
-                  <strong>Rs {{ selectedProduct.standardWasteValuePerUnit | number: '1.2-2' }}</strong>
-                </div>
-                <div class="detail-pill">
-                  <span>Shop Product</span>
-                  <strong>{{ selectedProduct.shopProduct?.name || 'Not linked' }}</strong>
-                </div>
-                <div class="detail-pill">
-                  <span>Shop Model</span>
-                  <strong>{{ selectedProduct.shopModel?.name || 'Not linked' }}</strong>
-                </div>
-                <div class="detail-pill">
-                  <span>Shop Variation</span>
-                  <strong>{{ selectedProduct.shopVariation?.sku || 'Not linked' }}</strong>
-                </div>
-                <div class="detail-pill">
-                  <span>Variation</span>
-                  <strong>
-                    {{ selectedProduct.variationColor || 'No color' }}
-                    <span *ngIf="selectedProduct.variationSize"> · {{ selectedProduct.variationSize }}</span>
-                  </strong>
-                </div>
-                <div class="detail-pill">
-                  <span>Selling Price</span>
-                  <strong>Rs {{ selectedProduct.defaultSellingPrice | number: '1.2-2' }}</strong>
-                </div>
-              </div>
-
-              <div class="product-detail-section" *ngIf="selectedProduct.shopCategory || selectedProduct.shopBrand || selectedProduct.shopProduct || selectedProduct.shopModel">
-                <div class="detail-section-title">Shop Mapping</div>
-                <div class="detail-line-list">
-                  <div class="detail-line-row">
-                    <div>
-                      <div class="table-primary">Category / Brand</div>
-                      <div class="table-note">
-                        {{ selectedProduct.shopCategory?.name || 'No category' }} · {{ selectedProduct.shopBrand?.name || 'No brand' }}
-                      </div>
-                    </div>
-                    <strong>{{ selectedProduct.shopProduct?.name || 'No shop product' }}</strong>
-                  </div>
-                  <div class="detail-line-row">
-                    <div>
-                      <div class="table-primary">Model / Variation</div>
-                      <div class="table-note">
-                        {{ selectedProduct.shopModel?.name || 'No model' }}
-                      </div>
-                    </div>
-                    <strong>
-                      {{ selectedProduct.shopVariation?.sku || 'No variation' }}
-                      <span *ngIf="selectedProduct.variationColor"> · {{ selectedProduct.variationColor }}</span>
-                      <span *ngIf="selectedProduct.variationSize"> · {{ selectedProduct.variationSize }}</span>
-                    </strong>
-                  </div>
-                </div>
-              </div>
-
-              <div class="product-detail-section">
-                <div class="detail-section-title">Material Template</div>
-                <div *ngIf="!selectedProduct.standardMaterialLines?.length" class="table-empty compact-empty">No material lines added.</div>
-                <div class="detail-line-list" *ngIf="selectedProduct.standardMaterialLines?.length">
-                  <div class="detail-line-row" *ngFor="let line of selectedProduct.standardMaterialLines">
-                    <div>
-                      <div class="table-primary">{{ line.materialName || line.rawMaterial?.name || '-' }}</div>
-                      <div class="table-note">
-                        {{ line.qtyPerUnit | number: '1.0-2' }} {{ line.unitLabel || 'PCS' }} × Rs {{ line.rate | number: '1.2-2' }}
-                      </div>
-                    </div>
-                    <strong>Rs {{ (line.qtyPerUnit || 0) * (line.rate || 0) | number: '1.2-2' }}</strong>
-                  </div>
-                </div>
-              </div>
-
-              <div class="product-detail-section" *ngIf="selectedProduct.note">
-                <div class="detail-section-title">Note</div>
-                <div class="table-note">{{ selectedProduct.note }}</div>
+            <div class="product-footer">
+              <div class="product-actions" *ngIf="canManage">
+                <button mat-icon-button color="primary" [disabled]="deletingId === product._id" (click)="startEdit(product); $event.stopPropagation()" title="Edit">
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button mat-icon-button color="warn" [disabled]="deletingId === product._id" (click)="deleteProduct(product); $event.stopPropagation()" title="Delete">
+                  <mat-icon>{{ deletingId === product._id ? 'hourglass_top' : 'delete' }}</mat-icon>
+                </button>
               </div>
             </div>
           </div>
         </div>
+
+        <!-- Selected Product Detail -->
+        <div class="product-detail-panel" *ngIf="selectedProduct">
+          <div class="detail-panel-header">
+            <div class="detail-title">{{ selectedProduct.name }}</div>
+            <div class="detail-rate">
+              Worker Rate: ₹{{ selectedProduct.workerPieceRate | number: '1.0-2' }}/{{ selectedProduct.unitLabel }}
+            </div>
+          </div>
+
+          <div class="detail-pills-grid">
+            <div class="detail-pill">
+              <span>Materials</span>
+              <strong>{{ selectedProduct.standardMaterialLines?.length || 0 }}</strong>
+            </div>
+            <div class="detail-pill">
+              <span>Material Cost</span>
+              <strong>₹{{ selectedProductTemplateCost | number: '1.2-2' }}</strong>
+            </div>
+            <div class="detail-pill">
+              <span>Waste Qty</span>
+              <strong>{{ selectedProduct.standardWasteQtyPerUnit | number: '1.0-2' }} {{ selectedProduct.standardWasteUnitLabel || 'KG' }}</strong>
+            </div>
+            <div class="detail-pill">
+              <span>Waste Value</span>
+              <strong>₹{{ selectedProduct.standardWasteValuePerUnit | number: '1.2-2' }}</strong>
+            </div>
+            <div class="detail-pill">
+              <span>Selling Price</span>
+              <strong>₹{{ selectedProduct.defaultSellingPrice | number: '1.2-2' }}</strong>
+            </div>
+          </div>
+
+          <div class="detail-section" *ngIf="selectedProduct.standardMaterialLines?.length > 0">
+            <div class="detail-section-title">Material Template</div>
+            <div class="material-detail-list">
+              <div class="material-detail-row" *ngFor="let line of selectedProduct.standardMaterialLines">
+                <div class="mat-name">{{ line.materialName || line.rawMaterial?.name || '-' }}</div>
+                <div class="mat-qty">{{ line.qtyPerUnit | number: '1.0-2' }} {{ line.unitLabel || 'PCS' }}</div>
+                <div class="mat-rate">× ₹{{ line.rate | number: '1.2-2' }}</div>
+                <div class="mat-total">₹{{ (line.qtyPerUnit || 0) * (line.rate || 0) | number: '1.2-2' }}</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="detail-section" *ngIf="selectedProduct.note">
+            <div class="detail-section-title">Note</div>
+            <div class="detail-note">{{ selectedProduct.note }}</div>
+          </div>
+        </div>
+
       </div>
+
     </div>
   </div>
 </div>

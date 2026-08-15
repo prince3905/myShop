@@ -1,6 +1,7 @@
 import { AfterViewInit, Component, ElementRef, EventEmitter, OnDestroy, OnInit, Optional, Output, ViewChild } from "@angular/core";
 import { MatDialog, MatDialogRef } from "@angular/material/dialog";
 import { MatSnackBar } from "@angular/material/snack-bar";
+import { ActivatedRoute, Router } from "@angular/router";
 import { debounceTime, distinctUntilChanged, switchMap, takeUntil } from "rxjs/operators";
 import { of, Subject } from "rxjs";
 import { BrandService } from "app/shared/services/brand.service";
@@ -47,6 +48,7 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
   billDiscount: number = 0;
   paidAmount: number = 0;
   paymentMethod: "CASH" | "UPI" | "CARD" | "BANK" | "ONLINE" | "CREDIT" = "CASH";
+  saleDate: Date | null = null;
   readonly paymentMethods = ["CASH", "UPI", "CARD", "BANK", "ONLINE", "CREDIT"];
   readonly splitPaymentMethods = ["CASH", "UPI", "CARD", "BANK", "ONLINE"];
   
@@ -61,7 +63,7 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
   
   Sales_added: any = {};
   final_Sales_data: any = {};
-  Display_items: any = {};
+  Display_items: any[] = [];
   totalPurchasePrice: number = null;
   totalQuantity: number = null;
 
@@ -88,13 +90,37 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
   itemSearchLoading = false;
   activeShopDetails: any = null;
   private readonly destroy$ = new Subject<void>();
+  today = new Date();
   private readonly itemSearch$ = new Subject<string>();
   private readonly customerSearch$ = new Subject<string>();
   isSavingSale = false;
   private lastAutoHoldSignature = "";
+
+  quickAddItems: any[] = [];
+  
+  get canBackdateSale(): boolean {
+    const role = this.authService.getUserRole();
+    return role === "ADMIN" || role === "SUPER_ADMIN";  
+  }
+
+  get minDate(): Date {
+    const d = new Date();
+    d.setDate(d.getDate() - 30);
+    return d;
+  }
+
+  setBackDate(daysAgo: number): void {
+    const date = new Date();
+    date.setDate(date.getDate() - daysAgo);
+    this.saleDate = date;
+  }
+  
   private readonly salesDraftStorageKey = "posSalesDraft";
   private readonly onlineStatusHandler = () => this.handleOnlineStatusChange();
   @ViewChild("barcodeInputRef") barcodeInputRef?: ElementRef<HTMLInputElement>;
+  editMode = false;
+  editSaleId = "";
+  originalSaleDate: string = "";
 
   constructor(
     private category: CategoryService,
@@ -109,9 +135,17 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
     private variationService: VariationService,
     private customerService: CustomerService,
     public authService: AuthService,
+    private route: ActivatedRoute,
+    private router: Router,
   ) {}
 
   ngOnInit(): void {
+    this.editSaleId = this.route.snapshot.paramMap.get("id") || "";
+    if (this.editSaleId) {
+      this.editMode = true;
+      this.loadSaleForEdit(this.editSaleId);
+    }
+
     this.loadHeldBillsFromStorage();
     this.restoreDraftFromStorage();
     this.loadSelectedShopDetails();
@@ -121,6 +155,8 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
     window.addEventListener("offline", this.onlineStatusHandler);
     window.addEventListener("online", this.onlineStatusHandler);
     this.setupSuggestionStreams();
+    this.itemSearch$.next("");
+    this.loadQuickAddItems();
   }
 
   ngAfterViewInit(): void {
@@ -155,6 +191,97 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
       },
       error: () => {
         this.activeShopDetails = null;
+      },
+    });
+  }
+
+  loadQuickAddItems(): void {
+    this.variationService.getVariations({ isQuickAdd: true }).subscribe({
+      next: (res: any) => {
+        this.quickAddItems = res?.data || res || [];
+      },
+      error: () => {
+        this.quickAddItems = [];
+      }
+    });
+  }
+
+  onQuickAddClick(variation: any): void {
+    const availableStock = Number(variation.quantity || 0);
+    
+    if (availableStock <= 0) {
+      this.snackBar.open(`Out of stock: ${variation.product?.name || 'Item'}`, "Close", { duration: 2000 });
+      return;
+    }
+
+    const existingIndex = this.Display_items?.findIndex(
+      (item: any) => item.variationId === variation._id
+    ) ?? -1;
+
+    if (existingIndex > -1) {
+      const currentQty = Number(this.Display_items[existingIndex].quantity || 0);
+      if (currentQty >= availableStock) {
+        this.snackBar.open(`Stock limit reached. Available: ${availableStock}`, "Close", { duration: 2000 });
+        return;
+      }
+      this.Display_items[existingIndex].quantity += 1;
+    } else {
+      const newItem = {
+        itemName: variation.product?.name || "Unknown Product",
+        category: "",
+        brand: "",
+        quantity: 1,
+        purchasePrice: Number(variation.sellingPrice || variation.costPrice || 0),
+        model: variation.model?.name || "",
+        size: variation.attributes?.size || "",
+        color: variation.attributes?.color || "",
+        variations: variation.sku || "",
+        variationId: variation._id,
+        variationSku: variation.sku || "",
+        productId: variation.product?._id || variation.product,
+        modelId: variation.model?._id || variation.model,
+        availableStock: availableStock,
+      };
+      this.Display_items.unshift(newItem);
+    }
+
+    this.calculateTotals();
+    this.saveDraftToStorage();
+    this.snackBar.open(`${variation.product?.name || 'Item'} added`, "Close", { duration: 1500 });
+  }
+
+  private loadSaleForEdit(id: string): void {
+    this.Sales.getSaleById(id).subscribe({
+      next: (res: any) => {
+        const sale = res?.data || res;
+        if (!sale) {
+          this.snackBar.open("Sale not found", "Close", { duration: 3000 });
+          this.router.navigate(["/sale-list"]);
+          return;
+        }
+        this.customerName = sale.customerName || "";
+        this.customerPhone = sale.customerPhone || "";
+        this.customerAddress = sale.customerAddress || "";
+        this.selectedCustomerId = sale.customer || "";
+        this.billDiscount = sale.billDiscount || 0;
+        this.description = sale.description || "";
+        const items = (sale.items || []).map((it: any) => ({
+          ...it,
+          purchasePrice: it.sellingPrice ?? it.purchasePrice
+        }));
+        this.Display_items = items;
+        this.paidAmount = sale.paidAmount || 0;
+        this.paymentMethod = sale.paymentMethod || "CASH";
+        this.billDiscount = sale.billDiscount || 0;
+        this.originalSaleDate = sale.createdAt || sale.saleDate || "";
+        
+        this.rebuildSalesStateFromDisplayItems();
+        this.onPaidAmountChange();
+        this.snackBar.open("Sale loaded for editing", "Close", { duration: 2000 });
+      },
+      error: () => {
+        this.snackBar.open("Failed to load sale", "Close", { duration: 3000 });
+        this.router.navigate(["/sale-list"]);
       },
     });
   }
@@ -1018,6 +1145,7 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
       finalPaidAmount = totalSplitAmount;
     }
 
+    const itemTotal = (this.Display_items || []).reduce((sum: number, it: any) => sum + (Number(it?.quantity || 0) * Number(it?.sellingPrice || it?.purchasePrice || 0)), 0);
     this.final_Sales_data = {
       customerName: customerName,
       customer: this.selectedCustomerId || null,
@@ -1029,6 +1157,7 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
         brand: it?.brand || null,
         quantity: Number(it?.quantity || 0),
         purchasePrice: Number(it?.purchasePrice || 0),
+        sellingPrice: Number(it?.sellingPrice || it?.purchasePrice || 0),
         model: it?.model || "",
         size: it?.size || "",
         variations: it?.variations || it?.variationSku || null,
@@ -1037,38 +1166,43 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
         productId: it?.productId || null,
         modelId: it?.modelId || null,
       })),
+      itemTotal,
       billDiscount: Number(this.billDiscount || 0),
       paidAmount: Number(finalPaidAmount || 0),
       walletUsedAmount: walletUsedAmount,
       paymentMethod: finalPaymentMethod || "CASH",
-      splitPayments: this.useSplitPayment ? this.splitPayments : null
+      splitPayments: this.useSplitPayment ? this.splitPayments : null,
+      ...(this.saleDate && this.canBackdateSale ? { saleDate: this.formatDateForApi(this.saleDate) } : {}),
+      ...(this.editMode && this.originalSaleDate ? { createdAt: this.originalSaleDate } : {}),
     };
-
     if (this.isSavingSale) {
       return;
     }
 
     this.isSavingSale = true;
-    this.Sales.addSales(this.final_Sales_data).subscribe(
+    
+    const saveObservable = this.editMode 
+      ? this.Sales.updateSale(this.editSaleId, this.final_Sales_data)
+      : this.Sales.addSales(this.final_Sales_data);
+
+    saveObservable.subscribe(
       (response: any) => {
-        this.snackBar.open(response?.message || "Sale saved", "Close", { duration: 3200, horizontalPosition: "center", verticalPosition: "bottom" });
-        this.resetForm();
-        this.lastAutoHoldSignature = "";
+        this.snackBar.open(response?.message || (this.editMode ? "Sale updated" : "Sale saved"), "Close", { duration: 3200, horizontalPosition: "center", verticalPosition: "bottom" });
+        if (!this.editMode) {
+          this.resetForm();
+          this.lastAutoHoldSignature = "";
+        }
         this.clearDraftFromStorage();
         this.isSavingSale = false;
         this.dialogRef?.close(true);
+        if (this.editMode) {
+          this.router.navigate(["/sale-list"]);
+        }
       },
       (error: any) => {
-        console.error("Error adding Sales item:", error);
-        if (this.shouldAutoHoldOnSaleError(error) && this.autoHoldCurrentBill()) {
-          this.snackBar.open("Internet/server issue detected. Bill moved to Hold Bills automatically.", "Close", {
-            duration: 4500,
-            horizontalPosition: "center",
-            verticalPosition: "bottom",
-          });
-        } else {
-        this.snackBar.open(error?.error?.message || "Failed to add sales item", "Close", { duration: 4000, horizontalPosition: "center", verticalPosition: "bottom" });
-        }
+        console.error(this.editMode ? "Error updating Sales item:" : "Error adding Sales item:", error);
+        const errMsg = error?.error?.message || error?.message || (this.editMode ? "Failed to update sale" : "Failed to add sales item");
+        this.snackBar.open(errMsg, "Close", { duration: 4000, horizontalPosition: "center", verticalPosition: "bottom" });
         this.isSavingSale = false;
       }
     );
@@ -1386,14 +1520,16 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
       },
     };
 
+    const itemTotal = clonedItems.reduce((acc: number, it: any) => acc + Number(it?.quantity || 0) * Number(it?.sellingPrice || it?.purchasePrice || 0), 0);
     this.final_Sales_data = {
       customerName,
       items: clonedItems,
+      itemTotal,
       billDiscount: Number(this.billDiscount || 0),
       paidAmount: Number(this.paidAmount || 0),
       paymentMethod: this.paymentMethod || "CASH",
     };
-    this.Display_items = this.Sales_added[customerName].items;
+    this.Display_items = clonedItems;
     this.calculateTotals();
     this.saveDraftToStorage();
   }
@@ -1438,6 +1574,14 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
         duration: 3600,
       });
     }
+  }
+
+  private formatDateForApi(d: Date): string {
+    const dt = new Date(d);
+    const yyyy = dt.getFullYear();
+    const mm = `${dt.getMonth() + 1}`.padStart(2, "0");
+    const dd = `${dt.getDate()}`.padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
   }
 
   private buildAutoHoldName(): string {
@@ -1595,10 +1739,6 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
         debounceTime(240),
         distinctUntilChanged(),
         switchMap((term) => {
-          if (!term) {
-            this.itemSearchLoading = false;
-            return of([]);
-          }
           this.itemSearchLoading = true;
           return this.item.searchProductsForPos(term);
         }),

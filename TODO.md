@@ -1,53 +1,88 @@
-# 🚀 MyShop - Future Features & Improvements
+# 🚀 MyShop - Development Rules & Guidelines
 
-## 🟥 High Priority (Game Changers)
+## ⚠️ Pre-Push Checklist (MANDATORY)
 
-### 1. 📱 WhatsApp Bill Integration
-- **Goal:** Send invoice/PDF to customer via WhatsApp immediately after sale.
-- **Why:** Professional look, saves paper, easy for customers to track purchases.
-- **Tech:** WhatsApp Business API or simple "Click to Chat" link with pre-filled text.
+Koi bhi change git push karne se pehle ye sab check karein:
 
-### 2. 🔔 Low Stock Alerts & Notifications
-- **Goal:** Auto-notify when stock hits "Reorder Level".
-- **Why:** Prevent stock-outs, ensure popular items are always available.
-- **Tech:** Dashboard notifications, Mobile Push notifications, or Email alerts.
+### ✅ Code Quality
+- [ ] Full build clear karein (`npm run build` ya equivalent)
+- [ ] TypeScript errors nahi hone chahiye
+- [ ] Console errors nahi hone chahiye
 
-### 3. 🛑 Customer Credit Limit (Udhaar Control)
-- **Goal:** Set a max credit limit per customer (e.g., ₹5,000).
-- **Why:** Prevent bad debts. Block sales if limit is exceeded.
-- **Tech:** Validation in `salesController` before creating sale.
+### ✅ Logic & Permissions
+- [ ] Naya feature ke liye permission check kiya?
 
----
+### ✅ Testing
 
-## 🟨 Medium Priority (Operational Efficiency)
 
-### 4. 📊 Daily "Z-Report" (Shift Closing)
-- **Goal:** End-of-day summary: System Cash vs Drawer Cash.
-- **Why:** Detect staff theft or calculation errors instantly.
-- **Tech:** A modal on "Logout" or "Close Shift" button.
-
-### 5. 📦 Purchase Order (PO) Generation
-- **Goal:** Generate a formal PO document to send to suppliers.
-- **Why:** Professional procurement process, track pending orders.
-- **Tech:** PDF generation from "Pending Orders" list.
-
-### 6. 📸 Barcode/QR Scanner Support (Mobile App)
-- **Goal:** Use phone camera as a barcode scanner.
-- **Why:** Faster billing on mobile app without external hardware.
-- **Tech:** Capacitor Barcode Scanner plugin.
+### ✅ UI/UX
+- [ ] Mobile responsive check kiya?
+- [ ] Loading states everywhere handle kiye?
+- [ ] Error messages clear hain?
+UI app se milta julata rehena chhiye
 
 ---
 
-## 🟦 Low Priority (Polish & Analytics)
+## 🔒 Permission Rules
 
-### 7. 📈 AI-Based Sales Prediction
-- **Goal:** Predict next month's sales based on history.
-- **Why:** Better inventory planning.
+### Important Rules
+- **STAFF** ko kabhi cost price nahi dikhna chahiye
+- **MANAGER** ko kabhi profit nahi dikhna chahiye
+- Har naye feature me permission check lagana ZAROORI ha
 
-### 8. 💳 Payment Gateway Integration
-- **Goal:** Accept UPI/Card directly in the app.
-- **Why:** Fully digital payments, no cash handling.
+---
 
-### 9. 🌍 Multi-Language Support
-- **Goal:** Hindi/English toggle.
-- **Why:** Easier for non-English speaking staff.
+## 📋 New Feature Checklist
+
+Naya feature add karte waqt:
+
+1. ✅ FeatureRegistry me add karein
+2. ✅ roleFeaturePolicy me add karein
+4. ✅ Route guard lagayein
+5. ✅ Backend controller me permission check lagayein
+6. ✅ Test with all roles
+
+---
+
+## 🚫 Git Push Rules
+
+- **MASTER/Main branch par direct push BLOCKED** - Sirf PR se hi push karein
+- Har push se pehle pre-push checklist MANDATORY hai
+- Code review zaroori hai for new features
+bina permition code push nhi hoga
+
+---
+
+## 🔧 Common Issues & Fixes
+
+### UI not showing?
+- Console check karein - koi error to nahi?
+- Permission check karein - role me feature hai?
+- Network tab check karein - API response shi hai?
+
+### Permission error aata hai?
+- FeatureRegistry check karein
+- roleFeaturePolicy check karein
+- User role check karein database me
+
+### Data nahi loading?
+- Network tab check karein - koi API call ho rahi?
+- Backend logs check karein - error a raha hai?
+- Database me data exist karta hai?
+
+### Logic breakdown?
+- Console errors check karein
+- Console.log lagakar debug karein
+- Database queries check karein
+
+---
+
+## 📞 Support
+
+Koi bhi issue aaye to:
+1. Console errors check karein
+2. Network tab API response check karein
+3. Backend terminal logs check karein
+4. Database data check karein
+
+---

@@ -92,6 +92,19 @@ export class ShopService {
     this.selectedShopSubject.next(null);
   }
 
+  cloneShopData(payload: any) {
+    this.clearCache();
+    return this.http.post<any>(`${this.baseURL}/api/shops/sync/clone-bulk`, payload);
+  }
+
+  copySingleDistributor(payload: any) {
+    return this.http.post<any>(`${this.baseURL}/api/shops/sync/copy-distributor`, payload);
+  }
+
+  copySingleProduct(payload: any) {
+    return this.http.post<any>(`${this.baseURL}/api/shops/sync/copy-product`, payload);
+  }
+
   private clearCache(): void {
     this.responseCache.clear();
     this.inflightCache.clear();

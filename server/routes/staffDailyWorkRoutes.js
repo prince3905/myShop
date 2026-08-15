@@ -14,6 +14,7 @@ router.post("/", authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"), aut
 router.put("/:id", authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF"), authorizeFeature("staff.daily_work"), staffDailyWorkController.updateDailyWork);
 router.patch("/:id/verification", authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER"), authorizeFeature("factory.verification"), staffDailyWorkController.verifyDailyWork);
 router.patch("/:id/push-stock", authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER"), authorizeFeature("factory.push_to_shop"), staffDailyWorkController.pushDailyWorkToStock);
+router.patch("/:id/remove-khoraki", authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER"), authorizeFeature("staff.daily_work"), staffDailyWorkController.removeKhorakiFromDailyWork);
 router.delete("/:id", authorizeRoles("SUPER_ADMIN", "ADMIN", "MANAGER"), authorizeFeature("staff.daily_work"), staffDailyWorkController.deleteDailyWork);
 
 module.exports = router;

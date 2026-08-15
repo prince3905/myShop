@@ -138,6 +138,17 @@ const factoryProductSchema = new mongoose.Schema(
       trim: true,
       default: "",
     },
+    rateHistory: [
+      {
+        oldWorkerPieceRate: Number,
+        newWorkerPieceRate: Number,
+        oldDefaultSellingPrice: Number,
+        newDefaultSellingPrice: Number,
+        reason: String,
+        changedAt: { type: Date, default: Date.now },
+        updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+      },
+    ],
     active: {
       type: Boolean,
       default: true,

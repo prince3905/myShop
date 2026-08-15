@@ -11,6 +11,7 @@ import { firstValueFrom } from "rxjs";
 import { MatDialog } from "@angular/material/dialog";
 import { StockReorderPreviewDialogComponent } from "./stock-reorder-preview-dialog.component";
 import { ConfirmDialogComponent } from "app/shared/components/confirm-dialog/confirm-dialog.component";
+import { ShopService } from "app/shared/services/shop.service";
 
 @Component({
   selector: "stocks",
@@ -97,12 +98,33 @@ export class StocksComponent implements OnInit {
   reconciliationSearch = "";
   reconciliation: any = null;
 
+  transferModelOptions: any[] = [];
+  transferVariationOptions: any[] = [];
+  targetShopOptions: any[] = [];
+  transferSaving = false;
+  transferForm: {
+    product: string | null;
+    model: string | null;
+    variation: string | null;
+    targetShopId: string | null;
+    transferQty: number | null;
+    note: string;
+  } = {
+    product: null,
+    model: null,
+    variation: null,
+    targetShopId: null,
+    transferQty: 1,
+    note: "Inter-shop stock transfer",
+  };
+
   constructor(
     private stocksService: StocksService,
     public authService: AuthService,
     private productService: ProductService,
     private distributorService: DistributorService,
     private purchaseService: PurchaseService,
+    private shopService: ShopService,
     private dialog: MatDialog,
     private snackBar: MatSnackBar,
     private router: Router,
@@ -119,6 +141,7 @@ export class StocksComponent implements OnInit {
     setTimeout(() => {
       this.loadProductsForAdjust();
       this.loadDistributorsForReorder();
+      this.loadShopsForTransfer();
     }, 0);
     setTimeout(() => {
       this.loadCurrentReconciliation();
@@ -327,7 +350,10 @@ export class StocksComponent implements OnInit {
     });
   }
 
-  loadStocks(): void {
+  allRows: any[] = [];
+  private searchDebounceTimer: any = null;
+
+  loadStocks(updateAll: boolean = true): void {
     this.loading = true;
 
     const params: any = {
@@ -341,7 +367,11 @@ export class StocksComponent implements OnInit {
 
     this.stocksService.getStocks(params).subscribe({
       next: (res: any) => {
-        this.rows = Array.isArray(res?.stockReport) ? res.stockReport : [];
+        const fetchedRows = Array.isArray(res?.stockReport) ? res.stockReport : [];
+        if (updateAll || !this.allRows.length) {
+          this.allRows = [...fetchedRows];
+        }
+        this.rows = fetchedRows;
         this.totalItems = Number(res?.total || 0);
         this.summary = {
           totalQuantity: Number(res?.summary?.totalQuantity || 0),
@@ -360,9 +390,34 @@ export class StocksComponent implements OnInit {
     });
   }
 
-  onSearch(): void {
+  onSearchInput(): void {
+    const q = (this.search || "").trim().toLowerCase();
+    if (this.allRows && this.allRows.length > 0) {
+      if (!q) {
+        this.rows = [...this.allRows];
+      } else {
+        this.rows = this.allRows.filter((r: any) => {
+          const sku = (r.sku || "").toLowerCase();
+          const pName = (r.productName || "").toLowerCase();
+          const mName = (r.modelName || "").toLowerCase();
+          const color = (r.attributes?.color || "").toLowerCase();
+          const size = (r.attributes?.size || "").toLowerCase();
+          return sku.includes(q) || pName.includes(q) || mName.includes(q) || color.includes(q) || size.includes(q);
+        });
+      }
+    }
+
+    if (this.searchDebounceTimer) {
+      clearTimeout(this.searchDebounceTimer);
+    }
+    this.searchDebounceTimer = setTimeout(() => {
+      this.onSearch(false);
+    }, 300);
+  }
+
+  onSearch(updateAll: boolean = true): void {
     this.page = 1;
-    this.loadStocks();
+    this.loadStocks(updateAll);
   }
 
   onClear(): void {
@@ -527,6 +582,94 @@ export class StocksComponent implements OnInit {
         this.adjustSaving = false;
         this.snackBar.open(err?.error?.message || "Failed to adjust stock", "Close", {
           duration: 3000,
+        });
+      },
+    });
+  }
+
+  loadShopsForTransfer(): void {
+    this.shopService.getAllShops().subscribe({
+      next: (res: any) => {
+        const currentUser = this.authService.getCurrentUser() || {};
+        const currentShopId = currentUser?.shop?._id || currentUser?.shop;
+        const allShops = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+        this.targetShopOptions = allShops.filter((s: any) => `${s._id}` !== `${currentShopId}`);
+      },
+      error: () => {
+        this.targetShopOptions = [];
+      },
+    });
+  }
+
+  onTransferProductChange(): void {
+    this.transferForm.model = null;
+    this.transferForm.variation = null;
+    this.transferVariationOptions = [];
+
+    const product = this.products.find((p: any) => `${p?._id}` === `${this.transferForm.product}`);
+    const map = new Map<string, any>();
+    (product?.variations || []).forEach((v: any) => {
+      const modelId = `${v?.model?._id || v?.model || ""}`;
+      if (!modelId || map.has(modelId)) return;
+      map.set(modelId, {
+        _id: modelId,
+        name: v?.model?.name || "Model",
+      });
+    });
+    this.transferModelOptions = Array.from(map.values());
+  }
+
+  onTransferModelChange(): void {
+    this.transferForm.variation = null;
+    const product = this.products.find((p: any) => `${p?._id}` === `${this.transferForm.product}`);
+
+    this.transferVariationOptions = (product?.variations || []).filter((v: any) => {
+      const modelId = `${v?.model?._id || v?.model || ""}`;
+      return modelId === `${this.transferForm.model}`;
+    });
+  }
+
+  submitStockTransfer(): void {
+    if (this.transferSaving) return;
+
+    if (!this.transferForm.variation || !this.transferForm.targetShopId || !this.transferForm.transferQty) {
+      this.snackBar.open("Variation, Target Shop, and Quantity are required", "Close", { duration: 2600 });
+      return;
+    }
+
+    const qty = Number(this.transferForm.transferQty);
+    if (qty <= 0) {
+      this.snackBar.open("Transfer quantity must be greater than 0", "Close", { duration: 2600 });
+      return;
+    }
+
+    this.transferSaving = true;
+    this.stocksService.transferStock({
+      variationId: this.transferForm.variation,
+      targetShopId: this.transferForm.targetShopId,
+      transferQty: qty,
+      note: this.transferForm.note || "Inter-shop stock transfer",
+    }).subscribe({
+      next: (res: any) => {
+        this.transferSaving = false;
+        this.snackBar.open(res?.message || "Stock transferred successfully!", "Close", { duration: 3600 });
+        this.transferForm = {
+          product: null,
+          model: null,
+          variation: null,
+          targetShopId: null,
+          transferQty: 1,
+          note: "Inter-shop stock transfer",
+        };
+        this.transferModelOptions = [];
+        this.transferVariationOptions = [];
+        this.loadStocks();
+        this.loadTransactions();
+      },
+      error: (err: any) => {
+        this.transferSaving = false;
+        this.snackBar.open(err?.error?.message || "Failed to complete inter-shop stock transfer", "Close", {
+          duration: 3600,
         });
       },
     });
@@ -887,5 +1030,13 @@ export class StocksComponent implements OnInit {
   private getCurrentMonthKey(): string {
     const d = new Date();
     return `${d.getFullYear()}-${`${d.getMonth() + 1}`.padStart(2, "0")}`;
+  }
+
+  getLowStockCount(): number {
+    return this.summary?.lowStockCount || 0;
+  }
+
+  getOutOfStockCount(): number {
+    return this.rows.filter(row => (row?.quantity || 0) === 0).length;
   }
 }

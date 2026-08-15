@@ -1,122 +1,136 @@
 <div class="main-content">
-  <div class="row">
-    <div class="col-md-4">
-      <div class="card">
-        <div class="card-header card-header-danger">
-          <h4 class="card-title">{{ isEditMode ? "Edit User" : "Create User" }}</h4>
-          <p class="card-category">
-            {{ isSuperAdmin ? "Super Admin Control" : "Shop Scoped User Management" }}
-          </p>
-        </div>
-        <div class="card-body">
-          <form [formGroup]="userForm" (ngSubmit)="submitUser()">
-            <mat-form-field class="example-full-width">
-              <mat-label>Email</mat-label>
-              <input matInput formControlName="email" type="email" />
-            </mat-form-field>
+  <div class="users-layout">
 
-            <mat-form-field class="example-full-width">
-              <mat-label>Phone</mat-label>
-              <input matInput formControlName="phoneNo" />
-            </mat-form-field>
-
-            <mat-form-field class="example-full-width" *ngIf="!isEditMode">
-              <mat-label>Password</mat-label>
-              <input matInput type="password" formControlName="password" />
-            </mat-form-field>
-
-            <mat-form-field class="example-full-width">
-              <mat-label>Role</mat-label>
-              <mat-select formControlName="role">
-                <mat-option *ngFor="let role of allowedRoles" [value]="role">{{ role }}</mat-option>
-              </mat-select>
-            </mat-form-field>
-
-            <mat-form-field class="example-full-width" *ngIf="isSuperAdmin">
-              <mat-label>Shop</mat-label>
-              <mat-select formControlName="shop">
-                <mat-option *ngFor="let shop of shops" [value]="shop._id">
-                  {{ shop.name }} ({{ shop.shopCode }})
-                </mat-option>
-              </mat-select>
-            </mat-form-field>
-
-            <mat-form-field class="example-full-width">
-              <mat-label>Status</mat-label>
-              <mat-select formControlName="isActive">
-                <mat-option [value]="true">Active</mat-option>
-                <mat-option [value]="false">Inactive</mat-option>
-              </mat-select>
-            </mat-form-field>
-
-            <div class="form-actions">
-              <button mat-raised-button class="btn btn-danger" [disabled]="saving">
-                {{ saving ? "Saving..." : (isEditMode ? "Update User" : "Create User") }}
-              </button>
-              <button
-                *ngIf="isEditMode"
-                mat-stroked-button
-                type="button"
-                class="ml-2"
-                (click)="cancelEdit()">
-                Cancel
-              </button>
-            </div>
-          </form>
+    <!-- ── Left: Create / Edit Form ── -->
+    <div class="form-panel">
+      <div class="form-panel-header">
+        <mat-icon>{{ isEditMode ? 'manage_accounts' : 'person_add' }}</mat-icon>
+        <div>
+          <div class="panel-title">{{ isEditMode ? 'Edit User' : 'Create User' }}</div>
+          <div class="panel-sub">{{ isSuperAdmin ? 'Super Admin Control' : 'Shop Scoped User Management' }}</div>
         </div>
       </div>
+
+      <form [formGroup]="userForm" (ngSubmit)="submitUser()" class="user-form">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Email</mat-label>
+          <input matInput formControlName="email" type="email" />
+          <mat-icon matPrefix>email</mat-icon>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Phone</mat-label>
+          <input matInput formControlName="phoneNo" />
+          <mat-icon matPrefix>phone</mat-icon>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width" *ngIf="!isEditMode">
+          <mat-label>Password</mat-label>
+          <input matInput type="password" formControlName="password" />
+          <mat-icon matPrefix>lock</mat-icon>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Role</mat-label>
+          <mat-select formControlName="role">
+            <mat-option *ngFor="let role of allowedRoles" [value]="role">{{ role }}</mat-option>
+          </mat-select>
+          <mat-icon matPrefix>badge</mat-icon>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width" *ngIf="isSuperAdmin">
+          <mat-label>Shop</mat-label>
+          <mat-select formControlName="shop">
+            <mat-option *ngFor="let shop of shops" [value]="shop._id">
+              {{ shop.name }} ({{ shop.shopCode }})
+            </mat-option>
+          </mat-select>
+          <mat-icon matPrefix>store</mat-icon>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Status</mat-label>
+          <mat-select formControlName="isActive">
+            <mat-option [value]="true">Active</mat-option>
+            <mat-option [value]="false">Inactive</mat-option>
+          </mat-select>
+          <mat-icon matPrefix>toggle_on</mat-icon>
+        </mat-form-field>
+
+        <div class="form-actions">
+          <button mat-raised-button color="warn" type="submit" [disabled]="saving">
+            <mat-icon>{{ saving ? 'hourglass_top' : (isEditMode ? 'save' : 'person_add') }}</mat-icon>
+            {{ saving ? 'Saving...' : (isEditMode ? 'Update User' : 'Create User') }}
+          </button>
+          <button *ngIf="isEditMode" mat-stroked-button type="button" (click)="cancelEdit()">
+            Cancel
+          </button>
+        </div>
+      </form>
     </div>
 
-    <div class="col-md-8">
-      <div class="card">
-        <div class="card-header card-header-danger">
-          <h4 class="card-title">Users</h4>
-          <p class="card-category" *ngIf="isSuperAdmin">
+    <!-- ── Right: Users List ── -->
+    <div class="list-panel">
+      <div class="list-panel-header">
+        <div>
+          <div class="panel-title">All Users</div>
+          <div class="panel-sub" *ngIf="isSuperAdmin">
             Mode: {{ currentShopLabel === 'Global' ? 'Global (All Shops)' : 'Shop-wise' }}
-          </p>
-          <p class="card-category" *ngIf="!isSuperAdmin">Shop-wise users</p>
+          </div>
+          <div class="panel-sub" *ngIf="!isSuperAdmin">Shop-wise users</div>
         </div>
-        <div class="card-body">
-          <div class="state-row" *ngIf="loading">Loading users...</div>
-          <div class="state-row error" *ngIf="!loading && errorMessage">{{ errorMessage }}</div>
-          <div class="state-row" *ngIf="!loading && !errorMessage && users.length === 0">
-            No users found.
+      </div>
+
+      <div class="state-row" *ngIf="loading">
+        <mat-spinner diameter="28"></mat-spinner>
+        <span>Loading users...</span>
+      </div>
+
+      <div class="state-row error" *ngIf="!loading && errorMessage">{{ errorMessage }}</div>
+
+      <div class="empty-state-bento" *ngIf="!loading && !errorMessage && users.length === 0">
+        <mat-icon>group_off</mat-icon>
+        <p>No users found.</p>
+      </div>
+
+      <div class="users-bento-grid" *ngIf="!loading && !errorMessage && users.length > 0">
+        <div class="user-card-v3" *ngFor="let user of users">
+          <div class="user-card-top">
+            <div class="user-avatar">{{ (user.email || user.phoneNo || 'U')[0].toUpperCase() }}</div>
+            <div class="user-info">
+              <div class="user-email">{{ user.email || '-' }}</div>
+              <div class="user-phone" *ngIf="user.phoneNo">
+                <mat-icon>phone</mat-icon> {{ user.phoneNo }}
+              </div>
+            </div>
+            <span class="active-badge" [ngClass]="user.isActive ? 'active' : 'inactive'">
+              {{ user.isActive ? 'Active' : 'Inactive' }}
+            </span>
           </div>
 
-          <div class="table-responsive" *ngIf="!loading && !errorMessage && users.length > 0">
-            <table class="table">
-              <thead class="text-danger">
-                <tr>
-                  <th>Email</th>
-                  <th>Phone</th>
-                  <th>Role</th>
-                  <th>Shop</th>
-                  <th>Active</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let user of users">
-                  <td>{{ user.email || "-" }}</td>
-                  <td>{{ user.phoneNo || "-" }}</td>
-                  <td>{{ user.role || "-" }}</td>
-                  <td>{{ user?.shop?.name || "GLOBAL" }} <span *ngIf="user?.shop?.shopCode">({{ user.shop.shopCode }})</span></td>
-                  <td>{{ user.isActive ? "Yes" : "No" }}</td>
-                  <td>
-                    <button
-                      mat-stroked-button
-                      color="primary"
-                      *ngIf="canEditUser(user)"
-                      (click)="onEdit(user)">
-                      Edit
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+          <div class="user-meta-row">
+            <div class="meta-chip role-chip">
+              <mat-icon>badge</mat-icon>
+              {{ user.role || '-' }}
+            </div>
+            <div class="meta-chip shop-chip">
+              <mat-icon>store</mat-icon>
+              {{ user?.shop?.name || 'GLOBAL' }}
+              <span *ngIf="user?.shop?.shopCode">({{ user.shop.shopCode }})</span>
+            </div>
+          </div>
+
+          <div class="user-card-footer" *ngIf="canEditUser(user)">
+            <button mat-stroked-button color="primary" (click)="onEdit(user)">
+              <mat-icon>edit</mat-icon> Edit
+            </button>
+            <button mat-stroked-button color="warn" (click)="onDelete(user)" *ngIf="canDeleteUser(user)">
+              <mat-icon>delete</mat-icon> Delete
+            </button>
           </div>
         </div>
       </div>
     </div>
+
   </div>
 </div>

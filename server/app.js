@@ -14,6 +14,8 @@ const allowedOrigins = (
   .map((origin) => origin.trim())
   .filter(Boolean);
 
+const allowedConnectSources = ["'self'", ...allowedOrigins];
+
 const dynamicOriginPatterns = [
   /^https?:\/\/localhost(?::\d+)?$/i,
   /^https?:\/\/127\.0\.0\.1(?::\d+)?$/i,
@@ -23,6 +25,7 @@ const dynamicOriginPatterns = [
   /^https:\/\/[a-z0-9.-]+\.onrender\.com$/i,
   /^capacitor:\/\/localhost$/i,
   /^ionic:\/\/localhost$/i,
+  /^https:\/\/[a-z0-9.-]+\.railway\.app$/i,
 ];
 
 const authWindowMs = 15 * 60 * 1000;
@@ -33,6 +36,7 @@ const isDevelopment = `${process.env.NODE_ENV || "development"}` !== "production
 const { authRateLimit, salesRateLimit, userRateLimit, customerRateLimit, generalRateLimit } = require("./middleware/rateLimiter");
 
 const shopRouter = require("./routes/shopRoutes");
+const shopSyncRoutes = require("./routes/shopSyncRoutes");
 const userRoutes = require("./routes/allUsersRoutes");
 const authRouter = require("./routes/authRoutes");
 const distributorRouter = require("./routes/distributorRoutes");
@@ -57,6 +61,7 @@ const staffDailyWorkRoutes = require("./routes/staffDailyWorkRoutes");
 const factoryProductRoutes = require("./routes/factoryProductRoutes");
 const rawMaterialRoutes = require("./routes/rawMaterialRoutes");
 const rawMaterialPurchaseRoutes = require("./routes/rawMaterialPurchaseRoutes");
+const fraudDetectionRoutes = require("./routes/fraudDetectionRoutes");
 
 
 //Middleware
@@ -91,7 +96,7 @@ app.use(
             styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://maxcdn.bootstrapcdn.com", "https://cdnjs.cloudflare.com"],
             fontSrc: ["'self'", "https://fonts.gstatic.com", "https://maxcdn.bootstrapcdn.com", "https://cdnjs.cloudflare.com"],
             imgSrc: ["'self'", "data:", "https:"],
-            connectSrc: ["'self'"],
+            connectSrc: allowedConnectSources,
             frameSrc: ["'none'"],
             objectSrc: ["'none'"],
             upgradeInsecureRequests: [],
@@ -101,8 +106,6 @@ app.use(
   }),
 );
 
-// Request logging middleware (logs all HTTP requests)
-app.use(logger.requestLogger);
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: false, limit: "1mb" }));
 app.use("/api/auth/login", authRateLimit);
@@ -111,6 +114,7 @@ app.use("/api/users/login", authRateLimit);
 
 
 app.use("/api/shops", shopRouter);
+app.use("/api/shops/sync", shopSyncRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/auth", authRouter);
 app.use("/api/distributor", distributorRouter);
@@ -137,12 +141,20 @@ app.use("/api/staff-daily-work", staffDailyWorkRoutes);
 app.use("/api/factory-products", factoryProductRoutes);
 app.use("/api/raw-materials", rawMaterialRoutes);
 app.use("/api/raw-material-purchases", rawMaterialPurchaseRoutes);
+app.use("/api/fraud-detection", fraudDetectionRoutes);
 
 app.get("/api/health", (req, res) => {
   res.status(200).json({
     success: true,
     status: "ok",
     timestamp: new Date().toISOString(),
+  });
+});
+
+app.use("/api", (req, res) => {
+  res.status(404).json({
+    success: false,
+    message: "API route not found",
   });
 });
 

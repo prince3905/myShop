@@ -1,0 +1,144 @@
+<div class="sync-modal-container">
+  <div class="modal-header">
+    <div class="header-title">
+      <mat-icon color="primary">swap_horiz</mat-icon>
+      <h3>Shop Data Copy / Transfer Wizard</h3>
+    </div>
+    <button mat-icon-button (click)="onClose()">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <mat-dialog-content class="modal-body">
+    <p class="modal-sub">
+      Ek Shop ka data (Products, Categories, Brands, Distributors) dusri Shop me copy karein bina dobara type kiye.
+    </p>
+
+    <div class="loading-spinner" *ngIf="isLoadingShops">
+      <mat-spinner diameter="32"></mat-spinner> Loading shop accounts...
+    </div>
+
+    <div *ngIf="!isLoadingShops">
+      <!-- Visual Flow Boxes -->
+      <div class="shops-selection-grid">
+        <!-- Source Shop Box -->
+        <div class="shop-card source-card">
+          <div class="card-badge badge-source">
+            <mat-icon>file_upload</mat-icon> 📤 JAHAN SE COPY KARNA HAI
+          </div>
+          <p class="card-hint">(Is shop ka data LIYA jayega)</p>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Select Source Shop</mat-label>
+            <mat-select [(ngModel)]="sourceShopId" [disabled]="isSubmitting">
+              <mat-option *ngFor="let shop of shops" [value]="shop._id">
+                {{ shop.name }} ({{ shop.shopCode }})
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <!-- Flow Arrow -->
+        <div class="arrow-divider">
+          <mat-icon color="primary">east</mat-icon>
+          <span class="flow-badge">COPY TO</span>
+        </div>
+
+        <!-- Target Shop Box -->
+        <div class="shop-card target-card">
+          <div class="card-badge badge-target">
+            <mat-icon>download</mat-icon> 📥 JIS SHOP MEIN COPY KARNA HAI
+          </div>
+          <p class="card-hint">(Is shop MEIN naya data daala jayega)</p>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Select Target Shop</mat-label>
+            <mat-select [(ngModel)]="targetShopId" [disabled]="isSubmitting">
+              <mat-option *ngFor="let shop of shops" [value]="shop._id">
+                {{ shop.name }} ({{ shop.shopCode }})
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+      </div>
+
+      <!-- Live Flow Explanation Box -->
+      <div class="flow-summary-banner" *ngIf="sourceShopId && targetShopId">
+        <mat-icon color="accent">info</mat-icon>
+        <span>
+          <strong>Summary:</strong> "<u>{{ getSourceShopName() }}</u>" SE data copy hoke "<u>{{ getTargetShopName() }}</u>" MEIN chala jayega.
+        </span>
+      </div>
+
+      <!-- Item Checklist -->
+      <div class="options-checklist-box">
+        <div class="checklist-header">Kya-kya Copy karna hai (Select Items):</div>
+        
+        <div class="checkbox-grid">
+          <mat-checkbox [(ngModel)]="includeCategories" [disabled]="isSubmitting" color="primary">
+            Categories (श्रेणियां)
+          </mat-checkbox>
+          <mat-checkbox [(ngModel)]="includeBrands" [disabled]="isSubmitting" color="primary">
+            Brands (ब्रांड्स)
+          </mat-checkbox>
+          <mat-checkbox [(ngModel)]="includeProducts" [disabled]="isSubmitting" color="primary">
+            Products & Variations (सामान/आइटम्स)
+          </mat-checkbox>
+          <mat-checkbox [(ngModel)]="includeDistributors" [disabled]="isSubmitting" color="primary">
+            Distributors (सप्लायर/डिस्ट्रीब्यूटर)
+          </mat-checkbox>
+        </div>
+      </div>
+
+      <!-- Sync Progress / Result Summary -->
+      <div class="sync-progress-wrap" *ngIf="isSubmitting">
+        <mat-spinner diameter="36" color="primary"></mat-spinner>
+        <span>Data copy ho raha hai... Kripya thoda wait karein.</span>
+      </div>
+
+      <div class="stats-result-card" *ngIf="syncStats">
+        <div class="result-title">
+          <mat-icon color="accent">check_circle</mat-icon> Data Safalta Se Copy Ho Gaya!
+        </div>
+        <div class="stats-grid">
+          <div class="stat-pill">
+            <span class="label">Categories Copied:</span>
+            <span class="value">{{ syncStats.categoriesCopied }}</span>
+          </div>
+          <div class="stat-pill">
+            <span class="label">Brands Copied:</span>
+            <span class="value">{{ syncStats.brandsCopied }}</span>
+          </div>
+          <div class="stat-pill">
+            <span class="label">Products Copied:</span>
+            <span class="value">{{ syncStats.productsCopied }}</span>
+          </div>
+          <div class="stat-pill">
+            <span class="label">Variations Copied:</span>
+            <span class="value">{{ syncStats.variationsCopied }}</span>
+          </div>
+          <div class="stat-pill">
+            <span class="label">Distributors Copied:</span>
+            <span class="value">{{ syncStats.distributorsCopied }}</span>
+          </div>
+          <div class="stat-pill skipped">
+            <span class="label">Pehle Se Bane Skipped:</span>
+            <span class="value">{{ syncStats.skippedItems }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end" class="modal-footer">
+    <button mat-button (click)="onClose()" [disabled]="isSubmitting">Cancel</button>
+    <button
+      mat-raised-button
+      color="primary"
+      (click)="onStartSync()"
+      [disabled]="isSubmitting || isLoadingShops"
+    >
+      <mat-icon>content_copy</mat-icon> Start Copy Process
+    </button>
+  </mat-dialog-actions>
+</div>

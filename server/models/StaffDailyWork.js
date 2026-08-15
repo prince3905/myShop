@@ -41,6 +41,11 @@ const staffDailyWorkSchema = new mongoose.Schema(
       trim: true,
       default: "",
     },
+    factoryProductSku: {
+      type: String,
+      trim: true,
+      default: "",
+    },
     workItem: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "StaffWorkItem",
@@ -81,6 +86,15 @@ const staffDailyWorkSchema = new mongoose.Schema(
       type: Number,
       min: 0,
       default: 0,
+    },
+    isKhorakiIncluded: {
+      type: Boolean,
+      default: false,
+    },
+    khorakiAmount: {
+      type: Number,
+      min: 0,
+      default: 100,
     },
     verificationStatus: {
       type: String,

@@ -17,12 +17,15 @@ export class SalesListComponent implements OnInit {
   loading = false;
 
   salesRows: any[] = [];
+  allSalesRows: any[] = [];
+  searchDebounceTimer: any = null;
   totalItems = 0;
   page = 1;
   pageSize = 10;
   pageSizeOptions: number[] = [5, 10, 25, 50, 100];
 
   selectedSale: any = null;
+  saleAuditLogs: any[] = [];
   @ViewChild("saleDetailsCard") saleDetailsCard?: ElementRef<HTMLElement>;
   
   // Shop Details for Payment
@@ -55,6 +58,17 @@ export class SalesListComponent implements OnInit {
     totalQty: 0,
   };
 
+  todaySummary: any = {
+    transactionCount: 0,
+    grossSales: 0,
+    netSales: 0,
+    cash: 0,
+    card: 0,
+    digital: 0,
+    due: 0,
+    returns: 0,
+  };
+
   constructor(
     public dialog: MatDialog,
     private salesService: SalesService,
@@ -68,6 +82,32 @@ export class SalesListComponent implements OnInit {
   ngOnInit(): void {
     this.loadSales();
     this.loadShopDetails();
+    this.loadTodaySummary();
+  }
+
+  loadTodaySummary(dateStr?: string): void {
+    this.salesService.getZReport(dateStr).subscribe({
+      next: (res: any) => {
+        if (res?.success) {
+          const data = res.data || {};
+          const salesSummary = data.salesSummary || {};
+          const payment = data.paymentBreakdown || {};
+          this.todaySummary = {
+            transactionCount: data.transactionCount || 0,
+            grossSales: salesSummary.grossSales || 0,
+            netSales: salesSummary.netSales || 0,
+            cash: payment.cash || 0,
+            card: payment.card || 0,
+            digital: payment.digital || 0,
+            due: salesSummary.totalDue || 0,
+            returns: salesSummary.totalReturns || 0,
+          };
+        }
+      },
+      error: () => {
+        console.error("Failed to load today's summary");
+      }
+    });
   }
 
   loadShopDetails(): void {
@@ -92,7 +132,43 @@ export class SalesListComponent implements OnInit {
     return this.authService.can("sales.pos") && !this.authService.isGlobalReadOnlyMode();
   }
 
-  loadSales(): void {
+  canEditSale(): boolean {
+    return this.authService.can("sales.edit") && !this.authService.isGlobalReadOnlyMode();
+  }
+
+  canDeleteSale(): boolean {
+    return this.authService.can("sales.delete") && !this.authService.isGlobalReadOnlyMode();
+  }
+
+  editSale(row: any): void {
+    if (!row?._id) return;
+    this.router.navigate(["/sale/edit", row._id]);
+  }
+
+  deleteSale(row: any): void {
+    if (!row?._id) {
+      alert("No sale ID");
+      return;
+    }
+    if (!confirm(`Delete this sale? Invoice: ${row.invoiceNo}`)) return;
+    
+    this.loading = true;
+    console.log("Deleting sale:", row._id);
+    this.salesService.deleteSale(row._id).subscribe({
+      next: (res) => {
+        console.log("Delete response:", res);
+        this.snackBar.open("Sale deleted", "Close", { duration: 3000 });
+        this.loadSales();
+      },
+      error: (err) => {
+        this.loading = false;
+        console.error("Delete error:", err);
+        this.snackBar.open(err?.error?.message || "Failed to delete", "Close", { duration: 3000 });
+      },
+    });
+  }
+
+  loadSales(updateAll: boolean = true): void {
     this.loading = true;
 
     const params: any = {
@@ -110,7 +186,11 @@ export class SalesListComponent implements OnInit {
 
     this.salesService.getSales(params).subscribe({
       next: (response: any) => {
-        this.salesRows = Array.isArray(response?.itemResults) ? response.itemResults : [];
+        const fetchedRows = Array.isArray(response?.itemResults) ? response.itemResults : [];
+        if (updateAll || !this.allSalesRows.length) {
+          this.allSalesRows = [...fetchedRows];
+        }
+        this.salesRows = fetchedRows;
         this.totalItems = Number(response?.totalItems || 0);
         this.summary.totalSales = this.totalItems;
         this.summary.totalRevenue = this.salesRows.reduce(
@@ -124,20 +204,53 @@ export class SalesListComponent implements OnInit {
         this.loading = false;
       },
       error: (err) => {
-        this.loading = false;
+        console.error("Failed to load sales:", err);
         this.salesRows = [];
         this.totalItems = 0;
-        this.summary = { totalSales: 0, totalRevenue: 0, totalQty: 0 };
-        this.snackBar.open(err?.error?.message || "Failed to load sales", "Close", {
-          duration: 2800,
-        });
+        this.loading = false;
       },
     });
   }
 
-  applyFilters(): void {
+  onSearchInput(): void {
+    const qInv = (this.filters.invoiceNo || "").trim().toLowerCase();
+    const qCust = (this.filters.customerName || "").trim().toLowerCase();
+    const qItem = (this.filters.itemName || "").trim().toLowerCase();
+
+    if (this.allSalesRows && this.allSalesRows.length > 0) {
+      if (!qInv && !qCust && !qItem) {
+        this.salesRows = [...this.allSalesRows];
+      } else {
+        this.salesRows = this.allSalesRows.filter((r: any) => {
+          const inv = (r.invoiceNo || "").toLowerCase();
+          const cust = (r.customerName || r.customerPhone || "").toLowerCase();
+          const item = (r.itemName || r.productName || r.sku || "").toLowerCase();
+          const matchInv = !qInv || inv.includes(qInv);
+          const matchCust = !qCust || cust.includes(qCust);
+          const matchItem = !qItem || item.includes(qItem);
+          return matchInv && matchCust && matchItem;
+        });
+      }
+    }
+
+    if (this.searchDebounceTimer) {
+      clearTimeout(this.searchDebounceTimer);
+    }
+    this.searchDebounceTimer = setTimeout(() => {
+      this.applyFilters(false);
+    }, 300);
+  }
+
+  applyFilters(updateAll: boolean = true): void {
     this.page = 1;
-    this.loadSales();
+    this.loadSales(updateAll);
+    const startDate = this.filters.startDate ? this.formatDateForApi(this.filters.startDate) : undefined;
+    const endDate = this.filters.endDate ? this.formatDateForApi(this.filters.endDate) : undefined;
+    if (startDate || endDate) {
+      this.loadTodaySummary(startDate || endDate);
+    } else {
+      this.loadTodaySummary();
+    }
   }
 
   clearFilters(): void {
@@ -153,6 +266,7 @@ export class SalesListComponent implements OnInit {
     };
     this.page = 1;
     this.loadSales();
+    this.loadTodaySummary();
   }
 
   onPageChange(event: PageEvent): void {
@@ -253,18 +367,63 @@ export class SalesListComponent implements OnInit {
   }
 
   showDetails(row: any): void {
-    this.selectedSale = row;
-    this.cdr.detectChanges();
+    this.saleAuditLogs = [];
+    if (row?._id) {
+      // Fetch fresh data from server
+      this.salesService.getSaleById(row._id).subscribe({
+        next: (res: any) => {
+          this.selectedSale = res?.data || res;
+          this.saleAuditLogs = [];
+          this.salesService.getSaleAudit(row._id).subscribe({
+            next: (auditRes: any) => {
+              this.saleAuditLogs = auditRes?.auditLogs || [];
+            },
+            error: () => {
+              this.saleAuditLogs = [];
+            },
+          });
+        },
+        error: () => {
+          this.selectedSale = row;
+        },
+      });
+    } else {
+      this.selectedSale = row;
+    }
     setTimeout(() => {
       this.saleDetailsCard?.nativeElement?.scrollIntoView({
         behavior: "smooth",
         block: "start",
       });
-    }, 150);
+    }, 0);
+  }
+
+  showAudit(row: any): void {
+    if (!row?._id) return;
+    this.loading = true;
+    this.salesService.getSaleAudit(row._id).subscribe({
+      next: (res: any) => {
+        this.loading = false;
+        const logs = res?.auditLogs || [];
+        if (logs.length === 0) {
+          this.snackBar.open("No audit logs found", "Close", { duration: 3000 });
+          return;
+        }
+        const msg = logs.map((l: any) =>
+          `${l.action} by ${l.actor?.name || l.actor?.pFname || "Unknown"} on ${new Date(l.createdAt).toLocaleString()}`
+        ).join("\n");
+        alert(`Audit Logs:\n${msg}`);
+      },
+      error: (err) => {
+        this.loading = false;
+        this.snackBar.open("Failed to load audit logs", "Close", { duration: 3000 });
+      },
+    });
   }
 
   closeDetails(): void {
     this.selectedSale = null;
+    this.saleAuditLogs = [];
   }
 
   openReturn(row: any): void {
@@ -305,6 +464,14 @@ export class SalesListComponent implements OnInit {
 
   isReturnClosed(row: any): boolean {
     return this.getReturnBadge(row) === "full";
+  }
+
+  hasDue(): boolean {
+    return this.salesRows.some(row => (row?.dueAmount || 0) > 0);
+  }
+
+  getDueCount(): number {
+    return this.salesRows.filter(row => (row?.dueAmount || 0) > 0).length;
   }
 
   shareOnWhatsApp(row: any): void {
@@ -508,5 +675,23 @@ export class SalesListComponent implements OnInit {
     const mm = `${dt.getMonth() + 1}`.padStart(2, "0");
     const dd = `${dt.getDate()}`.padStart(2, "0");
     return `${yyyy}-${mm}-${dd}`;
+  }
+
+  getRowTooltip(row: any): string {
+    if (!row) return "";
+    
+    const items = row.items || [];
+    if (!items.length) return "No items";
+    
+    const itemSummaries = items.slice(0, 5).map((item: any, idx: number) => {
+      return `${idx + 1}. ${item.itemName || 'Item'} (${item.quantity})`;
+    }).join('\n');
+    
+    const more = items.length > 5 ? `\n+ ${items.length - 5} more items` : "";
+    const total = row.totalPurchasePrice || 0;
+    const paid = row.paidAmount || 0;
+    const due = row.dueAmount || 0;
+    
+    return `${itemSummaries}${more}\n\nTotal: ₹${total} | Paid: ₹${paid} | Due: ₹${due}`;
   }
 }

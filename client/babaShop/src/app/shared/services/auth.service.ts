@@ -130,15 +130,21 @@ export class AuthService {
   setActiveShop(shopId: string | null, shopCode: string | null = null) {
     const user = this.getCurrentUser();
     if (!user) return;
-    user.shop = shopId || null;
-    user.shopCode = shopCode || null;
+    const cleanShopId = shopId && shopId !== "null" && shopId !== "undefined" ? shopId : null;
+    const cleanShopCode = shopCode && shopCode !== "null" && shopCode !== "undefined" ? shopCode : null;
+    user.shop = cleanShopId;
+    user.shopCode = cleanShopCode;
     this.user = user;
-    this.currentShopSubject.next(shopId || null);
+    this.currentShopSubject.next(cleanShopId);
   }
 
   getShopId(): string | null {
     const user = this.getCurrentUser();
-    return user?.shop || null;
+    const shop = user?.shop;
+    if (!shop || shop === "null" || shop === "undefined") {
+      return null;
+    }
+    return shop;
   }
   getUserRole(): string | null {
     return this.getCurrentUser()?.role || null;
@@ -152,6 +158,11 @@ export class AuthService {
           this.showLoader = false;
         }),
         tap(({ user }) => {
+          const currentLocalUser = this.getCurrentUser();
+          if (currentLocalUser && currentLocalUser.role === "SUPER_ADMIN" && Object.prototype.hasOwnProperty.call(currentLocalUser, "shop")) {
+            user.shop = currentLocalUser.shop;
+            user.shopCode = currentLocalUser.shopCode;
+          }
           this.user = user;
         }),
         catchError((err) => {
@@ -254,12 +265,16 @@ export class AuthService {
 }
 
   isGlobalReadOnlyMode(): boolean {
-    const user = this.getCurrentUser() || {};
-    return user.role === "SUPER_ADMIN" && !user.shop;
+    const role = this.getUserRole();
+    const shopId = this.getShopId();
+    return role === "SUPER_ADMIN" && !shopId;
   }
 
   canViewSensitivePricing(): boolean {
     const role = this.getUserRole() || "";
+    if (role === "SUPER_ADMIN") {
+      return true;
+    }
     if (!["SUPER_ADMIN", "ADMIN"].includes(role)) {
       return false;
     }

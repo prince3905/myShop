@@ -1,31 +1,43 @@
-<div class="main-content">
-  <div class="dashboard-decor shadow-blob-1"></div>
-  <div class="dashboard-decor shadow-blob-2"></div>
-  <div class="dashboard-decor shadow-blob-3"></div>
-
+<div class="main-content stocks-page">
   <div class="container-fluid">
-    <div class="card filter-card">
-      <div class="card-header premium-header">
-        <div class="header-main">
-          <h4 class="card-title">Inventory Intelligence Report</h4>
-          <p class="card-category">Real-time stock analytics, valuation, and optimization suite.</p>
-        </div>
-        <div class="action-buttons">
-          <button mat-stroked-button class="premium-btn gold" (click)="exportStockCsv()">
-            <mat-icon>download</mat-icon> CSV
-          </button>
-          <button *ngIf="canManagePurchases" mat-raised-button class="premium-btn royal" (click)="goToPurchase()">
-            <mat-icon>add_shopping_cart</mat-icon> Purchase
-          </button>
+
+    <!-- ── Hero Header ── -->
+    <div class="stock-hero-bar">
+      <div>
+        <h2 class="hero-title">Stock Report</h2>
+        <p class="hero-sub">Live stock, valuation and low-stock tracking</p>
+      </div>
+    </div>
+
+    <!-- ── KPI Cards ── -->
+    <div class="summary-kpi-row">
+      <div class="kpi-card">
+        <div class="kpi-icon"><mat-icon>inventory</mat-icon></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Total Records</div>
+          <div class="kpi-value">{{ totalItems }}</div>
         </div>
       </div>
+      <div class="kpi-card low-stock">
+        <div class="kpi-icon"><mat-icon>warning</mat-icon></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Low Stock</div>
+          <div class="kpi-value">{{ getLowStockCount() }}</div>
+        </div>
+      </div>
+      <div class="kpi-card out-stock">
+        <div class="kpi-icon"><mat-icon>block</mat-icon></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Out of Stock</div>
+          <div class="kpi-value">{{ getOutOfStockCount() }}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card filter-card">
       <div class="card-body">
         <div class="stock-context-row">
           <div class="context-chip">Scope: {{ currentScopeLabel }}</div>
-          <div class="context-chip">Records: {{ totalItems }}</div>
-          <button mat-stroked-button color="warn" (click)="exportStockCsv()">Export Stock CSV</button>
-          <button mat-stroked-button color="primary" (click)="goToProducts()">Manage Products</button>
-          <button *ngIf="canManagePurchases" mat-stroked-button color="accent" (click)="goToPurchase()">Create Purchase</button>
         </div>
 
         <div class="filter-row" *ngIf="canCreateReorderDraft">
@@ -51,7 +63,7 @@
         <div class="filter-row">
           <mat-form-field appearance="outline" class="filter-field search-field">
             <mat-label>Search SKU / Product / Model</mat-label>
-            <input matInput [(ngModel)]="search" (keyup.enter)="onSearch()" placeholder="e.g. S24-256-BLK or Galaxy M24" />
+            <input matInput [(ngModel)]="search" (input)="onSearchInput()" placeholder="Type SKU, 62, Product, Model..." />
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="filter-field">
@@ -79,41 +91,26 @@
       </div>
     </div>
 
-    <div class="bento-grid stock-bento" *ngIf="!loading">
-      <div class="dashboard-click-card primary">
-        <div class="card-icon-modern">
-          <i class="material-icons">inventory</i>
-        </div>
-        <div class="card-label-modern">Total Quantity</div>
-        <div class="card-value-modern">{{ summary.totalQuantity }}</div>
-        <div class="card-meta-modern">Stock Items across all variations</div>
+    <div class="stock-summary-grid" *ngIf="!loading">
+      <div class="summary-card">
+        <div class="label">Total Qty</div>
+        <div class="value">{{ summary.totalQuantity }}</div>
       </div>
-
-      <div class="dashboard-click-card info">
-        <div class="card-icon-modern info">
-          <i class="material-icons">event_seat</i>
-        </div>
-        <div class="card-label-modern">Reserved Stock</div>
-        <div class="card-value-modern">{{ summary.totalReserved }}</div>
-        <div class="card-meta-modern">Held for pending orders</div>
+      <div class="summary-card">
+        <div class="label">Reserved Qty</div>
+        <div class="value">{{ summary.totalReserved }}</div>
       </div>
-
-      <div class="dashboard-click-card danger">
-        <div class="card-icon-modern danger">
-          <i class="material-icons">report_problem</i>
-        </div>
-        <div class="card-label-modern">Low Stock Alerts</div>
-        <div class="card-value-modern">{{ summary.lowStockCount }}</div>
-        <div class="card-meta-modern">Items below reorder level</div>
+      <div class="summary-card">
+        <div class="label">Damaged Qty</div>
+        <div class="value">{{ summary.totalDamaged }}</div>
       </div>
-
-      <div class="dashboard-click-card bento-card-lg success" *ngIf="canViewSensitivePricing">
-        <div class="card-icon-modern success">
-          <i class="material-icons">currency_exchange</i>
-        </div>
-        <div class="card-label-modern">Inventory Valuation (Cost)</div>
-        <div class="card-value-modern">₹ {{ summary.totalCostValue | number:'1.2-2' }}</div>
-        <div class="card-meta-modern">Based on average purchase cost per SKU</div>
+      <div class="summary-card">
+        <div class="label">Low Stock SKUs</div>
+        <div class="value">{{ summary.lowStockCount }}</div>
+      </div>
+      <div class="summary-card valuation" *ngIf="canViewSensitivePricing">
+        <div class="label">Total Stock Valuation (Cost)</div>
+        <div class="value">₹ {{ summary.totalCostValue | number:'1.2-2' }}</div>
       </div>
     </div>
 
@@ -164,7 +161,8 @@
             </div>
           </div>
 
-          <div class="stock-context-row">
+        <div class="stock-context-row">
+          <div class="context-chip">Scope: {{ currentScopeLabel }}</div>
             <div class="context-chip">Lines: {{ reconciliation?.summary?.totalLines || 0 }}</div>
             <div class="context-chip">System Qty: {{ reconciliation?.summary?.totalSystemQty || 0 }}</div>
             <div class="context-chip">Counted Qty: {{ reconciliation?.summary?.totalCountedQty || 0 }}</div>
@@ -523,6 +521,72 @@
 
           <button mat-raised-button color="primary" [disabled]="adjustSaving" (click)="submitAdjustment()">
             {{ adjustSaving ? 'Saving...' : 'Adjust Stock' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Dedicated 1-Click Inter-Shop Stock Transfer ── -->
+    <div class="card mt-3" *ngIf="canAdjustStock">
+      <div class="card-header card-header-info" style="background: linear-gradient(60deg, #0284c7, #0369a1); color: white;">
+        <h4 class="card-title" style="color: white; font-weight: 700;">🚚 1-Click Inter-Shop Stock Transfer</h4>
+        <p class="card-category" style="color: rgba(255,255,255,0.9);">Transfer stock directly from current shop to another shop with automatic IN/OUT records</p>
+      </div>
+      <div class="card-body">
+        <div class="filter-row">
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Product</mat-label>
+            <mat-select [(ngModel)]="transferForm.product" (selectionChange)="onTransferProductChange()">
+              <mat-option [value]="null">Select Product</mat-option>
+              <mat-option *ngFor="let p of products" [value]="p._id">
+                {{ p.name }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Model</mat-label>
+            <mat-select [(ngModel)]="transferForm.model" [disabled]="!transferForm.product" (selectionChange)="onTransferModelChange()">
+              <mat-option [value]="null">Select Model</mat-option>
+              <mat-option *ngFor="let m of transferModelOptions" [value]="m._id">
+                {{ m.name }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="filter-field search-field">
+            <mat-label>Variation SKU</mat-label>
+            <mat-select [(ngModel)]="transferForm.variation" [disabled]="!transferForm.model">
+              <mat-option [value]="null">Select Variation</mat-option>
+              <mat-option *ngFor="let v of transferVariationOptions" [value]="v._id">
+                {{ v.sku }} - Avl: {{ v.quantity || 0 }} Pcs
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Target Shop (Destination)</mat-label>
+            <mat-select [(ngModel)]="transferForm.targetShopId">
+              <mat-option [value]="null">Select Target Shop</mat-option>
+              <mat-option *ngFor="let shop of targetShopOptions" [value]="shop._id">
+                {{ shop.shopCode || shop.name }} ({{ shop.name }})
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Transfer Quantity (Pcs)</mat-label>
+            <input matInput type="number" [(ngModel)]="transferForm.transferQty" placeholder="e.g. 5" min="1" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="filter-field note-field">
+            <mat-label>Transfer Note</mat-label>
+            <input matInput [(ngModel)]="transferForm.note" placeholder="Reason for transfer" appCapitalizeFirst />
+          </mat-form-field>
+
+          <button mat-raised-button color="accent" [disabled]="transferSaving || !transferForm.variation || !transferForm.targetShopId" (click)="submitStockTransfer()" style="background-color: #0284c7; color: white;">
+            <mat-icon>local_shipping</mat-icon>
+            {{ transferSaving ? 'Transferring...' : 'Transfer Stock Now' }}
           </button>
         </div>
       </div>

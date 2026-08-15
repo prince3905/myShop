@@ -72,8 +72,8 @@ exports.createStaffPayment = async (req, res) => {
       createdBy: req.user._id,
     };
 
-    if (!["ADVANCE", "PAYMENT"].includes(payload.entryType)) {
-      return res.status(400).json({ success: false, message: "Entry type must be ADVANCE or PAYMENT" });
+    if (!["ADVANCE", "PAYMENT", "KHORAKI"].includes(payload.entryType)) {
+      return res.status(400).json({ success: false, message: "Entry type must be ADVANCE, PAYMENT or KHORAKI" });
     }
 
     if (!Number.isFinite(payload.amount) || payload.amount <= 0) {
@@ -214,12 +214,14 @@ exports.getStaffPaymentSummary = async (req, res) => {
 
     const totalAdvance = Number(totals.find((row) => row._id === "ADVANCE")?.totalAmount || 0);
     const totalPayment = Number(totals.find((row) => row._id === "PAYMENT")?.totalAmount || 0);
+    const totalKhoraki = Number(totals.find((row) => row._id === "KHORAKI")?.totalAmount || 0);
 
     return res.json({
       success: true,
       summary: {
         totalAdvance,
         totalPayment,
+        totalKhoraki,
         netBalance: totalAdvance - totalPayment,
         todayEntries: Number(todayCount || 0),
         byType,
@@ -279,8 +281,8 @@ exports.updateStaffPayment = async (req, res) => {
     payment.note = `${req.body?.note ?? payment.note ?? ""}`.trim();
     payment.updatedBy = req.user._id;
 
-    if (!["ADVANCE", "PAYMENT"].includes(payment.entryType)) {
-      return res.status(400).json({ success: false, message: "Entry type must be ADVANCE or PAYMENT" });
+    if (!["ADVANCE", "PAYMENT", "KHORAKI"].includes(payment.entryType)) {
+      return res.status(400).json({ success: false, message: "Entry type must be ADVANCE, PAYMENT or KHORAKI" });
     }
 
     if (!Number.isFinite(payment.amount) || payment.amount <= 0) {

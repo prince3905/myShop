@@ -1,0 +1,62 @@
+<div class="main-content barcode-catalog-page">
+  <div class="container-fluid">
+    <section class="catalog-shell">
+      <header class="catalog-header no-print">
+        <div class="catalog-header-copy">
+          <span class="catalog-kicker">POS Quick Add</span>
+          <h2>Barcode Catalog</h2>
+          <p>Print-ready quick add labels for the counter. Compact, scan-friendly, and easier to browse.</p>
+        </div>
+
+        <button
+          mat-raised-button
+          color="primary"
+          class="catalog-print-btn"
+          (click)="printCatalog()"
+          [disabled]="isLoading || quickAddItems.length === 0"
+        >
+          <mat-icon>print</mat-icon>
+          Print Catalog
+        </button>
+      </header>
+
+      <div *ngIf="isLoading" class="catalog-state">
+        <mat-spinner diameter="40"></mat-spinner>
+        <p>Loading catalog...</p>
+      </div>
+
+      <div *ngIf="!isLoading && quickAddItems.length === 0" class="catalog-state">
+        <mat-icon class="catalog-empty-icon">inventory_2</mat-icon>
+        <p>No items added to Quick Add yet.</p>
+        <small>Edit a variation and enable <strong>Show in POS Quick Add</strong>.</small>
+      </div>
+
+      <div *ngIf="quickAddItems.length > 0" class="catalog-scroll print-only-layout">
+        <div class="catalog-grid">
+          <article *ngFor="let item of quickAddItems" class="catalog-card catalog-cell">
+            <div class="catalog-card-top">
+              <div class="catalog-item-name">{{ item.product?.name || 'Item' }}</div>
+              <div class="catalog-meta">
+                <span class="catalog-price">₹{{ item.sellingPrice || 0 }}</span>
+                <span *ngIf="item.sku" class="catalog-sku">{{ item.sku }}</span>
+              </div>
+            </div>
+
+            <div class="catalog-barcode-wrap">
+              <div
+                *ngIf="item.barcode"
+                [innerHTML]="generateEan13Svg(item.barcode)"
+                class="catalog-barcode"
+              ></div>
+              <span *ngIf="item.barcode" class="catalog-code">{{ item.barcode }}</span>
+
+              <div *ngIf="!item.barcode" class="catalog-no-barcode">
+                <span>No Barcode</span>
+              </div>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>

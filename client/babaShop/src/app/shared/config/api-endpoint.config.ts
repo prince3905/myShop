@@ -63,6 +63,7 @@ export const resolveApiURLForMode = (mode: ApiMode, customURL = ""): string => {
   if (mode === "render") {
     return DEFAULT_RENDER_URL;
   }
+  }
   if (mode === "custom") {
     return normalizeApiURL(customURL);
   }

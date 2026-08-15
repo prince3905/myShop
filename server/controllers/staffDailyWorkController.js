@@ -44,11 +44,13 @@ const populateDailyWorkQuery = (query) =>
     .populate("staff", "name phone staffType workType rateType rate active")
     .populate({
       path: "factoryProduct",
-      select: "name unitLabel workerPieceRate standardWasteQtyPerUnit standardWasteUnitLabel standardWasteValuePerUnit standardMaterialLines shopVariation defaultSellingPrice",
-      populate: {
-        path: "shopVariation",
-        select: "sku sellingPrice costPrice attributes",
-      },
+      select: "name code unitLabel workerPieceRate standardLabourCost standardOtherCost standardWasteQtyPerUnit standardWasteUnitLabel standardWasteValuePerUnit standardMaterialLines shopCategory shopBrand shopModel shopVariation variationColor variationSize defaultSellingPrice",
+      populate: [
+        { path: "shopCategory", select: "name" },
+        { path: "shopBrand", select: "name" },
+        { path: "shopModel", select: "name" },
+        { path: "shopVariation", select: "sku sellingPrice costPrice attributes" },
+      ],
     })
     .populate("workItem", "itemName workType pieceRate unit active")
     .populate("createdBy", "email role pFname pLname")
@@ -63,7 +65,7 @@ const populatePushHistoryQuery = (query) =>
     .populate("sourceShop", "name shopCode")
     .populate("targetShop", "name shopCode")
     .populate("staff", "name workType")
-    .populate("factoryProduct", "name")
+    .populate("factoryProduct", "name shopVariation unitLabel workerPieceRate")
     .populate("sourceVariation", "sku")
     .populate("targetVariation", "sku")
     .populate("product", "name")
@@ -197,6 +199,11 @@ const validateFactoryProductStock = async ({ req, factoryProduct, unitsCompleted
 
   const materialIds = Array.from(requiredMap.keys()).map((id) => new mongoose.Types.ObjectId(id));
 
+  const RawMaterial = require("../models/RawMaterial");
+  const rawMaterials = await RawMaterial.find({ _id: { $in: materialIds } }).lean();
+  const rawMaterialMap = new Map();
+  rawMaterials.forEach((m) => rawMaterialMap.set(String(m._id), m));
+
   const [approvedPurchases, dailyWorks] = await Promise.all([
     RawMaterialPurchase.find({
       shop: req.shopId,
@@ -228,8 +235,19 @@ const validateFactoryProductStock = async ({ req, factoryProduct, unitsCompleted
       if (!requiredMap.has(rawMaterialId)) {
         continue;
       }
+      const PACK_UNITS = ["BAG", "SET", "PACKET", "PKT", "BOX"];
+      const mat = rawMaterialMap.get(rawMaterialId);
+      const matUnit = `${mat?.unitLabel || "PCS"}`.toUpperCase();
+      const itemUnit = `${item?.unitLabel || matUnit}`.toUpperCase();
+      const pcsPerPack = Number(mat?.pcsPerPack || 0);
+
+      let rawQty = Number(item?.receivedQty || 0) || Number(item?.orderedQty || 0);
+      if ((PACK_UNITS.includes(itemUnit) || PACK_UNITS.includes(matUnit)) && pcsPerPack > 0) {
+        rawQty = rawQty * pcsPerPack;
+      }
+
       const existing = receivedMap.get(rawMaterialId) || 0;
-      receivedMap.set(rawMaterialId, existing + Number(item?.receivedQty || 0));
+      receivedMap.set(rawMaterialId, existing + rawQty);
     }
   }
 
@@ -250,15 +268,28 @@ const validateFactoryProductStock = async ({ req, factoryProduct, unitsCompleted
     }
   }
 
+  const PACK_UNITS = ["BAG", "SET", "PACKET", "PKT", "BOX"];
   for (const [rawMaterialId, required] of requiredMap.entries()) {
-    const receivedQty = Number(receivedMap.get(rawMaterialId) || 0);
+    const mat = rawMaterialMap.get(rawMaterialId);
+    const matUnit = `${mat?.unitLabel || "PCS"}`.toUpperCase();
+    const pcsPerPack = Number(mat?.pcsPerPack || 0);
+
+    const openingQty = Number(mat?.openingQty || 0);
+    const isPackUnit = PACK_UNITS.includes(matUnit) && pcsPerPack > 0;
+    const openingInPcs = isPackUnit ? (openingQty * pcsPerPack) : openingQty;
+    
+    const receivedInPcs = Number(receivedMap.get(rawMaterialId) || 0);
     const consumedQty = Number(consumedMap.get(rawMaterialId) || 0);
-    const availableQty = receivedQty - consumedQty;
-    if (required.requiredQty > availableQty + 0.0001) {
+
+    const totalIncomingInPcs = openingInPcs + receivedInPcs;
+    const availableQtyInPcs = totalIncomingInPcs - consumedQty;
+
+    // Only enforce stock check if raw material stock has been initialized/purchased
+    if (totalIncomingInPcs > 0 && required.requiredQty > availableQtyInPcs + 0.0001) {
       return {
         status: 400,
         success: false,
-        message: `${required.materialName} ka stock kam hai. Required ${required.requiredQty} ${required.unitLabel}, available ${Math.max(0, availableQty)} ${required.unitLabel}.`,
+        message: `${required.materialName} ka stock kam hai. Required ${required.requiredQty} PCS, available ${Math.max(0, Math.floor(availableQtyInPcs))} PCS.`,
       };
     }
   }
@@ -329,8 +360,10 @@ exports.createDailyWork = async (req, res) => {
     if (workItem?.error) {
       return res.status(workItem.error.status).json(workItem.error);
     }
-    if (`${staff?.rateType || ""}` === "PIECE" && !factoryProduct) {
-      return res.status(400).json({ success: false, message: "Piece-rate staff requires a factory product" });
+    const isKhorakiOnly = (req.body?.isKhorakiIncluded === true || req.body?.isKhorakiOnly === true) && Number(unitsCompleted || 0) === 0;
+
+    if (`${staff?.rateType || ""}` === "PIECE" && !factoryProduct && !isKhorakiOnly) {
+      return res.status(400).json({ success: false, message: "Piece-rate staff requires a factory product for production work" });
     }
 
     const stockError = await validateFactoryProductStock({
@@ -342,14 +375,20 @@ exports.createDailyWork = async (req, res) => {
       return res.status(stockError.status).json(stockError);
     }
 
+    const isKhorakiIncluded = req.body?.isKhorakiIncluded === true || req.body?.includeKhoraki === true || req.body?.khoraki === true;
+    let computedKhorakiAmount = Number(req.body?.khorakiAmount ?? (attendanceStatus === "HALF_DAY" ? 50 : 100));
+    if (attendanceStatus === "ABSENT") {
+      computedKhorakiAmount = 0;
+    }
+
     const dailyWork = await StaffDailyWork.create({
       shop: req.shopId,
       staff: staff._id,
       entryDate,
       attendanceStatus,
       workType: `${req.body?.workType || staff.workType || ""}`.trim(),
-      factoryProduct: factoryProduct?._id || null,
-      factoryProductName: `${factoryProduct?.name || ""}`.trim(),
+      factoryProduct: unitsCompleted > 0 ? (factoryProduct?._id || null) : null,
+      factoryProductName: unitsCompleted > 0 ? `${factoryProduct?.name || ""}`.trim() : "",
       workItem: workItem?._id || null,
       workItemName: `${workItem?.itemName || ""}`.trim(),
       unit: `${factoryProduct?.unitLabel || workItem?.unit || "PCS"}`.trim(),
@@ -364,6 +403,8 @@ exports.createDailyWork = async (req, res) => {
         req.body?.earnedAmount,
         factoryProduct?.workerPieceRate ?? workItem?.pieceRate,
       ),
+      isKhorakiIncluded,
+      khorakiAmount: isKhorakiIncluded ? computedKhorakiAmount : 0,
       verificationStatus: "PENDING",
       verifiedQty: 0,
       verificationNote: "",
@@ -377,11 +418,13 @@ exports.createDailyWork = async (req, res) => {
       createdBy: req.user._id,
     });
 
+
+
     const populated = await populateDailyWorkQuery(StaffDailyWork.findById(dailyWork._id));
 
     return res.status(201).json({
       success: true,
-      message: "Daily work entry added",
+      message: isKhorakiIncluded ? "Daily work entry added + Khoraki (₹100) logged" : "Daily work entry added",
       dailyWork: populated,
     });
   } catch (error) {
@@ -659,6 +702,7 @@ exports.updateDailyWork = async (req, res) => {
     dailyWork.workType = `${req.body?.workType || dailyWork.workType || staff.workType || ""}`.trim();
     dailyWork.factoryProduct = factoryProduct?._id || null;
     dailyWork.factoryProductName = `${factoryProduct?.name || ""}`.trim();
+    dailyWork.factoryProductSku = factoryProduct?.shopVariation?.sku || "";
     dailyWork.workItem = workItem?._id || null;
     dailyWork.workItemName = `${workItem?.itemName || ""}`.trim();
     dailyWork.unit = `${factoryProduct?.unitLabel || workItem?.unit || dailyWork.unit || "PCS"}`.trim();
@@ -809,8 +853,46 @@ exports.pushDailyWorkToStock = async (req, res) => {
     } else {
       targetVariation = await ProductVariation.findOne({
         shop: targetShop._id,
-        sku: sourceVariation.sku,
+        product: sourceVariation.product,
       }).select("_id product model sku quantity costPrice sellingPrice");
+
+      if (!targetVariation) {
+        targetVariation = await ProductVariation.findOne({
+          shop: targetShop._id,
+          sku: sourceVariation.sku,
+        }).select("_id product model sku quantity costPrice sellingPrice");
+      }
+
+      if (!targetVariation) {
+        const product = await Product.findOne({ _id: sourceVariation.product, shop: req.shopId }).select("_id name category brand");
+        const model = await ProductModel.findOne({ _id: sourceVariation.model, shop: req.shopId }).select("_id name");
+
+        const newVariation = await ProductVariation.create({
+          product: sourceVariation.product,
+          model: sourceVariation.model,
+          sku: sourceVariation.sku,
+          barcode: sourceVariation.barcode || "",
+          attributes: sourceVariation.attributes,
+          sellingPrice: sourceVariation.sellingPrice,
+          costPrice: 0,
+          quantity: 0,
+          discount: { type: "FLAT", value: 0 },
+          images: [],
+          isActive: true,
+          shop: targetShop._id,
+        });
+
+        await Stock.updateOne(
+          { shop: targetShop._id, variation: newVariation._id },
+          {
+            $setOnInsert: { shop: targetShop._id, variation: newVariation._id, quantity: 0 },
+            $set: { product: sourceVariation.product, model: sourceVariation.model, sku: newVariation.sku },
+          },
+          { upsert: true }
+        );
+
+        targetVariation = newVariation;
+      }
     }
 
     if (!targetVariation) {
@@ -849,9 +931,19 @@ exports.pushDailyWorkToStock = async (req, res) => {
       createdBy: req.user._id,
     });
 
-    await ProductVariation.findByIdAndUpdate(targetVariation._id, {
+    const resolvedSellingPrice = Number(factoryProduct.defaultSellingPrice || 0) || Number(sourceVariation.sellingPrice || 0) || Number(targetVariation.sellingPrice || 0);
+
+    const variationUpdate = {
       costPrice: Number(nextCostPrice || 0),
-    });
+    };
+    if (resolvedSellingPrice > 0) {
+      variationUpdate.sellingPrice = resolvedSellingPrice;
+    }
+
+    await ProductVariation.findByIdAndUpdate(targetVariation._id, variationUpdate);
+    if (`${sourceVariation._id}` !== `${targetVariation._id}` && resolvedSellingPrice > 0) {
+      await ProductVariation.findByIdAndUpdate(sourceVariation._id, { sellingPrice: resolvedSellingPrice });
+    }
 
     await Stock.findOneAndUpdate(
       { shop: targetShop._id, variation: targetVariation._id },
@@ -975,5 +1067,45 @@ exports.verifyDailyWork = async (req, res) => {
   } catch (error) {
     logger.error("Verify Staff Daily Work Error:", error);
     return res.status(500).json({ success: false, message: "Failed to verify daily work entry" });
+  }
+};
+
+exports.removeKhorakiFromDailyWork = async (req, res) => {
+  try {
+    if (!req.shopId) {
+      return res.status(400).json({ success: false, message: "Please select a shop first" });
+    }
+
+    if (!MANAGER_AND_ABOVE.includes(`${req.user?.role || ""}`)) {
+      return res.status(403).json({ success: false, message: "You do not have permission to modify daily work entries" });
+    }
+
+    const dailyWork = await StaffDailyWork.findOne({
+      _id: req.params.id,
+      shop: req.shopId,
+      isDeleted: false,
+    });
+
+    if (!dailyWork) {
+      return res.status(404).json({ success: false, message: "Daily work entry not found" });
+    }
+
+    // If entry contains actual production work, just turn OFF Khoraki so production work stays 100% intact!
+    if (Number(dailyWork.unitsCompleted || 0) > 0 || Number(dailyWork.earnedAmount || 0) > 0) {
+      dailyWork.isKhorakiIncluded = false;
+      dailyWork.khorakiAmount = 0;
+      dailyWork.updatedBy = req.user._id;
+      await dailyWork.save();
+      return res.json({ success: true, message: "Khoraki removed! Production work remains 100% safe." });
+    } else {
+      // Pure Khoraki entry: soft delete the entry
+      dailyWork.isDeleted = true;
+      dailyWork.updatedBy = req.user._id;
+      await dailyWork.save();
+      return res.json({ success: true, message: "Khoraki entry deleted" });
+    }
+  } catch (error) {
+    logger.error("Remove Khoraki Error:", error);
+    return res.status(500).json({ success: false, message: "Failed to remove Khoraki" });
   }
 };

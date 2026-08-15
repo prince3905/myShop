@@ -1,332 +1,295 @@
-<h2 mat-dialog-title>Distributor Details</h2>
+<div class="main-content customer-details-page">
+  <div class="container-fluid">
 
-<mat-dialog-content class="content">
-  <div class="details-grid">
-    <!-- Basic Info -->
-    <div class="section-title">Basic Information</div>
-
-    <div class="detail-item">
-      <label>ID</label>
-      <span>{{ data?._id }}</span>
+    <!-- Hero Header -->
+    <div class="customer-hero-bar">
+      <div class="hero-left">
+        <button mat-stroked-button class="back-btn" (click)="close()">
+          <mat-icon>arrow_back</mat-icon>
+        </button>
+        <div>
+          <h2 class="hero-title">{{ data?.name || 'Distributor Details' }}</h2>
+          <p class="hero-sub">Full ledger and transaction history</p>
+        </div>
+      </div>
+      <div class="hero-actions">
+        <button mat-stroked-button (click)="editDistributor()" class="edit-btn">
+          <mat-icon>edit</mat-icon> Edit Distributor
+        </button>
+      </div>
     </div>
 
-    <div class="detail-item">
-      <label>Name</label>
-      <span>{{ data?.name }}</span>
+    <!-- Loading Spinner -->
+    <div class="loading" *ngIf="ledgerLoading">
+      <mat-spinner color="primary" mode="indeterminate"></mat-spinner>
     </div>
 
-    <div class="detail-item">
-      <label>Phone</label>
-      <span>{{ data?.phone }}</span>
+    <div *ngIf="!ledgerLoading && data">
+      <!-- Distributor Info Card -->
+      <div class="card">
+        <div class="card-header card-header-info">
+          <h4 class="card-title">Distributor Information</h4>
+          <p class="card-category">Complete details and account summary</p>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <div class="info-section">
+                <h5>Contact Details</h5>
+                <table class="info-table">
+                  <tr>
+                    <th>Name:</th>
+                    <td>{{ data.name }}</td>
+                  </tr>
+                  <tr>
+                    <th>Phone:</th>
+                    <td>{{ data.phone }}</td>
+                  </tr>
+                  <tr>
+                    <th>Telephone:</th>
+                    <td>{{ data.telephone || 'N/A' }}</td>
+                  </tr>
+                  <tr>
+                    <th>Email:</th>
+                    <td>{{ data.email || 'N/A' }}</td>
+                  </tr>
+                  <tr>
+                    <th>Shop:</th>
+                    <td>{{ data.shop?.name || data.shop?.shopCode || 'N/A' }}</td>
+                  </tr>
+                  <tr>
+                    <th>GST Number:</th>
+                    <td>{{ data.gstNumber || 'N/A' }}</td>
+                  </tr>
+                </table>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <div class="info-section">
+                <h5>Address Details</h5>
+                <table class="info-table">
+                  <tr>
+                    <th>Address:</th>
+                    <td>
+                      {{ data.address?.addressLine1 || 'N/A' }}
+                      <span *ngIf="data.address?.addressLine2">, {{ data.address?.addressLine2 }}</span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th>City:</th>
+                    <td>{{ data.address?.city || 'N/A' }}</td>
+                  </tr>
+                  <tr>
+                    <th>District:</th>
+                    <td>{{ data.address?.district || 'N/A' }}</td>
+                  </tr>
+                  <tr>
+                    <th>State:</th>
+                    <td>{{ data.address?.state || 'N/A' }}</td>
+                  </tr>
+                  <tr>
+                    <th>Pincode:</th>
+                    <td>{{ data.address?.pincode || 'N/A' }}</td>
+                  </tr>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Account Summary Card -->
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-label">Opening Balance</div>
+          <div class="kpi-value">₹ {{ data?.openingBalance || 0 | number:'1.2-2' }}</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Current Due</div>
+          <div class="kpi-value due">₹ {{ data?.currentBalance || 0 | number:'1.2-2' }}</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Credit Limit</div>
+          <div class="kpi-value">₹ {{ data?.creditLimit || 0 | number:'1.2-2' }}</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Payment Terms</div>
+          <div class="kpi-value">{{ data?.paymentTerms || 0 }} days</div>
+        </div>
+      </div>
+
+      <!-- Ledger Action Bar -->
+      <div class="ledger-action-bar">
+        <button mat-raised-button color="primary" (click)="openLedgerModal('payment')" [disabled]="!canMutateLedger">
+          <mat-icon>payments</mat-icon>
+          Payment
+        </button>
+
+        <button mat-raised-button color="accent" (click)="openLedgerModal('purchase')" [disabled]="!canMutateLedger">
+          <mat-icon>shopping_cart</mat-icon>
+          Purchase
+        </button>
+
+        <button mat-raised-button color="warn" (click)="openLedgerModal('purchase_return')" [disabled]="!canMutateLedger">
+          <mat-icon>assignment_return</mat-icon>
+          Return
+        </button>
+
+        <button mat-stroked-button (click)="openLedgerModal('adjustment')" [disabled]="!canMutateLedger">
+          <mat-icon>tune</mat-icon>
+          Adjustment
+        </button>
+      </div>
+
+      <div class="section-title" *ngIf="!canMutateLedger">
+        Select a shop to create payment/purchase/return/adjustment entries.
+      </div>
+
+      <!-- Date Filter -->
+      <div class="date-filter">
+        <mat-form-field appearance="outline" class="date-field">
+          <mat-label>From Date</mat-label>
+          <input matInput [matDatepicker]="fromPicker" [(ngModel)]="fromDate" (dateChange)="applyDateFilter()">
+          <mat-datepicker-toggle matSuffix [for]="fromPicker"></mat-datepicker-toggle>
+          <mat-datepicker #fromPicker></mat-datepicker>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="date-field">
+          <mat-label>To Date</mat-label>
+          <input matInput [matDatepicker]="toPicker" [(ngModel)]="toDate" (dateChange)="applyDateFilter()">
+          <mat-datepicker-toggle matSuffix [for]="toPicker"></mat-datepicker-toggle>
+          <mat-datepicker #toPicker></mat-datepicker>
+        </mat-form-field>
+
+        <div class="date-actions">
+          <button mat-raised-button color="primary" (click)="applyDateFilter()">
+            Apply
+          </button>
+
+          <button mat-button color="warn" (click)="resetFilter()">
+            Reset
+          </button>
+
+          <button mat-raised-button color="accent" (click)="printLedgerHistory()" [disabled]="!ledger.length">
+            <mat-icon>print</mat-icon>
+            Print
+          </button>
+        </div>
+      </div>
+
+      <!-- Ledger Summary -->
+      <div class="section-title">Ledger Summary</div>
+      <table *ngIf="ledger.length" class="ledger-table">
+        <thead>
+          <tr>
+            <th class="right">Total Debit</th>
+            <th class="right">Total Credit</th>
+            <th class="right"> Total Balance</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="right debit">
+              ₹ {{ totalDebit | number:'1.2-2' }}
+            </td>
+
+            <td class="right credit">
+              ₹ {{ totalCredit | number:'1.2-2' }}
+            </td>
+
+            <td class="right balance" [ngClass]="{
+                  'positive-balance': closingBalance > 0,
+                  'zero-balance': closingBalance === 0,
+                  'negative-balance': closingBalance < 0
+                }">
+              ₹ {{ closingBalance | number:'1.2-2' }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Invoice-wise Outstanding -->
+      <div class="section-title" *ngIf="invoiceSummary.length">Invoice-wise Outstanding</div>
+
+      <table *ngIf="invoiceSummary.length" class="ledger-table">
+        <thead>
+          <tr>
+            <th>Invoice</th>
+            <th>Last Activity</th>
+            <th>Last Payment Mode</th>
+            <th class="right">Purchase</th>
+            <th class="right">Paid</th>
+            <th class="right">Due</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of invoiceSummary">
+            <td>{{ row.invoiceNo }}</td>
+            <td>{{ row.lastDate | date: "dd/MM/yyyy hh:mm a" }}</td>
+            <td>{{ row.lastPaymentMode | titlecase }}</td>
+            <td class="right debit">₹ {{ row.purchaseAmount | number:'1.2-2' }}</td>
+            <td class="right credit">₹ {{ row.paidAmount | number:'1.2-2' }}</td>
+            <td class="right balance" [ngClass]="{
+              'positive-balance': row.dueAmount > 0,
+              'zero-balance': row.dueAmount === 0,
+              'negative-balance': row.dueAmount < 0
+            }">
+              ₹ {{ row.dueAmount | number:'1.2-2' }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Ledger History -->
+      <div class="section-title">Ledger History</div>
+
+      <table *ngIf="ledger.length" class="ledger-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Type</th>
+            <th>Payment Mode</th>
+            <th>Note</th>
+            <th class="right">Debit</th>
+            <th class="right">Credit</th>
+            <th class="right">Balance</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr *ngFor="let entry of ledger">
+            <td>{{ entry.transactionDate | date: "dd/MM/yyyy hh:mm a" }}</td>
+            <td>{{ entry.type | titlecase }}</td>
+            <td>{{ resolvePaymentMethod(entry) | titlecase }}</td>
+            <td>{{ entry.note || "-" }}</td>
+            <td class="right debit">
+              <ng-container *ngIf="entry.type === 'purchase' || entry.type === 'opening' || (entry.type === 'adjustment' && entry.amount > 0); else noDebit">
+                ₹ {{ entry.amount | number:'1.2-2' }}
+              </ng-container>
+              <ng-template #noDebit>—</ng-template>
+            </td>
+            <td class="right credit">
+              <ng-container *ngIf="entry.type === 'payment' || entry.type === 'purchase_return' || (entry.type === 'adjustment' && entry.amount < 0); else noCredit">
+                ₹ {{ entry.amount < 0 ? (entry.amount * -1 | number:'1.2-2') : (entry.amount | number:'1.2-2') }}
+              </ng-container>
+              <ng-template #noCredit>—</ng-template>
+            </td>
+            <td class="right balance" [ngClass]="{
+              'positive-balance': entry.balanceAfterTransaction > 0,
+              'zero-balance': entry.balanceAfterTransaction === 0,
+              'negative-balance': entry.balanceAfterTransaction < 0
+            }">
+              ₹ {{ entry.balanceAfterTransaction }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div *ngIf="!ledger.length" class="empty-state">
+        <mat-icon>receipt_long</mat-icon>
+        <p>No ledger entries found</p>
+      </div>
     </div>
-
-    <div class="detail-item">
-      <label>Telephone</label>
-      <span>{{ data?.telephone }}</span>
-    </div>
-
-    <div class="detail-item">
-      <label>Email</label>
-      <span>{{ data?.email || "-" }}</span>
-    </div>
-
-    <div class="detail-item">
-      <label>GST Number</label>
-      <span>{{ data?.gstNumber || "-" }}</span>
-    </div>
-
-    <div class="detail-item">
-      <label>Status</label>
-      <span class="status">{{ data?.status }}</span>
-    </div>
-
-    <!-- Shop Info -->
-    <div class="section-title">Shop Information</div>
-
-    <div class="detail-item">
-      <label>Shop Name</label>
-      <span>{{ data?.shop?.name || "-" }}</span>
-    </div>
-
-    <div class="detail-item">
-      <label>Shop Code</label>
-      <span>{{ data?.shop?.shopCode || "-" }}</span>
-    </div>
-
-    <!-- Address Info -->
-    <div class="section-title">Address Details</div>
-
-    <div class="detail-item full-width">
-      <label>Address</label>
-      <span>
-        {{ data?.address?.addressLine1 }},
-        {{ data?.address?.addressLine2 }}
-      </span>
-    </div>
-
-    <div class="detail-item">
-      <label>City</label>
-      <span>{{ data?.address?.city || "-" }}</span>
-    </div>
-
-    <div class="detail-item">
-      <label>District</label>
-      <span>{{ data?.address?.district || "-" }}</span>
-    </div>
-
-    <div class="detail-item">
-      <label>State</label>
-      <span>{{ data?.address?.state || "-" }}</span>
-    </div>
-
-    <div class="detail-item">
-      <label>Pincode</label>
-      <span>{{ data?.address?.pincode || "-" }}</span>
-    </div>
-
-    <!-- Balance Info -->
-    <div class="section-title">Account Details</div>
-
-    <div class="detail-item">
-      <label>Opening Balance कुल धन राशि</label>
-      <span>₹ {{ data?.openingBalance }}</span>
-    </div>
-
-    <div class="detail-item">
-      <label>Current Balance मौजूदा बकाया राशि</label>
-      <span>₹ {{ data?.currentBalance }}</span>
-    </div>
-
-    <div class="detail-item">
-      <label>Credit Limit</label>
-      <span>₹ {{ data?.creditLimit || 0 }}</span>
-    </div>
-
-    <div class="detail-item">
-      <label>Payment Terms</label>
-      <span>{{ data?.paymentTerms || 0 }} days</span>
-    </div>
-
-    <div class="detail-item">
-      <label>Created At</label>
-      <span>{{ data?.createdAt | date: "medium" }}</span>
-    </div>
-
-    <div class="detail-item">
-      <label>Updated At</label>
-      <span>{{ data?.updatedAt | date: "medium" }}</span>
-    </div>
-  </div>
-  <!-- Ledger Section -->
-
-  <div class="ledger-action-bar">
-
-    <button mat-raised-button color="primary" (click)="openLedgerModal('payment')" [disabled]="!canMutateLedger">
-      <mat-icon>payments</mat-icon>
-      Payment
-    </button>
-
-    <button mat-raised-button color="accent" (click)="openLedgerModal('purchase')" [disabled]="!canMutateLedger">
-      <mat-icon>shopping_cart</mat-icon>
-      Purchase
-    </button>
-
-    <button mat-raised-button color="warn" (click)="openLedgerModal('purchase_return')" [disabled]="!canMutateLedger">
-      <mat-icon>assignment_return</mat-icon>
-      Return
-    </button>
-
-    <button mat-stroked-button (click)="openLedgerModal('adjustment')" [disabled]="!canMutateLedger">
-      <mat-icon>tune</mat-icon>
-      Adjustment
-    </button>
-
-  </div>
-
-  <div class="section-title" *ngIf="!canMutateLedger">
-    Select a shop to create payment/purchase/return/adjustment entries.
-  </div>
-
-
-
-  <div class="date-filter">
-  <mat-form-field appearance="outline" class="date-field">
-    <mat-label>From Date</mat-label>
-    <input matInput type="date" [(ngModel)]="fromDate" (change)="applyDateFilter()">
-  </mat-form-field>
-
-  <mat-form-field appearance="outline" class="date-field">
-    <mat-label>To Date</mat-label>
-    <input matInput type="date" [(ngModel)]="toDate" (change)="applyDateFilter()">
-  </mat-form-field>
-
-  <div class="date-actions">
-    <button mat-raised-button color="primary" (click)="applyDateFilter()">
-      Apply
-    </button>
-
-    <button mat-button color="warn" (click)="resetFilter()">
-      Reset
-    </button>
-
-    <button mat-raised-button color="accent" (click)="printLedgerHistory()" [disabled]="!ledger.length">
-      <mat-icon>print</mat-icon>
-      Print
-    </button>
   </div>
 </div>
-
-
-
-
-  <div class="section-title">Ledger Summary</div>
-  <table *ngIf="ledger.length" class="ledger-table">
-    <thead>
-      <tr>
-        <th class="right">Total Debit</th>
-        <th class="right">Total Credit</th>
-        <th class="right"> Total Balance</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td class="right debit">
-          ₹ {{ totalDebit | number:'1.2-2' }}
-        </td>
-
-        <td class="right credit">
-          ₹ {{ totalCredit | number:'1.2-2' }}
-        </td>
-
-        <td class="right balance" [ngClass]="{
-              'positive-balance': closingBalance > 0,
-              'zero-balance': closingBalance === 0,
-              'negative-balance': closingBalance < 0
-            }">
-          ₹ {{ closingBalance | number:'1.2-2' }}
-        </td>
-      </tr>
-    </tbody>
-
-
-  </table>
-
-
-
-
-
-
-
-  <div class="section-title">Ledger History</div>
-
-  <div class="section-title" *ngIf="invoiceSummary.length">Invoice-wise Outstanding</div>
-
-  <table *ngIf="invoiceSummary.length" class="ledger-table">
-    <thead>
-      <tr>
-        <th>Invoice</th>
-        <th>Last Activity</th>
-        <th>Last Payment Mode</th>
-        <th class="right">Purchase</th>
-        <th class="right">Paid</th>
-        <th class="right">Due</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let row of invoiceSummary">
-        <td>{{ row.invoiceNo }}</td>
-        <td>{{ row.lastDate | date: "dd/MM/yyyy hh:mm a" }}</td>
-        <td>{{ row.lastPaymentMode | titlecase }}</td>
-        <td class="right debit">₹ {{ row.purchaseAmount | number:'1.2-2' }}</td>
-        <td class="right credit">₹ {{ row.paidAmount | number:'1.2-2' }}</td>
-        <td class="right balance" [ngClass]="{
-          'positive-balance': row.dueAmount > 0,
-          'zero-balance': row.dueAmount === 0,
-          'negative-balance': row.dueAmount < 0
-        }">
-          ₹ {{ row.dueAmount | number:'1.2-2' }}
-        </td>
-      </tr>
-    </tbody>
-  </table>
-
-  <table *ngIf="ledger.length" class="ledger-table">
-    <thead>
-      <tr>
-        <th>Date</th>
-        <th>Type</th>
-        <th>Payment Mode</th>
-        <th>Note</th>
-        <th class="right">Debit</th>
-        <th class="right">Credit</th>
-        <th class="right">Balance</th>
-      </tr>
-    </thead>
-
-    <tbody>
-      <tr *ngFor="let entry of ledger">
-        <!-- Date -->
-        <td>
-          {{ entry.transactionDate | date: "dd/MM/yyyy hh:mm a" }}
-        </td>
-
-        <!-- Type -->
-        <td>
-          {{ entry.type | titlecase }}
-        </td>
-
-        <td>
-          {{ resolvePaymentMethod(entry) | titlecase }}
-        </td>
-
-        <!-- Note -->
-        <td>
-          {{ entry.note || "-" }}
-        </td>
-
-        <!-- Debit -->
-        <td class="right debit">
-          <ng-container *ngIf="
-      entry.type === 'purchase' ||
-      entry.type === 'opening' ||
-      (entry.type === 'adjustment' && entry.amount > 0);
-    else noDebit">
-
-            ₹ {{ entry.amount | number:'1.2-2' }}
-          </ng-container>
-
-          <ng-template #noDebit>—</ng-template>
-        </td>
-
-        <!-- Credit -->
-        <td class="right credit">
-          <ng-container *ngIf="
-      entry.type === 'payment' ||
-      entry.type === 'purchase_return' ||
-      (entry.type === 'adjustment' && entry.amount < 0);
-    else noCredit">
-
-            ₹ {{ entry.amount < 0 ? (entry.amount * -1 | number:'1.2-2') : (entry.amount | number:'1.2-2') }}
-              </ng-container>
-
-              <ng-template #noCredit>—</ng-template>
-        </td>
-
-        <!-- Balance -->
-        <td class="right balance" [ngClass]="{
-    'positive-balance': entry.balanceAfterTransaction > 0,
-    'zero-balance': entry.balanceAfterTransaction === 0,
-    'negative-balance': entry.balanceAfterTransaction < 0
-  }">
-          ₹ {{ entry.balanceAfterTransaction }}
-        </td>
-      </tr>
-    </tbody>
-  </table>
-
-  <div *ngIf="!ledger.length">No ledger entries found.</div>
-</mat-dialog-content>
-
-<mat-dialog-actions align="end">
-  <button mat-stroked-button color="primary" (click)="close()">Close</button>
-</mat-dialog-actions>

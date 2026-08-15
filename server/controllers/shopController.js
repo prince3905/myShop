@@ -141,6 +141,7 @@ exports.getShopById = async (req, res) => {
 exports.updateShop = async (req, res) => {
   const allowedFields = [
     "name",
+    "shopCode",
     "contactNumber",
     "email",
     "address",
@@ -151,11 +152,21 @@ exports.updateShop = async (req, res) => {
 
   allowedFields.forEach((field) => {
     if (req.body[field] !== undefined) {
-      updateData[field] = req.body[field];
+      if (field === "shopCode") {
+        updateData[field] = `${req.body[field]}`.trim().toUpperCase();
+      } else {
+        updateData[field] = req.body[field];
+      }
     }
   });
 
   try {
+    if (updateData.shopCode) {
+      const existing = await Shop.findOne({ shopCode: updateData.shopCode, _id: { $ne: req.params.id } });
+      if (existing) {
+        return res.status(400).json({ success: false, message: `Shop code "${updateData.shopCode}" already in use` });
+      }
+    }
     const filter = getShopFilter(req);
     const updatedShop = await Shop.findOneAndUpdate(
       {

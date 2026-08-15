@@ -56,7 +56,7 @@ function waitForFreshBuild(filePath, buildStartedAt, timeoutMs = 120000) {
   });
 }
 
-function waitForHealth(url, timeoutMs = 30000) {
+function waitForHealth(url, timeoutMs = 90000) {
   const start = Date.now();
 
   return new Promise((resolve, reject) => {
@@ -123,7 +123,7 @@ async function main() {
   console.log("[local] starting backend with nodemon on http://localhost:3000 ...");
   startCommand("server", "npm", ["run", "dev"], serverDir);
 
-  await waitForHealth("http://localhost:3000/api/health");
+  await waitForHealth("http://127.0.0.1:3000/api/health");
   console.log("[local] app ready on http://localhost:3000");
 }
 

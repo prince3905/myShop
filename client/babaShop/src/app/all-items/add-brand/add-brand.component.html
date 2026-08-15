@@ -1,102 +1,130 @@
-<div class="main-content">
-  <div class="card">
-    <div class="card-header card-header-danger">
-      <h4 class="card-title">{{ isEditMode ? "Edit Brand" : "Add Brand" }}</h4>
-      <p class="card-category">Brand master with search and status control</p>
+<div class="main-content item-list-page">
+  <div class="container-fluid">
+
+    <div class="expense-hero-bar">
+      <div>
+        <h2 class="hero-title">{{ isEditMode ? "Edit Brand" : "Add Brand" }}</h2>
+        <p class="hero-sub">Brand master with search and status control</p>
+      </div>
     </div>
 
-    <div class="card-body">
-      <form (ngSubmit)="onSubmit()" #brandForm="ngForm" class="brand-form">
-        <mat-form-field class="example-full-width">
-          <mat-label>Brand Name</mat-label>
-          <input matInput name="name" [(ngModel)]="name" appCapitalizeFirst required />
-        </mat-form-field>
+    <div class="expense-layout">
 
-        <mat-form-field class="example-full-width">
-          <mat-label>Brand Description</mat-label>
-          <textarea matInput name="description" [(ngModel)]="description" appCapitalizeFirst></textarea>
-        </mat-form-field>
-
-        <div class="form-actions">
-          <button mat-raised-button type="submit" class="btn btn-danger" [disabled]="!brandForm.valid || isLoading">
-            {{ isLoading ? "Saving..." : (isEditMode ? "Update Brand" : "Add Brand") }}
-          </button>
-          <button mat-stroked-button type="button" *ngIf="isEditMode" (click)="resetForm()">Cancel</button>
+      <div class="form-panel">
+        <div class="form-panel-header">
+          <mat-icon>{{ isEditMode ? 'edit' : 'add_circle' }}</mat-icon>
+          <div>
+            <div class="panel-title">{{ isEditMode ? 'Edit Brand' : 'New Brand' }}</div>
+            <div class="panel-sub">Brand details</div>
+          </div>
         </div>
-      </form>
 
-      <hr />
+        <form (ngSubmit)="onSubmit()" #brandForm="ngForm" class="filter-form">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Brand Name</mat-label>
+            <input matInput name="name" [(ngModel)]="name" appCapitalizeFirst required />
+          </mat-form-field>
 
-      <div class="filter-row">
-        <mat-form-field class="filter-field">
-          <mat-label>Search</mat-label>
-          <input matInput [(ngModel)]="search" (ngModelChange)="onSearchChange()" placeholder="Search brand..." />
-        </mat-form-field>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Brand Description</mat-label>
+            <textarea matInput name="description" [(ngModel)]="description" appCapitalizeFirst rows="3"></textarea>
+            <button mat-icon-button matSuffix type="button" (click)="generateDescription()" [disabled]="generating" matTooltip="Generate AI Description">
+              <mat-icon>{{ generating ? 'hourglass_top' : 'auto_awesome' }}</mat-icon>
+            </button>
+          </mat-form-field>
 
-        <mat-form-field class="filter-field">
-          <mat-label>Status</mat-label>
-          <mat-select [(ngModel)]="activeFilter" (selectionChange)="onSearchChange()">
-            <mat-option value="all">All</mat-option>
-            <mat-option value="true">Active</mat-option>
-            <mat-option value="false">Inactive</mat-option>
-          </mat-select>
-        </mat-form-field>
+          <div class="form-actions">
+            <button mat-raised-button color="primary" type="submit" [disabled]="!brandForm.valid || isLoading">
+              <mat-icon>{{ isLoading ? 'hourglass_top' : 'save' }}</mat-icon>
+              {{ isLoading ? 'Saving...' : (isEditMode ? 'Update' : 'Add Brand') }}
+            </button>
+            <button mat-stroked-button type="button" *ngIf="isEditMode" (click)="resetForm()">
+              Cancel
+            </button>
+          </div>
+        </form>
       </div>
 
-      <div class="loading-block" *ngIf="loadingList">Loading brands...</div>
+      <div class="list-panel">
+        <div class="filter-card">
+          <div class="filter-card-header">
+            <mat-icon>list</mat-icon>
+            <div>
+              <div class="panel-title">All Brands</div>
+              <div class="panel-sub">{{ totalItems }} total</div>
+            </div>
+          </div>
 
-      <div class="table-responsive" *ngIf="!loadingList">
-        <table class="table">
-          <thead class="text-danger">
-            <tr>
-              <th>Name</th>
-              <th>Description</th>
-              <th>Used In Categories</th>
-              <th>Status</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let brand of brands">
-              <td>{{ brand.name }}</td>
-              <td>{{ brand.description || "-" }}</td>
-              <td>
-                <ng-container *ngIf="getLinkedCategoryNames(brand._id).length; else noLinkedCategories">
+          <div class="filter-row-custom">
+            <mat-form-field appearance="outline">
+              <mat-label>Search</mat-label>
+              <input matInput [(ngModel)]="search" (ngModelChange)="onSearchChange()" placeholder="Search brand..." />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Status</mat-label>
+              <mat-select [(ngModel)]="activeFilter" (selectionChange)="onSearchChange()">
+                <mat-option value="all">All</mat-option>
+                <mat-option value="true">Active</mat-option>
+                <mat-option value="false">Inactive</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <div class="loading-state" *ngIf="loadingList">
+          <mat-spinner diameter="32"></mat-spinner> Loading brands...
+        </div>
+
+        <div class="product-table" *ngIf="!loadingList">
+          <div class="table-header">
+            <span>Name</span>
+            <span>Description</span>
+            <span>Categories</span>
+            <span>Status</span>
+            <span>Action</span>
+          </div>
+          <div class="table-body">
+            <div class="table-row" *ngFor="let brand of brands">
+              <div class="row-name">{{ brand.name }}</div>
+              <div>{{ brand.description || '-' }}</div>
+              <div>
+                <ng-container *ngIf="getLinkedCategoryNames(brand._id).length; else noCat">
                   {{ getLinkedCategoryNames(brand._id).join(", ") }}
                 </ng-container>
-                <ng-template #noLinkedCategories>-</ng-template>
-              </td>
-              <td>
-                <span class="status-pill" [ngClass]="brand.isActive ? 'active' : 'inactive'">
+                <ng-template #noCat>-</ng-template>
+              </div>
+              <div>
+                <span class="status-badge" [class.active]="brand.isActive" [class.inactive]="!brand.isActive">
                   {{ brand.isActive ? "Active" : "Inactive" }}
                 </span>
-              </td>
-              <td class="action-col">
+              </div>
+              <div class="action-cell">
                 <button mat-icon-button color="primary" (click)="startEdit(brand)" matTooltip="Edit">
                   <mat-icon>edit</mat-icon>
                 </button>
-                <button mat-icon-button color="accent" (click)="toggleStatus(brand)" matTooltip="Toggle status">
-                  <mat-icon>{{ brand.isActive ? "toggle_on" : "toggle_off" }}</mat-icon>
+                <button mat-icon-button [color]="brand.isActive ? 'warn' : 'accent'" (click)="toggleStatus(brand)" matTooltip="Toggle">
+                  <mat-icon>{{ brand.isActive ? 'toggle_on' : 'toggle_off' }}</mat-icon>
                 </button>
                 <button mat-icon-button color="warn" (click)="deleteBrand(brand)" matTooltip="Delete">
                   <mat-icon>delete</mat-icon>
                 </button>
-              </td>
-            </tr>
-            <tr *ngIf="brands.length === 0">
-              <td colspan="5" class="text-center">No brands found</td>
-            </tr>
-          </tbody>
-        </table>
+              </div>
+            </div>
+            <div class="empty-row" *ngIf="brands.length === 0">
+              No brands found
+            </div>
+          </div>
+        </div>
+
+        <mat-paginator
+          [length]="totalItems"
+          [pageSize]="pageSize"
+          [pageSizeOptions]="[5,10,25]"
+          [pageIndex]="pageIndex"
+          (page)="onPageChange($event)">
+        </mat-paginator>
       </div>
 
-      <mat-paginator
-        [length]="totalItems"
-        [pageSize]="pageSize"
-        [pageSizeOptions]="[5,10,25]"
-        [pageIndex]="pageIndex"
-        (page)="onPageChange($event)">
-      </mat-paginator>
     </div>
   </div>
 </div>

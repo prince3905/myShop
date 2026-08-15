@@ -29,6 +29,7 @@ export class AddDetailsComponent implements OnInit {
   product: any = null;
   models: any[] = [];
   variations: any[] = [];
+  allShopVariations: any[] = [];
   totalVariations = 0;
   pageSize = 10;
   pageIndex = 0;
@@ -40,6 +41,7 @@ export class AddDetailsComponent implements OnInit {
   isLoading = false;
   listLoading = false;
   creatingModel = false;
+  editingModelId: string | null = null;
   modelName = "";
   allowCodeRegenerationInEdit = false;
   canRegenerateCodes = true;
@@ -55,6 +57,7 @@ export class AddDetailsComponent implements OnInit {
     costPrice: 0,
     sellingPrice: 0,
     isActive: true,
+    isQuickAdd: false,
   };
 
   constructor(
@@ -81,6 +84,16 @@ export class AddDetailsComponent implements OnInit {
     this.loadProduct();
     this.loadModels();
     this.loadVariations();
+    this.loadAllShopVariations();
+  }
+
+  loadAllShopVariations() {
+    this.variationService.getVariations({ limit: 1000 }).subscribe({
+      next: (res: any) => {
+        this.allShopVariations = Array.isArray(res?.data) ? res.data : [];
+      },
+      error: () => {},
+    });
   }
 
   get canMutate(): boolean {
@@ -109,7 +122,10 @@ export class AddDetailsComponent implements OnInit {
     });
   }
 
-  loadVariations() {
+  allVariations: any[] = [];
+  private searchDebounceTimer: any = null;
+
+  loadVariations(updateAll: boolean = true) {
     this.listLoading = true;
     const params: any = {
       product: this.productId,
@@ -118,7 +134,7 @@ export class AddDetailsComponent implements OnInit {
       sort: "-createdAt",
     };
     if (this.searchSku.trim()) {
-      params.sku = this.searchSku.trim();
+      params.search = this.searchSku.trim();
     }
     if (this.filterStatus === "active") {
       params.isActive = "true";
@@ -131,7 +147,11 @@ export class AddDetailsComponent implements OnInit {
 
     this.variationService.getVariations(params).subscribe({
       next: (res: any) => {
-        this.variations = Array.isArray(res?.data) ? res.data : [];
+        const fetched = Array.isArray(res?.data) ? res.data : [];
+        if (updateAll || !this.allVariations.length) {
+          this.allVariations = [...fetched];
+        }
+        this.variations = fetched;
         this.totalVariations = Number(res?.total || this.variations.length);
         this.listLoading = false;
       },
@@ -140,6 +160,31 @@ export class AddDetailsComponent implements OnInit {
         this.snackBar.open("Failed to load variations", "Close", { duration: 2500 });
       },
     });
+  }
+
+  onSearchInput(): void {
+    const q = (this.searchSku || "").trim().toLowerCase();
+    if (this.allVariations && this.allVariations.length > 0) {
+      if (!q) {
+        this.variations = [...this.allVariations];
+      } else {
+        this.variations = this.allVariations.filter((v: any) => {
+          const sku = (v.sku || "").toLowerCase();
+          const barcode = (v.barcode || "").toLowerCase();
+          const mName = (v.model?.name || "").toLowerCase();
+          const color = (v.attributes?.color || "").toLowerCase();
+          const size = (v.attributes?.size || "").toLowerCase();
+          return sku.includes(q) || barcode.includes(q) || mName.includes(q) || color.includes(q) || size.includes(q);
+        });
+      }
+    }
+
+    if (this.searchDebounceTimer) {
+      clearTimeout(this.searchDebounceTimer);
+    }
+    this.searchDebounceTimer = setTimeout(() => {
+      this.applyFilters(false);
+    }, 300);
   }
 
   loadVariation(id: string) {
@@ -157,6 +202,7 @@ export class AddDetailsComponent implements OnInit {
           costPrice: Number(v.costPrice || 0),
           sellingPrice: Number(v.sellingPrice || 0),
           isActive: v.isActive !== false,
+          isQuickAdd: !!v.isQuickAdd,
         };
         this.allowCodeRegenerationInEdit = false;
         this.loadVariationUsage(v._id);
@@ -210,6 +256,7 @@ export class AddDetailsComponent implements OnInit {
       costPrice: Number(this.variation.costPrice || 0),
       sellingPrice: Number(this.variation.sellingPrice || 0),
       isActive: !!this.variation.isActive,
+      isQuickAdd: !!this.variation.isQuickAdd,
     };
 
     const req$ = this.isEditMode
@@ -229,7 +276,10 @@ export class AddDetailsComponent implements OnInit {
       },
       error: (err) => {
         this.isLoading = false;
-        if (Number(err?.status || 0) === 404 && this.isEditMode) {
+        const status = Number(err?.status || 0);
+        const errorMsg = err?.error?.message || "";
+
+        if (status === 404 && this.isEditMode) {
           this.snackBar.open("Variation no longer exists. Switched to create mode.", "Close", {
             duration: 3000,
           });
@@ -238,8 +288,20 @@ export class AddDetailsComponent implements OnInit {
           this.loadVariations();
           return;
         }
-        this.snackBar.open(err?.error?.message || "Operation failed", "Close", {
-          duration: 3000,
+
+        let friendlyMsg = errorMsg;
+        if (status === 409 || errorMsg.includes("already exists")) {
+          if (errorMsg.toLowerCase().includes("sku")) {
+            friendlyMsg = "This SKU already exists. Please change color/storage or regenerate SKU.";
+          } else if (errorMsg.toLowerCase().includes("barcode")) {
+            friendlyMsg = "This barcode already exists. Please regenerate.";
+          } else {
+            friendlyMsg = "Duplicate entry: This variation already exists for this shop.";
+          }
+        }
+
+        this.snackBar.open(friendlyMsg || "Operation failed", "Close", {
+          duration: 4000,
         });
       },
     });
@@ -276,6 +338,7 @@ export class AddDetailsComponent implements OnInit {
       costPrice: Number(v.costPrice || 0),
       sellingPrice: Number(v.sellingPrice || 0),
       isActive: v.isActive !== false,
+      isQuickAdd: !!v.isQuickAdd,
     };
     this.allowCodeRegenerationInEdit = false;
     this.loadVariationUsage(v._id);
@@ -338,6 +401,18 @@ export class AddDetailsComponent implements OnInit {
     return err?.error?.message || "Delete failed";
   }
 
+  getSelectedModel(): any {
+    return this.models.find((m) => m._id === this.variation.model);
+  }
+
+  saveModel(): void {
+    if (this.editingModelId) {
+      this.updateModel();
+    } else {
+      this.createModel();
+    }
+  }
+
   createModel() {
     if (!this.canMutate) return;
     const name = (this.modelName || "").trim();
@@ -353,7 +428,7 @@ export class AddDetailsComponent implements OnInit {
         next: (res: any) => {
           this.creatingModel = false;
           this.modelName = "";
-          this.snackBar.open("Model created", "Close", { duration: 2500 });
+          this.snackBar.open("Model created successfully", "Close", { duration: 2500 });
           const model = res?.data;
           if (model) {
             this.models = [model, ...this.models];
@@ -370,6 +445,93 @@ export class AddDetailsComponent implements OnInit {
           });
         },
       });
+  }
+
+  startEditModel(model: any): void {
+    if (!this.canMutate || !model?._id) return;
+
+    const hasVariations = this.variations.some(
+      (v) => `${v.model?._id || v.model || ""}` === `${model._id}`
+    );
+
+    if (hasVariations) {
+      this.snackBar.open(
+        `Is Model (${model.name}) ke sath pehle se Variations judi hui hain. Edit ya Delete karne ke liye pehle iski sabhi Variations delete karein.`,
+        "Close",
+        { duration: 4500, panelClass: ["snackbar-error"] }
+      );
+      return;
+    }
+
+    this.editingModelId = model._id;
+    this.modelName = model.name;
+    this.snackBar.open(`Editing Model: ${model.name}. Change name in the box and click Save.`, "Close", { duration: 3000 });
+  }
+
+  cancelEditModel(): void {
+    this.editingModelId = null;
+    this.modelName = "";
+  }
+
+  updateModel(): void {
+    if (!this.canMutate || !this.editingModelId) return;
+    const name = (this.modelName || "").trim();
+    if (!name) {
+      this.snackBar.open("Model name is required", "Close", { duration: 2500 });
+      return;
+    }
+
+    this.creatingModel = true;
+    this.productModelService.updateModel(this.editingModelId, { name }).subscribe({
+      next: () => {
+        this.creatingModel = false;
+        this.snackBar.open("Model updated successfully", "Close", { duration: 2500 });
+        this.editingModelId = null;
+        this.modelName = "";
+        this.loadModels();
+      },
+      error: (err: any) => {
+        this.creatingModel = false;
+        this.snackBar.open(err?.error?.message || "Failed to update model", "Close", { duration: 4000 });
+      },
+    });
+  }
+
+  deleteModel(model: any): void {
+    if (!this.canMutate || !model?._id) return;
+
+    const hasVariations = this.variations.some(
+      (v) => `${v.model?._id || v.model || ""}` === `${model._id}`
+    );
+
+    if (hasVariations) {
+      this.snackBar.open(
+        `Is Model (${model.name}) ke sath pehle se Variations judi hui hain. Delete karne se pehle iski sabhi Variations delete karein.`,
+        "Close",
+        { duration: 4500, panelClass: ["snackbar-error"] }
+      );
+      return;
+    }
+
+    const confirmed = window.confirm(`Are you sure you want to delete model "${model.name}"?`);
+    if (!confirmed) return;
+
+    this.productModelService.deleteModel(model._id).subscribe({
+      next: () => {
+        this.snackBar.open("Model deleted successfully", "Close", { duration: 2500 });
+        if (this.variation.model === model._id) {
+          this.variation.model = "";
+        }
+        if (this.editingModelId === model._id) {
+          this.editingModelId = null;
+          this.modelName = "";
+        }
+        this.loadModels();
+      },
+      error: (err: any) => {
+        this.snackBar.open(err?.error?.message || "Failed to delete model", "Close", { duration: 4000 });
+      },
+    });
   }
 
   printVariationLabel(v: any): void {
@@ -543,6 +705,7 @@ export class AddDetailsComponent implements OnInit {
       costPrice: 0,
       sellingPrice: 0,
       isActive: true,
+      isQuickAdd: false,
     };
     this.allowCodeRegenerationInEdit = false;
     this.canRegenerateCodes = true;
@@ -617,6 +780,14 @@ export class AddDetailsComponent implements OnInit {
     const cleaned = (modelName || "").trim().toUpperCase();
     if (!cleaned) return "";
 
+    const digits = cleaned.match(/\d+/g);
+    if (digits && digits.length >= 2) {
+      return `${digits[0]}${digits[1]}`.slice(0, 5);
+    }
+    if (digits && digits.length === 1) {
+      return `${digits[0]}`.slice(0, 4);
+    }
+
     const alphaNumMatch = cleaned.match(/\b[A-Z]+\d+[A-Z0-9]*\b/);
     if (alphaNumMatch?.[0]) return alphaNumMatch[0];
 
@@ -626,7 +797,7 @@ export class AddDetailsComponent implements OnInit {
     if (words.length === 1) {
       return words[0].slice(0, 4);
     }
-    return `${words[0][0] || ""}${words[1][0] || ""}${(words[2]?.[0] || "")}`.slice(0, 4);
+    return words.join("").slice(0, 4);
   }
 
   private getStorageToken(storage: string): string {
@@ -659,8 +830,9 @@ export class AddDetailsComponent implements OnInit {
 
   private ensureUniqueSku(baseSku: string): string {
     const currentEditingId = this.isEditMode ? this.variationId : null;
+    const list = this.allShopVariations.length ? this.allShopVariations : this.variations;
     const used = new Set(
-      (this.variations || [])
+      (list || [])
         .filter((v: any) => v?._id !== currentEditingId)
         .map((v: any) => (v?.sku || "").toUpperCase())
         .filter(Boolean),
@@ -681,8 +853,9 @@ export class AddDetailsComponent implements OnInit {
     const normalized = (sku || "").trim().toUpperCase();
     if (!normalized) return "";
 
+    const list = this.allShopVariations.length ? this.allShopVariations : this.variations;
     const used = new Set(
-      (this.variations || [])
+      (list || [])
         .filter((v: any) => v?._id !== (this.isEditMode ? this.variationId : null))
         .map((v: any) => `${v?.barcode || ""}`)
         .filter(Boolean),
@@ -837,9 +1010,9 @@ export class AddDetailsComponent implements OnInit {
     return "shop";
   }
 
-  applyFilters() {
+  applyFilters(updateAll: boolean = true) {
     this.pageIndex = 0;
-    this.loadVariations();
+    this.loadVariations(updateAll);
   }
 
   resetFilters() {

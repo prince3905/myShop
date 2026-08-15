@@ -1,5 +1,6 @@
 const User = require("../models/User");
 const Shop = require("../models/Shop");
+const EntityAuditLog = require("../models/EntityAuditLog");
 const mongoose = require("mongoose");
 
 const isSuperAdmin = (req) => req.user?.role === "SUPER_ADMIN";
@@ -278,6 +279,19 @@ exports.updateUser = async (req, res) => {
       runValidators: true,
     }).select("-password").populate("shop", "name shopCode");
 
+    // Create audit log for update
+    await EntityAuditLog.create({
+      shop: target.shop || null,
+      entityType: "USER",
+      entityId: target._id,
+      action: "UPDATE",
+      actor: req.user._id,
+      meta: {
+        updatedFields: Object.keys(updateData),
+        updatedByEmail: req.user.email
+      }
+    });
+
     return res.status(200).json({
       success: true,
       message: "User updated successfully",
@@ -293,6 +307,84 @@ exports.updateUser = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to update user",
+    });
+  }
+};
+
+exports.deleteUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const actorRole = req.user.role;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid user id",
+      });
+    }
+
+    const target = await User.findById(id).select("+password");
+    if (!target) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    // Prevent SUPER_ADMIN from being deleted
+    if (target.role === "SUPER_ADMIN") {
+      return res.status(403).json({
+        success: false,
+        message: "Cannot delete SUPER_ADMIN",
+      });
+    }
+
+    // Role check: can only delete lower rank users
+    if (!isSuperAdmin(req)) {
+      if (!req.user.shop || target.shop?.toString() !== req.user.shop?.toString()) {
+        return res.status(403).json({
+          success: false,
+          message: "You can delete users only in your own shop",
+        });
+      }
+
+      if (roleRank[target.role] >= roleRank[actorRole]) {
+        return res.status(403).json({
+          success: false,
+          message: "You cannot delete same or higher role users",
+        });
+      }
+    }
+
+    const deletedUser = target.phoneNo + " (" + target.role + ")";
+    const deletedBy = req.user._id;
+    const deletedAt = new Date();
+
+    // Hard delete user
+    await User.findByIdAndDelete(id);
+
+    // Create audit log for deletion
+    await EntityAuditLog.create({
+      shop: target.shop || null,
+      entityType: "USER",
+      entityId: target._id,
+      action: "DELETE",
+      actor: deletedBy,
+      meta: {
+        deletedUser: deletedUser,
+        deletedByEmail: req.user.email,
+        deletedAt: deletedAt
+      }
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "User deleted successfully",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to delete user",
     });
   }
 };

@@ -15,15 +15,20 @@ exports.validate = (req, res, next) => {
 // SALE CREATION VALIDATION
 exports.validateSaleCreation = [
   body("customerName")
-    .optional()
-    .isString()
+    .optional({ nullable: true, allowEmpty: true })
+    .customSanitizer((value) => value || "")
     .isLength({ max: 100 })
-    .withMessage("Customer name cannot exceed 100 characters")
-    .trim(),
+    .withMessage("Customer name cannot exceed 100 characters"),
   body("customerPhone")
-    .optional()
-    .isMobilePhone()
-    .withMessage("Invalid phone number format"),
+    .optional({ nullable: true, allowEmpty: true })
+    .customSanitizer((value) => value || "")
+    .custom((value) => {
+      if (!value || value === "") return true;
+      if (!/^\d{10,}$/.test(value)) {
+        throw new Error("Invalid phone number format - use 10 digit number");
+      }
+      return true;
+    }),
   body("items")
     .isArray({ min: 1 })
     .withMessage("At least one item is required"),

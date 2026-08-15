@@ -46,7 +46,7 @@ export class FactoryVerificationComponent implements OnInit {
   }
 
   get filteredTargetShopOptions(): any[] {
-    return this.targetShopOptions.filter((shop: any) => `${shop?._id || ""}` !== this.currentShopId);
+    return this.targetShopOptions;
   }
 
   get factoryPendingRows(): any[] {
@@ -65,14 +65,43 @@ export class FactoryVerificationComponent implements OnInit {
     return this.factoryPendingRows.length;
   }
 
+  getVariationLabel(item: any): string {
+    if (!item) return "";
+    const fp = item?.factoryProduct || item;
+    const variation = fp?.shopVariation || item?.shopVariation;
+
+    const sku = item?.factoryProductSku || fp?.code || variation?.sku || "";
+    const size = fp?.variationSize || variation?.attributes?.size || "";
+    const color = fp?.variationColor || variation?.attributes?.color || "";
+    const modelName = fp?.shopModel?.name || variation?.model?.name || "";
+
+    const parts: string[] = [];
+    if (modelName && modelName.toUpperCase() !== (fp?.name || "").toUpperCase()) {
+      parts.push(modelName);
+    }
+    if (size) {
+      parts.push(size);
+    }
+    if (color && !["NONE", "NETURAL", "NATURAL"].includes(color.toUpperCase())) {
+      parts.push(color);
+    }
+    if (sku) {
+      parts.push(sku);
+    }
+
+    return parts.join(" · ");
+  }
+
   get productWiseFactoryPending(): any[] {
     const grouped = new Map<string, any>();
 
     this.factoryPendingRows.forEach((row: any) => {
       const key = `${row?.factoryProduct?._id || row?.factoryProduct || row?._id}`;
+      const varLabel = this.getVariationLabel(row);
       const existing = grouped.get(key) || {
         key,
         productName: row?.factoryProductName || row?.factoryProduct?.name || "-",
+        variationLabel: varLabel,
         unit: row?.unit || row?.factoryProduct?.unitLabel || "PCS",
         qty: 0,
         entries: 0,
@@ -103,16 +132,25 @@ export class FactoryVerificationComponent implements OnInit {
     this.loadPushHistory();
   }
 
-  loadRows(): void {
+  allRows: any[] = [];
+  private searchDebounceTimer: any = null;
+
+  loadRows(updateAll: boolean = true): void {
     this.loading = true;
     this.staffDailyWorkService.getDailyWorks({
       ...this.filters,
       verificationStatus: this.filters.verificationStatus || "",
     }).subscribe({
       next: (response) => {
-        this.rows = (response?.dailyWorks || []).filter((row: any) => !!row?.factoryProduct);
+        const fetchedRows = (response?.dailyWorks || []).filter(
+          (row: any) => !!row?.factoryProduct && Number(row?.unitsCompleted || 0) > 0
+        );
+        if (updateAll || !this.allRows.length) {
+          this.allRows = [...fetchedRows];
+        }
+        this.rows = fetchedRows;
         this.rows.forEach((row: any) => this.ensureTargetShopSelection(row));
-        this.summary = this.buildSummary(this.rows);
+        this.summary = this.buildSummary(this.allRows.length ? this.allRows : this.rows);
         this.loading = false;
       },
       error: (error) => {
@@ -120,6 +158,31 @@ export class FactoryVerificationComponent implements OnInit {
         this.snackBar.open(error?.error?.message || "Failed to load verification list", "Close", { duration: 2500 });
       },
     });
+  }
+
+  onSearchInput(): void {
+    const q = (this.filters.search || "").trim().toLowerCase();
+    if (this.allRows && this.allRows.length > 0) {
+      if (!q) {
+        this.rows = [...this.allRows];
+      } else {
+        this.rows = this.allRows.filter((row: any) => {
+          const pName = (row.factoryProductName || row.factoryProduct?.name || "").toLowerCase();
+          const sName = (row.staff?.name || "").toLowerCase();
+          const note = (row.note || "").toLowerCase();
+          const status = (row.verificationStatus || "").toLowerCase();
+          const varLabel = (this.getVariationLabel(row) || "").toLowerCase();
+          return pName.includes(q) || sName.includes(q) || note.includes(q) || status.includes(q) || varLabel.includes(q);
+        });
+      }
+    }
+
+    if (this.searchDebounceTimer) {
+      clearTimeout(this.searchDebounceTimer);
+    }
+    this.searchDebounceTimer = setTimeout(() => {
+      this.loadRows(false);
+    }, 300);
   }
 
   resetFilters(): void {
@@ -239,6 +302,69 @@ export class FactoryVerificationComponent implements OnInit {
       return currentShopCost;
     }
     return this.getActualBoxCost(row);
+  }
+
+  getProductMetaBadges(row: any): string[] {
+    const fp = row?.factoryProduct || row;
+    const variation = fp?.shopVariation || row?.shopVariation;
+
+    const badges: string[] = [];
+
+    const category = fp?.shopCategory?.name;
+    if (category) badges.push(`Category: ${category}`);
+
+    const brand = fp?.shopBrand?.name;
+    if (brand) badges.push(`Brand: ${brand}`);
+
+    const model = fp?.shopModel?.name;
+    if (model) badges.push(`Model: ${model}`);
+
+    const color = fp?.variationColor || variation?.attributes?.color;
+    if (color && !["NONE", "NETURAL", "NATURAL"].includes(color.toUpperCase())) {
+      badges.push(`Color: ${color}`);
+    }
+
+    const size = fp?.variationSize || variation?.attributes?.size;
+    if (size) badges.push(`Size: ${size}`);
+
+    const rate = fp?.workerPieceRate || row?.pieceRate;
+    if (Number(rate || 0) > 0) {
+      badges.push(`Worker Rate: ₹${rate}/${fp?.unitLabel || row?.unit || "PCS"}`);
+    }
+
+    return badges;
+  }
+
+  getFinancialSummary(row: any): any {
+    const qty = Number(row?.unitsCompleted || 0);
+    const pieceRate = Number(row?.factoryProduct?.workerPieceRate || row?.pieceRate || 0);
+    const workerPay = Number(row?.earnedAmount ?? (qty * pieceRate));
+
+    const fp = row?.factoryProduct || {};
+    const matCostPerUnit = (fp?.standardMaterialLines || []).reduce((sum: number, line: any) => {
+      return sum + (Number(line?.qtyPerUnit || 0) * Number(line?.rate || 0));
+    }, 0);
+    const otherCostPerUnit = Number(fp?.standardOtherCost || 0);
+    const wasteValuePerUnit = Number(fp?.standardWasteValuePerUnit || 0);
+
+    const costPerPiece = matCostPerUnit + (qty > 0 ? (workerPay / qty) : pieceRate) + otherCostPerUnit + wasteValuePerUnit;
+    const totalBatchCost = qty * costPerPiece;
+
+    const sellPricePerPiece = this.getShopSellingPrice(row);
+    const totalSellingValue = qty * sellPricePerPiece;
+    const estimatedBatchMargin = totalSellingValue - totalBatchCost;
+
+    return {
+      qty,
+      pieceRate,
+      workerPay,
+      costPerPiece,
+      totalBatchCost,
+      sellPricePerPiece,
+      totalSellingValue,
+      estimatedBatchMargin,
+      unit: row?.unit || fp?.unitLabel || "PCS",
+    };
   }
 
   getMaterialPreview(row: any): string {

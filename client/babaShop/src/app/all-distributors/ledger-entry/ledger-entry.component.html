@@ -1,70 +1,82 @@
-<h2 mat-dialog-title>
-  {{ type | titlecase }} Entry
-</h2>
+<div class="ledger-dialog">
+  <h2 mat-dialog-title>
+    <mat-icon>{{ getTypeIcon() }}</mat-icon>
+    {{ type | titlecase }} Entry
+  </h2>
 
-<mat-dialog-content>
+  <mat-dialog-content>
 
-  <form [formGroup]="form" class="ledger-form">
+    <div class="type-banner" [class]="'type-' + type">
+      <mat-icon>{{ getTypeIcon() }}</mat-icon>
+      <span>{{ getTypeLabel() }}</span>
+    </div>
 
-    <!-- Amount -->
-    <mat-form-field appearance="outline" class="full-width">
-      <mat-label>Amount</mat-label>
-      <input matInput type="number" min="1" [max]="maxAmount || null" formControlName="amount">
-      <mat-error *ngIf="form.get('amount')?.hasError('required')">
-        Amount is required
-      </mat-error>
-    </mat-form-field>
+    <form [formGroup]="form" class="ledger-form">
 
-    <!-- Payment Mode (only for payment) -->
-    <mat-form-field *ngIf="type === 'payment'"
-      appearance="outline"
-      class="full-width">
-      <mat-label>Payment Mode</mat-label>
-      <mat-select formControlName="paymentMode">
-        <mat-option *ngFor="let m of paymentModes" [value]="m">
-          {{ m }}
-        </mat-option>
-      </mat-select>
-      <mat-error *ngIf="form.get('paymentMode')?.hasError('required')">
-        Payment mode required
-      </mat-error>
-    </mat-form-field>
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Amount</mat-label>
+        <mat-icon matPrefix>currency_rupee</mat-icon>
+        <input matInput type="number" min="1" [max]="maxAmount || null" formControlName="amount">
+        <mat-error *ngIf="form.get('amount')?.hasError('required')">
+          Amount is required
+        </mat-error>
+      </mat-form-field>
 
-    <mat-form-field *ngIf="type === 'payment'" appearance="outline" class="full-width">
-      <mat-label>Against Purchase (Optional)</mat-label>
-      <mat-select formControlName="referenceId">
-        <mat-option value="">General Payment</mat-option>
-        <mat-option *ngFor="let p of purchaseOptions" [value]="p._id">
-          {{ p.optionLabel || (p.invoiceNo || p._id) }}
-        </mat-option>
-      </mat-select>
-      <mat-hint *ngIf="!purchaseOptions.length">
-        No pending confirmed purchase found for this distributor
-      </mat-hint>
-      <mat-hint *ngIf="maxAmount > 0">
-        Max payment for selected purchase: ₹{{ maxAmount | number:'1.2-2' }}
-      </mat-hint>
-    </mat-form-field>
+      <mat-form-field *ngIf="type === 'payment'"
+        appearance="outline"
+        class="full-width">
+        <mat-label>Payment Mode</mat-label>
+        <mat-icon matPrefix>payment</mat-icon>
+        <mat-select formControlName="paymentMode">
+          <mat-option *ngFor="let m of paymentModes" [value]="m">
+            {{ m }}
+          </mat-option>
+        </mat-select>
+        <mat-error *ngIf="form.get('paymentMode')?.hasError('required')">
+          Payment mode required
+        </mat-error>
+      </mat-form-field>
 
-    <!-- Note -->
-    <mat-form-field appearance="outline" class="full-width">
-      <mat-label>Note</mat-label>
-      <textarea matInput rows="3" formControlName="note" appCapitalizeFirst></textarea>
-    </mat-form-field>
+      <mat-form-field *ngIf="type === 'payment'" appearance="outline" class="full-width">
+        <mat-label>Against Purchase (Optional)</mat-label>
+        <mat-icon matPrefix>receipt</mat-icon>
+        <mat-select formControlName="referenceId">
+          <mat-option value="">General Payment</mat-option>
+          <mat-option *ngFor="let p of purchaseOptions" [value]="p._id">
+            {{ p.optionLabel || (p.invoiceNo || p._id) }}
+          </mat-option>
+        </mat-select>
+        <mat-hint *ngIf="!purchaseOptions.length">
+          No pending confirmed purchase found for this distributor
+        </mat-hint>
+        <mat-hint *ngIf="maxAmount > 0">
+          Max payment for selected purchase: ₹{{ maxAmount | number:'1.2-2' }}
+        </mat-hint>
+      </mat-form-field>
 
-  </form>
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Note</mat-label>
+        <mat-icon matPrefix>notes</mat-icon>
+        <textarea matInput rows="3" formControlName="note" appCapitalizeFirst placeholder="Add additional details..."></textarea>
+      </mat-form-field>
 
-</mat-dialog-content>
+    </form>
+  </mat-dialog-content>
 
-<mat-dialog-actions align="end">
-  <button mat-button mat-dialog-close>Cancel</button>
+  <mat-dialog-actions align="end">
+    <button mat-stroked-button mat-dialog-close class="cancel-btn">
+      <mat-icon>close</mat-icon> Cancel
+    </button>
 
-  <button mat-raised-button
-          color="primary"
-          (click)="submit()"
-          [disabled]="!canSubmit || form.invalid || loading">
+    <button mat-raised-button
+            [color]="getSubmitColor()"
+            (click)="submit()"
+            [disabled]="!canSubmit || form.invalid || loading"
+            class="submit-btn">
 
-    {{ loading ? 'Saving...' : 'Save' }}
+      <mat-icon>{{ loading ? 'hourglass_empty' : getSubmitIcon() }}</mat-icon>
+      {{ loading ? 'Saving...' : 'Save ' + (type | titlecase) }}
 
-  </button>
-</mat-dialog-actions>
+    </button>
+  </mat-dialog-actions>
+</div>

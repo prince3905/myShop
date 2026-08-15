@@ -7,6 +7,7 @@ import { Subject, Subscription } from "rxjs";
 import { MatDialog } from "@angular/material/dialog";
 import { AddDistributorsComponent } from "../add-distributors/add-distributors.component";
 import { ViewDistributorComponent } from "../view-distributor/view-distributor.component";
+import { ShopSyncModalComponent } from "app/shops/shop-sync-modal/shop-sync-modal.component";
 import { ShopService } from "app/shared/services/shop.service";
 import { AuthService } from "app/shared/services/auth.service";
 
@@ -166,6 +167,20 @@ export class DistributorsComponent implements OnInit, OnDestroy {
     this.suggestions = [];
   }
 
+  openShopSyncModal(): void {
+    this.dialog
+      .open(ShopSyncModalComponent, {
+        width: "580px",
+        disableClose: true,
+      })
+      .afterClosed()
+      .subscribe((res) => {
+        if (res === true) {
+          this.getAllDistributors(this.getQueryParams(1));
+        }
+      });
+  }
+
   openAddDistributor() {
     if (this.isGlobalSuperAdmin) {
       this.snackBar.open("Select a shop first to add distributor", "Close", {
@@ -175,8 +190,9 @@ export class DistributorsComponent implements OnInit, OnDestroy {
     }
     this.dialog
       .open(AddDistributorsComponent, {
-        width: "40%",
-        height: "80%",
+        width: "90%",
+        maxWidth: "800px",
+        maxHeight: "90vh",
         data: null,
       })
       .afterClosed()
@@ -261,7 +277,8 @@ export class DistributorsComponent implements OnInit, OnDestroy {
     }
     this.dialog
       .open(AddDistributorsComponent, {
-        width: "650px",
+        width: "90%",
+        maxWidth: "800px",
         data: row,
       })
       .afterClosed()
@@ -273,6 +290,10 @@ export class DistributorsComponent implements OnInit, OnDestroy {
           });
         }
       });
+  }
+
+  editDistributor(item: any) {
+    this.openEditDistributor(item);
   }
 
   openDistributorModal() {

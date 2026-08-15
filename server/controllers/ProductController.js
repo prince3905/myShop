@@ -11,6 +11,21 @@ const Category = require("../models/Category");
 const Brand = require("../models/Brand");
 const { logEntityAudit } = require("../utils/entityAudit.service");
 
+const generateAutoDescription = (name, category = "", brand = "") => {
+  const templates = [
+    `Premium quality ${name} - perfect for home and office use. Durable and reliable.`,
+    `High-quality ${name} designed for maximum comfort and longevity.`,
+    `${name} - Best in class product with excellent finish and durability.`,
+    `Upgrade your space with our premium ${name}. Quality guaranteed.`,
+    `Top-rated ${name} with modern design and superior performance.`,
+  ];
+
+  const adjectives = ["premium", "high-quality", "durable", "reliable", "best-in-class"];
+  const randomAdj = adjectives[Math.floor(Math.random() * adjectives.length)];
+
+  return `${randomAdj.charAt(0).toUpperCase() + randomAdj.slice(1)} ${name} with excellent build quality. Perfect for everyday use.`;
+};
+
 const isSuperAdminGlobal = (req) =>
   req.user?.role === "SUPER_ADMIN" && !req.shopId;
 
@@ -77,6 +92,7 @@ const mapProductForPosSearch = (productDoc, matchedBy = [], req = null) => ({
   productId: productDoc?._id,
   name: productDoc?.name || "",
   label: productDoc?.name || "",
+  icon: productDoc?.category?.icon || productDoc?.icon || "folder",
   matchedBy,
   models: groupVariationsByModel(Array.isArray(productDoc?.variations) ? productDoc.variations : [], req),
 });
@@ -87,16 +103,16 @@ const validateCategoryBrandMapping = async ({ shopId, categoryId, brandId }) => 
   }
 
   const [category, brand] = await Promise.all([
-    Category.findOne({ _id: categoryId, shop: shopId }).select("_id name brands").lean(),
-    Brand.findOne({ _id: brandId, shop: shopId }).select("_id name").lean(),
+    Category.findById(categoryId).select("_id name brands").lean(),
+    Brand.findById(brandId).select("_id name").lean(),
   ]);
 
   if (!category) {
-    return { valid: false, message: "Selected category not found for this shop" };
+    return { valid: false, message: "Selected category not found" };
   }
 
   if (!brand) {
-    return { valid: false, message: "Selected brand not found for this shop" };
+    return { valid: false, message: "Selected brand not found" };
   }
 
   const mappedBrandIds = Array.isArray(category.brands)
@@ -184,6 +200,7 @@ exports.createProduct = async (req, res) => {
       });
     }
 
+    const autoDescription = description || generateAutoDescription(name);
     const slug = slugify(name, { lower: true, strict: true });
 
     const product = await Product.create({
@@ -191,7 +208,7 @@ exports.createProduct = async (req, res) => {
       slug,
       category,
       brand,
-      description,
+      description: autoDescription,
       images,
       shop: req.shopId,
     });
@@ -277,10 +294,10 @@ exports.getProducts = async (req, res) => {
     const totalItems = await Product.countDocuments(query);
 
     let productQuery = Product.find(query)
-      .select("name brand category createdAt")
+      .select("name icon brand category createdAt")
       .sort(sort)
       .populate("brand", "name")
-      .populate("category", "name")
+      .populate("category", "name icon")
       .populate({
         path: "variations",
         select: "model sku barcode attributes sellingPrice costPrice quantity",
@@ -321,84 +338,98 @@ exports.getProducts = async (req, res) => {
 exports.searchProductsForPos = async (req, res) => {
   try {
     const term = `${req.query.term || ""}`.trim();
-    if (!term) {
-      return res.json({
-        success: true,
-        data: [],
-      });
-    }
-
-    const regex = new RegExp(term, "i");
-    const productFilter = isSuperAdminGlobal(req)
+    const isSuperAdmin = isSuperAdminGlobal(req);
+    const productFilter = isSuperAdmin
       ? { isDeleted: { $ne: true } }
       : { shop: req.shopId, isDeleted: { $ne: true } };
-    const shopScopedFilter = isSuperAdminGlobal(req) ? {} : { shop: req.shopId };
+    const shopScopedFilter = isSuperAdmin ? {} : { shop: req.shopId };
 
-    const [productMatches, modelMatches, variationMatches] = await Promise.all([
-      Product.find({
-        ...productFilter,
-        name: { $regex: regex },
-      }).select("_id name").limit(12),
-      ProductModel.find({
-        ...shopScopedFilter,
-        name: { $regex: regex },
-      }).select("_id product name").limit(12),
-      ProductVariation.find({
-        ...shopScopedFilter,
-        $or: [{ sku: { $regex: regex } }, { barcode: { $regex: regex } }],
-      })
-        .select("_id product model sku barcode")
-        .populate("model", "name")
-        .limit(12),
-    ]);
+    let products;
 
-    const matchMeta = new Map();
-    const addMatch = (productId, label) => {
-      const key = `${productId || ""}`;
-      if (!key) return;
-      if (!matchMeta.has(key)) {
-        matchMeta.set(key, new Set());
-      }
-      matchMeta.get(key).add(label);
-    };
+    if (!term) {
+      products = await Product.find(productFilter)
+        .populate("category", "name icon")
+        .populate({
+          path: "variations",
+          populate: {
+            path: "model",
+            select: "name",
+          },
+        })
+        .select("_id name icon variations")
+        .limit(50)
+        .sort({ name: 1 });
+    } else {
+      const regex = new RegExp(term, "i");
 
-    productMatches.forEach((row) => addMatch(row._id, "Name"));
-    modelMatches.forEach((row) => addMatch(row.product, `Model: ${row.name}`));
-    variationMatches.forEach((row) => {
-      addMatch(row.product, `SKU: ${row.sku}`);
-      if (row.barcode && regex.test(row.barcode)) {
-        addMatch(row.product, `Barcode: ${row.barcode}`);
-      }
-      if (row.model?.name && regex.test(row.model.name)) {
-        addMatch(row.product, `Model: ${row.model.name}`);
-      }
-    });
+      const [productMatches, modelMatches, variationMatches] = await Promise.all([
+        Product.find({
+          ...productFilter,
+          name: { $regex: regex },
+        }).select("_id name icon").populate("category", "name icon").limit(12),
+        ProductModel.find({
+          ...shopScopedFilter,
+          name: { $regex: regex },
+        }).select("_id product name").limit(12),
+        ProductVariation.find({
+          ...shopScopedFilter,
+          $or: [{ sku: { $regex: regex } }, { barcode: { $regex: regex } }],
+        })
+          .select("_id product model sku barcode")
+          .populate("model", "name")
+          .limit(12),
+      ]);
 
-    const productIds = Array.from(matchMeta.keys()).slice(0, 20);
-    if (!productIds.length) {
-      return res.json({
-        success: true,
-        data: [],
+      const matchMeta = new Map();
+      const addMatch = (productId, label) => {
+        const key = `${productId || ""}`;
+        if (!key) return;
+        if (!matchMeta.has(key)) {
+          matchMeta.set(key, new Set());
+        }
+        matchMeta.get(key).add(label);
+      };
+
+      productMatches.forEach((row) => addMatch(row._id, "Name"));
+      modelMatches.forEach((row) => addMatch(row.product, `Model: ${row.name}`));
+      variationMatches.forEach((row) => {
+        addMatch(row.product, `SKU: ${row.sku}`);
+        if (row.barcode && regex.test(row.barcode)) {
+          addMatch(row.product, `Barcode: ${row.barcode}`);
+        }
+        if (row.model?.name && regex.test(row.model.name)) {
+          addMatch(row.product, `Model: ${row.model.name}`);
+        }
       });
+
+      const productIds = Array.from(matchMeta.keys()).slice(0, 20);
+      if (!productIds.length) {
+        return res.json({
+          success: true,
+          data: [],
+        });
+      }
+
+      products = await Product.find({
+        ...productFilter,
+        _id: { $in: productIds },
+      })
+        .populate("category", "name icon")
+        .populate({
+          path: "variations",
+          populate: {
+            path: "model",
+            select: "name",
+          },
+        })
+        .select("_id name icon variations");
+
+      const orderMap = new Map(productIds.map((id, index) => [String(id), index]));
+      products = products
+        .sort((a, b) => (orderMap.get(String(a._id)) ?? 999) - (orderMap.get(String(b._id)) ?? 999));
     }
 
-    const products = await Product.find({
-      ...productFilter,
-      _id: { $in: productIds },
-    })
-      .populate({
-        path: "variations",
-        populate: {
-          path: "model",
-          select: "name",
-        },
-      })
-      .select("_id name variations");
-
-    const orderMap = new Map(productIds.map((id, index) => [String(id), index]));
-    const rows = products
-      .sort((a, b) => (orderMap.get(String(a._id)) ?? 999) - (orderMap.get(String(b._id)) ?? 999))
-      .map((product) => mapProductForPosSearch(product, Array.from(matchMeta.get(String(product._id)) || []), req));
+    const rows = products.map((product) => mapProductForPosSearch(product, [], req));
 
     return res.json({
       success: true,
@@ -423,8 +454,8 @@ exports.getProductById = async (req, res) => {
       : { _id: req.params.id, shop: req.shopId, isDeleted: { $ne: true } };
 
     const product = await Product.findOne(filter)
-      .select("name slug description images category brand createdAt updatedAt shop")
-      .populate("category", "name")
+      .select("name slug description icon images category brand createdAt updatedAt shop")
+      .populate("category", "name icon")
       .populate("brand", "name")
       .populate({
         path: "variations",

@@ -114,18 +114,30 @@ export class StaffPaymentsComponent implements OnInit {
     });
   }
 
-  loadPaymentContext(): void {
+  allPayments: any[] = [];
+  private searchDebounceTimer: any = null;
+
+  loadPaymentContext(updateAll: boolean = true): void {
+    this.loadPayments(updateAll);
+  }
+
+  loadPayments(updateAll: boolean = true): void {
     this.loadingSummary = true;
     this.loadingPayments = true;
+
     forkJoin({
       paymentsResponse: this.staffPaymentService.getPayments(this.filters),
       dailyWorksResponse: this.staffDailyWorkService.getDailyWorks({}),
     }).subscribe({
       next: ({ paymentsResponse, dailyWorksResponse }) => {
-        this.payments = paymentsResponse?.payments || [];
+        const fetched = paymentsResponse?.payments || [];
+        if (updateAll || !this.allPayments.length) {
+          this.allPayments = [...fetched];
+        }
+        this.payments = fetched;
         this.dailyWorks = dailyWorksResponse?.dailyWorks || [];
-        this.staffBalanceMap = this.buildStaffBalanceMap(this.dailyWorks, this.payments);
-        this.summary = this.buildSummary(this.payments);
+        this.staffBalanceMap = this.buildStaffBalanceMap(this.dailyWorks, this.allPayments.length ? this.allPayments : this.payments);
+        this.summary = this.buildSummary(this.allPayments.length ? this.allPayments : this.payments);
         this.loadingSummary = false;
         this.loadingPayments = false;
         if (!this.editingPaymentId && this.paymentForm.staff) {
@@ -138,6 +150,30 @@ export class StaffPaymentsComponent implements OnInit {
         this.showError(error?.error?.message || "Failed to load entries");
       },
     });
+  }
+
+  onSearchInput(): void {
+    const q = (this.filters.search || "").trim().toLowerCase();
+    if (this.allPayments && this.allPayments.length > 0) {
+      if (!q) {
+        this.payments = [...this.allPayments];
+      } else {
+        this.payments = this.allPayments.filter((p: any) => {
+          const name = (p.staff?.name || "").toLowerCase();
+          const note = (p.note || "").toLowerCase();
+          const mode = (p.paymentMode || "").toLowerCase();
+          const type = (p.entryType || "").toLowerCase();
+          return name.includes(q) || note.includes(q) || mode.includes(q) || type.includes(q);
+        });
+      }
+    }
+
+    if (this.searchDebounceTimer) {
+      clearTimeout(this.searchDebounceTimer);
+    }
+    this.searchDebounceTimer = setTimeout(() => {
+      this.loadPayments(false);
+    }, 300);
   }
 
   submitPayment(form: NgForm): void {

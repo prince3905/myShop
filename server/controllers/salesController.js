@@ -11,6 +11,7 @@ const SaleLedger = require("../models/SaleLedger");
 const Customer = require("../models/Customer");
 const { applyStockTransaction } = require("../utils/stock.service");
 const { createSaleLedgerEntry } = require("../utils/saleLedger.service");
+const { logEntityAudit } = require("../utils/entityAudit.service");
 const {
   getCustomerDuplicateMessage,
   normalizeCustomerPhone,
@@ -379,7 +380,31 @@ exports.createSale = async (req, res) => {
       paidAmount = 0,
       walletUsedAmount = 0,
       splitPayments = null,
+      saleDate = null,
     } = req.body || {};
+
+    // Back-date sale validation - only ADMIN/SUPER_ADMIN can create back-dated sales
+    const userRole = req.user?.role || "";
+    const isPrivilegedUser = ["SUPER_ADMIN", "ADMIN"].includes(userRole);
+    let saleDateObj = null;
+    
+    if (saleDate && typeof saleDate === "string") {
+      saleDateObj = new Date(saleDate);
+      if (isNaN(saleDateObj.getTime())) {
+        return res.status(400).json({ success: false, message: "Invalid saleDate format" });
+      }
+      
+      // Only allow back-date within last 30 days for privileged users
+      if (!isPrivilegedUser) {
+        return res.status(403).json({ success: false, message: "Only ADMIN can create back-dated sales" });
+      }
+      
+      const now = new Date();
+      const daysDiff = (now - saleDateObj) / (1000 * 60 * 60 * 24);
+      if (daysDiff > 30) {
+        return res.status(400).json({ success: false, message: "Cannot create sales older than 30 days" });
+      }
+    }
 
     if (!Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ success: false, message: "items[] is required" });
@@ -596,7 +621,7 @@ exports.createSale = async (req, res) => {
       });
 
       const invoiceNo = await generateInvoiceNo({ type: "SALE" });
-      const sale = await Sale.create([{
+      const saleCreateData = {
         shop: req.shopId,
         customer: customerDoc?._id || req.body?.customer || undefined,
         customerName,
@@ -618,7 +643,14 @@ exports.createSale = async (req, res) => {
         }),
         orderSource: "POS",
         status: "COMPLETED",
-      }], { session: mongooseSession });
+      };
+      
+      // Add back-dated sale date if provided and user is privileged
+      if (saleDateObj && isPrivilegedUser) {
+        saleCreateData.createdAt = saleDateObj;
+      }
+      
+      const sale = await Sale.create([saleCreateData], { session: mongooseSession });
 
       const saleDoc = sale[0];
 
@@ -632,6 +664,7 @@ exports.createSale = async (req, res) => {
         referenceId: saleDoc._id,
         note: `Sale ${saleDoc.invoiceNo || saleDoc._id}`,
         createdBy: req.user?._id,
+        createdAt: saleDateObj || undefined,
         session: mongooseSession,
       });
 
@@ -946,18 +979,99 @@ exports.getSaleById = async (req, res) => {
       : hasObjectId
         ? { shop: req.shopId, $or: [{ _id: id }, { invoiceNo: id }] }
         : { shop: req.shopId, invoiceNo: id };
-    const sale = await Sale.findOne(query);
+    const sale = await Sale.findOne(query).populate("customer", "phone");
     if (!sale) {
       return res.status(404).json({ success: false, message: "Sale not found" });
     }
 
-    const responseSale = sale.toObject();
-    responseSale.dueAmount = getSaleCollectibleDue(responseSale);
+    const responseSale = {
+      _id: sale._id,
+      invoiceNo: sale.invoiceNo || null,
+      customerName: sale.customerName || "Walk-in",
+      customerPhone: sale.customerPhone || (sale.customer ? sale.customer.phone : null),
+      totalPurchasePrice: Number(sale.totalAmount || 0),
+      subTotal: Number(sale.subTotal || 0),
+      billDiscount: Number(sale.billDiscount || 0),
+      paidAmount: Number(sale.paidAmount || 0),
+      walletUsedAmount: Number(sale.walletUsedAmount || 0),
+      dueAmount: getSaleCollectibleDue(sale),
+      paymentMethod: sale.paymentMethod,
+      paymentBreakdown: sale.paymentBreakdown || [],
+      totalQuantity: Number(sale.totalQuantity || 0),
+      returnedQuantity: Number(sale.returnedQuantity || 0),
+      returnedAmount: Number(sale.returnedAmount || 0),
+      refundedAmount: Number(sale.refundedAmount || 0),
+      dueAdjustedAmount: Number(sale.dueAdjustedAmount || 0),
+      creditedAmount: Number(sale.creditedAmount || 0),
+      purchaseDate: sale.createdAt,
+      status: sale.status,
+      orderSource: sale.orderSource,
+      createdAt: sale.createdAt,
+      updatedAt: sale.updatedAt,
+      items: sale.items || [],
+    };
     return res.status(200).json({ success: true, data: responseSale });
   } catch (error) {
     return res.status(500).json({
       success: false,
       message: "Error fetching sale",
+      error: "Internal server error",
+    });
+  }
+};
+
+exports.getSaleAuditLogs = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ success: false, message: "Invalid sale id" });
+    }
+
+    const EntityAuditLog = require("../models/EntityAuditLog");
+
+    const auditLogs = await EntityAuditLog.find({
+      entityType: "SALE",
+      entityId: id,
+    })
+      .sort({ createdAt: -1 })
+      .populate("actor", "name pFname pLname email")
+      .lean();
+
+    return res.status(200).json({ success: true, auditLogs });
+  } catch (error) {
+    logger.error("Error fetching sale audit logs:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error fetching audit logs",
+      error: "Internal server error",
+    });
+  }
+};
+
+exports.getAllSaleAuditLogs = async (req, res) => {
+  try {
+    const { page = 1, limit = 50 } = req.query;
+    const EntityAuditLog = require("../models/EntityAuditLog");
+
+    const query = isSuperAdminGlobal(req)
+      ? { entityType: "SALE" }
+      : { entityType: "SALE", shop: req.shopId };
+
+    const auditLogs = await EntityAuditLog.find(query)
+      .sort({ createdAt: -1 })
+      .limit(Number(limit))
+      .skip((Number(page) - 1) * Number(limit))
+      .populate("actor", "name pFname pLname email")
+      .lean();
+
+    const total = await EntityAuditLog.countDocuments(query);
+
+    return res.status(200).json({ success: true, auditLogs, total, page: Number(page), limit: Number(limit) });
+  } catch (error) {
+    logger.error("Error fetching all sale audit logs:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error fetching audit logs",
       error: "Internal server error",
     });
   }
@@ -1358,65 +1472,67 @@ exports.getSalesReportOverview = async (req, res) => {
             { $match: saleQuery },
             { $unwind: "$items" },
             {
-              $group: {
-                _id: {
-                  itemName: "$items.itemName",
-                  model: "$items.model",
+              $addFields: {
+                itemGrossSale: {
+                  $multiply: [
+                    { $toDouble: { $ifNull: ["$items.quantity", 0] } },
+                    { $toDouble: { $ifNull: ["$items.sellingPrice", 0] } },
+                  ],
                 },
-                soldQty: {
-                  $sum: {
-                    $max: [
-                      {
-                        $subtract: [
-                          { $toDouble: { $ifNull: ["$items.quantity", 0] } },
-                          { $toDouble: { $ifNull: ["$items.returnedQuantity", 0] } },
-                        ],
-                      },
-                      0,
-                    ],
-                  },
-                },
-                saleAmount: {
-                  $sum: {
-                    $multiply: [
-                      {
-                        $max: [
-                          {
-                            $subtract: [
-                              { $toDouble: { $ifNull: ["$items.quantity", 0] } },
-                              { $toDouble: { $ifNull: ["$items.returnedQuantity", 0] } },
-                            ],
-                          },
-                          0,
-                        ],
-                      },
-                      { $toDouble: { $ifNull: ["$items.sellingPrice", 0] } },
-                    ],
-                  },
-                },
-                costAmount: {
-                  $sum: {
-                    $multiply: [
-                      {
-                        $max: [
-                          {
-                            $subtract: [
-                              { $toDouble: { $ifNull: ["$items.quantity", 0] } },
-                              { $toDouble: { $ifNull: ["$items.returnedQuantity", 0] } },
-                            ],
-                          },
-                          0,
-                        ],
-                      },
-                      { $toDouble: { $ifNull: ["$items.purchasePrice", 0] } },
-                    ],
-                  },
+                itemCost: {
+                  $multiply: [
+                    { $toDouble: { $ifNull: ["$items.quantity", 0] } },
+                    { $toDouble: { $ifNull: ["$items.purchasePrice", 0] } },
+                  ],
                 },
               },
             },
             {
+              $group: {
+                _id: { invoiceNo: "$invoiceNo" },
+                billDiscount: { $first: { $toDouble: { $ifNull: ["$billDiscount", 0] } } },
+                totalBillSale: { $sum: "$itemGrossSale" },
+                itemsData: {
+                  $push: {
+                    itemName: "$items.itemName",
+                    model: "$items.model",
+                    quantity: { $toDouble: { $ifNull: ["$items.quantity", 0] } },
+                    itemGrossSale: "$itemGrossSale",
+                    itemCost: "$itemCost",
+                  },
+                },
+              },
+            },
+            { $unwind: "$itemsData" },
+            {
               $addFields: {
-                grossProfit: { $subtract: ["$saleAmount", "$costAmount"] },
+                allocatedDiscount: {
+                  $multiply: [
+                    "$billDiscount",
+                    {
+                      $cond: [
+                        { $gt: ["$totalBillSale", 0] },
+                        { $divide: ["$itemsData.itemGrossSale", "$totalBillSale"] },
+                        0,
+                      ],
+                    },
+                  ],
+                },
+              },
+            },
+            {
+              $group: {
+                _id: { itemName: "$itemsData.itemName", model: "$itemsData.model" },
+                soldQty: { $sum: "$itemsData.quantity" },
+                saleAmount: { $sum: "$itemsData.itemGrossSale" },
+                costAmount: { $sum: "$itemsData.itemCost" },
+                discountAllocated: { $sum: "$allocatedDiscount" },
+              },
+            },
+            {
+              $addFields: {
+                netSaleAmount: { $subtract: ["$saleAmount", "$discountAllocated"] },
+                grossProfit: { $subtract: [{ $subtract: ["$saleAmount", "$discountAllocated"] }, "$costAmount"] },
               },
             },
             { $sort: { grossProfit: -1, soldQty: -1 } },
@@ -2103,6 +2219,259 @@ exports.createSaleReturn = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Error creating sale return",
+      error: "Internal server error",
+    });
+  }
+};
+
+exports.updateSale = async (req, res) => {
+  try {
+    logger.info("Update sale request:", { 
+      id: req.params.id, 
+      itemTotal: req.body?.itemTotal,
+      billDiscount: req.body?.billDiscount,
+      paidAmount: req.body?.paidAmount,
+      netAmount: (req.body?.itemTotal || 0) - (req.body?.billDiscount || 0),
+      calculatedDue: Math.max(0, ((req.body?.itemTotal || 0) - (req.body?.billDiscount || 0)) - (req.body?.paidAmount || 0) - (req.body?.walletUsedAmount || 0))
+    });
+    
+    if (!req.shopId) {
+      return res.status(400).json({ success: false, message: "Please select a shop first" });
+    }
+
+    const { id } = req.params;
+    const {
+      customer,
+      customerName = "Walk-in",
+      customerPhone = "",
+      customerAddress = "",
+      items = [],
+      paymentMethod = "CASH",
+      billDiscount = 0,
+      paidAmount = 0,
+      walletUsedAmount = 0,
+      splitPayments = null,
+      createdAt,
+    } = req.body || {};
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ success: false, message: "Invalid sale ID" });
+    }
+
+    const existingSale = await Sale.findOne({ _id: id, shop: req.shopId });
+    if (!existingSale) {
+      return res.status(404).json({ success: false, message: "Sale not found" });
+    }
+
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ success: false, message: "items[] is required" });
+    }
+
+    logger.info("Existing sale:", existingSale.invoiceNo);
+
+    // NOTE: Edit does NOT touch stock - only delete should restore stock
+    // Stock was already deducted when sale was created originally
+
+    // Calculate totals - use sellingPrice for actual amount customer paid
+    const itemTotal = items.reduce(
+      (sum, it) => sum + Number(it.quantity || 0) * Number(it.sellingPrice || it.purchasePrice || 0),
+      0
+    );
+    const netAmount = itemTotal - Number(billDiscount || 0);
+    const returnedAmount = Number(existingSale.returnedAmount || 0);
+    const netPayable = Math.max(0, roundAmount(netAmount - returnedAmount));
+    const dueAmount = Math.max(0, roundAmount(netPayable - Number(paidAmount || 0) - Number(walletUsedAmount || 0)));
+
+    // Determine customer
+    let customerDoc = null;
+    const normalizedPhone = normalizeCustomerPhone(customerPhone);
+    
+    if (customer && mongoose.Types.ObjectId.isValid(`${customer}`)) {
+      customerDoc = await Customer.findOne({ _id: customer, shop: req.shopId });
+    } else if (normalizedPhone && normalizedPhone.length === 10) {
+      customerDoc = await Customer.findOne({ shop: req.shopId, phone: normalizedPhone });
+    }
+
+    const customerNameTrimmed = `${customerName || ""}`.trim() || "Walk-in";
+    const paymentMethodFinal = Array.isArray(splitPayments) && splitPayments.length > 0 
+      ? "SPLIT" 
+      : paymentMethod;
+
+    // === UPDATE SALE RECORD ===
+    const updateData = {
+      customer: customerDoc?._id || null,
+      customerName: customerNameTrimmed,
+      customerPhone: customerPhone || "",
+      customerAddress: customerAddress || "",
+      items,
+      itemTotal,
+      billDiscount: Number(billDiscount || 0),
+      totalAmount: itemTotal,
+      netAmount,
+      paidAmount: Number(paidAmount || 0),
+      walletUsedAmount: Number(walletUsedAmount || 0),
+      dueAmount,
+      paymentMethod: paymentMethodFinal,
+      splitPayments,
+    };
+
+    if (createdAt) {
+      updateData.createdAt = new Date(createdAt);
+    }
+
+    const updatedSale = await Sale.findByIdAndUpdate(id, updateData, { new: true });
+
+    // === UPDATE LEDGER ===
+    await SaleLedger.deleteMany({ referenceId: existingSale._id, shop: req.shopId });
+    await SaleLedger.deleteMany({ sale: existingSale._id, shop: req.shopId });
+
+    try {
+      await createSaleLedgerEntry({
+        shop: req.shopId,
+        sale: existingSale._id,
+        customer: customerDoc?._id || null,
+        customerName: customerNameTrimmed,
+        amount: netAmount,
+        paidAmount: Number(paidAmount || 0),
+        walletUsedAmount: Number(walletUsedAmount || 0),
+        dueAmount,
+        paymentMethod: paymentMethodFinal,
+        type: "sale",
+        referenceId: existingSale._id,
+        note: `Sale edited: ${existingSale.invoiceNo}`,
+        splitPayments,
+        createdBy: req.user?._id,
+      });
+    } catch (ledgerErr) {
+      logger.error("Ledger update error (non-blocking):", ledgerErr);
+    }
+
+    // === UPDATE CUSTOMER ACCOUNT ===
+    if (customerDoc) {
+      syncCustomerAccountSnapshot({ shopId: req.shopId, customerId: customerDoc._id });
+    }
+
+    // NOTE: Edit does NOT touch stock - only delete should restore stock
+
+    logger.info("Sale updated:", updatedSale.invoiceNo);
+
+    // === AUDIT LOG ===
+    await logEntityAudit({
+      shop: req.shopId,
+      entityType: "SALE",
+      entityId: updatedSale._id,
+      action: "UPDATE",
+      actor: req.user?._id,
+      meta: {
+        invoiceNo: updatedSale.invoiceNo,
+        customerName: customerNameTrimmed,
+        previousAmount: existingSale.totalAmount,
+        newAmount: updatedSale.totalAmount,
+        itemsCount: items?.length || 0,
+        updatedAt: new Date().toISOString(),
+      },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Sale updated successfully",
+      data: updatedSale,
+    });
+  } catch (error) {
+    logger.error("Error updating sale:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error updating sale",
+      error: "Internal server error",
+    });
+  }
+};
+
+exports.deleteSale = async (req, res) => {
+  try {
+    logger.info("Delete sale request:", { id: req.params.id, shopId: req.shopId, user: req.user?._id });
+    
+    if (!req.shopId) {
+      return res.status(400).json({ success: false, message: "Please select a shop first" });
+    }
+
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ success: false, message: "Invalid sale ID" });
+    }
+
+    const existingSale = await Sale.findOne({ _id: id, shop: req.shopId });
+    if (!existingSale) {
+      logger.warn("Sale not found for delete:", { id, shopId: req.shopId });
+      return res.status(404).json({ success: false, message: "Sale not found" });
+    }
+
+    logger.info("Deleting sale:", { invoiceNo: existingSale.invoiceNo, items: existingSale.items?.length });
+
+    // === RESTORE STOCK (reverse the OUT transactions) ===
+    const variationIds = existingSale.items?.map((it) => it.variationId).filter(Boolean);
+    const variations = await ProductVariation.find({ _id: { $in: variationIds } });
+    const variationMap = new Map(variations.map((v) => [v._id.toString(), v]));
+
+    for (const item of existingSale.items || []) {
+      const variation = variationMap.get(`${item.variationId}`);
+      if (variation) {
+        await applyStockTransaction({
+          shop: req.shopId,
+          product: variation.product,
+          model: variation.model,
+          variation: variation._id,
+          sku: variation.sku || item.variationSku,
+          type: "IN",
+          quantity: Number(item.quantity || 0),
+          referenceType: "SALE",
+          referenceId: existingSale._id,
+          note: `Sale deleted - stock restored: ${existingSale.invoiceNo}`,
+          createdBy: req.user?._id,
+        });
+      }
+    }
+
+    // === DELETE SALE LEDGER ENTRIES ===
+    await SaleLedger.deleteMany({ referenceId: existingSale._id, shop: req.shopId });
+    await SaleLedger.deleteMany({ sale: existingSale._id, shop: req.shopId });
+
+    // === UPDATE CUSTOMER ACCOUNT ===
+    if (existingSale.customer) {
+      syncCustomerAccountSnapshot({ shopId: req.shopId, customerId: existingSale.customer });
+    }
+
+    // === AUDIT LOG ===
+    await logEntityAudit({
+      shop: req.shopId,
+      entityType: "SALE",
+      entityId: existingSale._id,
+      action: "DELETE",
+      actor: req.user?._id,
+      meta: {
+        invoiceNo: existingSale.invoiceNo,
+        customerName: existingSale.customerName,
+        totalAmount: existingSale.totalAmount,
+        itemsCount: existingSale.items?.length || 0,
+        deletedAt: new Date().toISOString(),
+      },
+    });
+
+    // === DELETE SALE ===
+    await Sale.findByIdAndDelete(id);
+
+    logger.info("Sale deleted:", existingSale.invoiceNo);
+
+    return res.status(200).json({
+      success: true,
+      message: "Sale deleted successfully",
+    });
+  } catch (error) {
+    logger.error("Error deleting sale:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error deleting sale",
       error: "Internal server error",
     });
   }

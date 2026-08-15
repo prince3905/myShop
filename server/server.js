@@ -1,3 +1,7 @@
+if (process.stdin && process.stdin.on) {
+  process.stdin.on('error', () => {});
+}
+
 const mongoose = require('mongoose');
 require("dotenv").config();
 const app = require("./app");
@@ -22,6 +26,6 @@ mongoose
   .then(() => console.log('DB Connected successfully'))
   .catch((err) => console.error(err));
 
-app.listen(port, () => {
+app.listen(port, '0.0.0.0', () => {
   console.log(`Server is running on port ${port}`);
 });

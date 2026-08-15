@@ -41,6 +41,29 @@ export class FactoryProductMasterComponent implements OnInit {
     active: true,
   };
 
+  bulkCalc = {
+    totalSheets: 0,
+    totalBoxes: 0,
+    resultPerBox: 0,
+  };
+
+  calculateBulkPerBox(): void {
+    const sheets = Number(this.bulkCalc.totalSheets || 0);
+    const boxes = Number(this.bulkCalc.totalBoxes || 0);
+    if (sheets > 0 && boxes > 0) {
+      this.bulkCalc.resultPerBox = Number((sheets / boxes).toFixed(3));
+    } else {
+      this.bulkCalc.resultPerBox = 0;
+    }
+  }
+
+  applyBulkToMaterialLine(line: any): void {
+    if (this.bulkCalc.resultPerBox > 0) {
+      line.qtyPerUnit = this.bulkCalc.resultPerBox;
+      this.snackBar.open(`Applied ${this.bulkCalc.resultPerBox} Sheet/Box to recipe line`, "Close", { duration: 2200 });
+    }
+  }
+
   filters = {
     search: "",
     active: "",
@@ -104,18 +127,24 @@ export class FactoryProductMasterComponent implements OnInit {
     this.loadProducts();
   }
 
-  loadProducts(): void {
+  allProducts: any[] = [];
+  private searchDebounceTimer: any = null;
+
+  loadProducts(updateAll: boolean = true): void {
     this.loadingSummary = true;
     this.loadingProducts = true;
     const previousSelectedId = this.selectedProduct?._id || null;
     this.factoryProductService.getProducts(this.filters).subscribe({
       next: (response) => {
         this.products = response?.products || [];
+        if (updateAll || !this.allProducts.length) {
+          this.allProducts = [...this.products];
+        }
         this.selectedProduct =
           this.products.find((row: any) => row?._id === previousSelectedId) ||
           this.products[0] ||
           null;
-        this.summary = this.buildSummary(this.products);
+        this.summary = this.buildSummary(this.allProducts.length ? this.allProducts : this.products);
         this.loadingSummary = false;
         this.loadingProducts = false;
       },
@@ -125,6 +154,32 @@ export class FactoryProductMasterComponent implements OnInit {
         this.showError(error?.error?.message || "Failed to load factory products");
       },
     });
+  }
+
+  onSearchInput(): void {
+    const q = (this.filters.search || "").trim().toLowerCase();
+    if (this.allProducts && this.allProducts.length > 0) {
+      if (!q) {
+        this.products = [...this.allProducts];
+      } else {
+        this.products = this.allProducts.filter((p: any) => {
+          const name = (p.name || "").toLowerCase();
+          const code = (p.code || "").toLowerCase();
+          const note = (p.note || "").toLowerCase();
+          const sku = (p.shopVariation?.sku || "").toLowerCase();
+          const color = (p.variationColor || "").toLowerCase();
+          const size = (p.variationSize || "").toLowerCase();
+          return name.includes(q) || code.includes(q) || note.includes(q) || sku.includes(q) || color.includes(q) || size.includes(q);
+        });
+      }
+    }
+
+    if (this.searchDebounceTimer) {
+      clearTimeout(this.searchDebounceTimer);
+    }
+    this.searchDebounceTimer = setTimeout(() => {
+      this.loadProducts(false);
+    }, 300);
   }
 
   loadRawMaterials(): void {
@@ -186,11 +241,13 @@ export class FactoryProductMasterComponent implements OnInit {
   }
 
   loadShopVariations(): void {
+    this.shopVariationOptions = [];
     this.variationService.getVariations({ limit: 300, sort: "sku" }).subscribe({
       next: (response) => {
         this.shopVariationOptions = response?.data || [];
       },
-      error: () => {
+      error: (err) => {
+        console.error("Variation load error:", err);
         this.shopVariationOptions = [];
       },
     });
@@ -242,13 +299,16 @@ export class FactoryProductMasterComponent implements OnInit {
       standardWasteQtyPerUnit: Number(product.standardWasteQtyPerUnit || 0),
       standardWasteUnitLabel: product.standardWasteUnitLabel || "KG",
       standardWasteValuePerUnit: Number(product.standardWasteValuePerUnit || 0),
-      standardMaterialLines: (product.standardMaterialLines || []).map((line: any) => ({
-        rawMaterial: line.rawMaterial?._id || line.rawMaterial || "",
-        materialName: line.materialName || line.rawMaterial?.name || "",
-        qtyPerUnit: Number(line.qtyPerUnit || 0),
-        unitLabel: line.unitLabel || line.rawMaterial?.unitLabel || "PCS",
-        rate: Number(line.rate || line.rawMaterial?.currentRate || 0),
-      })),
+      standardMaterialLines: (product.standardMaterialLines || []).map((line: any) => {
+        const lineUnit = `${line.unitLabel || line.rawMaterial?.unitLabel || "PCS"}`.toUpperCase();
+        return {
+          rawMaterial: line.rawMaterial?._id || line.rawMaterial || "",
+          materialName: line.materialName || line.rawMaterial?.name || "",
+          qtyPerUnit: Number(line.qtyPerUnit || 0),
+          unitLabel: lineUnit === "BAG" ? "PCS" : lineUnit,
+          rate: Number(line.rate || line.rawMaterial?.currentRate || 0),
+        };
+      }),
       note: product.note || "",
       active: !!product.active,
     };
@@ -367,6 +427,34 @@ export class FactoryProductMasterComponent implements OnInit {
     return this.brandOptions.find((row) => row?._id === this.productForm.shopBrand)?.name || "Auto from product";
   }
 
+  get filteredBrandOptions(): any[] {
+    const categoryId = `${this.productForm.shopCategory || ""}`.trim();
+    if (!categoryId) {
+      return this.brandOptions;
+    }
+    const category = this.categoryOptions.find((row) => row?._id === categoryId);
+    if (!category) {
+      return this.brandOptions;
+    }
+    const categoryBrandIds = Array.isArray(category?.brands)
+      ? category.brands.map((b: any) => `${typeof b === "string" ? b : b?._id || ""}`)
+      : [];
+    return this.brandOptions.filter((brand) => categoryBrandIds.includes(`${brand?._id || ""}`));
+  }
+
+  onCategoryChange(): void {
+    const categoryId = `${this.productForm.shopCategory || ""}`.trim();
+    if (categoryId) {
+      const category = this.categoryOptions.find((row) => row?._id === categoryId);
+      const categoryBrandIds = Array.isArray(category?.brands)
+        ? category.brands.map((b: any) => `${typeof b === "string" ? b : b?._id || ""}`)
+        : [];
+      if (categoryBrandIds.length > 0 && !categoryBrandIds.includes(this.productForm.shopBrand)) {
+        this.productForm.shopBrand = "";
+      }
+    }
+  }
+
   addMaterialLine(): void {
     this.productForm.standardMaterialLines.push({
       rawMaterial: "",
@@ -388,7 +476,12 @@ export class FactoryProductMasterComponent implements OnInit {
       return;
     }
     line.materialName = material.name || "";
-    line.unitLabel = material.unitLabel || "PCS";
+    const masterUnit = `${material.unitLabel || "PCS"}`.toUpperCase();
+    if (masterUnit === "BAG" || (material.pcsPerPack && Number(material.pcsPerPack) > 0)) {
+      line.unitLabel = "PCS";
+    } else {
+      line.unitLabel = masterUnit;
+    }
     line.rate = Number(material.currentRate || 0);
   }
 
@@ -406,8 +499,8 @@ export class FactoryProductMasterComponent implements OnInit {
       return;
     }
     this.productForm.name = product.name || "";
-    this.productForm.shopCategory = product.category?._id || product.category || this.productForm.shopCategory;
-    this.productForm.shopBrand = product.brand?._id || product.brand || this.productForm.shopBrand;
+    this.productForm.shopCategory = product.category?._id || product.category || "";
+    this.productForm.shopBrand = product.brand?._id || product.brand || "";
     if (this.productForm.shopModel && !this.filteredShopModelOptions.some((row) => row?._id === this.productForm.shopModel)) {
       this.productForm.shopModel = "";
     }

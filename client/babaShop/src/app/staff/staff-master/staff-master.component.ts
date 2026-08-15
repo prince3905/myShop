@@ -115,13 +115,20 @@ export class StaffMasterComponent implements OnInit {
     this.loadWorkTypes();
   }
 
-  loadStaffs(): void {
+  allStaffs: any[] = [];
+  private searchDebounceTimer: any = null;
+
+  loadStaffs(updateAll: boolean = true): void {
     this.loadingSummary = true;
     this.loadingStaffs = true;
     this.staffService.getStaffs(this.filters).subscribe({
       next: (response) => {
-        this.staffs = response?.staffs || [];
-        this.summary = this.buildSummary(this.staffs);
+        const fetched = response?.staffs || [];
+        if (updateAll || !this.allStaffs.length) {
+          this.allStaffs = [...fetched];
+        }
+        this.staffs = fetched;
+        this.summary = this.buildSummary(this.allStaffs.length ? this.allStaffs : this.staffs);
         this.loadingSummary = false;
         this.loadingStaffs = false;
       },
@@ -131,6 +138,30 @@ export class StaffMasterComponent implements OnInit {
         this.showError(error?.error?.message || "Failed to load staff list");
       },
     });
+  }
+
+  onSearchInput(): void {
+    const q = (this.filters.search || "").trim().toLowerCase();
+    if (this.allStaffs && this.allStaffs.length > 0) {
+      if (!q) {
+        this.staffs = [...this.allStaffs];
+      } else {
+        this.staffs = this.allStaffs.filter((s: any) => {
+          const name = (s.name || "").toLowerCase();
+          const phone = (s.phone || "").toLowerCase();
+          const wType = (s.workType || "").toLowerCase();
+          const role = (s.staffType || "").toLowerCase();
+          return name.includes(q) || phone.includes(q) || wType.includes(q) || role.includes(q);
+        });
+      }
+    }
+
+    if (this.searchDebounceTimer) {
+      clearTimeout(this.searchDebounceTimer);
+    }
+    this.searchDebounceTimer = setTimeout(() => {
+      this.loadStaffs(false);
+    }, 300);
   }
 
   loadWorkTypes(): void {

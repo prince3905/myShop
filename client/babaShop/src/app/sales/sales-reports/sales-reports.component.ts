@@ -186,6 +186,7 @@ export class SalesReportsComponent implements OnInit, OnDestroy {
 
   private loadAll(): void {
     this.loading = true;
+    this.loadPaymentSummary();
 
     const commonParams = {
       dateFrom: this.filters.dateFrom ? this.formatDate(this.filters.dateFrom) : undefined,

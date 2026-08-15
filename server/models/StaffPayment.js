@@ -21,7 +21,7 @@ const staffPaymentSchema = new mongoose.Schema(
     },
     entryType: {
       type: String,
-      enum: ["ADVANCE", "PAYMENT"],
+      enum: ["ADVANCE", "PAYMENT", "KHORAKI"],
       required: true,
     },
     amount: {

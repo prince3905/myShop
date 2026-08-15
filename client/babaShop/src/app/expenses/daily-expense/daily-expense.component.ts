@@ -89,6 +89,8 @@ export class DailyExpenseComponent implements OnInit {
     paymentMethod: "",
     dateFrom: "",
     dateTo: "",
+    page: 1,
+    limit: 50,
   };
 
   summary: any = {
@@ -101,6 +103,7 @@ export class DailyExpenseComponent implements OnInit {
   };
 
   expenses: any[] = [];
+  totalCount = 0;
   loadingSummary = false;
   loadingExpenses = false;
   savingExpense = false;
@@ -135,36 +138,92 @@ export class DailyExpenseComponent implements OnInit {
     return this.departmentAccountHeadMap[this.expenseForm.department] || ["Other"];
   }
 
-  loadAll(): void {
-    this.loadExpenses();
+  get totalPages(): number {
+    return Math.ceil(this.totalCount / this.filters.limit);
   }
 
-  loadExpenses(): void {
-    this.loadingSummary = true;
+  allExpenses: any[] = [];
+  private searchDebounceTimer: any = null;
+
+  loadExpenses(updateAll: boolean = true): void {
     this.loadingExpenses = true;
     this.dailyExpenseService.getExpenses(this.filters).subscribe({
       next: (response) => {
-        this.expenses = response?.expenses || [];
-        this.summary = this.buildSummary(this.expenses);
-        this.loadingSummary = false;
+        const fetched = response?.expenses || [];
+        if (updateAll || !this.allExpenses.length) {
+          this.allExpenses = [...fetched];
+        }
+        this.expenses = fetched;
+        this.totalCount = response?.totalCount || this.expenses.length;
         this.loadingExpenses = false;
       },
       error: (error) => {
-        this.loadingSummary = false;
         this.loadingExpenses = false;
-        this.showError(error?.error?.message || "Failed to load daily expenses");
+        this.showError(error?.error?.message || "Failed to load expenses");
       },
     });
   }
 
+  onSearchInput(): void {
+    const q = (this.filters.search || "").trim().toLowerCase();
+    if (this.allExpenses && this.allExpenses.length > 0) {
+      if (!q) {
+        this.expenses = [...this.allExpenses];
+      } else {
+        this.expenses = this.allExpenses.filter((e: any) => {
+          const cat = (e.category || "").toLowerCase();
+          const dept = (e.department || "").toLowerCase();
+          const head = (e.accountHead || "").toLowerCase();
+          const note = (e.note || "").toLowerCase();
+          const payee = (e.payeeName || "").toLowerCase();
+          return cat.includes(q) || dept.includes(q) || head.includes(q) || note.includes(q) || payee.includes(q);
+        });
+      }
+    }
+
+    if (this.searchDebounceTimer) {
+      clearTimeout(this.searchDebounceTimer);
+    }
+    this.searchDebounceTimer = setTimeout(() => {
+      this.loadExpenses(false);
+    }, 300);
+  }
+
+  loadSummary(): void {
+    this.loadingSummary = true;
+    this.dailyExpenseService.getSummary().subscribe({
+      next: (response) => {
+        if (response?.summary) {
+          this.summary = response.summary;
+        }
+        this.loadingSummary = false;
+      },
+      error: () => {
+        this.loadingSummary = false;
+      },
+    });
+  }
+
+  loadAll(): void {
+    this.loadSummary();
+    this.loadExpenses();
+  }
+
+  onPageChange(page: number): void {
+    this.filters.page = page;
+    this.loadExpenses();
+  }
+
   clearFilters(): void {
     this.filters = {
+      ...this.filters,
       search: "",
       category: "",
       department: "",
       paymentMethod: "",
       dateFrom: "",
       dateTo: "",
+      page: 1,
     };
     this.loadExpenses();
   }
@@ -266,34 +325,53 @@ export class DailyExpenseComponent implements OnInit {
     return `${item?._id || "row"}-${index}`;
   }
 
+  exportExpenses(): void {
+    const exportData = this.expenses.map((e) => ({
+      Date: this.formatDate(new Date(e.expenseDate)),
+      Category: e.category,
+      Department: e.department,
+      'Account Head': e.accountHead,
+      Amount: e.amount,
+      'Payment Method': e.paymentMethod,
+      Note: e.note || '',
+      Status: e.status,
+      Created: e.createdBy?.pFname || e.createdBy?.email || 'N/A',
+    }));
+
+    const csv = [
+      Object.keys(exportData[0] || {}).join(','),
+      ...exportData.map((row) => Object.values(row).join(',')),
+    ].join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `daily-expenses-${this.formatDate(new Date())}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  }
+
+  toggleStatus(expense: any): void {
+    if (!this.canManage || !expense?._id) return;
+    const newStatus = expense.status === 'ACTIVE' ? 'CANCELLED' : 'ACTIVE';
+    this.dailyExpenseService.updateExpense(expense._id, { status: newStatus }).subscribe({
+      next: (response) => {
+        this.snackBar.open(response?.message || 'Status updated', 'Close', { duration: 2000 });
+        this.loadAll();
+      },
+      error: (error) => {
+        this.showError(error?.error?.message || 'Failed to update status');
+      },
+    });
+  }
+
   private showError(message: string): void {
     this.snackBar.open(message, "Close", { duration: 3000 });
   }
 
   private formatDate(date: Date): string {
     return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
-  }
-
-  private buildSummary(expenses: any[]): any {
-    const today = this.formatDate(new Date());
-    return expenses.reduce((acc: any, expense: any) => {
-      const amount = Number(expense?.amount || 0);
-      const rowDate = this.formatDate(new Date(expense?.expenseDate || expense?.createdAt || new Date()));
-      acc.totalAmount += amount;
-      acc.totalEntries += 1;
-      if (rowDate === today) {
-        acc.todayAmount += amount;
-        acc.todayEntries += 1;
-      }
-      return acc;
-    }, {
-      totalAmount: 0,
-      totalEntries: 0,
-      todayAmount: 0,
-      todayEntries: 0,
-      byCategory: [],
-      byDepartment: [],
-    });
   }
 
   private syncExpenseFormSelections(): void {

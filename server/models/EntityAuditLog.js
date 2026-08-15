@@ -9,24 +9,21 @@ const entityAuditLogSchema = new mongoose.Schema(
     },
     entityType: {
       type: String,
-      enum: ["PRODUCT", "CUSTOMER", "DISTRIBUTOR"],
       required: true,
       index: true,
     },
     entityId: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.Mixed,
       required: true,
       index: true,
     },
     action: {
       type: String,
-      enum: ["CREATE", "UPDATE", "ARCHIVE", "RESTORE", "STATUS_CHANGE"],
       required: true,
       index: true,
     },
     actor: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      type: mongoose.Schema.Types.Mixed,
       required: true,
       index: true,
     },

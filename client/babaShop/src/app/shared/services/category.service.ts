@@ -4,6 +4,7 @@ import { Observable, of, throwError } from "rxjs";
 import { catchError, shareReplay, tap } from "rxjs/operators";
 import { environment } from "../../../environments/environment";
 import { AuthService } from "./auth.service";
+import { ProductService } from "./product.service";
 
 @Injectable({
   providedIn: "root",
@@ -16,6 +17,7 @@ export class CategoryService {
   constructor(
     private http: HttpClient,
     private authService: AuthService,
+    private productService: ProductService,
   ) {}
 
   get baseURL(): string {

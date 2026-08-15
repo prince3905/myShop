@@ -8,6 +8,7 @@ const Purchase = require("../models/Purchase");
 const SaleReturn = require("../models/SaleReturn");
 const PurchaseReturn = require("../models/PurchaseReturn");
 const SaleLedger = require("../models/SaleLedger");
+const RawMaterialPurchase = require("../models/RawMaterialPurchase");
 
 const isSuperAdminGlobal = (req) =>
   req.user?.role === "SUPER_ADMIN" && !req.shopId;
@@ -405,7 +406,7 @@ exports.getKpis = async (req, res) => {
     const start = getRangeStartDate(range, now) || new Date(0);
     const end = now;
 
-    const [salesAgg, todayOrders, activeShops, totalCustomers, lowStockCount, distributorDueAgg, todayPurchaseAgg, todaySaleReturnAgg, todayPurchaseReturnAgg] =
+    const [salesAgg, todayOrders, activeShops, totalCustomers, lowStockCount, distributorDueAgg, todayPurchaseAgg, todaySaleReturnAgg, todayPurchaseReturnAgg, rawMaterialPurchaseAgg] =
       await Promise.all([
         Sale.aggregate([
           { $match: { ...query, createdAt: { $gte: start, $lte: end } } },
@@ -456,7 +457,17 @@ exports.getKpis = async (req, res) => {
               totalQty: { $sum: "$totalQuantity" },
               count: { $sum: 1 },
             },
+},
+          ]),
+        RawMaterialPurchase.aggregate([
+          {
+            $match: {
+              ...query,
+              createdAt: { $gte: start, $lte: end },
+              isDeleted: { $ne: true },
+            },
           },
+          { $group: { _id: null, totalAmount: { $sum: "$subtotal" }, totalPaid: { $sum: "$paidAmount" }, totalDue: { $sum: "$dueAmount" }, count: { $sum: 1 } } },
         ]),
       ]);
 
@@ -478,6 +489,16 @@ exports.getKpis = async (req, res) => {
         todayPurchaseReturnAmount: Number(todayPurchaseReturnAgg[0]?.totalAmount || 0),
         todayPurchaseReturnQty: Number(todayPurchaseReturnAgg[0]?.totalQty || 0),
         todayPurchaseReturnCount: Number(todayPurchaseReturnAgg[0]?.count || 0),
+        todayRawMaterialPurchase: allowFinancials
+          ? Number(rawMaterialPurchaseAgg[0]?.totalAmount || 0)
+          : 0,
+        todayRawMaterialPurchasePaid: allowFinancials
+          ? Number(rawMaterialPurchaseAgg[0]?.totalPaid || 0)
+          : 0,
+        todayRawMaterialPurchaseDue: allowFinancials
+          ? Number(rawMaterialPurchaseAgg[0]?.totalDue || 0)
+          : 0,
+        todayRawMaterialPurchaseCount: Number(rawMaterialPurchaseAgg[0]?.count || 0),
         activeShops: Number(activeShops || 0),
         totalCustomers: Number(totalCustomers || 0),
         lowStockCount: Number(lowStockCount || 0),

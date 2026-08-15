@@ -1,13 +1,88 @@
-.form-container {
-  padding-top: 20px;
+.modal-container {
+  padding: 0;
 }
 
-.row {
+.modal-header {
   display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #ef4444, #f97316);
+  color: #fff;
 }
 
-.full-width {
+.header-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-content mat-icon {
+  font-size: 28px;
+  width: 28px;
+  height: 28px;
+}
+
+.header-title {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.header-sub {
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+.modal-header button {
+  color: #fff !important;
+}
+
+.modal-body {
+  padding: 20px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.form-grid mat-form-field {
   width: 100%;
+}
+
+.form-grid .full-width {
+  grid-column: span 2;
+}
+
+.modal-footer {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  padding: 16px 20px;
+  border-top: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+.modal-footer button {
+  min-width: 140px;
+}
+
+@media (max-width: 500px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-grid .full-width {
+    grid-column: span 1;
+  }
+}
+
+.icon-preview {
+  padding-right: 8px;
+  color: #64748b;
+}
+
+.icon-preview i {
+  font-size: 20px;
 }
