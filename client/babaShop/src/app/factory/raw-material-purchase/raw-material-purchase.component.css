@@ -455,18 +455,20 @@
 /* ── Amount Grid ── */
 .amount-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
 }
 
 .amount-item {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  padding: 10px;
+  padding: 8px 6px;
   background: #f8fafc;
   border-radius: 10px;
   text-align: center;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .amount-item.due {
@@ -478,12 +480,19 @@
   font-weight: 700;
   text-transform: uppercase;
   color: #94a3b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .amount-value {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 800;
   color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
 }
 
 .amount-item.due .amount-value {

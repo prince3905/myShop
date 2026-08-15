@@ -300,19 +300,19 @@
             <div class="amount-grid">
               <div class="amount-item">
                 <span class="amount-label">Value</span>
-                <span class="amount-value">₹{{ purchase.subtotal || 0 | number: '1.2-2' }}</span>
+                <span class="amount-value" [title]="'₹' + (purchase.subtotal || 0 | number: '1.0-0')">₹{{ purchase.subtotal || 0 | number: '1.0-0' }}</span>
               </div>
               <div class="amount-item">
                 <span class="amount-label">Paid</span>
-                <span class="amount-value">₹{{ purchase.paidAmount || 0 | number: '1.2-2' }}</span>
+                <span class="amount-value" [title]="'₹' + (purchase.paidAmount || 0 | number: '1.0-0')">₹{{ purchase.paidAmount || 0 | number: '1.0-0' }}</span>
               </div>
               <div class="amount-item due">
                 <span class="amount-label">Due</span>
-                <span class="amount-value">₹{{ purchase.dueAmount || 0 | number: '1.2-2' }}</span>
+                <span class="amount-value" [title]="'₹' + (purchase.dueAmount || 0 | number: '1.0-0')">₹{{ purchase.dueAmount || 0 | number: '1.0-0' }}</span>
               </div>
               <div class="amount-item">
                 <span class="amount-label">Received</span>
-                <span class="amount-value">{{ getPurchaseReceivedQty(purchase) | number: '1.0-2' }}</span>
+                <span class="amount-value" [title]="getPurchaseReceivedQty(purchase) | number: '1.0-2'">{{ getPurchaseReceivedQty(purchase) | number: '1.0-2' }}</span>
               </div>
             </div>
 
@@ -323,12 +323,12 @@
               </div>
               <div class="items-list">
                 <div class="item-row" *ngFor="let item of purchase.items">
-                  <span class="item-name">{{ item.materialName }}</span>
+                  <span class="item-name" [title]="item.materialName">{{ item.materialName }}</span>
                   <span class="item-qty">
                     {{ item.orderedQty | number: '1.0-2' }} {{ item.unitLabel }}
                     <span *ngIf="getItemPcs(item)" style="font-size:0.78rem; color:#0284c7; font-weight:600;">({{ getItemPcs(item) }} Pcs)</span>
                   </span>
-                  <span class="item-rate">× ₹{{ item.rate | number: '1.2-2' }}</span>
+                  <span class="item-rate">× ₹{{ item.rate | number: '1.0-0' }}</span>
                 </div>
               </div>
             </div>
