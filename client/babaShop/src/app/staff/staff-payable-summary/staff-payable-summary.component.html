@@ -113,28 +113,28 @@
             <div class="balance-icon"><mat-icon>work</mat-icon></div>
             <div class="balance-content">
               <div class="balance-label">Earned</div>
-              <div class="balance-value">₹{{ row.earned | number: '1.2-2' }}</div>
+              <div class="balance-value" [title]="'₹' + (row.earned | number: '1.0-0')">₹{{ row.earned | number: '1.0-0' }}</div>
             </div>
           </div>
           <div class="balance-item advance">
             <div class="balance-icon"><mat-icon>call_received</mat-icon></div>
             <div class="balance-content">
               <div class="balance-label">Advance</div>
-              <div class="balance-value">₹{{ row.advance | number: '1.2-2' }}</div>
+              <div class="balance-value" [title]="'₹' + (row.advance | number: '1.0-0')">₹{{ row.advance | number: '1.0-0' }}</div>
             </div>
           </div>
           <div class="balance-item payment">
             <div class="balance-icon"><mat-icon>payments</mat-icon></div>
             <div class="balance-content">
               <div class="balance-label">Payment</div>
-              <div class="balance-value">₹{{ row.payment | number: '1.2-2' }}</div>
+              <div class="balance-value" [title]="'₹' + (row.payment | number: '1.0-0')">₹{{ row.payment | number: '1.0-0' }}</div>
             </div>
           </div>
         </div>
 
         <div class="payable-result" [class.positive]="row.payable > 0" [class.negative]="row.payable < 0" [class.zero]="row.payable === 0">
           <div class="payable-label">Net Payable</div>
-          <div class="payable-value">₹{{ row.payable | number: '1.2-2' }}</div>
+          <div class="payable-value" [title]="'₹' + (row.payable | number: '1.0-0')">₹{{ row.payable | number: '1.0-0' }}</div>
         </div>
 
         <div class="payable-meta-row">

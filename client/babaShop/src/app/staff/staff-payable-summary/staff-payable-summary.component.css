@@ -213,16 +213,18 @@
 .balance-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
+  gap: 6px;
 }
 
 .balance-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px;
-  border-radius: 12px;
+  gap: 6px;
+  padding: 8px 8px;
+  border-radius: 10px;
   background: #f8fafc;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .balance-item.earned { background: #f0f9ff; }
@@ -230,9 +232,9 @@
 .balance-item.payment { background: #f0fdf4; }
 
 .balance-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -240,9 +242,9 @@
 }
 
 .balance-icon mat-icon {
-  font-size: 18px;
-  width: 18px;
-  height: 18px;
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
 }
 
 .balance-item.earned .balance-icon { background: #e0f2fe; color: #0369a1; }
@@ -252,21 +254,29 @@
 .balance-content {
   flex: 1;
   min-width: 0;
+  overflow: hidden;
 }
 
 .balance-label {
   font-size: 9px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
   color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .balance-value {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 800;
   color: #0f172a;
-  margin-top: 2px;
+  margin-top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
 }
 
 /* ── Payable Result ── */
@@ -274,9 +284,11 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 14px 16px;
+  padding: 10px 14px;
   border-radius: 12px;
   background: #f1f5f9;
+  gap: 8px;
+  min-width: 0;
 }
 
 .payable-result.positive {
@@ -295,20 +307,26 @@
 }
 
 .payable-label {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   color: #64748b;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .payable-result.positive .payable-label { color: #059669; }
 .payable-result.negative .payable-label { color: #dc2626; }
 
 .payable-value {
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 900;
   color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: right;
 }
 
 .payable-result.positive .payable-value { color: #059669; }
