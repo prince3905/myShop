@@ -408,14 +408,23 @@
 
 @media (max-width: 991px) {
   .navbar .container-fluid {
-    flex-wrap: wrap;
-    padding: 8px 12px !important;
+    flex-wrap: nowrap !important;
+    padding: 8px 10px !important;
     background: linear-gradient(180deg, rgba(0, 0, 0, 0.85) 0%, rgba(223, 8, 55, 0.8) 100%) !important;
+    align-items: center !important;
   }
 
   .navbar-wrapper {
-    width: 100%;
-    flex-wrap: wrap;
+    flex: 1 !important;
+    display: flex !important;
+    align-items: center !important;
+    flex-wrap: nowrap !important;
+    gap: 6px !important;
+    overflow: hidden !important;
+  }
+
+  .corner-dashboard-link span {
+    display: none !important;
   }
 
   .navbar .navbar-collapse {

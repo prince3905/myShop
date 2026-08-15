@@ -2,6 +2,9 @@ import { Component, HostListener, Inject, OnDestroy, OnInit, Renderer2 } from "@
 import { DOCUMENT } from "@angular/common";
 import { Router } from "@angular/router";
 import { AuthService } from "app/shared/services/auth.service";
+import { MatDialog } from "@angular/material/dialog";
+import { ShopService } from "app/shared/services/shop.service";
+import { ShopSyncModalComponent } from "app/shops/shop-sync-modal/shop-sync-modal.component";
 
 declare const $: any;
 
@@ -283,6 +286,9 @@ export class SidebarComponent implements OnInit, OnDestroy {
   isCollapsed = false;
   isMobileViewport = false;
   activeFlyoutKey: string | null = null;
+  shops: any[] = [];
+  selectedShop: string | null = null;
+  isSuperAdmin = false;
   private readonly collapseKey = "sidebar_collapsed";
   private sidebarEl: HTMLElement | null = null;
   private mainPanelEl: HTMLElement | null = null;
@@ -290,18 +296,67 @@ export class SidebarComponent implements OnInit, OnDestroy {
   constructor(
     private router: Router,
     private auth: AuthService,
+    private shopService: ShopService,
+    private dialog: MatDialog,
     private renderer: Renderer2,
     @Inject(DOCUMENT) private document: Document,
   ) {}
 
   ngOnInit() {
     this.userRole = this.auth.getUserRole();
+    this.isSuperAdmin = this.userRole === "SUPER_ADMIN";
+    this.selectedShop = this.shopService.getSelectedShop();
     this.menuItems = this.filterMenuByRole(ROUTES);
     this.sidebarEl = this.document.querySelector(".sidebar");
     this.mainPanelEl = this.document.querySelector(".main-panel");
     this.updateViewportState();
     this.restoreCollapseState();
     this.expandActiveParentMenu();
+
+    if (this.isSuperAdmin) {
+      this.shopService.getAllShops().subscribe((res: any) => {
+        this.shops = Array.isArray(res?.data) ? res.data : [];
+      });
+    }
+  }
+
+  getCurrentShopLabel(): string {
+    const activeShopId = this.selectedShop || this.shopService.getSelectedShop();
+    if (!activeShopId || activeShopId === "null" || activeShopId === "undefined") {
+      return "Global View";
+    }
+    const selected = this.shops.find((shop: any) => shop._id === activeShopId);
+    if (!selected) return "Global View";
+    return `${selected.name}${selected.shopCode ? ` (${selected.shopCode})` : ""}`;
+  }
+
+  onShopChange(shopId: string) {
+    const selectedShopObj = this.shops.find((shop: any) => shop._id === shopId);
+    this.shopService.setSelectedShop(shopId, selectedShopObj?.shopCode || null);
+    window.location.reload();
+  }
+
+  clearShopSelection() {
+    this.shopService.clearSelectedShop();
+    window.location.reload();
+  }
+
+  openShopSyncModal(): void {
+    const dialogRef = this.dialog.open(ShopSyncModalComponent, {
+      width: "580px",
+      disableClose: true,
+    });
+
+    dialogRef.afterClosed().subscribe((didSync) => {
+      if (didSync) {
+        window.location.reload();
+      }
+    });
+  }
+
+  navigateTo(path: string | null) {
+    if (!path) return;
+    this.router.navigateByUrl(path);
   }
 
   private expandActiveParentMenu(): void {

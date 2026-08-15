@@ -18,6 +18,34 @@
     </a>
   </div>
 
+  <!-- Mobile Shop Switcher Box -->
+  <div *ngIf="isSuperAdmin && isMobileViewport" class="mobile-sidebar-shop-box">
+    <div class="mobile-sidebar-shop-label">ACTIVE SHOP</div>
+    <button type="button" class="mobile-sidebar-shop-btn" [matMenuTriggerFor]="sidebarShopsMenu">
+      <i class="material-icons">storefront</i>
+      <span class="mobile-sidebar-shop-name">{{ getCurrentShopLabel() }}</span>
+      <i class="material-icons">arrow_drop_down</i>
+    </button>
+    <mat-menu #sidebarShopsMenu="matMenu">
+      <button mat-menu-item (click)="clearShopSelection()">
+        <i class="material-icons">public</i>
+        <span>All Shops (Global)</span>
+      </button>
+      <button mat-menu-item (click)="navigateTo('/shops')">
+        <i class="material-icons">add_business</i>
+        <span>Add Shop</span>
+      </button>
+      <button mat-menu-item (click)="openShopSyncModal()">
+        <i class="material-icons">sync_alt</i>
+        <span>Clone / Sync Shop Data</span>
+      </button>
+      <button mat-menu-item *ngFor="let shop of shops" (click)="onShopChange(shop._id)">
+        <i class="material-icons">storefront</i>
+        <span>{{ shop.name }} ({{ shop.shopCode }})</span>
+      </button>
+    </mat-menu>
+  </div>
+
   <!-- Menu -->
   <ul class="nav">
     <li

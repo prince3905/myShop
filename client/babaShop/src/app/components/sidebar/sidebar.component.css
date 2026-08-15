@@ -9,6 +9,49 @@
   overflow-x: visible;
 }
 
+.mobile-sidebar-shop-box {
+  margin: 8px 12px 14px;
+  padding: 10px 12px;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(237, 201, 72, 0.4);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mobile-sidebar-shop-label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: rgba(237, 201, 72, 0.8);
+}
+
+.mobile-sidebar-shop-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 6px 10px;
+  background: rgba(237, 201, 72, 0.15);
+  border: 1px solid #edc948;
+  border-radius: 8px;
+  color: #edc948;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  outline: none;
+  text-align: left;
+}
+
+.mobile-sidebar-shop-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #ffffff;
+}
+
 .nav {
   padding: 0 10px 14px;
 }
