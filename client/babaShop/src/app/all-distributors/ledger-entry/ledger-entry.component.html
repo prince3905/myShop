@@ -55,6 +55,18 @@
       </mat-form-field>
 
       <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Payment / Transaction Date</mat-label>
+        <mat-icon matPrefix>calendar_today</mat-icon>
+        <input matInput [matDatepicker]="ledgerDatePicker" formControlName="transactionDate" placeholder="Choose date">
+        <mat-datepicker-toggle matSuffix [for]="ledgerDatePicker"></mat-datepicker-toggle>
+        <mat-datepicker #ledgerDatePicker></mat-datepicker>
+        <mat-hint>Default is Today. Change for back-dated entries.</mat-hint>
+        <mat-error *ngIf="form.get('transactionDate')?.hasError('required')">
+          Date is required
+        </mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
         <mat-label>Note</mat-label>
         <mat-icon matPrefix>notes</mat-icon>
         <textarea matInput rows="3" formControlName="note" appCapitalizeFirst placeholder="Add additional details..."></textarea>

@@ -42,7 +42,8 @@ export class LedgerEntryComponent implements OnInit {
       amount: [null, [Validators.required, Validators.min(1)]],
       paymentMode: ['CASH'],
       referenceId: [''],
-      note: ['']
+      note: [''],
+      transactionDate: [new Date(), [Validators.required]]
     });
 
     // Payment ke case me paymentMode required
@@ -130,7 +131,8 @@ export class LedgerEntryComponent implements OnInit {
       paymentMode: this.form.value.paymentMode,
       referenceId: this.form.value.referenceId || undefined,
       referenceType: this.getSelectedReferenceType(),
-      note: this.form.value.note
+      note: this.form.value.note,
+      transactionDate: this.form.value.transactionDate ? new Date(this.form.value.transactionDate).toISOString() : new Date().toISOString()
     };
 
     this.distributorService.createLedgerEntry(payload)

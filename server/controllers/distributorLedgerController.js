@@ -34,11 +34,13 @@ exports.createLedger = async (req, res) => {
       referenceId,
       purchaseId,
       referenceType,
+      transactionDate,
     } = req.body;
     const normalizedType = `${type || ""}`.trim().toLowerCase();
     const normalizedPaymentMethod = `${paymentMethod || paymentMode || ""}`.trim().toUpperCase();
     const normalizedReferenceId = `${referenceId || purchaseId || ""}`.trim();
     const normalizedReferenceType = `${referenceType || "PURCHASE"}`.trim().toUpperCase();
+    const parsedTransactionDate = transactionDate ? new Date(transactionDate) : new Date();
 
     if (normalizedReferenceId) {
       let targetPurchase = null;
@@ -84,6 +86,7 @@ exports.createLedger = async (req, res) => {
       paymentMethod: normalizedPaymentMethod || (normalizedType === "payment" ? "CASH" : undefined),
       referenceId: normalizedReferenceId || undefined,
       note,
+      transactionDate: parsedTransactionDate,
       createdBy: req.user._id,
     });
 
