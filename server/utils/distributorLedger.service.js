@@ -77,6 +77,13 @@ exports.createDistributorLedgerEntry = async ({
     currentBalance: newBalance,
   });
 
+  if (transactionDate) {
+    await exports.rebuildDistributorLedgerBalances({
+      shopId: shop,
+      distributorId: distributor,
+    });
+  }
+
   if (["purchase", "payment", "purchase_return"].includes(type)) {
     await syncDistributorPurchaseSnapshots({
       distributorId: distributor,
