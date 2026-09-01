@@ -21,12 +21,16 @@ const {
   getAuditLogs,
   deactivateAccount,
   deactivateCurrentShop,
+  forgotPassword,
+  resetPasswordWithOtp,
 } = require("../controllers/authController");
 const { protect, authorizeRoles } = require("../middleware/authMiddleware");
 const { validateLogin, validateRegister, validate } = require("../middleware/authValidation");
 
 router.post("/login", validateLogin, validate, login);
 router.post("/register", validateRegister, validate, register);
+router.post("/forgot-password", forgotPassword);
+router.post("/reset-password", resetPasswordWithOtp);
 router.get("/authenticated", protect, authenticated);
 router.put("/profile", protect, updateProfile);
 router.get("/sessions", protect, getSessions);

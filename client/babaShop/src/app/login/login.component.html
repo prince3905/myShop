@@ -14,7 +14,8 @@
     </div>
 
     <mat-card-content>
-      <form (ngSubmit)="onSubmit()" #loginForm="ngForm" class="login-form">
+      <!-- ================= LOGIN MODE ================= -->
+      <form *ngIf="authMode === 'LOGIN'" (ngSubmit)="onSubmit()" #loginForm="ngForm" class="login-form">
         <div class="server-status-banner" [ngClass]="serverReachable === false ? 'offline' : (serverReachable === true ? 'online' : 'checking')">
           <div class="server-status-copy">
             <strong>{{ serverStatusLabel }}</strong>
@@ -28,7 +29,7 @@
           <mat-label>Shop Code</mat-label>
           <mat-icon matPrefix>store</mat-icon>
           <input matInput placeholder="BABA01" [ngModel]="shopCode" (ngModelChange)="normalizeShopCode($event)" name="shopCode">
-          <mat-hint>Example: BABA01</mat-hint>
+          <mat-hint>Example: BABA01 (Optional for Super Admin)</mat-hint>
           <mat-error *ngIf="shopCode && !shopCodePattern.test(shopCode)">
             Shop code can use uppercase letters, numbers, and hyphens only.
           </mat-error>
@@ -57,14 +58,103 @@
           </mat-error>
         </mat-form-field>
 
+        <!-- Forgot Password Link -->
+        <div class="forgot-link-container">
+          <button type="button" class="forgot-btn" (click)="setMode('FORGOT_STEP1')">
+            Forgot Password?
+          </button>
+        </div>
+
         <!-- Submit Button -->
         <div class="action-container">
           <button mat-raised-button color="primary" type="submit" [disabled]="loginForm.invalid" class="login-btn">
             LOGIN TO DASHBOARD
           </button>
         </div>
-
       </form>
+
+      <!-- ================= FORGOT STEP 1 (REQUEST OTP) ================= -->
+      <div *ngIf="authMode === 'FORGOT_STEP1'" class="forgot-step-container">
+        <div class="step-header">
+          <h4 class="step-title">🔑 Forgot Password</h4>
+          <p class="step-desc">Enter your registered email to receive a 6-digit OTP for resetting your password.</p>
+        </div>
+
+        <!-- Shop Code (Optional) -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Shop Code (Optional)</mat-label>
+          <mat-icon matPrefix>store</mat-icon>
+          <input matInput placeholder="BVTH001" [ngModel]="resetShopCode" (ngModelChange)="normalizeResetShopCode($event)" name="resetShopCode">
+          <mat-hint>Optional if Super Admin</mat-hint>
+        </mat-form-field>
+
+        <!-- Email Input -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Registered Email</mat-label>
+          <mat-icon matPrefix>email</mat-icon>
+          <input matInput placeholder="user@example.com" [(ngModel)]="resetEmail" name="resetEmail" required email>
+        </mat-form-field>
+
+        <div class="action-container">
+          <button mat-raised-button color="primary" type="button" (click)="onSendOtp()" [disabled]="!resetEmail || isSubmittingForgot" class="login-btn">
+            <span *ngIf="!isSubmittingForgot">SEND OTP VIA EMAIL</span>
+            <span *ngIf="isSubmittingForgot">SENDING OTP...</span>
+          </button>
+          
+          <button type="button" class="back-link-btn" (click)="setMode('LOGIN')">
+            ← Back to Login
+          </button>
+        </div>
+      </div>
+
+      <!-- ================= FORGOT STEP 2 (ENTER OTP & NEW PASSWORD) ================= -->
+      <div *ngIf="authMode === 'FORGOT_STEP2'" class="forgot-step-container">
+        <div class="step-header">
+          <h4 class="step-title">🔐 Enter OTP &amp; New Password</h4>
+          <p class="step-desc">We sent an OTP to <strong>{{ resetEmail }}</strong>. Enter it below to set your new password.</p>
+        </div>
+
+        <!-- 6-digit OTP -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>6-Digit OTP</mat-label>
+          <mat-icon matPrefix>pin</mat-icon>
+          <input matInput placeholder="123456" maxlength="6" [(ngModel)]="resetOtp" name="resetOtp" required style="letter-spacing: 4px; font-weight: bold; font-size: 16px;">
+          <mat-hint>Enter the 6-digit code received in your email</mat-hint>
+        </mat-form-field>
+
+        <!-- New Password -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>New Password</mat-label>
+          <mat-icon matPrefix>lock</mat-icon>
+          <input matInput type="password" placeholder="At least 6 characters" [(ngModel)]="resetNewPassword" name="resetNewPassword" required>
+        </mat-form-field>
+
+        <!-- Confirm Password -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Confirm New Password</mat-label>
+          <mat-icon matPrefix>lock_outline</mat-icon>
+          <input matInput type="password" placeholder="Re-enter new password" [(ngModel)]="resetConfirmPassword" name="resetConfirmPassword" required>
+        </mat-form-field>
+
+        <!-- Resend OTP Timer -->
+        <div class="resend-container">
+          <span *ngIf="resendCountdown > 0" class="countdown-text">Resend OTP in {{ resendCountdown }}s</span>
+          <button *ngIf="resendCountdown === 0" type="button" class="resend-btn" (click)="onSendOtp()" [disabled]="isSubmittingForgot">
+            Resend OTP
+          </button>
+        </div>
+
+        <div class="action-container">
+          <button mat-raised-button color="primary" type="button" (click)="onResetPassword()" [disabled]="!resetOtp || !resetNewPassword || !resetConfirmPassword || isSubmittingReset" class="login-btn">
+            <span *ngIf="!isSubmittingReset">RESET PASSWORD</span>
+            <span *ngIf="isSubmittingReset">RESETTING...</span>
+          </button>
+
+          <button type="button" class="back-link-btn" (click)="setMode('FORGOT_STEP1')">
+            ← Change Email / Back
+          </button>
+        </div>
+      </div>
     </mat-card-content>
 
     <mat-card-footer class="footer-text">

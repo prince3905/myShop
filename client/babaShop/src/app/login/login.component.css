@@ -332,3 +332,101 @@
     /* 4. Cursor ka color */
     caret-color: #d4af37 !important;
 }
+
+/* --- FORGOT PASSWORD FLOW STYLES --- */
+.forgot-link-container {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -5px;
+  margin-bottom: 5px;
+}
+
+.forgot-btn {
+  background: transparent;
+  border: none;
+  color: #d4af37;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 4px 6px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color 0.2s ease;
+}
+
+.forgot-btn:hover {
+  color: #ffd700;
+}
+
+.forgot-step-container {
+  margin-top: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: left;
+}
+
+.step-header {
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.step-title {
+  margin: 0 0 4px 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #d4af37;
+}
+
+.step-desc {
+  margin: 0;
+  font-size: 12px;
+  color: #bfa361;
+  line-height: 1.4;
+}
+
+.back-link-btn {
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px;
+  background: transparent;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  border-radius: 8px;
+  color: #d4af37;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.back-link-btn:hover {
+  background: rgba(212, 175, 55, 0.1);
+  border-color: #d4af37;
+}
+
+.resend-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: -5px;
+  margin-bottom: 5px;
+}
+
+.countdown-text {
+  font-size: 12px;
+  color: #bfa361;
+}
+
+.resend-btn {
+  background: transparent;
+  border: none;
+  color: #0284c7;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.resend-btn:hover {
+  color: #38bdf8;
+}
+
