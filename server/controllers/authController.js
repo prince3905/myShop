@@ -12,6 +12,7 @@ const {
   saveRoleFeaturePolicy,
   EDITABLE_ROLES,
 } = require("../utils/featureAccess");
+const { sendPasswordResetOtpEmail } = require("../utils/emailAlert.service");
 
 const pushAuditLog = async (userId, action, details = "") => {
   await User.findByIdAndUpdate(userId, {
@@ -854,3 +855,154 @@ exports.deactivateCurrentShop = async (req, res) => {
     });
   }
 };
+
+exports.forgotPassword = async (req, res) => {
+  try {
+    const { email, shopCode } = req.body;
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email address is required",
+      });
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedShopCode = shopCode?.trim()?.toUpperCase() || null;
+
+    const user = await User.findOne({ email: normalizedEmail }).select("+password");
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "No account found with this email address",
+      });
+    }
+
+    if (!user.isActive) {
+      return res.status(403).json({
+        success: false,
+        message: "This account has been disabled. Please contact administrator.",
+      });
+    }
+
+    let shopName = "Baba Vishwanath Store";
+    if (normalizedShopCode) {
+      const selectedShop = await Shop.findOne({ shopCode: normalizedShopCode, isActive: true });
+      if (!selectedShop && user.role !== "SUPER_ADMIN") {
+        return res.status(404).json({
+          success: false,
+          message: "Shop with this code not found",
+        });
+      }
+      if (selectedShop) {
+        shopName = selectedShop.name;
+      }
+    } else if (user.shop) {
+      const userShop = await Shop.findById(user.shop);
+      if (userShop) {
+        shopName = userShop.name;
+      }
+    }
+
+    // Generate secure 6-digit OTP
+    const otp = crypto.randomInt(100000, 999999).toString();
+    const expiry = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+
+    user.resetPasswordOtp = otp;
+    user.resetPasswordExpires = expiry;
+    await user.save();
+
+    await pushAuditLog(user._id, "FORGOT_PASSWORD_REQUESTED", `Password reset OTP generated for ${normalizedEmail}`);
+
+    const recipientName = [user.pFname, user.pLname].filter(Boolean).join(" ") || user.email;
+    const emailResult = await sendPasswordResetOtpEmail(normalizedEmail, otp, recipientName, shopName);
+
+    return res.status(200).json({
+      success: true,
+      message: "A 6-digit OTP has been sent to your email. It will expire in 15 minutes.",
+      devMode: emailResult?.devMode || false,
+    });
+  } catch (error) {
+    logger.error(`Error in forgotPassword: ${error.message}`);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to process forgot password request",
+    });
+  }
+};
+
+exports.resetPasswordWithOtp = async (req, res) => {
+  try {
+    const { email, otp, newPassword, shopCode } = req.body;
+
+    if (!email || !otp || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Email, OTP, and new password are all required",
+      });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: "New password must be at least 6 characters long",
+      });
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+    const user = await User.findOne({ email: normalizedEmail }).select(
+      "+resetPasswordOtp +resetPasswordExpires +password"
+    );
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    if (!user.resetPasswordOtp || !user.resetPasswordExpires) {
+      return res.status(400).json({
+        success: false,
+        message: "No OTP request found for this account. Please request a new OTP.",
+      });
+    }
+
+    if (new Date() > new Date(user.resetPasswordExpires)) {
+      user.resetPasswordOtp = undefined;
+      user.resetPasswordExpires = undefined;
+      await user.save();
+      return res.status(400).json({
+        success: false,
+        message: "OTP has expired. Please request a new one.",
+      });
+    }
+
+    if (user.resetPasswordOtp !== otp.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid OTP. Please check and enter the correct 6-digit OTP.",
+      });
+    }
+
+    // Set new password (bcrypt pre-save hook will hash it)
+    user.password = newPassword;
+    user.resetPasswordOtp = undefined;
+    user.resetPasswordExpires = undefined;
+    user.sessions = []; // clear all active sessions for security
+    await user.save();
+
+    await pushAuditLog(user._id, "PASSWORD_RESET_SUCCESS", "Password reset successfully using email OTP");
+
+    return res.status(200).json({
+      success: true,
+      message: "Password has been reset successfully. You can now login with your new password.",
+    });
+  } catch (error) {
+    logger.error(`Error in resetPasswordWithOtp: ${error.message}`);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to reset password",
+    });
+  }
+};
+

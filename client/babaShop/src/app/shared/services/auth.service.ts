@@ -199,6 +199,14 @@ export class AuthService {
     return this.http.put<any>(`${this.baseURL}/api/auth/change-password`, payload);
   }
 
+  forgotPassword(payload: { email: string; shopCode?: string }) {
+    return this.http.post<any>(`${this.baseURL}/api/auth/forgot-password`, payload);
+  }
+
+  resetPasswordWithOtp(payload: { email: string; otp: string; newPassword: string; shopCode?: string }) {
+    return this.http.post<any>(`${this.baseURL}/api/auth/reset-password`, payload);
+  }
+
   updateTwoFactor(enabled: boolean) {
     return this.http.put<any>(`${this.baseURL}/api/auth/2fa`, { enabled });
   }
