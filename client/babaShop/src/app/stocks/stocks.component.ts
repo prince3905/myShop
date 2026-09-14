@@ -411,8 +411,8 @@ export class StocksComponent implements OnInit {
       clearTimeout(this.searchDebounceTimer);
     }
     this.searchDebounceTimer = setTimeout(() => {
-      this.onSearch(false);
-    }, 300);
+      this.onSearch(true);
+    }, 280);
   }
 
   onSearch(updateAll: boolean = true): void {

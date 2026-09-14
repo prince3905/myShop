@@ -153,19 +153,14 @@ export class ItemsListComponent implements OnInit {
     let queryParamsObj: any = {
       page,
       perPage,
-      selectedOption: this.selectedOption || null,
+      name: this.itemName?.trim() || null,
+      category: this.selectedCategory || null,
+      brand: this.selectedBrand || null,
     };
-    if (this.selectedOption === "name") {
-      queryParamsObj.name = this.itemName;
-      queryParamsObj.category = this.selectedCategory;
-      queryParamsObj.brand = this.selectedBrand;
-    } else if (this.selectedOption === "category") {
-      queryParamsObj.category = this.selectedCategory;
-      queryParamsObj.brand = this.selectedBrand;
-    } else if (this.selectedOption === "brand") {
-      queryParamsObj.brand = this.selectedBrand;
-    } else if (this.selectedOption === "date") {
+    if (this.startDate) {
       queryParamsObj.startDate = this.startDate.toISOString().slice(0, 10);
+    }
+    if (this.endDate) {
       queryParamsObj.endDate = this.endDate.toISOString().slice(0, 10);
     }
     return queryParamsObj;
@@ -222,10 +217,11 @@ export class ItemsListComponent implements OnInit {
     this.navigateWithQuery({
       page: 1,
       perPage: this.pageSize,
-      selectedOption: this.selectedOption || null,
       name: null,
       category: null,
       brand: null,
+      startDate: null,
+      endDate: null,
     });
   }
 
@@ -234,28 +230,12 @@ export class ItemsListComponent implements OnInit {
   onFilterInputChange(): void {
     this.updateFilteredBrands();
 
-    const q = (this.itemName || "").trim().toLowerCase();
-    if (this.allItems && this.allItems.length > 0) {
-      if (!q) {
-        this.items = [...this.allItems];
-      } else {
-        this.items = this.allItems.filter((item: any) => {
-          const name = (item.name || "").toLowerCase();
-          const cat = (item.category?.name || "").toLowerCase();
-          const brand = (item.brand?.name || "").toLowerCase();
-          const sku = (item.variations?.[0]?.sku || "").toLowerCase();
-          return name.includes(q) || cat.includes(q) || brand.includes(q) || sku.includes(q);
-        });
-      }
-      this.paginatedItems = [...this.items];
-    }
-
     if (this.searchDebounceTimer) {
       clearTimeout(this.searchDebounceTimer);
     }
     this.searchDebounceTimer = setTimeout(() => {
       this.onSearch(1, this.pageSize);
-    }, 300);
+    }, 250);
   }
 
   onClear() {
