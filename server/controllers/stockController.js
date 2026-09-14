@@ -431,6 +431,10 @@ exports.transferStockBetweenShops = async (req, res) => {
       });
     }
 
+    const customNote = (note && `${note}`.trim() !== "Inter-shop stock transfer") ? ` - ${note.trim()}` : "";
+    const sourceNote = `Transferred to ${targetShop.shopCode || targetShop.name} (${targetShop.name})${customNote}`;
+    const targetNote = `Transferred from ${sourceShop.shopCode || sourceShop.name} (${sourceShop.name})${customNote}`;
+
     // 1. Deduct Stock from Source Shop (OUT)
     await applyStockTransaction({
       shop: sourceShop._id,
@@ -442,7 +446,7 @@ exports.transferStockBetweenShops = async (req, res) => {
       quantity: qty,
       referenceType: "TRANSFER",
       referenceId: targetShop._id,
-      note: note || `Inter-shop stock transfer sent to ${targetShop.shopCode || targetShop.name}`,
+      note: sourceNote,
       createdBy: req.user._id,
     });
 
@@ -530,7 +534,7 @@ exports.transferStockBetweenShops = async (req, res) => {
       quantity: qty,
       referenceType: "TRANSFER",
       referenceId: sourceShop._id,
-      note: note || `Inter-shop stock transfer received from ${sourceShop.shopCode || sourceShop.name}`,
+      note: targetNote,
       createdBy: req.user._id,
     });
 
