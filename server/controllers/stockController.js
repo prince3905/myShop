@@ -431,6 +431,10 @@ exports.transferStockBetweenShops = async (req, res) => {
       });
     }
 
+    const customNote = (note && `${note}`.trim() !== "Inter-shop stock transfer") ? ` - ${note.trim()}` : "";
+    const sourceNote = `Transferred to ${targetShop.shopCode || targetShop.name} (${targetShop.name})${customNote}`;
+    const targetNote = `Transferred from ${sourceShop.shopCode || sourceShop.name} (${sourceShop.name})${customNote}`;
+
     // 1. Deduct Stock from Source Shop (OUT)
     await applyStockTransaction({
       shop: sourceShop._id,
@@ -442,21 +446,61 @@ exports.transferStockBetweenShops = async (req, res) => {
       quantity: qty,
       referenceType: "TRANSFER",
       referenceId: targetShop._id,
-      note: note || `Inter-shop stock transfer sent to ${targetShop.shopCode || targetShop.name}`,
+      note: sourceNote,
       createdBy: req.user._id,
     });
 
-    // 2. Find or Create matching Target Shop Variation
+    // 2. Find or Create matching Target Shop Product, Model & Variation
     let targetVariation = await ProductVariation.findOne({
       shop: targetShop._id,
       sku: sourceVariation.sku,
     });
 
     if (!targetVariation) {
+      const sourceProduct = await Product.findById(sourceVariation.product);
+      const sourceModel = await ProductModel.findById(sourceVariation.model);
+
+      let targetProduct = await Product.findOne({
+        shop: targetShop._id,
+        name: sourceProduct?.name || "Transferred Product",
+        isDeleted: { $ne: true },
+      });
+
+      if (!targetProduct && sourceProduct) {
+        targetProduct = await Product.create({
+          name: sourceProduct.name,
+          slug: `${sourceProduct.slug || "product"}-${targetShop.shopCode || Date.now().toString(36)}`.toLowerCase(),
+          category: sourceProduct.category,
+          brand: sourceProduct.brand,
+          description: sourceProduct.description,
+          icon: sourceProduct.icon,
+          images: sourceProduct.images || [],
+          shop: targetShop._id,
+          isActive: true,
+        });
+      }
+
+      let targetModel = await ProductModel.findOne({
+        shop: targetShop._id,
+        product: targetProduct?._id,
+        name: sourceModel?.name || "Default Model",
+      });
+
+      if (!targetModel && sourceModel && targetProduct) {
+        targetModel = await ProductModel.create({
+          name: sourceModel.name,
+          product: targetProduct._id,
+          description: sourceModel.description,
+          images: sourceModel.images || [],
+          shop: targetShop._id,
+          isActive: true,
+        });
+      }
+
       targetVariation = await ProductVariation.create({
         shop: targetShop._id,
-        product: sourceVariation.product,
-        model: sourceVariation.model,
+        product: targetProduct?._id || sourceVariation.product,
+        model: targetModel?._id || sourceVariation.model,
         sku: sourceVariation.sku,
         barcode: sourceVariation.barcode || "",
         attributes: sourceVariation.attributes,
@@ -470,7 +514,7 @@ exports.transferStockBetweenShops = async (req, res) => {
         { shop: targetShop._id, variation: targetVariation._id },
         {
           $setOnInsert: { shop: targetShop._id, variation: targetVariation._id, quantity: 0 },
-          $set: { product: sourceVariation.product, model: sourceVariation.model, sku: targetVariation.sku },
+          $set: { product: targetVariation.product, model: targetVariation.model, sku: targetVariation.sku },
         },
         { upsert: true }
       );
@@ -490,7 +534,7 @@ exports.transferStockBetweenShops = async (req, res) => {
       quantity: qty,
       referenceType: "TRANSFER",
       referenceId: sourceShop._id,
-      note: note || `Inter-shop stock transfer received from ${sourceShop.shopCode || sourceShop.name}`,
+      note: targetNote,
       createdBy: req.user._id,
     });
 
