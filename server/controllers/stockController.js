@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const logger = require("../utils/logger");
+const Shop = require("../models/Shop");
 const Stock = require("../models/Stock");
 const ProductVariation = require("../models/ProductVariation");
 const Product = require("../models/Product");
@@ -129,18 +130,51 @@ exports.getStockReport = async (req, res) => {
       query.variation = variation;
     }
     if (search) {
-      const regex = new RegExp(search, "i");
-      const [productMatches, modelMatches] = await Promise.all([
-        Product.find({ name: regex }).select("_id").lean(),
-        ProductModel.find({ name: regex }).select("_id").lean(),
+      const term = `${search}`.trim();
+      const fullEscaped = term.replace(/[-[\]{}()*+?.,\\^$|#]/g, "\\$&");
+      const fullRegex = new RegExp(fullEscaped, "i");
+      const tokens = term
+        .split(/\s+/)
+        .filter(Boolean)
+        .map((tok) => {
+          const cleanTok = tok.replace(/^["'\u201c\u201d\u2018\u2019]+|["'\u201c\u201d\u2018\u2019]+$/g, "");
+          const escaped = (cleanTok || tok).replace(/[-[\]{}()*+?.,\\^$|#]/g, "\\$&");
+          return new RegExp(escaped, "i");
+        });
+
+      const [productMatches, modelMatches, varMatches] = await Promise.all([
+        Product.find({
+          $or: [
+            { name: fullRegex },
+            ...(tokens.length > 1 ? [{ $and: tokens.map((t) => ({ name: t })) }] : tokens.map((t) => ({ name: t }))),
+          ],
+        }).select("_id").lean(),
+        ProductModel.find({
+          $or: [
+            { name: fullRegex },
+            ...(tokens.length > 1 ? [{ $and: tokens.map((t) => ({ name: t })) }] : tokens.map((t) => ({ name: t }))),
+          ],
+        }).select("_id").lean(),
+        ProductVariation.find({
+          $or: [
+            { sku: fullRegex },
+            { barcode: fullRegex },
+            { "attributes.size": fullRegex },
+            { "attributes.color": fullRegex },
+            ...tokens.map((t) => ({ sku: t })),
+            ...tokens.map((t) => ({ "attributes.size": t })),
+          ],
+        }).select("_id").lean(),
       ]);
 
       const productIds = productMatches.map((p) => p._id);
       const modelIds = modelMatches.map((m) => m._id);
+      const variationIds = varMatches.map((v) => v._id);
 
-      query.$or = [{ sku: regex }];
+      query.$or = [{ sku: fullRegex }, ...tokens.map((t) => ({ sku: t }))];
       if (productIds.length) query.$or.push({ product: { $in: productIds } });
       if (modelIds.length) query.$or.push({ model: { $in: modelIds } });
+      if (variationIds.length) query.$or.push({ variation: { $in: variationIds } });
     }
 
     if (String(lowStock) === "true") {
@@ -175,8 +209,17 @@ exports.getStockReport = async (req, res) => {
       };
     });
 
+    const aggregateMatch = { ...query };
+    if (
+      aggregateMatch.shop &&
+      typeof aggregateMatch.shop === "string" &&
+      mongoose.Types.ObjectId.isValid(aggregateMatch.shop)
+    ) {
+      aggregateMatch.shop = new mongoose.Types.ObjectId(aggregateMatch.shop);
+    }
+
     const summaryRows = await Stock.aggregate([
-      { $match: query },
+      { $match: aggregateMatch },
       {
         $group: {
           _id: null,
@@ -213,10 +256,11 @@ exports.getStockReport = async (req, res) => {
       },
     });
   } catch (error) {
+    logger.error("Error retrieving stock report:", error);
     return res.status(500).json({
       success: false,
       message: "Error retrieving stock report",
-      error: "Internal server error",
+      error: error.message || "Internal server error",
     });
   }
 };

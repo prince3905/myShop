@@ -26,6 +26,21 @@ const generateAutoDescription = (name, category = "", brand = "") => {
   return `${randomAdj.charAt(0).toUpperCase() + randomAdj.slice(1)} ${name} with excellent build quality. Perfect for everyday use.`;
 };
 
+const escapeRegex = (text) => `${text || ""}`.replace(/[-[\]{}()*+?.,\\^$|#]/g, "\\$&");
+
+const buildSearchTokens = (term) => {
+  if (!term || !`${term}`.trim()) return [];
+  return `${term}`
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((tok) => {
+      const cleanTok = tok.replace(/^["'\u201c\u201d\u2018\u2019]+|["'\u201c\u201d\u2018\u2019]+$/g, "");
+      const escaped = escapeRegex(cleanTok || tok);
+      return new RegExp(escaped, "i");
+    });
+};
+
 const isSuperAdminGlobal = (req) =>
   req.user?.role === "SUPER_ADMIN" && !req.shopId;
 
@@ -260,12 +275,69 @@ exports.getProducts = async (req, res) => {
       startDate,
       endDate,
     } = req.query;
-    const query = isSuperAdminGlobal(req)
+    const isSuperAdmin = isSuperAdminGlobal(req);
+    const query = isSuperAdmin
       ? { isDeleted: { $ne: true } }
       : { shop: req.shopId, isDeleted: { $ne: true } };
 
     if (search || name) {
-      query.name = { $regex: search || name, $options: "i" };
+      const term = `${search || name}`.trim();
+      const fullEscaped = escapeRegex(term);
+      const fullRegex = new RegExp(fullEscaped, "i");
+      const tokens = buildSearchTokens(term);
+
+      const productConditions = [
+        { name: fullRegex },
+        ...(tokens.length > 1
+          ? [{ $and: tokens.map((t) => ({ name: t })) }]
+          : tokens.map((t) => ({ name: t }))),
+      ];
+
+      const shopScopedFilter = isSuperAdmin ? {} : { shop: req.shopId };
+
+      const [modelMatches, varMatches, catMatches, brandMatches] = await Promise.all([
+        ProductModel.find({
+          ...shopScopedFilter,
+          $or: [
+            { name: fullRegex },
+            ...(tokens.length > 1
+              ? [{ $and: tokens.map((t) => ({ name: t })) }]
+              : tokens.map((t) => ({ name: t }))),
+          ],
+        }).select("product").lean(),
+        ProductVariation.find({
+          ...shopScopedFilter,
+          $or: [
+            { sku: fullRegex },
+            { barcode: fullRegex },
+            { "attributes.size": fullRegex },
+            { "attributes.color": fullRegex },
+            ...tokens.map((t) => ({ sku: t })),
+            ...tokens.map((t) => ({ barcode: t })),
+            ...tokens.map((t) => ({ "attributes.size": t })),
+          ],
+        }).select("product").lean(),
+        Category.find({ name: fullRegex }).select("_id").lean(),
+        Brand.find({ name: fullRegex }).select("_id").lean(),
+      ]);
+
+      const matchedProductIds = [
+        ...modelMatches.map((m) => m.product),
+        ...varMatches.map((v) => v.product),
+      ].filter(Boolean);
+
+      const orClauses = [...productConditions];
+      if (matchedProductIds.length) {
+        orClauses.push({ _id: { $in: matchedProductIds } });
+      }
+      if (catMatches.length) {
+        orClauses.push({ category: { $in: catMatches.map((c) => c._id) } });
+      }
+      if (brandMatches.length) {
+        orClauses.push({ brand: { $in: brandMatches.map((b) => b._id) } });
+      }
+
+      query.$or = orClauses;
     }
 
     if (category) {
@@ -360,24 +432,50 @@ exports.searchProductsForPos = async (req, res) => {
         .limit(50)
         .sort({ name: 1 });
     } else {
-      const regex = new RegExp(term, "i");
+      const fullEscaped = escapeRegex(term);
+      const fullRegex = new RegExp(fullEscaped, "i");
+      const tokens = buildSearchTokens(term);
+
+      const productConditions = [
+        { name: fullRegex },
+        ...(tokens.length > 1
+          ? [{ $and: tokens.map((t) => ({ name: t })) }]
+          : tokens.map((t) => ({ name: t }))),
+      ];
+
+      const modelConditions = [
+        { name: fullRegex },
+        ...(tokens.length > 1
+          ? [{ $and: tokens.map((t) => ({ name: t })) }]
+          : tokens.map((t) => ({ name: t }))),
+      ];
+
+      const variationConditions = [
+        { sku: fullRegex },
+        { barcode: fullRegex },
+        { "attributes.size": fullRegex },
+        { "attributes.color": fullRegex },
+        ...tokens.map((t) => ({ sku: t })),
+        ...tokens.map((t) => ({ barcode: t })),
+        ...tokens.map((t) => ({ "attributes.size": t })),
+      ];
 
       const [productMatches, modelMatches, variationMatches] = await Promise.all([
         Product.find({
           ...productFilter,
-          name: { $regex: regex },
-        }).select("_id name icon").populate("category", "name icon").limit(12),
+          $or: productConditions,
+        }).select("_id name icon").populate("category", "name icon").limit(20),
         ProductModel.find({
           ...shopScopedFilter,
-          name: { $regex: regex },
-        }).select("_id product name").limit(12),
+          $or: modelConditions,
+        }).select("_id product name").limit(20),
         ProductVariation.find({
           ...shopScopedFilter,
-          $or: [{ sku: { $regex: regex } }, { barcode: { $regex: regex } }],
+          $or: variationConditions,
         })
-          .select("_id product model sku barcode")
+          .select("_id product model sku barcode attributes")
           .populate("model", "name")
-          .limit(12),
+          .limit(20),
       ]);
 
       const matchMeta = new Map();
@@ -394,15 +492,15 @@ exports.searchProductsForPos = async (req, res) => {
       modelMatches.forEach((row) => addMatch(row.product, `Model: ${row.name}`));
       variationMatches.forEach((row) => {
         addMatch(row.product, `SKU: ${row.sku}`);
-        if (row.barcode && regex.test(row.barcode)) {
+        if (row.barcode && fullRegex.test(row.barcode)) {
           addMatch(row.product, `Barcode: ${row.barcode}`);
         }
-        if (row.model?.name && regex.test(row.model.name)) {
+        if (row.model?.name && fullRegex.test(row.model.name)) {
           addMatch(row.product, `Model: ${row.model.name}`);
         }
       });
 
-      const productIds = Array.from(matchMeta.keys()).slice(0, 20);
+      const productIds = Array.from(matchMeta.keys()).slice(0, 25);
       if (!productIds.length) {
         return res.json({
           success: true,
