@@ -318,6 +318,12 @@ export class StaffDailyWorkComponent implements OnInit {
     });
   }
 
+  onKhorakiToggle(checked: boolean): void {
+    if (checked && (!this.dailyWorkForm.khorakiAmount || this.dailyWorkForm.khorakiAmount === 0)) {
+      this.dailyWorkForm.khorakiAmount = this.defaultKhorakiAmount;
+    }
+  }
+
   onStaffChange(): void {
     const staff = this.staffOptions.find((row) => row?._id === this.dailyWorkForm.staff);
     if (!staff) {
@@ -332,9 +338,11 @@ export class StaffDailyWorkComponent implements OnInit {
 
   onAttendanceChange(): void {
     this.dailyWorkForm.earnedAmount = this.earnedAmountPreview;
-    this.dailyWorkForm.khorakiAmount = this.defaultKhorakiAmount;
     if (this.dailyWorkForm.attendanceStatus === "ABSENT") {
       this.dailyWorkForm.isKhorakiIncluded = false;
+      this.dailyWorkForm.khorakiAmount = 0;
+    } else if (this.dailyWorkForm.isKhorakiIncluded) {
+      this.dailyWorkForm.khorakiAmount = this.defaultKhorakiAmount;
     }
   }
 
@@ -691,6 +699,69 @@ export class StaffDailyWorkComponent implements OnInit {
       error: (error) => {
         this.deletingId = null;
         this.showError(error?.error?.message || "Failed to remove Khoraki");
+      },
+    });
+  }
+
+  quickEditingKhoraki: any = null;
+  quickEditForm: any = {
+    khorakiAmount: 100,
+    attendanceStatus: "PRESENT",
+    entryDate: "",
+    note: "",
+  };
+  quickEditSaving = false;
+
+  openQuickEditKhoraki(item: any): void {
+    if (!this.canEditRow(item)) return;
+    this.quickEditingKhoraki = item;
+    const defaultAmt = item.attendanceStatus === "HALF_DAY" ? 50 : 100;
+    this.quickEditForm = {
+      khorakiAmount: Number(item.khorakiAmount ?? defaultAmt),
+      attendanceStatus: item.attendanceStatus || "PRESENT",
+      entryDate: this.formatDate(new Date(item.entryDate)),
+      note: item.note || "",
+    };
+  }
+
+  closeQuickEditKhoraki(): void {
+    this.quickEditingKhoraki = null;
+    this.quickEditSaving = false;
+  }
+
+  setQuickEditKhorakiAmount(amount: number): void {
+    this.quickEditForm.khorakiAmount = amount;
+  }
+
+  onQuickEditAttendanceChange(): void {
+    if (this.quickEditForm.attendanceStatus === "HALF_DAY" && this.quickEditForm.khorakiAmount === 100) {
+      this.quickEditForm.khorakiAmount = 50;
+    } else if (this.quickEditForm.attendanceStatus === "PRESENT" && this.quickEditForm.khorakiAmount === 50) {
+      this.quickEditForm.khorakiAmount = 100;
+    }
+  }
+
+  saveQuickEditKhoraki(): void {
+    if (!this.quickEditingKhoraki?._id || this.quickEditSaving) return;
+    this.quickEditSaving = true;
+
+    const payload = {
+      khorakiAmount: Number(this.quickEditForm.khorakiAmount || 0),
+      attendanceStatus: this.quickEditForm.attendanceStatus,
+      entryDate: this.quickEditForm.entryDate,
+      note: this.quickEditForm.note,
+    };
+
+    this.staffDailyWorkService.updateKhoraki(this.quickEditingKhoraki._id, payload).subscribe({
+      next: (response) => {
+        this.quickEditSaving = false;
+        this.snackBar.open(response?.message || "Khoraki updated successfully", "Close", { duration: 2500 });
+        this.closeQuickEditKhoraki();
+        this.loadAll();
+      },
+      error: (error) => {
+        this.quickEditSaving = false;
+        this.showError(error?.error?.message || "Failed to update Khoraki");
       },
     });
   }

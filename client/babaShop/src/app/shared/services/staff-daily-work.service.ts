@@ -59,6 +59,10 @@ export class StaffDailyWorkService {
     return this.http.delete(`${this.baseURL}/api/staff-daily-work/${id}`);
   }
 
+  updateKhoraki(id: string, payload: any): Observable<any> {
+    return this.http.patch(`${this.baseURL}/api/staff-daily-work/${id}/khoraki`, payload);
+  }
+
   removeKhoraki(id: string): Observable<any> {
     return this.http.patch(`${this.baseURL}/api/staff-daily-work/${id}/remove-khoraki`, {});
   }

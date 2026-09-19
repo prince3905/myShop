@@ -13,7 +13,7 @@ import { forkJoin } from "rxjs";
   styleUrls: ["./staff-payments.component.css"],
 })
 export class StaffPaymentsComponent implements OnInit {
-  readonly entryTypes = ["ADVANCE", "PAYMENT"];
+  readonly entryTypes = ["ADVANCE", "PAYMENT", "KHORAKI"];
   readonly paymentMethods = ["CASH", "UPI", "BANK", "CARD", "ONLINE", "CHEQUE"];
 
   paymentForm = {
@@ -92,6 +92,9 @@ export class StaffPaymentsComponent implements OnInit {
     }
     if (this.paymentForm.entryType === "PAYMENT") {
       return Math.max(0, Number(this.selectedStaffBalance.payable || 0));
+    }
+    if (this.paymentForm.entryType === "KHORAKI") {
+      return 100;
     }
     return Math.max(0, Number(staff?.rate || 0));
   }

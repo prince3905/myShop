@@ -176,11 +176,11 @@
             </div>
           </div>
 
-          <!-- High-Visibility 1-Click Khoraki (Food Allowance) Box -->
+          <!-- High-Visibility 1-Click Khoraki (Food Allowance) Box with Edit Amount -->
           <div style="background: #fff7ed; border: 2px solid #ea580c; border-radius: 14px; padding: 14px 18px; margin: 16px 0; box-shadow: 0 4px 12px rgba(234, 88, 12, 0.12);">
-            <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+            <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px;">
               <div style="display: flex; align-items: center; gap: 12px;">
-                <div style="width: 44px; height: 44px; border-radius: 12px; background: #ea580c; color: white; display: flex; align-items: center; justify-content: center;">
+                <div style="width: 44px; height: 44px; border-radius: 12px; background: #ea580c; color: white; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
                   <mat-icon style="font-size: 26px; width: 26px; height: 26px; color: white;">lunch_dining</mat-icon>
                 </div>
                 <div>
@@ -188,17 +188,35 @@
                     🍲 Khana Khoraki (Daily Food Expense)
                   </strong>
                   <span style="font-size: 13px; color: #c2410c; font-weight: 600;">
-                    {{ dailyWorkForm.attendanceStatus === 'PRESENT' ? '🟢 Present → ₹100 Extra Food Money' : (dailyWorkForm.attendanceStatus === 'HALF_DAY' ? '🟡 Half Day → ₹50 Extra Food Money' : '🔴 Absent → No Khoraki') }}
+                    {{ dailyWorkForm.attendanceStatus === 'PRESENT' ? '🟢 Present → Default ₹100 Food Money' : (dailyWorkForm.attendanceStatus === 'HALF_DAY' ? '🟡 Half Day → Default ₹50 Food Money' : '🔴 Absent → No Khoraki') }}
                   </span>
                 </div>
               </div>
 
               <div style="display: flex; align-items: center; gap: 10px;">
-                <mat-checkbox color="primary" [(ngModel)]="dailyWorkForm.isKhorakiIncluded" name="isKhorakiIncluded" [disabled]="dailyWorkForm.attendanceStatus === 'ABSENT'" style="transform: scale(1.3);">
+                <mat-checkbox color="primary" [(ngModel)]="dailyWorkForm.isKhorakiIncluded" (ngModelChange)="onKhorakiToggle($event)" name="isKhorakiIncluded" [disabled]="dailyWorkForm.attendanceStatus === 'ABSENT'" style="transform: scale(1.3);">
                   <strong style="font-size: 16px; color: #ea580c; font-weight: 800; margin-left: 4px;">
-                    +₹{{ defaultKhorakiAmount }}
+                    {{ dailyWorkForm.isKhorakiIncluded ? '+₹' + (dailyWorkForm.khorakiAmount || defaultKhorakiAmount) : '+₹' + defaultKhorakiAmount }}
                   </strong>
                 </mat-checkbox>
+              </div>
+            </div>
+
+            <!-- Editable Khoraki Custom Amount Row -->
+            <div *ngIf="dailyWorkForm.isKhorakiIncluded" style="margin-top: 12px; padding-top: 12px; border-top: 1px dashed #fdba74; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 13px; font-weight: 700; color: #9a3412;">Edit Amount:</span>
+                <mat-form-field appearance="outline" style="width: 130px; margin-bottom: -1.25em;">
+                  <span matPrefix style="font-weight: 800; color: #ea580c; margin-right: 4px;">₹</span>
+                  <input matInput type="number" [(ngModel)]="dailyWorkForm.khorakiAmount" name="khorakiAmount" min="0" placeholder="100" />
+                </mat-form-field>
+              </div>
+              <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                <button type="button" mat-stroked-button (click)="dailyWorkForm.khorakiAmount = 50" [style.background]="dailyWorkForm.khorakiAmount === 50 ? '#ea580c' : '#fff'" [style.color]="dailyWorkForm.khorakiAmount === 50 ? '#fff' : '#c2410c'" style="height: 34px; padding: 0 10px; font-size: 12px; border-radius: 8px; font-weight: 700; border-color: #fdba74;">₹50</button>
+                <button type="button" mat-stroked-button (click)="dailyWorkForm.khorakiAmount = 100" [style.background]="dailyWorkForm.khorakiAmount === 100 ? '#ea580c' : '#fff'" [style.color]="dailyWorkForm.khorakiAmount === 100 ? '#fff' : '#c2410c'" style="height: 34px; padding: 0 10px; font-size: 12px; border-radius: 8px; font-weight: 700; border-color: #fdba74;">₹100</button>
+                <button type="button" mat-stroked-button (click)="dailyWorkForm.khorakiAmount = 120" [style.background]="dailyWorkForm.khorakiAmount === 120 ? '#ea580c' : '#fff'" [style.color]="dailyWorkForm.khorakiAmount === 120 ? '#fff' : '#c2410c'" style="height: 34px; padding: 0 10px; font-size: 12px; border-radius: 8px; font-weight: 700; border-color: #fdba74;">₹120</button>
+                <button type="button" mat-stroked-button (click)="dailyWorkForm.khorakiAmount = 150" [style.background]="dailyWorkForm.khorakiAmount === 150 ? '#ea580c' : '#fff'" [style.color]="dailyWorkForm.khorakiAmount === 150 ? '#fff' : '#c2410c'" style="height: 34px; padding: 0 10px; font-size: 12px; border-radius: 8px; font-weight: 700; border-color: #fdba74;">₹150</button>
+                <button type="button" mat-stroked-button (click)="dailyWorkForm.khorakiAmount = 200" [style.background]="dailyWorkForm.khorakiAmount === 200 ? '#ea580c' : '#fff'" [style.color]="dailyWorkForm.khorakiAmount === 200 ? '#fff' : '#c2410c'" style="height: 34px; padding: 0 10px; font-size: 12px; border-radius: 8px; font-weight: 700; border-color: #fdba74;">₹200</button>
               </div>
             </div>
           </div>
@@ -524,7 +542,10 @@
                 Khoraki Cash Issued
               </div>
               <div class="work-actions" *ngIf="canEditRow(item) || canDeleteRow(item)">
-                <button mat-icon-button color="primary" [disabled]="deletingId === item._id" (click)="startEdit(item)" title="Edit Khoraki">
+                <button mat-stroked-button (click)="openQuickEditKhoraki(item)" style="height: 32px; padding: 0 10px; font-size: 12px; font-weight: 700; color: #ea580c; border-color: #fdba74; border-radius: 8px; background: #fff7ed;">
+                  <mat-icon style="font-size: 16px; width: 16px; height: 16px; margin-right: 2px;">edit_note</mat-icon> Quick Edit
+                </button>
+                <button mat-icon-button color="primary" [disabled]="deletingId === item._id" (click)="startEdit(item)" title="Edit Full Entry">
                   <mat-icon>edit</mat-icon>
                 </button>
                 <button *ngIf="canDeleteRow(item)" mat-icon-button color="warn" [disabled]="deletingId === item._id" (click)="deleteKhorakiCard(item)" title="Remove Khoraki">
@@ -535,6 +556,86 @@
 
           </div>
         </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── QUICK EDIT KHORAKI MODAL BACKDROP & DIALOG ── -->
+  <div *ngIf="quickEditingKhoraki" style="position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 16px; backdrop-filter: blur(4px);">
+    <div style="background: #ffffff; border-radius: 20px; width: 100%; max-width: 480px; box-shadow: 0 20px 40px rgba(0,0,0,0.25); border: 2px solid #fdba74; overflow: hidden; animation: popIn 0.2s ease-out;">
+      
+      <!-- Modal Header -->
+      <div style="background: linear-gradient(135deg, #ea580c, #c2410c); padding: 16px 20px; color: white; display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <mat-icon style="font-size: 28px; width: 28px; height: 28px;">edit_note</mat-icon>
+          <div>
+            <h3 style="margin: 0; font-size: 17px; font-weight: 800;">Edit Khana Khoraki</h3>
+            <span style="font-size: 12px; opacity: 0.9;">{{ quickEditingKhoraki.staff?.name || 'Worker' }} ({{ quickEditingKhoraki.staff?.workType || 'Worker' }})</span>
+          </div>
+        </div>
+        <button mat-icon-button (click)="closeQuickEditKhoraki()" style="color: white;">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div style="padding: 20px;">
+        
+        <!-- Khoraki Amount Input with Chips -->
+        <div style="margin-bottom: 18px;">
+          <label style="display: block; font-size: 13px; font-weight: 700; color: #9a3412; margin-bottom: 6px;">🍲 Khoraki Amount (₹):</label>
+          <mat-form-field appearance="outline" class="full-width" style="margin-bottom: -0.5em;">
+            <span matPrefix style="font-weight: 800; color: #ea580c; font-size: 18px; margin-right: 4px;">₹</span>
+            <input matInput type="number" [(ngModel)]="quickEditForm.khorakiAmount" min="0" placeholder="100" style="font-size: 18px; font-weight: 800; color: #ea580c;" />
+          </mat-form-field>
+          <div style="display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap;">
+            <button type="button" mat-stroked-button (click)="setQuickEditKhorakiAmount(50)" [style.background]="quickEditForm.khorakiAmount === 50 ? '#ea580c' : '#fff7ed'" [style.color]="quickEditForm.khorakiAmount === 50 ? '#fff' : '#c2410c'" style="height: 32px; padding: 0 10px; font-size: 12px; border-radius: 8px; font-weight: 700; border-color: #fdba74;">₹50</button>
+            <button type="button" mat-stroked-button (click)="setQuickEditKhorakiAmount(100)" [style.background]="quickEditForm.khorakiAmount === 100 ? '#ea580c' : '#fff7ed'" [style.color]="quickEditForm.khorakiAmount === 100 ? '#fff' : '#c2410c'" style="height: 32px; padding: 0 10px; font-size: 12px; border-radius: 8px; font-weight: 700; border-color: #fdba74;">₹100</button>
+            <button type="button" mat-stroked-button (click)="setQuickEditKhorakiAmount(120)" [style.background]="quickEditForm.khorakiAmount === 120 ? '#ea580c' : '#fff7ed'" [style.color]="quickEditForm.khorakiAmount === 120 ? '#fff' : '#c2410c'" style="height: 32px; padding: 0 10px; font-size: 12px; border-radius: 8px; font-weight: 700; border-color: #fdba74;">₹120</button>
+            <button type="button" mat-stroked-button (click)="setQuickEditKhorakiAmount(150)" [style.background]="quickEditForm.khorakiAmount === 150 ? '#ea580c' : '#fff7ed'" [style.color]="quickEditForm.khorakiAmount === 150 ? '#fff' : '#c2410c'" style="height: 32px; padding: 0 10px; font-size: 12px; border-radius: 8px; font-weight: 700; border-color: #fdba74;">₹150</button>
+            <button type="button" mat-stroked-button (click)="setQuickEditKhorakiAmount(200)" [style.background]="quickEditForm.khorakiAmount === 200 ? '#ea580c' : '#fff7ed'" [style.color]="quickEditForm.khorakiAmount === 200 ? '#fff' : '#c2410c'" style="height: 32px; padding: 0 10px; font-size: 12px; border-radius: 8px; font-weight: 700; border-color: #fdba74;">₹200</button>
+          </div>
+        </div>
+
+        <!-- Shift & Date Row -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+          <div>
+            <label style="display: block; font-size: 12px; font-weight: 700; color: #475569; margin-bottom: 4px;">📅 Khoraki Date:</label>
+            <mat-form-field appearance="outline" class="full-width" style="margin-bottom: -1em;">
+              <input matInput type="date" [(ngModel)]="quickEditForm.entryDate" />
+            </mat-form-field>
+          </div>
+          <div>
+            <label style="display: block; font-size: 12px; font-weight: 700; color: #475569; margin-bottom: 4px;">📋 Shift Attendance:</label>
+            <mat-form-field appearance="outline" class="full-width" style="margin-bottom: -1em;">
+              <mat-select [(ngModel)]="quickEditForm.attendanceStatus" (selectionChange)="onQuickEditAttendanceChange()">
+                <mat-option value="PRESENT">🟢 Full Day (Present)</mat-option>
+                <mat-option value="HALF_DAY">🟡 Half Day</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <!-- Note Input -->
+        <div style="margin-top: 14px;">
+          <label style="display: block; font-size: 12px; font-weight: 700; color: #475569; margin-bottom: 4px;">📝 Note (Optional):</label>
+          <mat-form-field appearance="outline" class="full-width" style="margin-bottom: -1em;">
+            <input matInput [(ngModel)]="quickEditForm.note" placeholder="e.g. Extra lunch money, night duty..." />
+          </mat-form-field>
+        </div>
+
+      </div>
+
+      <!-- Modal Footer Actions -->
+      <div style="background: #f8fafc; padding: 14px 20px; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 10px;">
+        <button mat-button (click)="closeQuickEditKhoraki()" [disabled]="quickEditSaving" style="font-weight: 600;">
+          Cancel
+        </button>
+        <button mat-raised-button (click)="saveQuickEditKhoraki()" [disabled]="quickEditSaving" style="background: linear-gradient(135deg, #ea580c, #c2410c); color: white; font-weight: 800; border-radius: 10px; padding: 0 22px;">
+          <mat-spinner diameter="18" *ngIf="quickEditSaving" style="display: inline-block; margin-right: 6px;"></mat-spinner>
+          {{ quickEditSaving ? 'Saving...' : '💾 Save Khoraki' }}
+        </button>
       </div>
 
     </div>
