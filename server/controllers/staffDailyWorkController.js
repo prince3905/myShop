@@ -1,5 +1,6 @@
 const logger = require("../utils/logger");
 const mongoose = require("mongoose");
+const User = require("../models/User");
 const StaffDailyWork = require("../models/StaffDailyWork");
 const Staff = require("../models/Staff");
 const StaffWorkItem = require("../models/StaffWorkItem");
@@ -717,6 +718,14 @@ exports.updateDailyWork = async (req, res) => {
       req.body?.earnedAmount ?? dailyWork.earnedAmount,
       factoryProduct?.workerPieceRate ?? workItem?.pieceRate ?? dailyWork.pieceRate,
     );
+    const isKhorakiIncluded = req.body?.isKhorakiIncluded === true;
+    let computedKhorakiAmount = Number(req.body?.khorakiAmount ?? (attendanceStatus === "HALF_DAY" ? 50 : 100));
+    if (attendanceStatus === "ABSENT" || !Number.isFinite(computedKhorakiAmount) || computedKhorakiAmount < 0) {
+      computedKhorakiAmount = 0;
+    }
+
+    dailyWork.isKhorakiIncluded = isKhorakiIncluded;
+    dailyWork.khorakiAmount = isKhorakiIncluded ? computedKhorakiAmount : 0;
     dailyWork.verificationStatus = "PENDING";
     dailyWork.verifiedQty = 0;
     dailyWork.verificationNote = "";
@@ -1067,6 +1076,63 @@ exports.verifyDailyWork = async (req, res) => {
   } catch (error) {
     logger.error("Verify Staff Daily Work Error:", error);
     return res.status(500).json({ success: false, message: "Failed to verify daily work entry" });
+  }
+};
+
+exports.updateKhorakiEntry = async (req, res) => {
+  try {
+    if (!req.shopId) {
+      return res.status(400).json({ success: false, message: "Please select a shop first" });
+    }
+
+    const dailyWork = await StaffDailyWork.findOne({
+      _id: req.params.id,
+      shop: req.shopId,
+      isDeleted: false,
+    });
+
+    if (!dailyWork) {
+      return res.status(404).json({ success: false, message: "Khoraki entry not found" });
+    }
+
+    if (STAFF_ONLY_FILTER(req) && `${dailyWork.createdBy}` !== `${req.user._id}`) {
+      return res.status(403).json({ success: false, message: "You can only update your own Khoraki entries" });
+    }
+
+    const newAmount = Number(req.body?.khorakiAmount);
+    if (!Number.isFinite(newAmount) || newAmount < 0) {
+      return res.status(400).json({ success: false, message: "Khoraki amount must be a valid number (0 or greater)" });
+    }
+
+    if (req.body?.entryDate) {
+      const parsedDate = normalizeDate(req.body.entryDate);
+      if (parsedDate) {
+        dailyWork.entryDate = parsedDate;
+      }
+    }
+
+    if (req.body?.attendanceStatus && ["PRESENT", "HALF_DAY", "ABSENT"].includes(req.body.attendanceStatus)) {
+      dailyWork.attendanceStatus = req.body.attendanceStatus;
+    }
+
+    dailyWork.isKhorakiIncluded = newAmount > 0;
+    dailyWork.khorakiAmount = newAmount;
+    if (req.body?.note !== undefined) {
+      dailyWork.note = `${req.body.note || ""}`.trim();
+    }
+    dailyWork.updatedBy = req.user._id;
+
+    await dailyWork.save();
+
+    const populated = await populateDailyWorkQuery(StaffDailyWork.findById(dailyWork._id));
+    return res.json({
+      success: true,
+      message: `Khoraki updated to ₹${newAmount} successfully`,
+      dailyWork: populated,
+    });
+  } catch (error) {
+    logger.error("Update Khoraki Error:", error);
+    return res.status(500).json({ success: false, message: "Failed to update Khoraki" });
   }
 };
 
