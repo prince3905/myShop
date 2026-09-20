@@ -409,9 +409,11 @@
 @media (max-width: 991px) {
   .navbar .container-fluid {
     flex-wrap: nowrap !important;
-    padding: 8px 10px !important;
+    padding: 6px 10px !important;
     background: linear-gradient(180deg, rgba(0, 0, 0, 0.85) 0%, rgba(223, 8, 55, 0.8) 100%) !important;
     align-items: center !important;
+    min-height: 50px !important;
+    height: 50px !important;
   }
 
   .navbar-wrapper {
@@ -421,6 +423,12 @@
     flex-wrap: nowrap !important;
     gap: 6px !important;
     overflow: hidden !important;
+    min-width: 0 !important;
+  }
+
+  .corner-dashboard-link {
+    padding: 4px 8px !important;
+    font-size: 11px !important;
   }
 
   .corner-dashboard-link span {
@@ -440,13 +448,27 @@
 
 @media (max-width: 640px) {
   .navbar-breadcrumb {
-    max-width: 140px;
+    max-width: 120px;
     font-size: 11px;
     color: #edc948;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .mobile-shop-btn {
+    padding: 0 6px !important;
+    height: 28px !important;
+    gap: 2px !important;
+  }
+
+  .mobile-shop-text {
+    max-width: 80px !important;
+    font-size: 10px !important;
   }
 
   .shop-chip {
-    max-width: 200px;
+    max-width: 180px;
     background: rgba(0, 0, 0, 0.3);
   }
 
@@ -458,3 +480,14 @@
     color: #edc948;
   }
 }
+
+@media (max-width: 380px) {
+  .navbar-breadcrumb {
+    display: none !important;
+  }
+
+  .mobile-shop-text {
+    max-width: 65px !important;
+  }
+}
+
