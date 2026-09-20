@@ -92,12 +92,8 @@ textarea,
 .sales-report-hero-bar,
 .hero-bar,
 [class*="hero-bar"] {
-  margin: 0 -12px 16px -12px !important;
-  padding: 16px 24px !important;
-}
-
-  padding-right: 24px !important;
-  padding-left: 24px !important;
+  margin: 0 0 16px 0 !important;
+  padding: 16px 20px !important;
 }
 
 /* =========================================
@@ -1024,10 +1020,12 @@ body, .mat-typography {
 }
 
 
-/* Global UI Scale to match 80% zoom alignment */
-body {
-  zoom: 0.8;
-  transform-origin: top left;
+/* Global UI Scale to match 80% zoom alignment on desktop */
+@media (min-width: 992px) {
+  body {
+    zoom: 0.8;
+    transform-origin: top left;
+  }
 }
 
 /* =========================================
@@ -1096,3 +1094,139 @@ body {
     display: none !important;
   }
 }
+
+/* =========================================
+   100% Mobile Responsiveness & Touch Optimization
+   ========================================= */
+@media (max-width: 991px) {
+  html,
+  body {
+    zoom: 1 !important;
+    transform: none !important;
+    width: 100% !important;
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+    -webkit-text-size-adjust: 100% !important;
+  }
+
+  .main-panel {
+    width: 100% !important;
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+    padding-top: 56px !important;
+  }
+
+  .main-content {
+    padding: 10px 8px !important;
+    overflow-x: hidden !important;
+  }
+
+  .main-content .container-fluid {
+    padding-right: 4px !important;
+    padding-left: 4px !important;
+    overflow-x: hidden !important;
+  }
+
+  /* Hero bars on mobile */
+  .expense-hero-bar,
+  .sales-hero-bar,
+  .returns-hero-bar,
+  .report-hero-bar,
+  .material-hero-bar,
+  .purchase-hero-bar,
+  .verify-hero-bar,
+  .product-hero-bar,
+  .payable-hero-bar,
+  .payment-hero-bar,
+  .work-hero-bar,
+  .staff-hero-bar,
+  .profile-hero-bar,
+  .settings-hero-bar,
+  .dashboard-hero-bar,
+  .orders-hero-bar,
+  .stock-hero-bar,
+  .sales-report-hero-bar,
+  .hero-bar,
+  [class*="hero-bar"] {
+    margin: 0 0 12px 0 !important;
+    padding: 12px 14px !important;
+    border-radius: 14px !important;
+  }
+
+  .hero-title {
+    font-size: 18px !important;
+    line-height: 1.25 !important;
+  }
+
+  .hero-sub {
+    font-size: 11px !important;
+  }
+
+  /* Angular Material Dialog / Overlay responsive width */
+  .cdk-overlay-pane {
+    max-width: 96vw !important;
+    width: auto !important;
+  }
+
+  .mat-mdc-dialog-container,
+  .mat-mdc-dialog-surface {
+    max-width: 96vw !important;
+    border-radius: 16px !important;
+  }
+
+  /* Smooth Table Touch Scrolling */
+  .table-responsive {
+    display: block !important;
+    width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: thin !important;
+  }
+
+  .table-responsive::-webkit-scrollbar {
+    height: 4px !important;
+  }
+
+  .table-responsive::-webkit-scrollbar-thumb {
+    background: #cbd5e1 !important;
+    border-radius: 4px !important;
+  }
+
+  /* Material Form Field Floating Labels */
+  .mat-mdc-form-field {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .mat-mdc-form-field .mdc-text-field {
+    padding-inline: 10px !important;
+  }
+
+  .mat-mdc-form-field .mdc-floating-label {
+    font-size: 12px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-content {
+    padding: 6px 4px !important;
+  }
+
+  .card {
+    border-radius: 14px !important;
+    margin-bottom: 14px !important;
+  }
+
+  .card .card-body {
+    padding: 12px 10px !important;
+  }
+
+  .btn,
+  button[mat-raised-button],
+  button[mat-stroked-button],
+  button[mat-button] {
+    font-size: 12px !important;
+    min-height: 38px !important;
+  }
+}
+

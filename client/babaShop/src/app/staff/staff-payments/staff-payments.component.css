@@ -744,6 +744,7 @@
 @media (max-width: 640px) {
   .summary-kpi-row {
     grid-template-columns: 1fr;
+    gap: 10px;
   }
 
   .inline-fields {
@@ -752,6 +753,18 @@
 
   .filter-bar {
     grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .filter-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .filter-actions button {
+    flex: 1 1 calc(50% - 4px);
+    min-height: 38px;
   }
 
   .payment-cards-grid {
@@ -765,4 +778,9 @@
   .breakdown-card {
     min-width: 100%;
   }
+
+  .compact-footer {
+    flex-wrap: wrap;
+  }
 }
+

@@ -192,7 +192,7 @@
 
 .table-header {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 0.6fr;
+  grid-template-columns: 50px 2fr 1fr 1fr 0.6fr;
   gap: 10px;
   padding: 14px 18px;
   background: #f8fafc;
@@ -202,6 +202,7 @@
   color: #64748b;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  align-items: center;
 }
 
 .panel-row {
@@ -217,6 +218,9 @@
 
 .product-name {
   font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .product-icon {
@@ -247,7 +251,9 @@
 }
 
 ::ng-deep .product-panel .mat-expansion-panel-header {
-  height: 52px !important;
+  height: auto !important;
+  min-height: 52px !important;
+  padding: 8px 16px !important;
 }
 
 .stock-badge {
@@ -279,6 +285,7 @@
 
 .variation-table {
   width: 100%;
+  min-width: 650px;
   border-collapse: collapse;
 }
 
@@ -333,24 +340,28 @@
   }
 
   .summary-kpi-row {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(3, 1fr);
   }
 
   .table-header,
   .panel-row {
-    grid-template-columns: 50px 1fr 1fr 0.6fr;
+    grid-template-columns: 40px 1.5fr 1fr 0.6fr;
   }
 
-  .table-header span:nth-child(3),
-  .panel-row div:nth-child(3) {
+  .table-header span:nth-child(4),
+  .panel-row div:nth-child(4) {
     display: none;
   }
 }
 
 @media (max-width: 640px) {
+  .summary-kpi-row {
+    grid-template-columns: 1fr;
+  }
+
   .table-header,
   .panel-row {
-    grid-template-columns: 50px 1fr 0.6fr;
+    grid-template-columns: 36px 1fr 60px;
   }
 
   .table-header span:nth-child(3),
@@ -359,4 +370,9 @@
   .panel-row div:nth-child(4) {
     display: none;
   }
+
+  .variation-details {
+    padding: 8px 10px;
+  }
 }
+

@@ -318,6 +318,21 @@ export class StaffDailyWorkComponent implements OnInit {
     });
   }
 
+  setFormKhorakiAmount(amount: number): void {
+    if (amount > 0) {
+      this.dailyWorkForm.isKhorakiIncluded = true;
+      this.dailyWorkForm.khorakiAmount = amount;
+    } else {
+      this.dailyWorkForm.isKhorakiIncluded = false;
+      this.dailyWorkForm.khorakiAmount = 0;
+    }
+  }
+
+  onFormKhorakiAmountInput(): void {
+    const amt = Number(this.dailyWorkForm.khorakiAmount || 0);
+    this.dailyWorkForm.isKhorakiIncluded = amt > 0;
+  }
+
   onKhorakiToggle(checked: boolean): void {
     if (checked && (!this.dailyWorkForm.khorakiAmount || this.dailyWorkForm.khorakiAmount === 0)) {
       this.dailyWorkForm.khorakiAmount = this.defaultKhorakiAmount;

@@ -382,6 +382,12 @@
   letter-spacing: 0.05em;
 }
 
+::ng-deep .product-panel .mat-expansion-panel-header {
+  height: auto !important;
+  min-height: 52px !important;
+  padding: 8px 14px !important;
+}
+
 .empty-state-bento {
   display: flex;
   flex-direction: column;
@@ -421,14 +427,17 @@
 
   .table-header,
   .panel-row {
-    grid-template-columns: 1fr 1fr 0.6fr 0.5fr;
+    grid-template-columns: 1.2fr 1fr 0.7fr 0.7fr 1.2fr;
   }
 
+  /* Hide barcode, attributes, price in header row on tablet */
   .table-header span:nth-child(3),
   .table-header span:nth-child(4),
+  .table-header span:nth-child(6),
   .panel-row div:nth-child(3),
-  .panel-row div:nth-child(4) {
-    display: none;
+  .panel-row div:nth-child(4),
+  .panel-row div:nth-child(6) {
+    display: none !important;
   }
 
   .detail-grid {
@@ -443,17 +452,39 @@
 
   .table-header,
   .panel-row {
-    grid-template-columns: 1fr 0.6fr 0.5fr;
+    grid-template-columns: 1.2fr 60px 80px;
   }
 
+  /* Keep Model/Name, Qty, and Actions visible on mobile */
   .table-header span:nth-child(2),
   .table-header span:nth-child(3),
   .table-header span:nth-child(4),
-  .table-header span:nth-child(5),
+  .table-header span:nth-child(6),
+  .table-header span:nth-child(7),
   .panel-row div:nth-child(2),
   .panel-row div:nth-child(3),
   .panel-row div:nth-child(4),
-  .panel-row div:nth-child(5) {
-    display: none;
+  .panel-row div:nth-child(6),
+  .panel-row div:nth-child(7) {
+    display: none !important;
+  }
+
+  .action-cell {
+    justify-content: flex-end;
+  }
+
+  .action-cell button {
+    width: 32px !important;
+    height: 32px !important;
+    padding: 0 !important;
+  }
+
+  .action-cell button mat-icon {
+    font-size: 18px !important;
+  }
+
+  .detail-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
   }
 }

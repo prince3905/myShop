@@ -659,10 +659,21 @@ mat-paginator {
   background: #fafbfc;
 }
 
+.sales-table {
+  width: 100%;
+  min-width: 1050px;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
 /* ── Responsive ── */
 @media (max-width: 1200px) {
   .summary-kpi-row {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .today-kpis {
+    grid-template-columns: repeat(3, 1fr);
   }
 
   .filter-grid {
@@ -675,6 +686,11 @@ mat-paginator {
 }
 
 @media (max-width: 960px) {
+  .today-kpis {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
   .filter-grid {
     grid-template-columns: 1fr;
   }
@@ -687,16 +703,71 @@ mat-paginator {
 @media (max-width: 640px) {
   .summary-kpi-row {
     grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .today-summary-row {
+    padding: 14px 12px;
+  }
+
+  .today-kpis {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .kpi-card {
+    padding: 12px 10px;
+    gap: 8px;
+    border-radius: 12px;
+  }
+
+  .kpi-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+  }
+
+  .kpi-icon mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+
+  .kpi-value {
+    font-size: 16px;
   }
 
   .sales-hero-bar {
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
     align-items: flex-start;
   }
 
   .hero-actions {
     width: 100%;
-    justify-content: flex-start;
+    display: flex;
+    gap: 8px;
+  }
+
+  .hero-actions button {
+    flex: 1;
+  }
+
+  .filter-actions {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .filter-actions button {
+    flex: 1;
+    min-height: 40px;
   }
 }
+
+@media (max-width: 420px) {
+  .today-kpis {
+    grid-template-columns: 1fr;
+  }
+}
+
