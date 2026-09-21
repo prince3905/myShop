@@ -44,14 +44,32 @@ const buildNormalizedItems = async (shopId, items = []) => {
   }
 
   const uniqueIds = [...new Set(rawMaterialIds)];
-  const rawMaterials = await RawMaterial.find({
+  let rawMaterials = await RawMaterial.find({
     _id: { $in: uniqueIds },
     shop: shopId,
-    isDeleted: false,
-  }).select("_id name unitLabel currentRate active");
+    isDeleted: { $ne: true },
+  }).select("_id name unitLabel currentRate active shop");
+
+  let resolvedShopId = shopId;
 
   if (rawMaterials.length !== uniqueIds.length) {
-    return { error: "One or more raw materials are invalid for selected shop", items: [] };
+    // Cross-shop fallback: Check if raw materials exist in DB across shops
+    const allMatching = await RawMaterial.find({
+      _id: { $in: uniqueIds },
+      isDeleted: { $ne: true },
+    }).select("_id name unitLabel currentRate active shop");
+
+    if (allMatching.length === uniqueIds.length) {
+      const materialShops = [...new Set(allMatching.map((m) => m.shop?.toString()).filter(Boolean))];
+      if (materialShops.length === 1 && materialShops[0]) {
+        rawMaterials = allMatching;
+        resolvedShopId = materialShops[0];
+      } else if (materialShops.length > 1) {
+        return { error: "Selected raw materials belong to different shops. Please select materials from the same shop.", items: [] };
+      }
+    } else {
+      return { error: "One or more raw materials were not found or have been deleted", items: [] };
+    }
   }
 
   const rawMaterialMap = new Map(rawMaterials.map((material) => [`${material._id}`, material]));
@@ -84,13 +102,13 @@ const buildNormalizedItems = async (shopId, items = []) => {
     });
   }
 
-  return { error: null, items: itemsWithMaterial };
+  return { error: null, items: itemsWithMaterial, resolvedShopId };
 };
 
 const buildQuery = (req) => {
   const query = {
     shop: req.shopId,
-    isDeleted: false,
+    isDeleted: { $ne: true },
   };
 
   if (STAFF_ONLY_FILTER(req)) {
@@ -134,14 +152,19 @@ exports.createPurchase = async (req, res) => {
       return res.status(400).json({ success: false, message: "Please select a distributor" });
     }
 
-    const distributor = await Distributor.findOne({ _id: distributorId, shop: req.shopId, isDeleted: { $ne: true } });
-    if (!distributor) {
-      return res.status(404).json({ success: false, message: "Distributor not found for selected shop" });
-    }
-
-    const { error, items } = await buildNormalizedItems(req.shopId, req.body?.items || []);
+    const { error, items, resolvedShopId } = await buildNormalizedItems(req.shopId, req.body?.items || []);
     if (error) {
       return res.status(400).json({ success: false, message: error });
+    }
+
+    const effectiveShopId = resolvedShopId || req.shopId;
+
+    let distributor = await Distributor.findOne({ _id: distributorId, shop: effectiveShopId, isDeleted: { $ne: true } });
+    if (!distributor) {
+      distributor = await Distributor.findOne({ _id: distributorId, isDeleted: { $ne: true } });
+    }
+    if (!distributor) {
+      return res.status(404).json({ success: false, message: "Distributor not found for selected shop" });
     }
 
     const subtotal = items.reduce((sum, item) => sum + Number(item.totalAmount || 0), 0);
@@ -155,7 +178,7 @@ exports.createPurchase = async (req, res) => {
       || (await generateInvoiceNo({ type: "RAW_MATERIAL_PURCHASE" }));
 
     const purchase = await RawMaterialPurchase.create({
-      shop: req.shopId,
+      shop: effectiveShopId,
       distributor: distributor._id,
       invoiceNo: normalizedInvoiceNo,
       purchaseDate: normalizeDate(req.body?.purchaseDate) || new Date(),
@@ -233,7 +256,7 @@ exports.updatePurchase = async (req, res) => {
     const purchase = await RawMaterialPurchase.findOne({
       _id: req.params.id,
       shop: req.shopId,
-      isDeleted: false,
+      isDeleted: { $ne: true },
     });
     if (!purchase) {
       return res.status(404).json({ success: false, message: "Raw material purchase not found" });
@@ -247,14 +270,18 @@ exports.updatePurchase = async (req, res) => {
       return res.status(400).json({ success: false, message: "Please select a distributor" });
     }
 
-    const distributor = await Distributor.findOne({ _id: distributorId, shop: req.shopId, isDeleted: { $ne: true } });
-    if (!distributor) {
-      return res.status(404).json({ success: false, message: "Distributor not found for selected shop" });
-    }
-
-    const { error, items } = await buildNormalizedItems(req.shopId, req.body?.items || []);
+    const { error, items, resolvedShopId } = await buildNormalizedItems(req.shopId, req.body?.items || []);
     if (error) {
       return res.status(400).json({ success: false, message: error });
+    }
+
+    const effectiveShopId = resolvedShopId || req.shopId;
+    let distributor = await Distributor.findOne({ _id: distributorId, shop: effectiveShopId, isDeleted: { $ne: true } });
+    if (!distributor) {
+      distributor = await Distributor.findOne({ _id: distributorId, isDeleted: { $ne: true } });
+    }
+    if (!distributor) {
+      return res.status(404).json({ success: false, message: "Distributor not found for selected shop" });
     }
     const subtotal = items.reduce((sum, item) => sum + Number(item.totalAmount || 0), 0);
     const paidAmount = Math.max(0, toNumber(req.body?.paidAmount ?? purchase.paidAmount, 0));
@@ -296,7 +323,7 @@ exports.approvePurchase = async (req, res) => {
     const purchase = await RawMaterialPurchase.findOne({
       _id: req.params.id,
       shop: req.shopId,
-      isDeleted: false,
+      isDeleted: { $ne: true },
     });
     if (!purchase) {
       return res.status(404).json({ success: false, message: "Raw material purchase not found" });
@@ -377,7 +404,7 @@ exports.addPayment = async (req, res) => {
     const purchase = await RawMaterialPurchase.findOne({
       _id: req.params.id,
       shop: req.shopId,
-      isDeleted: false,
+      isDeleted: { $ne: true },
     });
 
     if (!purchase) {
@@ -434,7 +461,7 @@ exports.cancelPurchase = async (req, res) => {
     const purchase = await RawMaterialPurchase.findOne({
       _id: req.params.id,
       shop: req.shopId,
-      isDeleted: false,
+      isDeleted: { $ne: true },
     });
     if (!purchase) {
       return res.status(404).json({ success: false, message: "Raw material purchase not found" });
