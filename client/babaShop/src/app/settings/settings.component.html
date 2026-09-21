@@ -5,7 +5,13 @@
     <div class="settings-hero-bar">
       <div>
         <h2 class="hero-title">Settings</h2>
-        <p class="hero-sub">Manage your account, security, and preferences</p>
+        <p class="hero-sub">Manage your account, security, preferences, and download mobile app</p>
+      </div>
+      <div class="hero-actions">
+        <button type="button" class="btn-hero-apk" (click)="setSection('Download APK')">
+          <mat-icon>android</mat-icon>
+          <span>Get Latest Android APK</span>
+        </button>
       </div>
     </div>
 
@@ -581,6 +587,84 @@
                     <span class="audit-action">{{ log.action }}</span>
                     <span class="audit-meta">{{ log.details || '-' }}</span>
                     <span class="audit-date">{{ log.createdAt | date:'medium' }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Download APK Section -->
+          <div class="content-card apk-card" *ngIf="activeSection === 'Download APK'">
+            <div class="card-header-row">
+              <div class="card-icon apk-icon"><mat-icon>android</mat-icon></div>
+              <div>
+                <h3 class="card-title">Download BabaShop Mobile App</h3>
+                <p class="card-sub">Get the latest official Android APK release</p>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="apk-download-box">
+                <div class="apk-banner-content">
+                  <div class="apk-badge-row">
+                    <span class="apk-chip version-chip"><mat-icon>verified</mat-icon> Latest Release</span>
+                    <span class="apk-chip size-chip"><mat-icon>sd_card</mat-icon> 33 MB</span>
+                    <span class="apk-chip platform-chip"><mat-icon>phone_android</mat-icon> Android 8.0+</span>
+                  </div>
+                  <h4 class="apk-headline">BabaShop Business Management Mobile APK</h4>
+                  <p class="apk-description">
+                    Fast counter billing, live inventory sync, instant camera barcode scanner, staff daily work & khoraki management directly from your phone.
+                  </p>
+
+                  <div class="apk-highlights-grid">
+                    <div class="apk-highlight-item">
+                      <mat-icon class="highlight-icon">offline_bolt</mat-icon>
+                      <div>
+                        <strong>Super Fast Counter Billing</strong>
+                        <span>Create GST invoices, challans & print instant receipts</span>
+                      </div>
+                    </div>
+                    <div class="apk-highlight-item">
+                      <mat-icon class="highlight-icon">swap_horiz</mat-icon>
+                      <div>
+                        <strong>Smart Stock Transfers</strong>
+                        <span>Seamless inter-shop stock transfers with zero duplicate errors</span>
+                      </div>
+                    </div>
+                    <div class="apk-highlight-item">
+                      <mat-icon class="highlight-icon">qr_code_scanner</mat-icon>
+                      <div>
+                        <strong>Instant Barcode Scanner</strong>
+                        <span>Scan product barcodes instantly using phone camera</span>
+                      </div>
+                    </div>
+                    <div class="apk-highlight-item">
+                      <mat-icon class="highlight-icon">security</mat-icon>
+                      <div>
+                        <strong>Direct & 100% Secure</strong>
+                        <span>Official direct APK install without Play Store login</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="apk-download-actions">
+                    <a href="/api/download/apk" download="BabaShop-latest.apk" class="btn-download-apk" (click)="downloadApk()">
+                      <mat-icon>cloud_download</mat-icon>
+                      <span>Download Latest APK (33 MB)</span>
+                    </a>
+                    <a href="/assets/downloads/BabaShop-latest.apk" download="BabaShop-latest.apk" class="btn-direct-link">
+                      <mat-icon>download_for_offline</mat-icon>
+                      <span>Direct Mirror Link</span>
+                    </a>
+                  </div>
+
+                  <div class="apk-install-guide">
+                    <span class="guide-title"><mat-icon>help_outline</mat-icon> How to install on your Android phone:</span>
+                    <ol>
+                      <li>Tap the <strong>Download Latest APK</strong> button above.</li>
+                      <li>Open your phone's <strong>Downloads</strong> folder or notification bar and tap on <code>BabaShop-latest.apk</code>.</li>
+                      <li>If prompted with <em>"Install unknown apps"</em> or <em>"Security warning"</em>, tap <strong>Settings</strong> and enable <strong>"Allow from this source"</strong>.</li>
+                      <li>Tap <strong>Install</strong>, then open BabaShop and login with your existing account!</li>
+                    </ol>
                   </div>
                 </div>
               </div>

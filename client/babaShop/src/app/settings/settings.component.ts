@@ -25,6 +25,7 @@ export class SettingsComponent implements OnInit {
     "Audit Logs",
     "Session Management",
     "App Preferences",
+    "Download APK",
     "Danger Zone",
   ];
   activeSection = "Profile Settings";
@@ -204,9 +205,21 @@ export class SettingsComponent implements OnInit {
       'Audit Logs': 'history',
       'Session Management': 'devices',
       'App Preferences': 'tune',
+      'Download APK': 'android',
       'Danger Zone': 'warning',
     };
     return icons[section] || 'settings';
+  }
+
+  downloadApk(): void {
+    const link = document.createElement("a");
+    link.href = "/api/download/apk";
+    link.download = "BabaShop-latest.apk";
+    link.target = "_blank";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    this.snackBar.open("Downloading BabaShop APK...", "OK", { duration: 3000 });
   }
 
   getAuditIcon(action: string): string {
