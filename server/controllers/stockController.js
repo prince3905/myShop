@@ -521,85 +521,117 @@ exports.transferStockBetweenShops = async (req, res) => {
 
     // 2. Find or Create matching Target Shop Product, Model & Variation
     const cleanSku = `${sourceVariation.sku || ""}`.trim();
-    let targetVariation = await ProductVariation.findOne({
+    const baseSku = cleanSku.replace(/-BV[A-Z0-9]+$/i, "").trim();
+    const cleanBarcode = `${sourceVariation.barcode || ""}`.trim();
+    const baseBarcode = cleanBarcode.replace(/-BV[A-Z0-9]+$/i, "").trim();
+
+    const [sourceProduct, sourceModel] = await Promise.all([
+      Product.findById(sourceVariation.product),
+      ProductModel.findById(sourceVariation.model),
+    ]);
+
+    const cleanProductName = `${sourceProduct?.name || "Transferred Product"}`.trim();
+    let targetProduct = await Product.findOne({
       shop: targetShop._id,
-      sku: { $regex: new RegExp(`^${cleanSku.replace(/[-[\]{}()*+?.,\\^$|#]/g, "\\$&")}$`, "i") },
+      name: { $regex: new RegExp(`^${cleanProductName.replace(/[-[\]{}()*+?.,\\^$|#]/g, "\\$&")}$`, "i") },
+      isDeleted: { $ne: true },
     });
 
-    if (!targetVariation) {
-      const [sourceProduct, sourceModel] = await Promise.all([
-        Product.findById(sourceVariation.product),
-        ProductModel.findById(sourceVariation.model),
-      ]);
-
-      const cleanProductName = `${sourceProduct?.name || "Transferred Product"}`.trim();
-      let targetProduct = await Product.findOne({
+    if (!targetProduct && sourceProduct) {
+      targetProduct = await Product.create({
+        name: cleanProductName,
+        slug: `${sourceProduct.slug || "product"}-${targetShop.shopCode || targetShop._id.toString().slice(-4)}`.toLowerCase(),
+        category: sourceProduct.category,
+        brand: sourceProduct.brand,
+        description: sourceProduct.description,
+        icon: sourceProduct.icon,
+        images: sourceProduct.images || [],
         shop: targetShop._id,
-        name: { $regex: new RegExp(`^${cleanProductName.replace(/[-[\]{}()*+?.,\\^$|#]/g, "\\$&")}$`, "i") },
-        isDeleted: { $ne: true },
+        isActive: true,
       });
+    }
 
-      if (!targetProduct && sourceProduct) {
-        targetProduct = await Product.create({
-          name: cleanProductName,
-          slug: `${sourceProduct.slug || "product"}-${targetShop.shopCode || targetShop._id.toString().slice(-4)}`.toLowerCase(),
-          category: sourceProduct.category,
-          brand: sourceProduct.brand,
-          description: sourceProduct.description,
-          icon: sourceProduct.icon,
-          images: sourceProduct.images || [],
-          shop: targetShop._id,
-          isActive: true,
-        });
-      }
+    const cleanModelName = `${sourceModel?.name || "Default Model"}`.trim();
+    let targetModel = targetProduct ? await ProductModel.findOne({
+      shop: targetShop._id,
+      product: targetProduct._id,
+      name: { $regex: new RegExp(`^${cleanModelName.replace(/[-[\]{}()*+?.,\\^$|#]/g, "\\$&")}$`, "i") },
+    }) : null;
 
-      const cleanModelName = `${sourceModel?.name || "Default Model"}`.trim();
-      let targetModel = await ProductModel.findOne({
+    if (!targetModel && sourceModel && targetProduct) {
+      targetModel = await ProductModel.create({
+        name: cleanModelName,
+        product: targetProduct._id,
+        description: sourceModel.description,
+        images: sourceModel.images || [],
         shop: targetShop._id,
-        product: targetProduct?._id,
-        name: { $regex: new RegExp(`^${cleanModelName.replace(/[-[\]{}()*+?.,\\^$|#]/g, "\\$&")}$`, "i") },
+        isActive: true,
       });
+    }
 
-      if (!targetModel && sourceModel && targetProduct) {
-        targetModel = await ProductModel.create({
-          name: cleanModelName,
-          product: targetProduct._id,
-          description: sourceModel.description,
-          images: sourceModel.images || [],
-          shop: targetShop._id,
-          isActive: true,
-        });
-      }
+    // Smart Variation Matching in Target Shop:
+    // 1) Match by exact SKU or base SKU (e.g. TA400-NONE-NRT vs TA400-NONE-NRT-BVFH001)
+    let targetVariation = await ProductVariation.findOne({
+      shop: targetShop._id,
+      $or: [
+        { sku: { $regex: new RegExp(`^${cleanSku.replace(/[-[\]{}()*+?.,\\^$|#]/g, "\\$&")}$`, "i") } },
+        { sku: { $regex: new RegExp(`^${baseSku.replace(/[-[\]{}()*+?.,\\^$|#]/g, "\\$&")}$`, "i") } },
+      ],
+    });
 
-      // Final check before creating variation to avoid duplicate key
+    // 2) Match by Barcode if available
+    if (!targetVariation && baseBarcode) {
       targetVariation = await ProductVariation.findOne({
         shop: targetShop._id,
-        sku: { $regex: new RegExp(`^${cleanSku.replace(/[-[\]{}()*+?.,\\^$|#]/g, "\\$&")}$`, "i") },
+        $or: [
+          { barcode: cleanBarcode },
+          { barcode: baseBarcode },
+        ],
+      });
+    }
+
+    // 3) Match by Product + Model + Attributes (color, size, storage)
+    if (!targetVariation && targetProduct && targetModel && sourceVariation.attributes) {
+      const attrQuery = {
+        shop: targetShop._id,
+        product: targetProduct._id,
+        model: targetModel._id,
+      };
+      if (sourceVariation.attributes.color) {
+        attrQuery["attributes.color"] = { $regex: new RegExp(`^${sourceVariation.attributes.color.trim().replace(/[-[\]{}()*+?.,\\^$|#]/g, "\\$&")}$`, "i") };
+      }
+      if (sourceVariation.attributes.size) {
+        attrQuery["attributes.size"] = { $regex: new RegExp(`^${sourceVariation.attributes.size.trim().replace(/[-[\]{}()*+?.,\\^$|#]/g, "\\$&")}$`, "i") };
+      }
+      if (sourceVariation.attributes.storage) {
+        attrQuery["attributes.storage"] = { $regex: new RegExp(`^${sourceVariation.attributes.storage.trim().replace(/[-[\]{}()*+?.,\\^$|#]/g, "\\$&")}$`, "i") };
+      }
+      targetVariation = await ProductVariation.findOne(attrQuery);
+    }
+
+    // 4) If still not found, create new variation in target shop
+    if (!targetVariation) {
+      targetVariation = await ProductVariation.create({
+        shop: targetShop._id,
+        product: targetProduct?._id || sourceVariation.product,
+        model: targetModel?._id || sourceVariation.model,
+        sku: baseSku || cleanSku,
+        barcode: baseBarcode || sourceVariation.barcode || "",
+        attributes: sourceVariation.attributes,
+        costPrice: sourceVariation.costPrice || 0,
+        sellingPrice: sourceVariation.sellingPrice || 0,
+        quantity: 0,
+        isActive: true,
       });
 
-      if (!targetVariation) {
-        targetVariation = await ProductVariation.create({
-          shop: targetShop._id,
-          product: targetProduct?._id || sourceVariation.product,
-          model: targetModel?._id || sourceVariation.model,
-          sku: cleanSku,
-          barcode: sourceVariation.barcode || "",
-          attributes: sourceVariation.attributes,
-          costPrice: sourceVariation.costPrice || 0,
-          sellingPrice: sourceVariation.sellingPrice || 0,
-          quantity: 0,
-          isActive: true,
-        });
-
-        await Stock.updateOne(
-          { shop: targetShop._id, variation: targetVariation._id },
-          {
-            $setOnInsert: { shop: targetShop._id, variation: targetVariation._id, quantity: 0 },
-            $set: { product: targetVariation.product, model: targetVariation.model, sku: targetVariation.sku },
-          },
-          { upsert: true }
-        );
-      }
+      await Stock.updateOne(
+        { shop: targetShop._id, variation: targetVariation._id },
+        {
+          $setOnInsert: { shop: targetShop._id, variation: targetVariation._id, quantity: 0 },
+          $set: { product: targetVariation.product, model: targetVariation.model, sku: targetVariation.sku },
+        },
+        { upsert: true }
+      );
     } else if (sourceVariation.sellingPrice > 0 && Number(targetVariation.sellingPrice || 0) === 0) {
       targetVariation.sellingPrice = sourceVariation.sellingPrice;
       await targetVariation.save();
