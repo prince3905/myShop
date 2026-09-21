@@ -247,7 +247,25 @@ const resolveClientDistPath = () => {
   }
 
   return candidates[0];
-};
+// APK Download Route
+app.get("/api/download/apk", (req, res) => {
+  const candidates = [
+    path.join(__dirname, "public", "downloads", "BabaShop-latest.apk"),
+    path.join(clientDistPath, "assets", "downloads", "BabaShop-latest.apk"),
+    path.join(__dirname, "..", "client", "babaShop", "src", "assets", "downloads", "BabaShop-latest.apk"),
+    path.join(__dirname, "..", "BabaShop-latest.apk"),
+  ];
+
+  for (const p of candidates) {
+    if (fs.existsSync(p)) {
+      return res.download(p, "BabaShop-latest.apk");
+    }
+  }
+
+  return res.status(404).json({ success: false, message: "APK file not found on server" });
+});
+
+app.use("/downloads", express.static(path.join(__dirname, "public", "downloads")));
 
 const clientDistPath = resolveClientDistPath();
 app.use(express.static(clientDistPath));
