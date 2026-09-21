@@ -247,6 +247,8 @@ const resolveClientDistPath = () => {
   }
 
   return candidates[0];
+};
+
 // APK Download Route
 app.get("/api/download/apk", (req, res) => {
   const candidates = [
