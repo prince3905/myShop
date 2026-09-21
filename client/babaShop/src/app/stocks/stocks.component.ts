@@ -1,4 +1,4 @@
-import { Component, OnInit } from "@angular/core";
+import { Component, OnInit, OnDestroy } from "@angular/core";
 import { PageEvent } from "@angular/material/paginator";
 import { StocksService } from "app/shared/services/stocks.service";
 import { AuthService } from "app/shared/services/auth.service";
@@ -7,7 +7,7 @@ import { ProductService } from "app/shared/services/product.service";
 import { MatSnackBar } from "@angular/material/snack-bar";
 import { DistributorService } from "app/shared/services/distributor.service";
 import { PurchaseService } from "app/shared/services/purchase.service";
-import { firstValueFrom } from "rxjs";
+import { firstValueFrom, Subscription } from "rxjs";
 import { MatDialog } from "@angular/material/dialog";
 import { StockReorderPreviewDialogComponent } from "./stock-reorder-preview-dialog.component";
 import { ConfirmDialogComponent } from "app/shared/components/confirm-dialog/confirm-dialog.component";
@@ -18,7 +18,8 @@ import { ShopService } from "app/shared/services/shop.service";
   templateUrl: "./stocks.component.html",
   styleUrls: ["./stocks.component.css"],
 })
-export class StocksComponent implements OnInit {
+export class StocksComponent implements OnInit, OnDestroy {
+  private shopSub?: Subscription;
   loading = false;
   isSuperAdmin = false;
   currentScopeLabel = "Shop Wise";
@@ -131,21 +132,35 @@ export class StocksComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    const user = this.authService.getCurrentUser() || {};
-    this.isSuperAdmin = user?.role === "SUPER_ADMIN";
-    this.currentScopeLabel =
-      this.isSuperAdmin && !user?.shop ? "Global (All Shops)" : "Shop Wise";
+    this.shopSub = this.authService.currentShop$.subscribe(() => {
+      const user = this.authService.getCurrentUser() || {};
+      this.isSuperAdmin = user?.role === "SUPER_ADMIN";
+      this.currentScopeLabel =
+        this.isSuperAdmin && !this.authService.getShopId() ? "Global (All Shops)" : "Shop Wise";
 
-    this.loadStocks();
-    this.loadTransactions();
-    setTimeout(() => {
+      this.loadStocks();
+      this.loadTransactions();
       this.loadProductsForAdjust();
       this.loadDistributorsForReorder();
       this.loadShopsForTransfer();
-    }, 0);
-    setTimeout(() => {
       this.loadCurrentReconciliation();
-    }, 120);
+
+      // Reset transfer form on shop switch
+      this.transferForm = {
+        product: null,
+        model: null,
+        variation: null,
+        targetShopId: null,
+        transferQty: 1,
+        note: "Inter-shop stock transfer",
+      };
+      this.transferModelOptions = [];
+      this.transferVariationOptions = [];
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.shopSub?.unsubscribe();
   }
 
   get canAdjustStock(): boolean {
@@ -591,7 +606,7 @@ export class StocksComponent implements OnInit {
     this.shopService.getAllShops().subscribe({
       next: (res: any) => {
         const currentUser = this.authService.getCurrentUser() || {};
-        const currentShopId = currentUser?.shop?._id || currentUser?.shop;
+        const currentShopId = this.authService.getShopId() || currentUser?.shop?._id || currentUser?.shop;
         const allShops = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
         this.targetShopOptions = allShops.filter((s: any) => `${s._id}` !== `${currentShopId}`);
       },
@@ -647,6 +662,7 @@ export class StocksComponent implements OnInit {
     this.stocksService.transferStock({
       variationId: this.transferForm.variation,
       targetShopId: this.transferForm.targetShopId,
+      sourceShopId: this.authService.getShopId() || undefined,
       transferQty: qty,
       note: this.transferForm.note || "Inter-shop stock transfer",
     }).subscribe({

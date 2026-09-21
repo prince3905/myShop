@@ -439,17 +439,15 @@ exports.manualAdjust = async (req, res) => {
   }
 };
 
+const activeTransferLocks = new Set();
+
 exports.transferStockBetweenShops = async (req, res) => {
+  let lockKey = null;
   try {
     const { sourceShopId, targetShopId, variationId, transferQty, note } = req.body;
 
-    const fromShopId = sourceShopId || req.shopId;
-    if (!fromShopId || !targetShopId || !variationId) {
-      return res.status(400).json({ success: false, message: "Source Shop, Target Shop and Variation are required" });
-    }
-
-    if (`${fromShopId}` === `${targetShopId}`) {
-      return res.status(400).json({ success: false, message: "Source Shop and Target Shop cannot be the same" });
+    if (!variationId || !targetShopId) {
+      return res.status(400).json({ success: false, message: "Target Shop and Variation are required" });
     }
 
     const qty = Number(transferQty || 0);
@@ -457,17 +455,44 @@ exports.transferStockBetweenShops = async (req, res) => {
       return res.status(400).json({ success: false, message: "Transfer quantity must be greater than 0" });
     }
 
-    const [sourceShop, targetShop, sourceVariation] = await Promise.all([
-      mongoose.model("Shop").findById(fromShopId),
-      mongoose.model("Shop").findById(targetShopId),
-      ProductVariation.findById(variationId),
-    ]);
-
-    if (!sourceShop || !targetShop || !sourceVariation) {
-      return res.status(404).json({ success: false, message: "Shop or Variation not found" });
+    const sourceVariation = await ProductVariation.findById(variationId);
+    if (!sourceVariation) {
+      return res.status(404).json({ success: false, message: "Source product variation not found" });
     }
 
-    const availableQty = Number(sourceVariation.quantity || 0);
+    // Determine the true source shop directly from the variation record
+    const fromShopId = sourceVariation.shop ? sourceVariation.shop.toString() : (sourceShopId || req.shopId);
+    if (!fromShopId) {
+      return res.status(400).json({ success: false, message: "Unable to determine source shop for variation" });
+    }
+
+    if (`${fromShopId}` === `${targetShopId}`) {
+      return res.status(400).json({ success: false, message: "Source Shop and Target Shop cannot be the same" });
+    }
+
+    // Concurrency Lock: Prevent duplicate in-flight transfers for the same variation & target shop
+    lockKey = `transfer_${sourceVariation._id.toString()}_${targetShopId}`;
+    if (activeTransferLocks.has(lockKey)) {
+      return res.status(429).json({
+        success: false,
+        message: "A stock transfer for this product is currently processing. Please wait a moment.",
+      });
+    }
+    activeTransferLocks.add(lockKey);
+
+    const [sourceShop, targetShop] = await Promise.all([
+      mongoose.model("Shop").findById(fromShopId),
+      mongoose.model("Shop").findById(targetShopId),
+    ]);
+
+    if (!sourceShop || !targetShop) {
+      return res.status(404).json({ success: false, message: "Source or Target Shop not found" });
+    }
+
+    // Check available stock in source shop
+    const sourceStockDoc = await Stock.findOne({ shop: sourceShop._id, variation: sourceVariation._id });
+    const availableQty = sourceStockDoc ? Number(sourceStockDoc.quantity || 0) : Number(sourceVariation.quantity || 0);
+
     if (qty > availableQty) {
       return res.status(400).json({
         success: false,
@@ -495,25 +520,29 @@ exports.transferStockBetweenShops = async (req, res) => {
     });
 
     // 2. Find or Create matching Target Shop Product, Model & Variation
+    const cleanSku = `${sourceVariation.sku || ""}`.trim();
     let targetVariation = await ProductVariation.findOne({
       shop: targetShop._id,
-      sku: sourceVariation.sku,
+      sku: { $regex: new RegExp(`^${cleanSku.replace(/[-[\]{}()*+?.,\\^$|#]/g, "\\$&")}$`, "i") },
     });
 
     if (!targetVariation) {
-      const sourceProduct = await Product.findById(sourceVariation.product);
-      const sourceModel = await ProductModel.findById(sourceVariation.model);
+      const [sourceProduct, sourceModel] = await Promise.all([
+        Product.findById(sourceVariation.product),
+        ProductModel.findById(sourceVariation.model),
+      ]);
 
+      const cleanProductName = `${sourceProduct?.name || "Transferred Product"}`.trim();
       let targetProduct = await Product.findOne({
         shop: targetShop._id,
-        name: sourceProduct?.name || "Transferred Product",
+        name: { $regex: new RegExp(`^${cleanProductName.replace(/[-[\]{}()*+?.,\\^$|#]/g, "\\$&")}$`, "i") },
         isDeleted: { $ne: true },
       });
 
       if (!targetProduct && sourceProduct) {
         targetProduct = await Product.create({
-          name: sourceProduct.name,
-          slug: `${sourceProduct.slug || "product"}-${targetShop.shopCode || Date.now().toString(36)}`.toLowerCase(),
+          name: cleanProductName,
+          slug: `${sourceProduct.slug || "product"}-${targetShop.shopCode || targetShop._id.toString().slice(-4)}`.toLowerCase(),
           category: sourceProduct.category,
           brand: sourceProduct.brand,
           description: sourceProduct.description,
@@ -524,15 +553,16 @@ exports.transferStockBetweenShops = async (req, res) => {
         });
       }
 
+      const cleanModelName = `${sourceModel?.name || "Default Model"}`.trim();
       let targetModel = await ProductModel.findOne({
         shop: targetShop._id,
         product: targetProduct?._id,
-        name: sourceModel?.name || "Default Model",
+        name: { $regex: new RegExp(`^${cleanModelName.replace(/[-[\]{}()*+?.,\\^$|#]/g, "\\$&")}$`, "i") },
       });
 
       if (!targetModel && sourceModel && targetProduct) {
         targetModel = await ProductModel.create({
-          name: sourceModel.name,
+          name: cleanModelName,
           product: targetProduct._id,
           description: sourceModel.description,
           images: sourceModel.images || [],
@@ -541,28 +571,36 @@ exports.transferStockBetweenShops = async (req, res) => {
         });
       }
 
-      targetVariation = await ProductVariation.create({
+      // Final check before creating variation to avoid duplicate key
+      targetVariation = await ProductVariation.findOne({
         shop: targetShop._id,
-        product: targetProduct?._id || sourceVariation.product,
-        model: targetModel?._id || sourceVariation.model,
-        sku: sourceVariation.sku,
-        barcode: sourceVariation.barcode || "",
-        attributes: sourceVariation.attributes,
-        costPrice: sourceVariation.costPrice || 0,
-        sellingPrice: sourceVariation.sellingPrice || 0,
-        quantity: 0,
-        isActive: true,
+        sku: { $regex: new RegExp(`^${cleanSku.replace(/[-[\]{}()*+?.,\\^$|#]/g, "\\$&")}$`, "i") },
       });
 
-      await Stock.updateOne(
-        { shop: targetShop._id, variation: targetVariation._id },
-        {
-          $setOnInsert: { shop: targetShop._id, variation: targetVariation._id, quantity: 0 },
-          $set: { product: targetVariation.product, model: targetVariation.model, sku: targetVariation.sku },
-        },
-        { upsert: true }
-      );
-    } else if (sourceVariation.sellingPrice > 0 && targetVariation.sellingPrice === 0) {
+      if (!targetVariation) {
+        targetVariation = await ProductVariation.create({
+          shop: targetShop._id,
+          product: targetProduct?._id || sourceVariation.product,
+          model: targetModel?._id || sourceVariation.model,
+          sku: cleanSku,
+          barcode: sourceVariation.barcode || "",
+          attributes: sourceVariation.attributes,
+          costPrice: sourceVariation.costPrice || 0,
+          sellingPrice: sourceVariation.sellingPrice || 0,
+          quantity: 0,
+          isActive: true,
+        });
+
+        await Stock.updateOne(
+          { shop: targetShop._id, variation: targetVariation._id },
+          {
+            $setOnInsert: { shop: targetShop._id, variation: targetVariation._id, quantity: 0 },
+            $set: { product: targetVariation.product, model: targetVariation.model, sku: targetVariation.sku },
+          },
+          { upsert: true }
+        );
+      }
+    } else if (sourceVariation.sellingPrice > 0 && Number(targetVariation.sellingPrice || 0) === 0) {
       targetVariation.sellingPrice = sourceVariation.sellingPrice;
       await targetVariation.save();
     }
@@ -588,7 +626,11 @@ exports.transferStockBetweenShops = async (req, res) => {
     });
   } catch (error) {
     logger.error("Transfer Stock Error:", error);
-    return res.status(500).json({ success: false, message: "Failed to complete inter-shop stock transfer" });
+    return res.status(500).json({ success: false, message: error?.message || "Failed to complete inter-shop stock transfer" });
+  } finally {
+    if (lockKey) {
+      activeTransferLocks.delete(lockKey);
+    }
   }
 };
 
