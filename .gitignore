@@ -13,3 +13,4 @@ node_modules/
 client/babaShop/android/
 server/.env
 *.log
+BabaShop-latest.apk
