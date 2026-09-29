@@ -213,7 +213,7 @@ export class SettingsComponent implements OnInit {
 
   downloadApk(): void {
     const link = document.createElement("a");
-    link.href = "/api/download/apk";
+    link.href = `/api/download/apk?t=${Date.now()}`;
     link.download = "BabaShop-latest.apk";
     link.target = "_blank";
     document.body.appendChild(link);
