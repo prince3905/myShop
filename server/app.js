@@ -260,6 +260,9 @@ app.get("/api/download/apk", (req, res) => {
 
   for (const p of candidates) {
     if (fs.existsSync(p)) {
+      res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+      res.setHeader("Pragma", "no-cache");
+      res.setHeader("Expires", "0");
       return res.download(p, "BabaShop-latest.apk");
     }
   }
