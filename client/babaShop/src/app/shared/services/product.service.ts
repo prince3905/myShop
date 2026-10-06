@@ -108,7 +108,7 @@ export class ProductService {
     return this.http.delete(`${this.baseURL}/api/products/${id}`);
   }
 
-  private clearCache(): void {
+  clearCache(): void {
     this.responseCache.clear();
     this.inflightCache.clear();
   }

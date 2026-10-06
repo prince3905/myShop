@@ -275,10 +275,11 @@ exports.getProducts = async (req, res) => {
       startDate,
       endDate,
     } = req.query;
-    const isSuperAdmin = isSuperAdminGlobal(req);
-    const query = isSuperAdmin
-      ? { isDeleted: { $ne: true } }
-      : { shop: req.shopId, isDeleted: { $ne: true } };
+    const requestedShopId = req.query.shop || req.query.shopId || req.shopId;
+    const isSuperAdmin = isSuperAdminGlobal(req) && !req.query.shop && !req.query.shopId;
+    const query = requestedShopId
+      ? { shop: requestedShopId, isDeleted: { $ne: true } }
+      : (isSuperAdmin ? { isDeleted: { $ne: true } } : { shop: req.shopId, isDeleted: { $ne: true } });
 
     if (search || name) {
       const term = `${search || name}`.trim();
@@ -293,7 +294,9 @@ exports.getProducts = async (req, res) => {
           : tokens.map((t) => ({ name: t }))),
       ];
 
-      const shopScopedFilter = isSuperAdmin ? {} : { shop: req.shopId };
+      const shopScopedFilter = requestedShopId
+        ? { shop: requestedShopId }
+        : (isSuperAdmin ? {} : { shop: req.shopId });
 
       const [modelMatches, varMatches, catMatches, brandMatches] = await Promise.all([
         ProductModel.find({
