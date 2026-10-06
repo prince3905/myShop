@@ -504,22 +504,7 @@ exports.transferStockBetweenShops = async (req, res) => {
     const sourceNote = `Transferred to ${targetShop.shopCode || targetShop.name} (${targetShop.name})${customNote}`;
     const targetNote = `Transferred from ${sourceShop.shopCode || sourceShop.name} (${sourceShop.name})${customNote}`;
 
-    // 1. Deduct Stock from Source Shop (OUT)
-    await applyStockTransaction({
-      shop: sourceShop._id,
-      product: sourceVariation.product,
-      model: sourceVariation.model,
-      variation: sourceVariation._id,
-      sku: sourceVariation.sku,
-      type: "OUT",
-      quantity: qty,
-      referenceType: "TRANSFER",
-      referenceId: targetShop._id,
-      note: sourceNote,
-      createdBy: req.user._id,
-    });
-
-    // 2. Find or Create matching Target Shop Product, Model & Variation
+    // 1. Find or Create matching Target Shop Product, Model & Variation FIRST (before any deduction)
     const cleanSku = `${sourceVariation.sku || ""}`.trim();
     const baseSku = cleanSku.replace(/-BV[A-Z0-9]+$/i, "").trim();
     const cleanBarcode = `${sourceVariation.barcode || ""}`.trim();
@@ -534,10 +519,13 @@ exports.transferStockBetweenShops = async (req, res) => {
     let targetProduct = await Product.findOne({
       shop: targetShop._id,
       name: { $regex: new RegExp(`^${cleanProductName.replace(/[-[\]{}()*+?.,\\^$|#]/g, "\\$&")}$`, "i") },
-      isDeleted: { $ne: true },
     });
 
-    if (!targetProduct && sourceProduct) {
+    if (targetProduct && targetProduct.isDeleted) {
+      targetProduct.isDeleted = false;
+      targetProduct.isActive = true;
+      await targetProduct.save();
+    } else if (!targetProduct && sourceProduct) {
       targetProduct = await Product.create({
         name: cleanProductName,
         slug: `${sourceProduct.slug || "product"}-${targetShop.shopCode || targetShop._id.toString().slice(-4)}`.toLowerCase(),
@@ -558,7 +546,10 @@ exports.transferStockBetweenShops = async (req, res) => {
       name: { $regex: new RegExp(`^${cleanModelName.replace(/[-[\]{}()*+?.,\\^$|#]/g, "\\$&")}$`, "i") },
     }) : null;
 
-    if (!targetModel && sourceModel && targetProduct) {
+    if (targetModel && !targetModel.isActive) {
+      targetModel.isActive = true;
+      await targetModel.save();
+    } else if (!targetModel && sourceModel && targetProduct) {
       targetModel = await ProductModel.create({
         name: cleanModelName,
         product: targetProduct._id,
@@ -632,25 +623,59 @@ exports.transferStockBetweenShops = async (req, res) => {
         },
         { upsert: true }
       );
-    } else if (sourceVariation.sellingPrice > 0 && Number(targetVariation.sellingPrice || 0) === 0) {
-      targetVariation.sellingPrice = sourceVariation.sellingPrice;
+    } else {
+      if (!targetVariation.isActive) {
+        targetVariation.isActive = true;
+      }
+      if (sourceVariation.sellingPrice > 0 && Number(targetVariation.sellingPrice || 0) === 0) {
+        targetVariation.sellingPrice = sourceVariation.sellingPrice;
+      }
       await targetVariation.save();
     }
 
-    // 3. Add Stock to Target Shop (IN)
-    await applyStockTransaction({
-      shop: targetShop._id,
-      product: targetVariation.product,
-      model: targetVariation.model,
-      variation: targetVariation._id,
-      sku: targetVariation.sku,
-      type: "IN",
-      quantity: qty,
-      referenceType: "TRANSFER",
-      referenceId: sourceShop._id,
-      note: targetNote,
-      createdBy: req.user._id,
-    });
+    // 2. ATOMIC STOCK TRANSFER: Execute both OUT and IN inside a single MongoDB Transaction Session
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    try {
+      // Step A: Deduct Stock from Source Shop (OUT)
+      await applyStockTransaction({
+        shop: sourceShop._id,
+        product: sourceVariation.product,
+        model: sourceVariation.model,
+        variation: sourceVariation._id,
+        sku: sourceVariation.sku,
+        type: "OUT",
+        quantity: qty,
+        referenceType: "TRANSFER",
+        referenceId: targetShop._id,
+        note: sourceNote,
+        createdBy: req.user._id,
+        session,
+      });
+
+      // Step B: Add Stock to Target Shop (IN)
+      await applyStockTransaction({
+        shop: targetShop._id,
+        product: targetVariation.product,
+        model: targetVariation.model,
+        variation: targetVariation._id,
+        sku: targetVariation.sku,
+        type: "IN",
+        quantity: qty,
+        referenceType: "TRANSFER",
+        referenceId: sourceShop._id,
+        note: targetNote,
+        createdBy: req.user._id,
+        session,
+      });
+
+      await session.commitTransaction();
+    } catch (txError) {
+      await session.abortTransaction();
+      throw txError;
+    } finally {
+      await session.endSession();
+    }
 
     return res.status(200).json({
       success: true,

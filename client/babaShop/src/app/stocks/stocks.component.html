@@ -284,7 +284,7 @@
                 <th *ngIf="canViewSensitivePricing">Cost</th>
                 <th *ngIf="canViewSensitivePricing">Value</th>
                 <th>Status</th>
-                <th *ngIf="canCreateReorderDraft">Action</th>
+                <th *ngIf="canCreateReorderDraft || canAdjustStock">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -309,24 +309,35 @@
                     {{ isLowStock(row) ? 'LOW' : 'OK' }}
                   </span>
                 </td>
-                <td *ngIf="canCreateReorderDraft">
-                  <button
-                    mat-stroked-button
-                    color="primary"
-                    *ngIf="isLowStock(row)"
-                    [disabled]="!reorderDistributorId || reorderingIds[(row?._id || row?.variation?._id || '')]"
-                    (click)="createReorderDraft(row)">
-                    {{
-                      reorderingIds[(row?._id || row?.variation?._id || '')]
-                        ? 'Creating...'
-                        : ('Reorder +' + getSuggestedReorderQty(row))
-                    }}
-                  </button>
-                  <span *ngIf="!isLowStock(row)" class="muted-action">-</span>
+                <td *ngIf="canCreateReorderDraft || canAdjustStock">
+                  <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+                    <button
+                      mat-stroked-button
+                      color="primary"
+                      *ngIf="canCreateReorderDraft && isLowStock(row)"
+                      [disabled]="!reorderDistributorId || reorderingIds[(row?._id || row?.variation?._id || '')]"
+                      (click)="createReorderDraft(row)">
+                      {{
+                        reorderingIds[(row?._id || row?.variation?._id || '')]
+                          ? 'Creating...'
+                          : ('Reorder +' + getSuggestedReorderQty(row))
+                      }}
+                    </button>
+                    <button
+                      mat-stroked-button
+                      *ngIf="canAdjustStock && (row?.quantity || 0) > 0"
+                      (click)="transferRowStock(row)"
+                      style="border-color: #0284c7; color: #0284c7; font-weight: 600; padding: 0 10px; height: 32px; line-height: 32px;"
+                      matTooltip="Quick transfer this item to another shop">
+                      <mat-icon style="font-size: 16px; width: 16px; height: 16px; vertical-align: middle; margin-right: 2px;">local_shipping</mat-icon>
+                      Transfer
+                    </button>
+                    <span *ngIf="!isLowStock(row) && (!canAdjustStock || (row?.quantity || 0) <= 0)" class="muted-action">-</span>
+                  </div>
                 </td>
               </tr>
               <tr *ngIf="rows.length === 0">
-                <td [attr.colspan]="(canCreateReorderDraft ? 1 : 0) + (canViewSensitivePricing ? 12 : 10)" class="empty">
+                <td [attr.colspan]="((canCreateReorderDraft || canAdjustStock) ? 1 : 0) + (canViewSensitivePricing ? 12 : 10)" class="empty">
                   No stock records found.
                   <span class="empty-help">Create/confirm purchase to auto-generate stock entries.</span>
                 </td>
@@ -527,10 +538,12 @@
     </div>
 
     <!-- ── Dedicated 1-Click Inter-Shop Stock Transfer ── -->
-    <div class="card mt-3" *ngIf="canAdjustStock">
+    <div class="card mt-3" id="transfer-section-card" *ngIf="canAdjustStock">
       <div class="card-header card-header-info" style="background: linear-gradient(60deg, #0284c7, #0369a1); color: white;">
         <h4 class="card-title" style="color: white; font-weight: 700;">🚚 1-Click Inter-Shop Stock Transfer</h4>
-        <p class="card-category" style="color: rgba(255,255,255,0.9);">Transfer stock directly from current shop to another shop with automatic IN/OUT records</p>
+        <p class="card-category" style="color: rgba(255,255,255,0.95); font-weight: 500;">
+          Transferring FROM: <strong>{{ currentShopCode }}</strong> &nbsp;➔&nbsp; Target Shop with 100% atomic sync
+        </p>
       </div>
       <div class="card-body">
         <div class="filter-row">

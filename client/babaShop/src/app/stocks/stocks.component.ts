@@ -163,6 +163,11 @@ export class StocksComponent implements OnInit, OnDestroy {
     this.shopSub?.unsubscribe();
   }
 
+  get currentShopCode(): string {
+    const user = this.authService.getCurrentUser() || {};
+    return user?.shopCode || (this.authService.getShopId() ? "Current Shop" : "Global");
+  }
+
   get canAdjustStock(): boolean {
     return this.authService.can("inventory.stocks") && !this.authService.isGlobalReadOnlyMode();
   }
@@ -497,9 +502,14 @@ export class StocksComponent implements OnInit, OnDestroy {
   }
 
   loadProductsForAdjust(): void {
-    this.productService.getAllProducts().subscribe({
+    const currentShopId = this.authService.getShopId();
+    this.productService.clearCache();
+    this.productService.getAllProducts(currentShopId ? { shop: currentShopId } : {}).subscribe({
       next: (res: any) => {
-        this.products = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+        const raw = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+        this.products = currentShopId
+          ? raw.filter((p: any) => !p.shop || `${p.shop?._id || p.shop}` === `${currentShopId}`)
+          : raw;
       },
       error: () => {
         this.products = [];
@@ -679,8 +689,10 @@ export class StocksComponent implements OnInit, OnDestroy {
         };
         this.transferModelOptions = [];
         this.transferVariationOptions = [];
+        this.productService.clearCache();
         this.loadStocks();
         this.loadTransactions();
+        this.loadProductsForAdjust();
       },
       error: (err: any) => {
         this.transferSaving = false;
@@ -689,6 +701,36 @@ export class StocksComponent implements OnInit, OnDestroy {
         });
       },
     });
+  }
+
+  transferRowStock(row: any): void {
+    if (!row || !this.canAdjustStock) return;
+    const prodId = `${row.product?._id || row.product || ""}`;
+    const modelId = `${row.model?._id || row.model || ""}`;
+    const varId = `${row.variation?._id || row.variation || row._id || ""}`;
+
+    if (prodId) {
+      this.transferForm.product = prodId;
+      this.onTransferProductChange();
+    }
+    if (modelId) {
+      this.transferForm.model = modelId;
+      this.onTransferModelChange();
+    }
+    if (varId) {
+      this.transferForm.variation = varId;
+    }
+    this.transferForm.transferQty = 1;
+
+    setTimeout(() => {
+      const el = document.getElementById("transfer-section-card");
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }, 120);
+
+    const itemName = row.productName || row.name || row.sku || "selected item";
+    this.snackBar.open(`Selected "${itemName}". Choose Target Destination Shop below.`, "OK", { duration: 3500 });
   }
 
   getSuggestedReorderQty(row: any): number {
