@@ -99,6 +99,7 @@
           <a
             class="nav-link"
             [routerLink]="[child.path]"
+            [queryParams]="child.queryParams || null"
             (click)="onNavLinkClick()"
             [matTooltip]="child.title"
             [matTooltipDisabled]="isMobileViewport || !isCollapsed"

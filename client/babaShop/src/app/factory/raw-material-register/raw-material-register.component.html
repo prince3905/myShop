@@ -3,11 +3,25 @@
 
     <!-- ── Hero Header ── -->
     <div class="material-hero-bar">
-      <div>
-        <h2 class="hero-title">Raw Material Master</h2>
-        <p class="hero-sub">Factory raw material master for item list, unit and last known rate.</p>
+      <div class="hero-text-block">
+        <h2 class="hero-title">{{ activeTab === 'PASSBOOK' ? '📖 चादरा पासबुक & लेजर' : 'Raw Material Master' }}</h2>
+        <p class="hero-sub">{{ activeTab === 'PASSBOOK' ? 'Complete statement of Sheet / Chadra — Kab aaya, Kaha kharch hua aur Bacha Stock' : 'Factory raw material master for item list, unit and last known rate.' }}</p>
+      </div>
+      <div class="hero-tab-pills">
+        <button type="button" class="tab-pill" [class.active]="activeTab === 'MASTER'" (click)="switchTab('MASTER')">
+          <mat-icon>inventory_2</mat-icon>
+          <span>Raw Material Master</span>
+        </button>
+        <button type="button" class="tab-pill passbook-pill" [class.active]="activeTab === 'PASSBOOK'" (click)="switchTab('PASSBOOK')">
+          <mat-icon>menu_book</mat-icon>
+          <span>📖 चादरा पासबुक</span>
+          <span class="pill-badge">Live</span>
+        </button>
       </div>
     </div>
+
+    <!-- ── MASTER TAB CONTENT ── -->
+    <ng-container *ngIf="activeTab === 'MASTER'">
 
     <!-- ── Summary KPI Cards ── -->
     <div class="summary-kpi-row">
@@ -262,9 +276,13 @@
             </div>
 
             <div class="material-footer">
+              <button type="button" mat-stroked-button class="passbook-btn" (click)="openPassbookForMaterial(material)" title="Open in Chadra Passbook">
+                <mat-icon>menu_book</mat-icon>
+                Passbook
+              </button>
               <button type="button" mat-stroked-button class="history-btn" (click)="viewHistory(material)">
                 <mat-icon>history</mat-icon>
-                View History
+                History
               </button>
               <div class="material-actions" *ngIf="canManage">
                 <button mat-icon-button color="primary" [disabled]="deletingId === material._id" (click)="startEdit(material)" title="Edit">
@@ -463,9 +481,267 @@
 
       </div>
     </div>
+    </ng-container>
 
-  </div>
-</div>
+    <!-- ══════════════════════════════════════════════════════════════════ -->
+    <!-- ── CHADRA PASSBOOK & LEDGER TAB ── -->
+    <!-- ══════════════════════════════════════════════════════════════════ -->
+    <ng-container *ngIf="activeTab === 'PASSBOOK'">
+
+      <!-- ── Top Passbook Filter & Selection Bar ── -->
+      <div class="passbook-control-card">
+        <div class="pcc-top-row">
+          
+          <!-- Material Selector -->
+          <div class="pcc-select-box">
+            <label class="pcc-field-label">Select Sheet / Chadra (सामान चुनें)</label>
+            <mat-form-field appearance="outline" class="full-width pcc-mat-field">
+              <mat-select [(ngModel)]="passbookMaterialId" (selectionChange)="onPassbookMaterialChange()" [disabled]="loadingPassbook">
+                <mat-option *ngFor="let m of materials" [value]="m._id">
+                  <strong>{{ m.name }}</strong>
+                  <span class="pcc-opt-meta" *ngIf="m.code || m.sizeLabel"> — {{ m.code }} {{ m.sizeLabel }}</span>
+                  <span class="pcc-opt-bal"> (Stock: {{ m.currentBalanceQty | number: '1.0-1' }} {{ m.unitLabel }})</span>
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>inventory_2</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <!-- Type Filter Tabs (All / Inward / Outward) -->
+          <div class="pcc-type-filters">
+            <label class="pcc-field-label">Entry Type (लेन-देन फ़िल्टर)</label>
+            <div class="pcc-pill-group">
+              <button type="button" class="pcc-type-btn" [class.active]="passbookFilters.type === 'ALL'" (click)="passbookFilters.type = 'ALL'">
+                Sabhi (All)
+              </button>
+              <button type="button" class="pcc-type-btn inward" [class.active]="passbookFilters.type === 'INWARD'" (click)="passbookFilters.type = 'INWARD'">
+                <mat-icon>call_received</mat-icon> Aaya (+ In)
+              </button>
+              <button type="button" class="pcc-type-btn outward" [class.active]="passbookFilters.type === 'OUTWARD'" (click)="passbookFilters.type = 'OUTWARD'">
+                <mat-icon>remove_circle</mat-icon> Kharch (- Out)
+              </button>
+            </div>
+          </div>
+
+          <!-- Quick Action Buttons: WhatsApp & Print -->
+          <div class="pcc-actions">
+            <button type="button" mat-flat-button class="whatsapp-btn" (click)="sharePassbookWhatsApp()" [disabled]="!passbookMaterial" title="Send summary on WhatsApp">
+              <span class="wa-icon">💬</span>
+              <span>WhatsApp Hisaab</span>
+            </button>
+            <button type="button" mat-stroked-button class="print-btn" (click)="printPassbook()" [disabled]="!passbookMaterial" title="Print statement">
+              <mat-icon>print</mat-icon>
+              <span>Print</span>
+            </button>
+            <button type="button" mat-icon-button class="refresh-btn" (click)="loadPassbook(passbookMaterialId)" [disabled]="loadingPassbook" title="Refresh Live Data">
+              <mat-icon [class.spin]="loadingPassbook">refresh</mat-icon>
+            </button>
+          </div>
+
+        </div>
+
+        <!-- Filter Sub-Row: Search and Date Range -->
+        <div class="pcc-bottom-row">
+          <div class="pcc-search-box">
+            <mat-icon>search</mat-icon>
+            <input type="text" [(ngModel)]="passbookFilters.search" placeholder="Search by Karigar, Item/Box, or Invoice No...">
+            <button *ngIf="passbookFilters.search" type="button" class="clear-input-btn" (click)="passbookFilters.search = ''">✕</button>
+          </div>
+
+          <div class="pcc-date-group">
+            <span class="pcc-date-lbl">From:</span>
+            <input type="date" [(ngModel)]="passbookFilters.dateFrom" class="pcc-date-input">
+            <span class="pcc-date-lbl">To:</span>
+            <input type="date" [(ngModel)]="passbookFilters.dateTo" class="pcc-date-input">
+            <button type="button" class="pcc-reset-btn" *ngIf="passbookFilters.dateFrom || passbookFilters.dateTo || passbookFilters.search || passbookFilters.type !== 'ALL'" (click)="resetPassbookFilters()">
+              Reset Filters
+            </button>
+          </div>
+
+          <!-- Sort Toggle -->
+          <div class="pcc-sort-toggle">
+            <button type="button" class="sort-toggle-btn" (click)="passbookFilters.sortOrder = passbookFilters.sortOrder === 'NEWEST' ? 'OLDEST' : 'NEWEST'">
+              <mat-icon>{{ passbookFilters.sortOrder === 'NEWEST' ? 'arrow_downward' : 'arrow_upward' }}</mat-icon>
+              <span>{{ passbookFilters.sortOrder === 'NEWEST' ? 'Naya Pehle (Newest)' : 'Purana Pehle (Oldest)' }}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Passbook Summary KPI Cards ── -->
+      <div class="passbook-kpi-grid" *ngIf="passbookMaterial">
+        <!-- 1. Total Inward -->
+        <div class="pb-kpi-card inward">
+          <div class="pb-kpi-icon"><mat-icon>call_received</mat-icon></div>
+          <div class="pb-kpi-content">
+            <div class="pb-kpi-label">Kul Aaya (Total Inward)</div>
+            <div class="pb-kpi-value text-green">
+              +{{ (passbookSummary?.totalInward || 0) | number: '1.0-1' }}
+              <span class="pb-unit">{{ passbookMaterial.unitLabel || 'PCS' }}</span>
+            </div>
+            <div class="pb-kpi-sub">{{ passbookSummary?.totalPurchasesCount || 0 }} Purchase Invoices</div>
+          </div>
+        </div>
+
+        <!-- 2. Total Outward (Kharch) -->
+        <div class="pb-kpi-card outward">
+          <div class="pb-kpi-icon"><mat-icon>remove_circle</mat-icon></div>
+          <div class="pb-kpi-content">
+            <div class="pb-kpi-label">Kul Kharch (Production Used)</div>
+            <div class="pb-kpi-value text-red">
+              -{{ (passbookSummary?.totalOutward || 0) | number: '1.0-1' }}
+              <span class="pb-unit">{{ passbookMaterial.unitLabel || 'PCS' }}</span>
+            </div>
+            <div class="pb-kpi-sub">{{ passbookSummary?.totalUsagesCount || 0 }} Production Entries</div>
+          </div>
+        </div>
+
+        <!-- 3. Current Balance (Bacha Stock) -->
+        <div class="pb-kpi-card balance highlight">
+          <div class="pb-kpi-icon"><mat-icon>account_balance_wallet</mat-icon></div>
+          <div class="pb-kpi-content">
+            <div class="pb-kpi-label">Bacha Stock (Current Balance)</div>
+            <div class="pb-kpi-value text-blue">
+              {{ (passbookSummary?.currentBalance || 0) | number: '1.0-1' }}
+              <span class="pb-unit">{{ passbookMaterial.unitLabel || 'PCS' }}</span>
+            </div>
+            <div class="pb-kpi-sub highlight-sub">
+              Available in Factory
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. Stock Value -->
+        <div class="pb-kpi-card value">
+          <div class="pb-kpi-icon"><mat-icon>currency_rupee</mat-icon></div>
+          <div class="pb-kpi-content">
+            <div class="pb-kpi-label">Stock Value (Total Worth)</div>
+            <div class="pb-kpi-value text-purple">
+              ₹{{ (passbookSummary?.stockValue || 0) | number: '1.0-0' }}
+            </div>
+            <div class="pb-kpi-sub">&#64; ₹{{ (passbookSummary?.effectiveRate || passbookMaterial?.currentRate || 0) | number: '1.0-0' }}/{{ passbookMaterial.unitLabel || 'PC' }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Loading Spinner ── -->
+      <div class="pb-loading-box" *ngIf="loadingPassbook">
+        <mat-spinner diameter="32"></mat-spinner>
+        <span>Loading Chadra passbook statement...</span>
+      </div>
+
+      <!-- ── Empty State ── -->
+      <div class="pb-empty-box" *ngIf="!loadingPassbook && (!filteredPassbookLedger || filteredPassbookLedger.length === 0)">
+        <mat-icon>menu_book</mat-icon>
+        <h3>Koi Passbook Entry Nahi Mili</h3>
+        <p>Selected filters ke sath koi transaction record nahi hai.</p>
+        <button mat-stroked-button color="primary" (click)="resetPassbookFilters()">Reset All Filters</button>
+      </div>
+
+      <!-- ── Passbook Ledger Table Card ── -->
+      <div class="passbook-ledger-card" *ngIf="!loadingPassbook && filteredPassbookLedger && filteredPassbookLedger.length > 0">
+        <div class="plc-header">
+          <div class="plc-title-row">
+            <mat-icon>receipt_long</mat-icon>
+            <div>
+              <h3 class="plc-title">{{ passbookMaterial?.name }} — Passbook Statement</h3>
+              <p class="plc-sub">Showing {{ filteredPassbookLedger.length }} entries in chronological order</p>
+            </div>
+          </div>
+          <div class="plc-count-badge">
+            {{ filteredPassbookLedger.length }} Entries
+          </div>
+        </div>
+
+        <div class="table-responsive plc-table-wrapper">
+          <table class="table plc-table">
+            <thead>
+              <tr>
+                <th class="col-date">Date</th>
+                <th class="col-type">Entry Type</th>
+                <th class="col-desc">Particulars (Item / Bill)</th>
+                <th class="col-party">Karigar / Supplier</th>
+                <th class="col-in text-right">Aaya (+ In)</th>
+                <th class="col-out text-right">Kharch (- Out)</th>
+                <th class="col-bal text-right">Bacha Stock</th>
+                <th class="col-rate text-right">Rate & Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let row of filteredPassbookLedger" [class.inward-row]="row.type === 'INWARD' || row.type === 'OPENING'" [class.outward-row]="row.type === 'OUTWARD'">
+                <!-- Date -->
+                <td class="col-date">
+                  <div class="cell-date-main">{{ row.date | date: 'dd MMM yyyy' }}</div>
+                  <div class="cell-date-sub">{{ row.date | date: 'shortTime' }}</div>
+                </td>
+
+                <!-- Type Badge -->
+                <td class="col-type">
+                  <span class="badge-type" [class.badge-in]="row.type === 'INWARD'" [class.badge-out]="row.type === 'OUTWARD'" [class.badge-opening]="row.type === 'OPENING'">
+                    <mat-icon>{{ row.type === 'INWARD' ? 'arrow_downward' : (row.type === 'OUTWARD' ? 'arrow_upward' : 'lock_clock') }}</mat-icon>
+                    <span>{{ row.type === 'INWARD' ? 'AAYA (+)' : (row.type === 'OUTWARD' ? 'KHARCH (-)' : 'OPENING') }}</span>
+                  </span>
+                </td>
+
+                <!-- Particulars -->
+                <td class="col-desc">
+                  <div class="cell-desc-title">
+                    <mat-icon class="inline-desc-icon">{{ row.type === 'INWARD' ? 'receipt' : 'build' }}</mat-icon>
+                    <span>{{ row.description }}</span>
+                  </div>
+                  <div class="cell-desc-meta" *ngIf="row.refNo && row.refNo !== '-'">
+                    Ref: #{{ row.refNo }}
+                  </div>
+                </td>
+
+                <!-- Karigar / Supplier -->
+                <td class="col-party">
+                  <div class="cell-party">
+                    <mat-icon>{{ row.type === 'INWARD' ? 'local_shipping' : 'person' }}</mat-icon>
+                    <span>{{ row.partyOrWorker || '-' }}</span>
+                  </div>
+                </td>
+
+                <!-- Aaya (+ In) -->
+                <td class="col-in text-right">
+                  <span class="qty-pill in" *ngIf="row.qtyIn > 0">
+                    +{{ row.qtyIn | number: '1.0-2' }} {{ row.unitLabel }}
+                  </span>
+                  <span class="qty-dash" *ngIf="!row.qtyIn">-</span>
+                </td>
+
+                <!-- Kharch (- Out) -->
+                <td class="col-out text-right">
+                  <span class="qty-pill out" *ngIf="row.qtyOut > 0">
+                    -{{ row.qtyOut | number: '1.0-2' }} {{ row.unitLabel }}
+                  </span>
+                  <span class="qty-dash" *ngIf="!row.qtyOut">-</span>
+                </td>
+
+                <!-- Running Balance -->
+                <td class="col-bal text-right">
+                  <span class="balance-badge">
+                    {{ row.runningBalance | number: '1.0-2' }} {{ row.unitLabel }}
+                  </span>
+                </td>
+
+                <!-- Rate & Amount -->
+                <td class="col-rate text-right">
+                  <div class="cell-amt" *ngIf="row.totalAmount > 0">
+                    ₹{{ row.totalAmount | number: '1.0-0' }}
+                  </div>
+                  <div class="cell-rate-sub" *ngIf="row.rate > 0">
+                    &#64; ₹{{ row.rate | number: '1.0-0' }}/{{ row.unitLabel }}
+                  </div>
+                  <span class="qty-dash" *ngIf="!row.totalAmount && !row.rate">-</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </ng-container>
 
 <mat-autocomplete #sizeAuto="matAutocomplete">
   <mat-option *ngFor="let size of defaultSizeOptions" [value]="size">{{ size }}</mat-option>

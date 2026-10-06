@@ -1,6 +1,7 @@
 import { Component, OnInit } from "@angular/core";
 import { NgForm } from "@angular/forms";
 import { MatSnackBar } from "@angular/material/snack-bar";
+import { ActivatedRoute, Router } from "@angular/router";
 import { AuthService } from "app/shared/services/auth.service";
 import { RawMaterialService } from "app/shared/services/raw-material.service";
 
@@ -26,7 +27,30 @@ export class RawMaterialRegisterComponent implements OnInit {
     "Paint / Red Oxide",
     "Iron Rivet 4N",
     "Aluminium Rivet",
+    "TATA30",
+    "TATA35",
+    "TATA40",
+    "TATA50",
+    "PRINTED30",
+    "COLOR 8*4",
   ];
+
+  // ── Mode Tabs: 'MASTER' or 'PASSBOOK' ──
+  activeTab: "MASTER" | "PASSBOOK" = "MASTER";
+
+  // ── Chadra Passbook State ──
+  passbookMaterialId: string | null = null;
+  passbookMaterial: any = null;
+  passbookLedger: any[] = [];
+  passbookSummary: any = null;
+  loadingPassbook: boolean = false;
+  passbookFilters = {
+    search: "",
+    type: "ALL", // 'ALL' | 'INWARD' | 'OUTWARD'
+    dateFrom: "",
+    dateTo: "",
+    sortOrder: "NEWEST", // 'NEWEST' | 'OLDEST'
+  };
 
   get nameSuggestions(): string[] {
     const existing = (this.materials || []).map((m) => m.name).filter(Boolean);
@@ -83,10 +107,20 @@ export class RawMaterialRegisterComponent implements OnInit {
     private rawMaterialService: RawMaterialService,
     private snackBar: MatSnackBar,
     private authService: AuthService,
+    private route: ActivatedRoute,
+    private router: Router,
   ) {}
 
   ngOnInit(): void {
     this.userRole = this.authService.getUserRole();
+    this.route.queryParams.subscribe((params) => {
+      if (params["tab"] === "passbook") {
+        this.activeTab = "PASSBOOK";
+      }
+      if (params["materialId"]) {
+        this.passbookMaterialId = params["materialId"];
+      }
+    });
     this.loadAll();
   }
 
@@ -114,6 +148,14 @@ export class RawMaterialRegisterComponent implements OnInit {
         this.summary = this.buildSummary(this.allMaterials.length ? this.allMaterials : this.materials);
         this.loadingSummary = false;
         this.loadingMaterials = false;
+
+        // Auto load passbook if passbook tab is open and nothing loaded yet
+        if (this.activeTab === "PASSBOOK" && !this.passbookLedger.length) {
+          const targetId = this.passbookMaterialId || this.getDefaultPassbookMaterialId();
+          if (targetId) {
+            this.loadPassbook(targetId);
+          }
+        }
       },
       error: (error) => {
         this.loadingSummary = false;
@@ -385,6 +427,163 @@ export class RawMaterialRegisterComponent implements OnInit {
     this.historySummary = null;
     this.usageSummary = null;
     this.loadingHistory = false;
+  }
+
+  // ── Chadra Passbook Methods ──
+  switchTab(tab: "MASTER" | "PASSBOOK", materialId?: string): void {
+    this.activeTab = tab;
+    if (tab === "PASSBOOK") {
+      const targetId = materialId || this.passbookMaterialId || this.getDefaultPassbookMaterialId();
+      if (targetId) {
+        this.loadPassbook(targetId);
+      }
+    }
+  }
+
+  getDefaultPassbookMaterialId(): string | null {
+    if (!this.materials || !this.materials.length) return null;
+    // Prefer TATA40 or 40mm sheet if available
+    const tata40 = this.materials.find(
+      (m) => /40/i.test(m.name || "") || /TA40/i.test(m.code || "")
+    );
+    return tata40 ? tata40._id : this.materials[0]._id;
+  }
+
+  openPassbookForMaterial(material: any): void {
+    if (!material?._id) return;
+    this.switchTab("PASSBOOK", material._id);
+  }
+
+  onPassbookMaterialChange(): void {
+    if (this.passbookMaterialId) {
+      this.loadPassbook(this.passbookMaterialId);
+    }
+  }
+
+  loadPassbook(materialId: string): void {
+    if (!materialId) return;
+    this.passbookMaterialId = materialId;
+    this.loadingPassbook = true;
+    this.rawMaterialService.getMaterialHistory(materialId).subscribe({
+      next: (res: any) => {
+        this.loadingPassbook = false;
+        this.passbookMaterial =
+          res?.material || this.materials.find((m) => `${m._id}` === `${materialId}`);
+        this.passbookLedger = Array.isArray(res?.ledger) ? res.ledger : [];
+        this.passbookSummary = res?.passbookSummary || {
+          openingQty: Number(this.passbookMaterial?.openingQty || 0),
+          totalInward: Number(res?.summary?.totalReceivedQty || 0),
+          totalOutward: Number(res?.usageSummary?.totalUsedQty || 0),
+          currentBalance: Number(
+            (res?.summary?.totalReceivedQty || 0) - (res?.usageSummary?.totalUsedQty || 0)
+          ),
+          stockValue: 0,
+        };
+      },
+      error: (err: any) => {
+        this.loadingPassbook = false;
+        this.showError(err?.error?.message || "Failed to load Chadra passbook");
+      },
+    });
+  }
+
+  get filteredPassbookLedger(): any[] {
+    let rows = Array.isArray(this.passbookLedger) ? [...this.passbookLedger] : [];
+
+    // Type filter
+    if (this.passbookFilters.type === "INWARD") {
+      rows = rows.filter((r) => r.type === "INWARD" || r.type === "OPENING");
+    } else if (this.passbookFilters.type === "OUTWARD") {
+      rows = rows.filter((r) => r.type === "OUTWARD");
+    }
+
+    // Search filter
+    const term = `${this.passbookFilters.search || ""}`.trim().toLowerCase();
+    if (term) {
+      rows = rows.filter((r) => {
+        const party = `${r.partyOrWorker || ""}`.toLowerCase();
+        const desc = `${r.description || ""}`.toLowerCase();
+        const ref = `${r.refNo || ""}`.toLowerCase();
+        const prod = `${r.productName || ""}`.toLowerCase();
+        return (
+          party.includes(term) ||
+          desc.includes(term) ||
+          ref.includes(term) ||
+          prod.includes(term)
+        );
+      });
+    }
+
+    // Date From filter
+    if (this.passbookFilters.dateFrom) {
+      const from = new Date(this.passbookFilters.dateFrom).getTime();
+      rows = rows.filter((r) => new Date(r.date).getTime() >= from);
+    }
+
+    // Date To filter
+    if (this.passbookFilters.dateTo) {
+      const to = new Date(this.passbookFilters.dateTo).setHours(23, 59, 59, 999);
+      rows = rows.filter((r) => new Date(r.date).getTime() <= to);
+    }
+
+    // Sort order
+    if (this.passbookFilters.sortOrder === "OLDEST") {
+      rows.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    } else {
+      rows.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    }
+
+    return rows;
+  }
+
+  resetPassbookFilters(): void {
+    this.passbookFilters = {
+      search: "",
+      type: "ALL",
+      dateFrom: "",
+      dateTo: "",
+      sortOrder: "NEWEST",
+    };
+  }
+
+  sharePassbookWhatsApp(): void {
+    if (!this.passbookMaterial) return;
+    const matName = this.passbookMaterial.name || "Raw Material";
+    const matCode = this.passbookMaterial.code ? ` (#${this.passbookMaterial.code})` : "";
+    const balance = this.passbookSummary?.currentBalance ?? 0;
+    const inward = this.passbookSummary?.totalInward ?? 0;
+    const outward = this.passbookSummary?.totalOutward ?? 0;
+    const value = this.passbookSummary?.stockValue ?? 0;
+    const unit = this.passbookMaterial.unitLabel || "PCS";
+    const today = new Date().toLocaleDateString("en-GB");
+
+    let text = `🏭 *BABA VISHWANATH FURNITURE*\n📖 *चादरा पासबुक रिपोर्ट (${today})*\n\n`;
+    text += `📦 *Material:* ${matName}${matCode}\n`;
+    text += `📥 *Kul Aaya (Inward):* ${inward} ${unit}\n`;
+    text += `📤 *Kul Kharch (Outward):* ${outward} ${unit}\n`;
+    text += `📊 *Bacha Stock (Balance):* ${balance} ${unit}\n`;
+    if (value > 0) {
+      text += `💰 *Stock Worth:* ₹${Math.round(value).toLocaleString("en-IN")}\n`;
+    }
+
+    const recent = (this.filteredPassbookLedger || []).slice(0, 3);
+    if (recent.length) {
+      text += `\n*Aakhri 3 Transactions:*\n`;
+      recent.forEach((r: any) => {
+        const d = new Date(r.date).toLocaleDateString("en-GB");
+        const sign =
+          r.type === "INWARD" || r.type === "OPENING" ? `+${r.qtyIn}` : `-${r.qtyOut}`;
+        text += `• ${d}: ${sign} ${unit} (${r.description} - ${r.partyOrWorker})\n`;
+      });
+    }
+
+    text += `\n_Generated via BabaShop App_`;
+    const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+    window.open(url, "_blank");
+  }
+
+  printPassbook(): void {
+    window.print();
   }
 
   deleteMaterial(material: any): void {

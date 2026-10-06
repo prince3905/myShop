@@ -17,6 +17,7 @@ declare interface RouteInfo {
   feature?: string;
   children?: RouteInfo[];
   expanded?: boolean;
+  queryParams?: any;
 }
 
 export const ROUTES: RouteInfo[] = [
@@ -195,6 +196,14 @@ export const ROUTES: RouteInfo[] = [
         path: "/raw-material-register",
         title: "Raw Material Master",
         icon: "inventory",
+        roles: ["SUPER_ADMIN", "ADMIN", "MANAGER"],
+        feature: "factory.raw_material_master",
+      },
+      {
+        path: "/raw-material-register",
+        queryParams: { tab: "passbook" },
+        title: "Chadra Passbook",
+        icon: "menu_book",
         roles: ["SUPER_ADMIN", "ADMIN", "MANAGER"],
         feature: "factory.raw_material_master",
       },
