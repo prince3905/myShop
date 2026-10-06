@@ -2,6 +2,10 @@ const logger = require("../utils/logger");
 const RawMaterial = require("../models/RawMaterial");
 const RawMaterialPurchase = require("../models/RawMaterialPurchase");
 const StaffDailyWork = require("../models/StaffDailyWork");
+const Distributor = require("../models/Distributor");
+const Staff = require("../models/Staff");
+const FactoryProduct = require("../models/FactoryProduct");
+const User = require("../models/User");
 
 const STAFF_ONLY_FILTER = (req) => `${req.user?.role || ""}` === "STAFF";
 const MANAGER_AND_ABOVE = ["SUPER_ADMIN", "ADMIN", "MANAGER"];
@@ -476,11 +480,117 @@ exports.getRawMaterialHistory = async (req, res) => {
       totalWasteValue: 0,
     });
 
+    // ── Unified Chronological Ledger / Passbook ──
+    const ledgerEvents = [];
+    const openingQty = Number(material.openingQty || 0);
+
+    // 1. Initial Opening Stock (if defined)
+    if (openingQty > 0) {
+      ledgerEvents.push({
+        date: material.createdAt,
+        type: "OPENING",
+        source: "OPENING",
+        refNo: "OPENING-STOCK",
+        partyOrWorker: "Opening Balance",
+        description: "Initial physical stock balance recorded",
+        productName: "",
+        unitsProduced: 0,
+        qtyIn: openingQty,
+        qtyOut: 0,
+        rate: Number(material.currentRate || 0),
+        totalAmount: openingQty * Number(material.currentRate || 0),
+        wasteQty: 0,
+        unitLabel: material.unitLabel || "PCS",
+        timestamp: new Date(material.createdAt).getTime(),
+        sortOrder: 0,
+      });
+    }
+
+    // 2. Inward entries (Purchases)
+    for (const row of history) {
+      const pDate = row.purchaseDate || row.approvedAt || row.createdAt;
+      ledgerEvents.push({
+        date: pDate,
+        type: "INWARD",
+        source: "PURCHASE",
+        refNo: row.invoiceNo || "-",
+        partyOrWorker: row.distributor?.name || "Supplier",
+        description: `Purchased via Invoice #${row.invoiceNo || "-"}`,
+        productName: "",
+        unitsProduced: 0,
+        qtyIn: Number(row.receivedQty || 0),
+        qtyOut: 0,
+        rate: Number(row.rate || 0),
+        totalAmount: Number(row.totalAmount || 0),
+        wasteQty: 0,
+        unitLabel: row.unitLabel || material.unitLabel || "PCS",
+        timestamp: new Date(pDate).getTime(),
+        sortOrder: 1,
+      });
+    }
+
+    // 3. Outward entries (Production Daily Works)
+    for (const row of usageHistory) {
+      ledgerEvents.push({
+        date: row.entryDate,
+        type: "OUTWARD",
+        source: "PRODUCTION",
+        refNo: row.factoryProductName || "Factory Work",
+        partyOrWorker: row.staff?.name || "Worker",
+        description: `Used in ${row.unitsCompleted} Pcs ${row.factoryProductName || "Item"}`,
+        productName: row.factoryProductName || "",
+        unitsProduced: Number(row.unitsCompleted || 0),
+        qtyIn: 0,
+        qtyOut: Number(row.usedQty || 0),
+        rate: Number(row.rate || 0),
+        totalAmount: Number(row.totalValue || 0),
+        wasteQty: Number(row.wasteQty || 0),
+        wasteUnitLabel: row.wasteUnitLabel || "KG",
+        unitLabel: row.unitLabel || material.unitLabel || "PCS",
+        timestamp: new Date(row.entryDate).getTime(),
+        sortOrder: 2,
+      });
+    }
+
+    // Sort ascending by date to compute accurate running balance
+    ledgerEvents.sort((a, b) => {
+      if (a.timestamp !== b.timestamp) return a.timestamp - b.timestamp;
+      return (a.sortOrder || 0) - (b.sortOrder || 0);
+    });
+
+    let runningBal = 0;
+    for (const ev of ledgerEvents) {
+      runningBal += (ev.qtyIn - ev.qtyOut);
+      ev.runningBalance = Number(runningBal.toFixed(2));
+    }
+
+    // Newest first for passbook view
+    const ledger = [...ledgerEvents].reverse();
+    const currentBalance = Number(runningBal.toFixed(2));
+    const totalInward = Number((summary.totalReceivedQty + openingQty).toFixed(2));
+    const totalOutward = Number(usageSummary.totalUsedQty.toFixed(2));
+    const effectiveRate = Number(material.currentRate || summary.lastRate || averageRate || 0);
+    const stockValue = Number((currentBalance * effectiveRate).toFixed(2));
+
     return res.json({
       success: true,
       material,
       history,
       usageHistory,
+      ledger,
+      passbookSummary: {
+        openingQty,
+        totalInward,
+        totalOutward,
+        currentBalance,
+        effectiveRate,
+        stockValue,
+        totalPurchasesCount: summary.purchaseCount,
+        totalUsagesCount: usageSummary.usageCount,
+        wasteQty: usageSummary.totalWasteQty,
+        lastRate: summary.lastRate,
+        averageRate,
+      },
       summary: {
         ...summary,
         averageRate,
