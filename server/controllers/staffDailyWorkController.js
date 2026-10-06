@@ -388,8 +388,9 @@ exports.createDailyWork = async (req, res) => {
       entryDate,
       attendanceStatus,
       workType: `${req.body?.workType || staff.workType || ""}`.trim(),
-      factoryProduct: unitsCompleted > 0 ? (factoryProduct?._id || null) : null,
-      factoryProductName: unitsCompleted > 0 ? `${factoryProduct?.name || ""}`.trim() : "",
+      factoryProduct: factoryProduct?._id || null,
+      factoryProductName: `${factoryProduct?.name || ""}`.trim(),
+      factoryProductSku: factoryProduct?.shopVariation?.sku || "",
       workItem: workItem?._id || null,
       workItemName: `${workItem?.itemName || ""}`.trim(),
       unit: `${factoryProduct?.unitLabel || workItem?.unit || "PCS"}`.trim(),
@@ -425,7 +426,7 @@ exports.createDailyWork = async (req, res) => {
 
     return res.status(201).json({
       success: true,
-      message: isKhorakiIncluded ? "Daily work entry added + Khoraki (₹100) logged" : "Daily work entry added",
+      message: isKhorakiIncluded ? `Daily work entry added + Khoraki (₹${computedKhorakiAmount}) logged` : "Daily work entry added",
       dailyWork: populated,
     });
   } catch (error) {
@@ -1117,6 +1118,25 @@ exports.updateKhorakiEntry = async (req, res) => {
 
     dailyWork.isKhorakiIncluded = newAmount > 0;
     dailyWork.khorakiAmount = newAmount;
+
+    if (req.body?.factoryProduct !== undefined) {
+      if (req.body.factoryProduct && mongoose.Types.ObjectId.isValid(`${req.body.factoryProduct}`)) {
+        const prod = await FactoryProduct.findOne({ _id: req.body.factoryProduct, shop: req.shopId, isDeleted: false }).lean();
+        if (prod) {
+          dailyWork.factoryProduct = prod._id;
+          dailyWork.factoryProductName = `${prod.name || ""}`.trim();
+          dailyWork.factoryProductSku = prod.shopVariation?.sku || "";
+          if (!dailyWork.unit || dailyWork.unit === "PCS") {
+            dailyWork.unit = `${prod.unitLabel || "PCS"}`.trim();
+          }
+        }
+      } else if (!req.body.factoryProduct) {
+        dailyWork.factoryProduct = null;
+        dailyWork.factoryProductName = "";
+        dailyWork.factoryProductSku = "";
+      }
+    }
+
     if (req.body?.note !== undefined) {
       dailyWork.note = `${req.body.note || ""}`.trim();
     }

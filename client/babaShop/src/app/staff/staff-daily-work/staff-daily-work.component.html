@@ -605,6 +605,29 @@
           </div>
         </div>
 
+        <!-- Product Against (Work Done) -->
+        <div style="margin-top: 14px;">
+          <label style="display: block; font-size: 12px; font-weight: 700; color: #475569; margin-bottom: 4px;">🏭 Product Against (Kaam kya kiya):</label>
+          <mat-form-field appearance="outline" class="full-width" style="margin-bottom: -1em;">
+            <mat-select [(ngModel)]="quickEditForm.factoryProduct" placeholder="Select Product worked on (Optional)">
+              <div style="padding: 6px 12px; position: sticky; top: 0; background: #fff; z-index: 10; border-bottom: 1px solid #e2e8f0;">
+                <input
+                  type="text"
+                  placeholder="🔍 Type to search product..."
+                  [(ngModel)]="quickEditProductSearchQuery"
+                  [ngModelOptions]="{standalone: true}"
+                  (keydown)="$event.stopPropagation()"
+                  style="border-radius: 6px; padding: 6px 10px; font-size: 13px; border: 1px solid #cbd5e1; outline: none; width: 100%;">
+              </div>
+              <mat-option value="">General Attendance (No Specific Product)</mat-option>
+              <mat-option *ngFor="let prod of quickEditFilteredProducts" [value]="prod._id">
+                {{ prod.name }} <span *ngIf="prod.shopVariation?.sku">· {{ prod.shopVariation.sku }}</span> <span *ngIf="prod.shopVariation?.attributes?.size">({{ prod.shopVariation.attributes.size }})</span>
+              </mat-option>
+            </mat-select>
+            <mat-icon matPrefix>inventory_2</mat-icon>
+          </mat-form-field>
+        </div>
+
         <!-- Note Input -->
         <div style="margin-top: 14px;">
           <label style="display: block; font-size: 12px; font-weight: 700; color: #475569; margin-bottom: 4px;">📝 Note (Optional):</label>

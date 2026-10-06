@@ -723,18 +723,33 @@ export class StaffDailyWorkComponent implements OnInit {
     khorakiAmount: 100,
     attendanceStatus: "PRESENT",
     entryDate: "",
+    factoryProduct: "",
     note: "",
   };
   quickEditSaving = false;
+  quickEditProductSearchQuery = "";
+
+  get quickEditFilteredProducts(): any[] {
+    const q = (this.quickEditProductSearchQuery || "").trim().toLowerCase();
+    if (!q) return this.factoryProductOptions || [];
+    return (this.factoryProductOptions || []).filter((item: any) => {
+      const name = (item.name || "").toLowerCase();
+      const sku = (item.shopVariation?.sku || "").toLowerCase();
+      const size = (item.shopVariation?.attributes?.size || "").toLowerCase();
+      return name.includes(q) || sku.includes(q) || size.includes(q);
+    });
+  }
 
   openQuickEditKhoraki(item: any): void {
     if (!this.canEditRow(item)) return;
     this.quickEditingKhoraki = item;
+    this.quickEditProductSearchQuery = "";
     const defaultAmt = item.attendanceStatus === "HALF_DAY" ? 50 : 100;
     this.quickEditForm = {
       khorakiAmount: Number(item.khorakiAmount ?? defaultAmt),
       attendanceStatus: item.attendanceStatus || "PRESENT",
       entryDate: this.formatDate(new Date(item.entryDate)),
+      factoryProduct: item.factoryProduct?._id || item.factoryProduct || "",
       note: item.note || "",
     };
   }
@@ -742,6 +757,7 @@ export class StaffDailyWorkComponent implements OnInit {
   closeQuickEditKhoraki(): void {
     this.quickEditingKhoraki = null;
     this.quickEditSaving = false;
+    this.quickEditProductSearchQuery = "";
   }
 
   setQuickEditKhorakiAmount(amount: number): void {
@@ -764,6 +780,7 @@ export class StaffDailyWorkComponent implements OnInit {
       khorakiAmount: Number(this.quickEditForm.khorakiAmount || 0),
       attendanceStatus: this.quickEditForm.attendanceStatus,
       entryDate: this.quickEditForm.entryDate,
+      factoryProduct: this.quickEditForm.factoryProduct || null,
       note: this.quickEditForm.note,
     };
 
