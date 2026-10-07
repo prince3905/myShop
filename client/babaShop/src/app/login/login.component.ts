@@ -214,5 +214,35 @@ export class LoginComponent implements OnInit {
     this.serverStatusLabel = 'Checking server...';
     this.connectivityService.checkNow();
   }
+
+  showServerUrlEdit = false;
+  customServerInput = '';
+
+  toggleServerUrlEdit(): void {
+    this.showServerUrlEdit = !this.showServerUrlEdit;
+    if (this.showServerUrlEdit) {
+      this.customServerInput = this.activeApiURL || 'http://192.168.31.47:3000';
+    }
+  }
+
+  saveCustomServerUrl(): void {
+    if (!this.customServerInput) return;
+    const trimmed = this.customServerInput.trim().replace(/\/+$/, '');
+    try {
+      localStorage.setItem('babashop.apiMode', 'custom');
+      localStorage.setItem('babashop.apiBaseURLOverride', trimmed);
+      this.activeApiURL = trimmed;
+      this.showServerUrlEdit = false;
+      this.checkServerStatus();
+      this.snackBar.open(`Server URL set to: ${trimmed}`, 'Close', { duration: 3000 });
+    } catch {
+      this.snackBar.open('Failed to save server URL', 'Close', { duration: 3000 });
+    }
+  }
+
+  setQuickServer(url: string): void {
+    this.customServerInput = url;
+    this.saveCustomServerUrl();
+  }
 }
 

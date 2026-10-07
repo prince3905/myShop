@@ -19,6 +19,8 @@ const allowedConnectSources = ["'self'", ...allowedOrigins];
 const dynamicOriginPatterns = [
   /^https?:\/\/localhost(?::\d+)?$/i,
   /^https?:\/\/127\.0\.0\.1(?::\d+)?$/i,
+  /^https?:\/\/192\.168\.\d+\.\d+(?::\d+)?$/i,
+  /^https?:\/\/10\.\d+\.\d+\.\d+(?::\d+)?$/i,
   /^https:\/\/[a-z0-9.-]+\.ngrok-free\.app$/i,
   /^https:\/\/[a-z0-9.-]+\.ngrok\.app$/i,
   /^https:\/\/[a-z0-9.-]+\.ngrok-dev\.app$/i,
@@ -143,6 +145,49 @@ app.use("/api/raw-materials", rawMaterialRoutes);
 app.use("/api/raw-material-purchases", rawMaterialPurchaseRoutes);
 app.use("/api/fraud-detection", fraudDetectionRoutes);
 
+const resolveClientDistPath = () => {
+  const candidates = [
+    path.join(__dirname, "public"),
+    path.join(__dirname, "..", "client", "server", "public"),
+    path.join(__dirname, "..", "client", "babaShop", "dist"),
+  ];
+
+  for (const candidate of candidates) {
+    if (fs.existsSync(path.join(candidate, "index.html"))) {
+      return candidate;
+    }
+  }
+
+  return candidates[0];
+};
+
+const clientDistPath = resolveClientDistPath();
+
+// APK Download Route (Must be before /api 404 handler!)
+const handleApkDownload = (req, res) => {
+  const candidates = [
+    path.join(__dirname, "public", "downloads", "BabaShop-latest.apk"),
+    path.join(__dirname, "public", "assets", "downloads", "BabaShop-latest.apk"),
+    path.join(clientDistPath, "assets", "downloads", "BabaShop-latest.apk"),
+    path.join(__dirname, "..", "client", "babaShop", "src", "assets", "downloads", "BabaShop-latest.apk"),
+    path.join(__dirname, "..", "BabaShop-latest.apk"),
+  ];
+
+  for (const p of candidates) {
+    if (fs.existsSync(p)) {
+      res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+      res.setHeader("Pragma", "no-cache");
+      res.setHeader("Expires", "0");
+      return res.download(p, "BabaShop-latest.apk");
+    }
+  }
+
+  return res.status(404).json({ success: false, message: "APK file not found on server" });
+};
+
+app.get("/api/download/apk", handleApkDownload);
+app.get("/downloads/BabaShop-latest.apk", handleApkDownload);
+
 app.get("/api/health", (req, res) => {
   res.status(200).json({
     success: true,
@@ -233,46 +278,7 @@ process.on("uncaughtException", (error) => {
   process.exit(1);
 });
 
-const resolveClientDistPath = () => {
-  const candidates = [
-    path.join(__dirname, "public"),
-    path.join(__dirname, "..", "client", "server", "public"),
-    path.join(__dirname, "..", "client", "babaShop", "dist"),
-  ];
-
-  for (const candidate of candidates) {
-    if (fs.existsSync(path.join(candidate, "index.html"))) {
-      return candidate;
-    }
-  }
-
-  return candidates[0];
-};
-
-// APK Download Route
-app.get("/api/download/apk", (req, res) => {
-  const candidates = [
-    path.join(__dirname, "public", "downloads", "BabaShop-latest.apk"),
-    path.join(clientDistPath, "assets", "downloads", "BabaShop-latest.apk"),
-    path.join(__dirname, "..", "client", "babaShop", "src", "assets", "downloads", "BabaShop-latest.apk"),
-    path.join(__dirname, "..", "BabaShop-latest.apk"),
-  ];
-
-  for (const p of candidates) {
-    if (fs.existsSync(p)) {
-      res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
-      res.setHeader("Pragma", "no-cache");
-      res.setHeader("Expires", "0");
-      return res.download(p, "BabaShop-latest.apk");
-    }
-  }
-
-  return res.status(404).json({ success: false, message: "APK file not found on server" });
-});
-
 app.use("/downloads", express.static(path.join(__dirname, "public", "downloads")));
-
-const clientDistPath = resolveClientDistPath();
 app.use(express.static(clientDistPath));
 
 app.get("*", (req, res, next) => {
