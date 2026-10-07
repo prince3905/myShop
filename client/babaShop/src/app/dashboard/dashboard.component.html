@@ -115,6 +115,7 @@
                 <div class="card-label-modern">Orders</div>
                 <div class="card-value-modern">{{ kpis?.todayOrders || 0 }}</div>
                 <div class="card-meta-modern">
+                    <i class="material-icons meta-icon-warning">people</i>
                     {{ kpis?.totalCustomers || 0 }} active customers
                 </div>
             </div>
@@ -127,6 +128,7 @@
                 <div class="card-label-modern">Catalog</div>
                 <div class="card-value-modern">{{ inventorySummary.products }}</div>
                 <div class="card-meta-modern">
+                    <i class="material-icons meta-icon-info">category</i>
                     Across {{ inventorySummary.categories }} categories
                 </div>
             </div>
