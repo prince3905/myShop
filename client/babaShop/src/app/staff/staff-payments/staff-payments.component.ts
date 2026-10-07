@@ -13,13 +13,13 @@ import { forkJoin } from "rxjs";
   styleUrls: ["./staff-payments.component.css"],
 })
 export class StaffPaymentsComponent implements OnInit {
-  readonly entryTypes = ["ADVANCE", "PAYMENT", "KHORAKI"];
+  readonly entryTypes = ["PAYMENT", "ADVANCE", "KHORAKI"];
   readonly paymentMethods = ["CASH", "UPI", "BANK", "CARD", "ONLINE", "CHEQUE"];
 
   paymentForm = {
     staff: "",
     entryDate: this.formatDate(new Date()),
-    entryType: "ADVANCE",
+    entryType: "PAYMENT",
     amount: null as number | null,
     paymentMethod: "CASH",
     note: "",
@@ -219,7 +219,7 @@ export class StaffPaymentsComponent implements OnInit {
     this.paymentForm = {
       staff: payment.staff?._id || "",
       entryDate: this.formatDate(new Date(payment.entryDate)),
-      entryType: payment.entryType || "ADVANCE",
+      entryType: payment.entryType || "PAYMENT",
       amount: Number(payment.amount || 0),
       paymentMethod: payment.paymentMethod || "CASH",
       note: payment.note || "",
@@ -232,7 +232,7 @@ export class StaffPaymentsComponent implements OnInit {
     this.paymentForm = {
       staff: "",
       entryDate: this.formatDate(new Date()),
-      entryType: "ADVANCE",
+      entryType: "PAYMENT",
       amount: null,
       paymentMethod: "CASH",
       note: "",
