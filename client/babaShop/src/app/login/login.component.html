@@ -21,29 +21,7 @@
             <strong>{{ serverStatusLabel }}</strong>
             <span>{{ activeApiURL }}</span>
           </div>
-          <div style="display: flex; gap: 6px; align-items: center;">
-            <button type="button" class="server-status-retry" (click)="toggleServerUrlEdit()">
-              {{ showServerUrlEdit ? 'Close' : '⚙️ Config' }}
-            </button>
-            <button type="button" class="server-status-retry" (click)="checkServerStatus()">Retry</button>
-          </div>
-        </div>
-
-        <!-- Quick Server URL Config on Login Page (For Mobile APK & Remote Access) -->
-        <div *ngIf="showServerUrlEdit || serverReachable === false" style="background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 12px; padding: 12px; margin-bottom: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.06);">
-          <div style="font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 6px; display: flex; justify-content: space-between;">
-            <span>🌐 Select Server Connection:</span>
-            <span *ngIf="serverReachable === false" style="color: #ef4444; font-size: 11px;">⚠️ Connection issue</span>
-          </div>
-          <div style="display: flex; gap: 6px;">
-            <input type="text" [(ngModel)]="customServerInput" [ngModelOptions]="{standalone: true}" placeholder="http://192.168.31.47:3000" style="flex: 1; border: 1px solid #94a3b8; border-radius: 8px; padding: 6px 10px; font-size: 13px; outline: none;">
-            <button type="button" (click)="saveCustomServerUrl()" style="background: #2563eb; color: white; border: none; border-radius: 8px; padding: 6px 14px; font-size: 12px; font-weight: 700; cursor: pointer;">Connect</button>
-          </div>
-          <div style="display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap;">
-            <button type="button" (click)="setQuickServer('http://192.168.31.47:3000')" style="font-size: 11px; padding: 4px 10px; border-radius: 6px; border: 1px solid #cbd5e1; background: #eff6ff; color: #1d4ed8; font-weight: 600; cursor: pointer;">📶 Wi-Fi (192.168.31.47)</button>
-            <button type="button" (click)="setQuickServer('https://myshop-amdm.onrender.com')" style="font-size: 11px; padding: 4px 10px; border-radius: 6px; border: 1px solid #cbd5e1; background: #f0fdf4; color: #15803d; font-weight: 600; cursor: pointer;">🌐 Render Cloud</button>
-            <button type="button" (click)="setQuickServer('http://localhost:3000')" style="font-size: 11px; padding: 4px 10px; border-radius: 6px; border: 1px solid #cbd5e1; background: #f8fafc; color: #475569; font-weight: 600; cursor: pointer;">💻 Localhost</button>
-          </div>
+          <button type="button" class="server-status-retry" (click)="checkServerStatus()">Retry</button>
         </div>
 
         <!-- Shop Code Input -->

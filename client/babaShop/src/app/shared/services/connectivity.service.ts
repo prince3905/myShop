@@ -62,37 +62,6 @@ export class ConnectivityService {
         this.serverReachable$.next(true);
       },
       error: () => {
-        // Fallback probe for native apps
-        const isNative = typeof window !== "undefined" && typeof (window as any).Capacitor !== "undefined";
-        const hasManualOverride = typeof window !== "undefined" && !!window.localStorage.getItem("babashop.apiBaseURLOverride");
-
-        if (isNative && !hasManualOverride) {
-          const alternateURL = baseURL.includes("onrender.com")
-            ? "http://192.168.31.47:3000"
-            : "https://myshop-amdm.onrender.com";
-
-          this.http.get<{ success: boolean; status: string }>(`${alternateURL}/api/health`).subscribe({
-            next: () => {
-              try {
-                window.localStorage.setItem("babashop.apiBaseURLOverride", alternateURL);
-                window.localStorage.setItem("babashop.apiMode", alternateURL.includes("192.168") ? "lan" : "render");
-              } catch (_) {}
-              this.activeApiURL$.next(alternateURL);
-              if (showChecking) {
-                this.checking$.next(false);
-              }
-              this.serverReachable$.next(true);
-            },
-            error: () => {
-              if (showChecking) {
-                this.checking$.next(false);
-              }
-              this.serverReachable$.next(false);
-            },
-          });
-          return;
-        }
-
         if (showChecking) {
           this.checking$.next(false);
         }

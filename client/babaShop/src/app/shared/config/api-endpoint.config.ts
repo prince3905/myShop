@@ -1,16 +1,14 @@
-export type ApiMode = "auto" | "local" | "emulator" | "render" | "lan" | "custom";
+export type ApiMode = "auto" | "local" | "emulator" | "render" | "custom";
 
 export const API_MODE_STORAGE_KEY = "babashop.apiMode";
 export const API_OVERRIDE_STORAGE_KEY = "babashop.apiBaseURLOverride";
 export const DEFAULT_RENDER_URL = "https://myshop-amdm.onrender.com";
-export const DEFAULT_LAN_URL = "http://192.168.31.47:3000";
 
 export const API_MODE_OPTIONS: Array<{ value: ApiMode; label: string }> = [
   { value: "auto", label: "Auto" },
   { value: "local", label: "Localhost" },
   { value: "emulator", label: "Android Emulator" },
   { value: "render", label: "Render (Cloud)" },
-  { value: "lan", label: "Wi-Fi / LAN" },
   { value: "custom", label: "Custom URL" },
 ];
 
@@ -42,8 +40,9 @@ export const getStoredApiBaseURL = (): string | null => {
     const raw = window.localStorage.getItem(API_OVERRIDE_STORAGE_KEY);
     if (!raw) return null;
     const trimmed = normalizeApiURL(raw);
-    if (trimmed.includes("example.ngrok") || trimmed.includes("dummy") || !trimmed.startsWith("http")) {
+    if (trimmed.includes("example.ngrok") || trimmed.includes("dummy") || trimmed.includes("192.168") || !trimmed.startsWith("http")) {
       window.localStorage.removeItem(API_OVERRIDE_STORAGE_KEY);
+      window.localStorage.removeItem(API_MODE_STORAGE_KEY);
       return null;
     }
     return trimmed;
@@ -73,9 +72,6 @@ export const resolveApiURLForMode = (mode: ApiMode, customURL = ""): string => {
   if (mode === "render") {
     return DEFAULT_RENDER_URL;
   }
-  if (mode === "lan") {
-    return DEFAULT_LAN_URL;
-  }
   if (mode === "custom") {
     return normalizeApiURL(customURL);
   }
@@ -84,11 +80,6 @@ export const resolveApiURLForMode = (mode: ApiMode, customURL = ""): string => {
 };
 
 export const getDefaultApiBaseURL = (production = false): string => {
-  const stored = getStoredApiBaseURL();
-  if (stored) {
-    return stored;
-  }
-
   if (isNativeApp()) {
     return DEFAULT_RENDER_URL;
   }
