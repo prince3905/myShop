@@ -36,6 +36,15 @@ export const APP_APK_VERSION = "2.1";
 export const getStoredApiBaseURL = (): string | null => {
   if (typeof window === "undefined") return null;
 
+  // On localhost, always use local backend and clean up stale remote overrides
+  if (isLocalFrontend()) {
+    try {
+      window.localStorage.removeItem(API_OVERRIDE_STORAGE_KEY);
+      window.localStorage.removeItem(API_MODE_STORAGE_KEY);
+    } catch (_) {}
+    return "http://localhost:3000";
+  }
+
   try {
     const raw = window.localStorage.getItem(API_OVERRIDE_STORAGE_KEY);
     if (!raw) return null;
