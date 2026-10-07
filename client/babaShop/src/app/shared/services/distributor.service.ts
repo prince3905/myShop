@@ -11,7 +11,7 @@ export class DistributorService {
   constructor(private http: HttpClient, private authService: AuthService) {}
 
   get baseURL(): string {
-    return environment.apiBaseURL;
+    return (environment.apiBaseURL || "").replace(/\/+$/, "");
   }
 
   getDistributor(data: any) {
