@@ -17,5 +17,5 @@ const run = (command, args, cwd) => {
   }
 };
 
-run("npm", ["install", "--include=dev"], appDir);
+run("npm", ["install", "--include=dev", "--legacy-peer-deps"], appDir);
 run("npm", ["run", "build:mobile", "--", `--output-path=${outputPath}`], appDir);
