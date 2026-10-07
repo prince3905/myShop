@@ -69,4 +69,14 @@ export class DistributorService {
   createLedgerEntry(payload: any): Observable<any> {
     return this.http.post(`${this.baseURL}/api/distributor-ledger`, payload);
   }
+
+  updateLedgerEntry(id: string, payload: any): Observable<any> {
+    return this.http.put(`${this.baseURL}/api/distributor-ledger/${id}`, payload);
+  }
+
+  deleteLedgerEntry(id: string, reason?: string): Observable<any> {
+    return this.http.request<any>("delete", `${this.baseURL}/api/distributor-ledger/${id}`, {
+      body: { reason },
+    });
+  }
 }

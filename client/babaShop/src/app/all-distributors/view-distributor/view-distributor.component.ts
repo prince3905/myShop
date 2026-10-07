@@ -23,6 +23,19 @@ export class ViewDistributorComponent implements OnInit {
   originalLedger: any[] = [];
   canMutateLedger = true;
 
+  // Admin Ledger Edit & Anti-Fraud Audit state
+  editingEntry: any = null;
+  editAmount: number = 0;
+  editPaymentMethod: string = "CASH";
+  editNote: string = "";
+  editReason: string = "";
+  savingEdit = false;
+
+  get isAdmin(): boolean {
+    const role = this.authService.getUserRole();
+    return role === "ADMIN" || role === "SUPER_ADMIN";
+  }
+
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: any,
     private dialogRef: MatDialogRef<ViewDistributorComponent>,
@@ -38,6 +51,92 @@ export class ViewDistributorComponent implements OnInit {
       !this.authService.getShopId()
     );
     this.loadLedger();
+  }
+
+  startEditLedger(entry: any): void {
+    if (!this.isAdmin) {
+      this.snackBar.open("Only Admin can edit ledger entries", "Close", { duration: 3000 });
+      return;
+    }
+    this.editingEntry = entry;
+    this.editAmount = Number(entry.amount || 0);
+    const resolvedMethod = this.resolvePaymentMethod(entry);
+    this.editPaymentMethod = ["CASH", "BANK", "ONLINE", "UPI", "CARD", "CHEQUE"].includes(resolvedMethod)
+      ? resolvedMethod
+      : "CASH";
+    this.editNote = entry.note || "";
+    this.editReason = "";
+  }
+
+  cancelEditLedger(): void {
+    this.editingEntry = null;
+    this.editReason = "";
+    this.savingEdit = false;
+  }
+
+  saveEditLedger(): void {
+    if (!this.editingEntry?._id) return;
+    if (this.editAmount === null || this.editAmount === undefined || this.editAmount < 0) {
+      this.snackBar.open("Please enter a valid amount", "Close", { duration: 3000 });
+      return;
+    }
+    if (!this.editReason?.trim()) {
+      this.snackBar.open("Security requirement: Please enter audit reason", "Close", { duration: 3500 });
+      return;
+    }
+
+    this.savingEdit = true;
+    const payload = {
+      amount: this.editAmount,
+      paymentMethod: this.editPaymentMethod,
+      note: this.editNote,
+      reason: this.editReason.trim(),
+    };
+
+    this.distributorService.updateLedgerEntry(this.editingEntry._id, payload).subscribe({
+      next: (res) => {
+        this.savingEdit = false;
+        this.editingEntry = null;
+        this.snackBar.open(res?.message || "Entry updated & balance recalculated", "OK", { duration: 3500 });
+        this.loadLedger();
+      },
+      error: (err) => {
+        this.savingEdit = false;
+        this.snackBar.open(err?.error?.message || "Failed to update entry", "Close", { duration: 4000 });
+      },
+    });
+  }
+
+  deleteLedgerEntry(entry: any): void {
+    if (!this.isAdmin) {
+      this.snackBar.open("Only Admin can delete ledger entries", "Close", { duration: 3000 });
+      return;
+    }
+
+    const confirmMsg = `Kya aap sach me ye ${entry.type} entry (₹${entry.amount}) delete karna chahte hain?\n\nDistributor ka running balance automatically recalculate ho jayega.`;
+    if (!confirm(confirmMsg)) {
+      return;
+    }
+
+    const reason = prompt("Audit Security: Deletion ka reason darj karein (e.g. Galti se galat entry ho gayi thi):", "Wrong entry correction");
+    if (reason === null) {
+      return; // Cancelled
+    }
+
+    if (!reason.trim()) {
+      this.snackBar.open("Audit log requirement: Reason likhna anivarya hai", "Close", { duration: 3000 });
+      return;
+    }
+
+    this.distributorService.deleteLedgerEntry(entry._id, reason.trim()).subscribe({
+      next: (res) => {
+        this.snackBar.open(res?.message || "Entry deleted & balance recalculated", "OK", { duration: 3500 });
+        this.loadLedger();
+      },
+      error: (err) => {
+        this.snackBar.open(err?.error?.message || "Failed to delete entry", "Close", { duration: 4000 });
+      },
+    });
   }
 
   applyDateFilter() {

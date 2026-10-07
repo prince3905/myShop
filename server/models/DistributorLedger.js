@@ -63,7 +63,46 @@ const distributorLedgerSchema = new mongoose.Schema(
     isDeleted: {
       type: Boolean,
       default: false,
-    }
+    },
+    deletedAt: {
+      type: Date,
+    },
+    deletedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+    deletionReason: {
+      type: String,
+      trim: true,
+    },
+    editHistory: [
+      {
+        editedAt: {
+          type: Date,
+          default: Date.now,
+        },
+        editedBy: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+        },
+        editorName: {
+          type: String,
+        },
+        editorRole: {
+          type: String,
+        },
+        previousAmount: Number,
+        newAmount: Number,
+        previousPaymentMethod: String,
+        newPaymentMethod: String,
+        previousNote: String,
+        newNote: String,
+        previousTransactionDate: Date,
+        newTransactionDate: Date,
+        reason: String,
+        ip: String,
+      },
+    ],
   },
   { timestamps: true }
 );

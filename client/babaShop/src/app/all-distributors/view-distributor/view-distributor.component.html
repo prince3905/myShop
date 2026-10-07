@@ -241,6 +241,71 @@
         </tbody>
       </table>
 
+      <!-- Admin Ledger Correction Modal -->
+      <div *ngIf="editingEntry" class="admin-edit-modal-backdrop">
+        <div class="admin-edit-card">
+          <div class="admin-edit-header">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <mat-icon style="color: #2563eb;">admin_panel_settings</mat-icon>
+              <div>
+                <h4 style="margin: 0; font-size: 16px; font-weight: 700; color: #1e293b;">Admin Ledger Correction</h4>
+                <p style="margin: 0; font-size: 11px; color: #64748b;">Anti-fraud security: Har badlav audit log me save hoga</p>
+              </div>
+            </div>
+            <button mat-icon-button (click)="cancelEditLedger()"><mat-icon>close</mat-icon></button>
+          </div>
+
+          <div class="admin-edit-body">
+            <div class="edit-badge-bar">
+              <span class="badge-chip">Entry: {{ editingEntry.type | uppercase }}</span>
+              <span class="badge-chip">Date: {{ editingEntry.transactionDate | date:'dd/MM/yyyy hh:mm a' }}</span>
+              <span class="badge-chip">Current Amount: ₹{{ editingEntry.amount }}</span>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6">
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Correct Amount (₹)</mat-label>
+                  <input matInput type="number" [(ngModel)]="editAmount" min="0" placeholder="e.g. 5000">
+                </mat-form-field>
+              </div>
+              <div class="col-md-6" *ngIf="editingEntry.type === 'payment'">
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Payment Mode</mat-label>
+                  <mat-select [(ngModel)]="editPaymentMethod">
+                    <mat-option value="CASH">CASH</mat-option>
+                    <mat-option value="BANK">BANK</mat-option>
+                    <mat-option value="ONLINE">ONLINE</mat-option>
+                    <mat-option value="UPI">UPI</mat-option>
+                    <mat-option value="CARD">CARD</mat-option>
+                    <mat-option value="CHEQUE">CHEQUE</mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+            </div>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Note / Narration</mat-label>
+              <input matInput [(ngModel)]="editNote" placeholder="Remarks">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Audit Reason (Required)</mat-label>
+              <input matInput [(ngModel)]="editReason" placeholder="e.g. Galti se 15000 daal diya tha, actual 5000 tha">
+              <mat-hint style="color: #0284c7; font-size: 11px;">⚠️ Ye reason system audit logs me permanent store hoga.</mat-hint>
+            </mat-form-field>
+          </div>
+
+          <div class="admin-edit-actions">
+            <button mat-button (click)="cancelEditLedger()" [disabled]="savingEdit">Cancel</button>
+            <button mat-raised-button color="primary" (click)="saveEditLedger()" [disabled]="savingEdit || !editReason?.trim() || editAmount < 0">
+              <mat-icon>{{ savingEdit ? 'hourglass_top' : 'check_circle' }}</mat-icon>
+              {{ savingEdit ? 'Updating & Recalculating...' : 'Update & Recalculate Balance' }}
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- Ledger History -->
       <div class="section-title">Ledger History</div>
 
@@ -254,12 +319,18 @@
             <th class="right">Debit</th>
             <th class="right">Credit</th>
             <th class="right">Balance</th>
+            <th *ngIf="isAdmin" class="text-center" style="width: 90px;">Action</th>
           </tr>
         </thead>
 
         <tbody>
           <tr *ngFor="let entry of ledger">
-            <td>{{ entry.transactionDate | date: "dd/MM/yyyy hh:mm a" }}</td>
+            <td>
+              {{ entry.transactionDate | date: "dd/MM/yyyy hh:mm a" }}
+              <span *ngIf="entry.editHistory?.length" style="display: block; font-size: 10px; color: #d97706; font-weight: 700;">
+                ✏️ Edited ({{ entry.editHistory.length }})
+              </span>
+            </td>
             <td>{{ entry.type | titlecase }}</td>
             <td>{{ resolvePaymentMethod(entry) | titlecase }}</td>
             <td>{{ entry.note || "-" }}</td>
@@ -281,6 +352,14 @@
               'negative-balance': entry.balanceAfterTransaction < 0
             }">
               ₹ {{ entry.balanceAfterTransaction }}
+            </td>
+            <td *ngIf="isAdmin" class="text-center" style="white-space: nowrap;">
+              <button mat-icon-button color="primary" (click)="startEditLedger(entry)" matTooltip="Edit Entry (Admin Only)" style="width: 32px; height: 32px; line-height: 32px;">
+                <mat-icon style="font-size: 18px; color: #2563eb;">edit</mat-icon>
+              </button>
+              <button mat-icon-button color="warn" (click)="deleteLedgerEntry(entry)" matTooltip="Delete Entry (Admin Only)" style="width: 32px; height: 32px; line-height: 32px;">
+                <mat-icon style="font-size: 18px; color: #ef4444;">delete</mat-icon>
+              </button>
             </td>
           </tr>
         </tbody>
