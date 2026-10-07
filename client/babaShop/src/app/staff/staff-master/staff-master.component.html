@@ -45,17 +45,33 @@
       </div>
     </div>
 
+    <!-- ── Mobile Section Switcher (Only visible on screens <= 992px) ── -->
+    <div class="mobile-section-switcher">
+      <button type="button" class="mobile-switch-btn" [class.active]="mobileSection === 'FORM'" (click)="mobileSection = 'FORM'">
+        <mat-icon>{{ editingStaffId ? 'edit_note' : 'person_add' }}</mat-icon>
+        <span>{{ editingStaffId ? 'Edit Staff' : '📝 Staff Form' }}</span>
+      </button>
+      <button type="button" class="mobile-switch-btn" [class.active]="mobileSection === 'LIST'" (click)="mobileSection = 'LIST'">
+        <mat-icon>groups</mat-icon>
+        <span>📋 Staff List ({{ staffs.length }})</span>
+      </button>
+    </div>
+
     <!-- ── Main Two-Column Layout ── -->
     <div class="staff-layout">
 
       <!-- ── Left: Add/Edit Form + Work Types ── -->
-      <div class="form-panel">
+      <div class="form-panel" [class.mobile-hidden]="mobileSection !== 'FORM'">
         <div class="form-panel-header">
           <mat-icon>{{ editingStaffId ? 'edit_note' : 'person_add' }}</mat-icon>
-          <div>
+          <div style="flex: 1; min-width: 0;">
             <div class="panel-title">{{ getFormTitle() }}</div>
             <div class="panel-sub" *ngIf="editingStaffId">Editing selected staff member</div>
           </div>
+          <button type="button" mat-raised-button color="primary" class="header-save-btn" (click)="submitStaff(staffNgForm)" [disabled]="savingStaff || staffNgForm.invalid">
+            <mat-icon>{{ savingStaff ? 'hourglass_top' : 'save' }}</mat-icon>
+            {{ editingStaffId ? 'Update' : 'Save' }}
+          </button>
         </div>
 
         <form #staffNgForm="ngForm" (ngSubmit)="submitStaff(staffNgForm)" class="staff-form">
@@ -186,7 +202,7 @@
       </div>
 
       <!-- ── Right: Staff List ── -->
-      <div class="list-panel">
+      <div class="list-panel" [class.mobile-hidden]="mobileSection !== 'LIST'">
         <div class="list-panel-header">
           <div class="panel-title">Staff List</div>
           <div class="filter-bar">

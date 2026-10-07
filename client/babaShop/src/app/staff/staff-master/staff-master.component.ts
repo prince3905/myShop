@@ -65,6 +65,7 @@ export class StaffMasterComponent implements OnInit {
   deletingId: string | null = null;
   deletingWorkTypeId: string | null = null;
   userRole: string | null = null;
+  mobileSection: 'FORM' | 'LIST' = 'FORM';
 
   constructor(
     private staffService: StaffService,
@@ -204,7 +205,11 @@ export class StaffMasterComponent implements OnInit {
         this.snackBar.open(response?.message || (this.editingStaffId ? "Staff updated" : "Staff added"), "Close", {
           duration: 2500,
         });
+        const wasEditing = !!this.editingStaffId;
         this.cancelEdit(form);
+        if (wasEditing) {
+          this.mobileSection = 'LIST';
+        }
         this.loadAll();
       },
       error: (error) => {
@@ -250,6 +255,7 @@ export class StaffMasterComponent implements OnInit {
     }
 
     this.editingStaffId = staff._id;
+    this.mobileSection = 'FORM';
     this.staffForm = {
       name: staff.name || "",
       phone: staff.phone || "",

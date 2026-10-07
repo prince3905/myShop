@@ -69,6 +69,7 @@ export class StaffDailyWorkComponent implements OnInit {
   currentUserId: string | null = null;
   currentShopLabel = "-";
   activeTab: 'WORK' | 'KHORAKI' = 'WORK';
+  mobileSection: 'FORM' | 'LIST' = 'FORM';
 
   get defaultKhorakiAmount(): number {
     const status = this.dailyWorkForm.attendanceStatus;
@@ -399,9 +400,13 @@ export class StaffDailyWorkComponent implements OnInit {
           "Close",
           { duration: 2500 },
         );
+        const wasEditing = !!this.editingDailyWorkId;
         this.cancelEdit(form);
         if (payload.isKhorakiIncluded && this.activeTab === 'KHORAKI') {
           this.activeTab = 'KHORAKI';
+        }
+        if (wasEditing) {
+          this.mobileSection = 'LIST';
         }
         this.loadAll();
       },
@@ -418,6 +423,7 @@ export class StaffDailyWorkComponent implements OnInit {
     }
 
     this.editingDailyWorkId = dailyWork._id;
+    this.mobileSection = 'FORM';
     this.dailyWorkForm = {
       staff: dailyWork.staff?._id || dailyWork.staff || "",
       entryDate: this.formatDate(new Date(dailyWork.entryDate)),

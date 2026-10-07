@@ -80,17 +80,33 @@
       </div>
     </div>
 
+    <!-- ── Mobile Section Switcher (Only visible on screens <= 992px) ── -->
+    <div class="mobile-section-switcher">
+      <button type="button" class="mobile-switch-btn" [class.active]="mobileSection === 'FORM'" (click)="mobileSection = 'FORM'">
+        <mat-icon>{{ editingDailyWorkId ? 'edit_note' : 'add_task' }}</mat-icon>
+        <span>{{ editingDailyWorkId ? 'Edit Entry' : '📝 Entry Form' }}</span>
+      </button>
+      <button type="button" class="mobile-switch-btn" [class.active]="mobileSection === 'LIST'" (click)="mobileSection = 'LIST'">
+        <mat-icon>format_list_bulleted</mat-icon>
+        <span>📋 Entries & Details ({{ (activeTab === 'WORK' ? productionWorkList : khorakiList).length }})</span>
+      </button>
+    </div>
+
     <!-- ── Main Two-Column Layout ── -->
     <div class="work-layout">
 
       <!-- ── Left: Add/Edit Form ── -->
-      <div class="form-panel">
+      <div class="form-panel" [class.mobile-hidden]="mobileSection !== 'FORM'">
         <div class="form-panel-header">
           <mat-icon>{{ editingDailyWorkId ? 'edit_note' : 'add_task' }}</mat-icon>
-          <div>
+          <div style="flex: 1; min-width: 0;">
             <div class="panel-title">{{ getFormTitle() }}</div>
             <div class="panel-sub" *ngIf="editingDailyWorkId">Editing selected entry</div>
           </div>
+          <button type="button" mat-raised-button color="primary" class="header-save-btn" (click)="submitDailyWork(dailyWorkNgForm)" [disabled]="savingDailyWork || dailyWorkNgForm.invalid || loadingStaffs || hasMaterialShortage">
+            <mat-icon>{{ savingDailyWork ? 'hourglass_top' : 'save' }}</mat-icon>
+            {{ editingDailyWorkId ? 'Update' : 'Save' }}
+          </button>
           <button type="button" mat-stroked-button class="more-toggle-btn" (click)="showAdvanced = !showAdvanced">
             {{ showAdvanced ? 'Less' : 'More' }}
           </button>
@@ -275,7 +291,7 @@
       </div>
 
       <!-- ── Right: Work Entries List ── -->
-      <div class="list-panel">
+      <div class="list-panel" [class.mobile-hidden]="mobileSection !== 'LIST'">
         <div class="list-panel-header">
           <div class="panel-title">Daily Work Entries</div>
           <div class="filter-bar">
