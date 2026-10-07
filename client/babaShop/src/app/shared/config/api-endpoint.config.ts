@@ -33,12 +33,20 @@ export const isLocalFrontend = (): boolean => {
   );
 };
 
+export const APP_APK_VERSION = "2.1";
+
 export const getStoredApiBaseURL = (): string | null => {
   if (typeof window === "undefined") return null;
 
   try {
     const raw = window.localStorage.getItem(API_OVERRIDE_STORAGE_KEY);
-    return raw ? normalizeApiURL(raw) : null;
+    if (!raw) return null;
+    const trimmed = normalizeApiURL(raw);
+    if (trimmed.includes("example.ngrok") || trimmed.includes("dummy") || !trimmed.startsWith("http")) {
+      window.localStorage.removeItem(API_OVERRIDE_STORAGE_KEY);
+      return null;
+    }
+    return trimmed;
   } catch {
     return null;
   }

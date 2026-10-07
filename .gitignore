@@ -14,3 +14,5 @@ client/babaShop/android/
 server/.env
 *.log
 BabaShop-latest.apk
+BabaShop-*.apk
+!client/babaShop/src/assets/downloads/*.apk

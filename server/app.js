@@ -165,11 +165,17 @@ const clientDistPath = resolveClientDistPath();
 
 // APK Download Route (Must be before /api 404 handler!)
 const handleApkDownload = (req, res) => {
+  const downloadFileName = "BabaShop-v2.1.apk";
   const candidates = [
+    path.join(__dirname, "public", "downloads", "BabaShop-v2.1.apk"),
     path.join(__dirname, "public", "downloads", "BabaShop-latest.apk"),
+    path.join(__dirname, "public", "assets", "downloads", "BabaShop-v2.1.apk"),
     path.join(__dirname, "public", "assets", "downloads", "BabaShop-latest.apk"),
+    path.join(clientDistPath, "assets", "downloads", "BabaShop-v2.1.apk"),
     path.join(clientDistPath, "assets", "downloads", "BabaShop-latest.apk"),
+    path.join(__dirname, "..", "client", "babaShop", "src", "assets", "downloads", "BabaShop-v2.1.apk"),
     path.join(__dirname, "..", "client", "babaShop", "src", "assets", "downloads", "BabaShop-latest.apk"),
+    path.join(__dirname, "..", "BabaShop-v2.1.apk"),
     path.join(__dirname, "..", "BabaShop-latest.apk"),
   ];
 
@@ -178,7 +184,8 @@ const handleApkDownload = (req, res) => {
       res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
       res.setHeader("Pragma", "no-cache");
       res.setHeader("Expires", "0");
-      return res.download(p, "BabaShop-latest.apk");
+      res.setHeader("Content-Type", "application/vnd.android.package-archive");
+      return res.download(p, downloadFileName);
     }
   }
 
@@ -186,7 +193,10 @@ const handleApkDownload = (req, res) => {
 };
 
 app.get("/api/download/apk", handleApkDownload);
+app.get("/downloads/BabaShop-v2.1.apk", handleApkDownload);
 app.get("/downloads/BabaShop-latest.apk", handleApkDownload);
+app.get("/assets/downloads/BabaShop-v2.1.apk", handleApkDownload);
+app.get("/assets/downloads/BabaShop-latest.apk", handleApkDownload);
 
 app.get("/api/health", (req, res) => {
   res.status(200).json({

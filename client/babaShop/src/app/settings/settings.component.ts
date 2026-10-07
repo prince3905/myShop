@@ -211,15 +211,18 @@ export class SettingsComponent implements OnInit {
     return icons[section] || 'settings';
   }
 
+  get apkDownloadUrl(): string {
+    const base = this.activeApiURL ? this.activeApiURL.replace(/\/+$/, '') : '';
+    return `${base}/api/download/apk?v=2.1`;
+  }
+
+  get apkMirrorUrl(): string {
+    const base = this.activeApiURL ? this.activeApiURL.replace(/\/+$/, '') : '';
+    return `${base}/downloads/BabaShop-v2.1.apk`;
+  }
+
   downloadApk(): void {
-    const link = document.createElement("a");
-    link.href = `/api/download/apk?t=${Date.now()}`;
-    link.download = "BabaShop-latest.apk";
-    link.target = "_blank";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    this.snackBar.open("Downloading BabaShop APK...", "OK", { duration: 3000 });
+    this.snackBar.open("Downloading BabaShop v2.1 APK...", "OK", { duration: 3000 });
   }
 
   getAuditIcon(action: string): string {

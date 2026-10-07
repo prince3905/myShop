@@ -43,10 +43,15 @@ if [ ! -f "${APK_SRC}" ]; then
 fi
 
 DEST_PATHS=(
+  "${ROOT_DIR}/BabaShop-v2.1.apk"
   "${ROOT_DIR}/BabaShop-latest.apk"
+  "${ROOT_DIR}/server/public/downloads/BabaShop-v2.1.apk"
   "${ROOT_DIR}/server/public/downloads/BabaShop-latest.apk"
+  "${ROOT_DIR}/server/public/assets/downloads/BabaShop-v2.1.apk"
   "${ROOT_DIR}/server/public/assets/downloads/BabaShop-latest.apk"
+  "${ROOT_DIR}/client/babaShop/src/assets/downloads/BabaShop-v2.1.apk"
   "${ROOT_DIR}/client/babaShop/src/assets/downloads/BabaShop-latest.apk"
+  "${ROOT_DIR}/client/babaShop/dist/assets/downloads/BabaShop-v2.1.apk"
   "${ROOT_DIR}/client/babaShop/dist/assets/downloads/BabaShop-latest.apk"
 )
 
@@ -56,11 +61,11 @@ for dest in "${DEST_PATHS[@]}"; do
   echo "  ✅ Copied to: ${dest}"
 done
 
-APK_SIZE=$(ls -lh "${ROOT_DIR}/BabaShop-latest.apk" | awk '{print $5}')
+APK_SIZE=$(ls -lh "${ROOT_DIR}/BabaShop-v2.1.apk" | awk '{print $5}')
 echo ""
 echo "=========================================="
 echo "🎉 SUCCESS: Latest BabaShop APK generated!"
 echo "📦 File Size: ${APK_SIZE}"
 echo "📅 Date: $(date)"
-echo "📲 Version: v1.2 Latest"
+echo "📲 Version: v2.1 Latest"
 echo "=========================================="
