@@ -54,17 +54,33 @@
       </div>
     </div>
 
+    <!-- ── Mobile Section Switcher (Only visible on screens <= 992px) ── -->
+    <div class="mobile-section-switcher">
+      <button type="button" class="mobile-switch-btn" [class.active]="mobileSection === 'FORM'" (click)="mobileSection = 'FORM'">
+        <mat-icon>{{ editingPaymentId ? 'edit_note' : 'add_card' }}</mat-icon>
+        <span>{{ editingPaymentId ? 'Edit Entry' : '📝 Entry Form' }}</span>
+      </button>
+      <button type="button" class="mobile-switch-btn" [class.active]="mobileSection === 'LIST'" (click)="mobileSection = 'LIST'">
+        <mat-icon>format_list_bulleted</mat-icon>
+        <span>📋 Recent Entries ({{ totalEntriesCount }})</span>
+      </button>
+    </div>
+
     <!-- ── Main Two-Column Layout ── -->
     <div class="payment-layout">
 
       <!-- ── Left: Add/Edit Form ── -->
-      <div class="form-panel">
+      <div class="form-panel" [class.mobile-hidden]="mobileSection !== 'FORM'">
         <div class="form-panel-header">
           <mat-icon>{{ editingPaymentId ? 'edit_note' : 'add_card' }}</mat-icon>
-          <div>
+          <div style="flex: 1; min-width: 0;">
             <div class="panel-title">{{ getFormTitle() }}</div>
             <div class="panel-sub" *ngIf="editingPaymentId">Editing selected entry</div>
           </div>
+          <button type="button" mat-raised-button color="warn" class="header-save-btn" (click)="submitPayment(paymentNgForm)" [disabled]="savingPayment || paymentNgForm.invalid || loadingStaffs">
+            <mat-icon>{{ savingPayment ? 'hourglass_top' : 'save' }}</mat-icon>
+            {{ editingPaymentId ? 'Update' : 'Save' }}
+          </button>
         </div>
 
         <form #paymentNgForm="ngForm" (ngSubmit)="submitPayment(paymentNgForm)" class="payment-form">
@@ -161,7 +177,7 @@
       </div>
 
       <!-- ── Right: Payment Entries List ── -->
-      <div class="list-panel">
+      <div class="list-panel" [class.mobile-hidden]="mobileSection !== 'LIST'">
         <div class="list-panel-header">
           <div class="panel-title">Recent Entries</div>
           <div class="filter-bar">

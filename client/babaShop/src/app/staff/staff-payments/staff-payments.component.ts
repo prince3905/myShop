@@ -53,6 +53,7 @@ export class StaffPaymentsComponent implements OnInit {
   savingPayment = false;
   deletingId: string | null = null;
   userRole: string | null = null;
+  mobileSection: 'FORM' | 'LIST' = 'FORM';
 
   constructor(
     private staffService: StaffService,
@@ -195,7 +196,11 @@ export class StaffPaymentsComponent implements OnInit {
         this.snackBar.open(response?.message || (this.editingPaymentId ? "Entry updated" : "Entry added"), "Close", {
           duration: 2500,
         });
+        const wasEditing = !!this.editingPaymentId;
         this.cancelEdit(form);
+        if (wasEditing) {
+          this.mobileSection = 'LIST';
+        }
         this.loadAll();
       },
       error: (error) => {
@@ -210,6 +215,7 @@ export class StaffPaymentsComponent implements OnInit {
       return;
     }
     this.editingPaymentId = payment._id;
+    this.mobileSection = 'FORM';
     this.paymentForm = {
       staff: payment.staff?._id || "",
       entryDate: this.formatDate(new Date(payment.entryDate)),
