@@ -15,6 +15,9 @@ export PATH="/opt/homebrew/bin:${JAVA_HOME}/bin:${PATH}"
 echo "📍 Using Java Home: ${JAVA_HOME}"
 echo "📍 Using Android SDK: ${ANDROID_HOME}"
 
+# 0. Clean any previous APKs from assets to avoid recursive bundling
+rm -f "${ROOT_DIR}/client/babaShop/src/assets/downloads/"*.apk "${ROOT_DIR}/client/babaShop/dist/assets/downloads/"*.apk "${ROOT_DIR}/client/babaShop/android/app/src/main/assets/public/assets/downloads/"*.apk 2>/dev/null || true
+
 # 1. Build Angular Client (production build)
 echo ""
 echo "📦 Step 1/4: Building Angular production frontend..."
