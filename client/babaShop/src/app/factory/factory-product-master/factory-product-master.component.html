@@ -332,6 +332,10 @@
                 <mat-icon>person</mat-icon>
                 ₹{{ product.workerPieceRate | number: '1.0-2' }}/{{ product.unitLabel }}
               </span>
+              <span class="product-chip history-chip" *ngIf="product.rateHistory?.length" title="Rate History Available">
+                <mat-icon>history</mat-icon>
+                {{ product.rateHistory.length }} {{ product.rateHistory.length === 1 ? 'change' : 'changes' }}
+              </span>
               <span class="product-chip materials">
                 {{ product.standardMaterialLines?.length || 0 }} materials
               </span>
@@ -399,6 +403,62 @@
                 <div class="mat-qty">{{ line.qtyPerUnit | number: '1.0-2' }} {{ line.unitLabel || 'PCS' }}</div>
                 <div class="mat-rate">× ₹{{ line.rate | number: '1.2-2' }}</div>
                 <div class="mat-total">₹{{ (line.qtyPerUnit || 0) * (line.rate || 0) | number: '1.2-2' }}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Rate & Cost Change History Timeline -->
+          <div class="detail-section rate-history-section">
+            <div class="detail-section-title history-title-row">
+              <span class="title-with-icon">
+                <mat-icon class="history-icon">history</mat-icon>
+                Rate & Cost Change History
+              </span>
+              <span class="history-count-badge" *ngIf="selectedProduct.rateHistory?.length">
+                {{ selectedProduct.rateHistory.length }} Record{{ selectedProduct.rateHistory.length > 1 ? 's' : '' }}
+              </span>
+            </div>
+
+            <div class="empty-history" *ngIf="!selectedProduct.rateHistory || selectedProduct.rateHistory.length === 0">
+              <mat-icon>schedule</mat-icon>
+              <span>Is product ka rate change history abhi logged nahi hai (Current Rate: ₹{{ selectedProduct.workerPieceRate }}/{{ selectedProduct.unitLabel }}).</span>
+            </div>
+
+            <div class="rate-history-timeline" *ngIf="selectedProduct.rateHistory && selectedProduct.rateHistory.length > 0">
+              <div class="history-timeline-card" *ngFor="let h of selectedProduct.rateHistory">
+                <div class="timeline-marker"></div>
+                <div class="timeline-body">
+                  <div class="timeline-header">
+                    <div class="rate-pills-row">
+                      <span class="rate-pill worker-pill" *ngIf="h.oldWorkerPieceRate !== undefined && h.newWorkerPieceRate !== undefined && h.oldWorkerPieceRate !== null && h.newWorkerPieceRate !== null">
+                        <mat-icon>engineering</mat-icon>
+                        Worker: ₹{{ h.oldWorkerPieceRate }} ➔ ₹{{ h.newWorkerPieceRate }}
+                      </span>
+                      <span class="rate-pill selling-pill" *ngIf="h.oldDefaultSellingPrice && h.newDefaultSellingPrice && h.oldDefaultSellingPrice !== h.newDefaultSellingPrice">
+                        <mat-icon>sell</mat-icon>
+                        Selling: ₹{{ h.oldDefaultSellingPrice }} ➔ ₹{{ h.newDefaultSellingPrice }}
+                      </span>
+                      <span class="rate-pill cost-pill" *ngIf="h.oldCalculatedCost && h.newCalculatedCost && h.oldCalculatedCost !== h.newCalculatedCost">
+                        <mat-icon>inventory_2</mat-icon>
+                        Box Cost: ₹{{ h.oldCalculatedCost }} ➔ ₹{{ h.newCalculatedCost }}
+                      </span>
+                    </div>
+                    <span class="timeline-date">{{ h.changedAt | date:'medium' }}</span>
+                  </div>
+
+                  <div class="timeline-diff" *ngIf="h.diffSummary">
+                    {{ h.diffSummary }}
+                  </div>
+
+                  <div class="timeline-meta">
+                    <span class="actor-tag">
+                      <mat-icon>person</mat-icon> {{ h.actorName || h.updatedBy?.pFname || h.updatedBy?.email || 'Admin' }}
+                    </span>
+                    <span *ngIf="h.reason && h.reason !== h.diffSummary" class="reason-tag">
+                      · {{ h.reason }}
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

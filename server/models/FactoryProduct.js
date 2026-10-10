@@ -144,9 +144,13 @@ const factoryProductSchema = new mongoose.Schema(
         newWorkerPieceRate: Number,
         oldDefaultSellingPrice: Number,
         newDefaultSellingPrice: Number,
+        oldCalculatedCost: Number,
+        newCalculatedCost: Number,
+        diffSummary: String,
         reason: String,
         changedAt: { type: Date, default: Date.now },
         updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+        actorName: String,
       },
     ],
     active: {
