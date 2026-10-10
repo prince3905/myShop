@@ -383,7 +383,9 @@ export class StaffDailyWorkComponent implements OnInit {
     const payload = {
       ...this.dailyWorkForm,
       earnedAmount: this.earnedAmountPreview,
-      pieceRate: Number(this.selectedFactoryProduct?.workerPieceRate || this.dailyWorkForm.pieceRate || 0),
+      pieceRate: this.editingDailyWorkId
+        ? Number(this.dailyWorkForm.pieceRate ?? this.selectedFactoryProduct?.workerPieceRate ?? 0)
+        : Number(this.selectedFactoryProduct?.workerPieceRate ?? this.dailyWorkForm.pieceRate ?? 0),
       factoryProductName: this.selectedFactoryProduct?.name || this.dailyWorkForm.factoryProductName || "",
       unit: this.selectedFactoryProduct?.unitLabel || this.dailyWorkForm.unit || "PCS",
     };
@@ -614,9 +616,9 @@ export class StaffDailyWorkComponent implements OnInit {
     const size = fp?.variationSize || variation?.attributes?.size;
     if (size) badges.push(`Size: ${size}`);
 
-    const rate = fp?.workerPieceRate || item?.pieceRate;
-    if (Number(rate || 0) > 0) {
-      badges.push(`Worker Rate: ₹${rate}/${fp?.unitLabel || item?.unit || "PCS"}`);
+    const rate = Number(item?.pieceRate ?? fp?.workerPieceRate ?? 0);
+    if (rate > 0) {
+      badges.push(`Worker Rate: ₹${rate}/${item?.unit || fp?.unitLabel || "PCS"}`);
     }
 
     return badges;
@@ -624,7 +626,7 @@ export class StaffDailyWorkComponent implements OnInit {
 
   getFinancialSummary(item: any): any {
     const qty = Number(item?.unitsCompleted || 0);
-    const pieceRate = Number(item?.factoryProduct?.workerPieceRate || item?.pieceRate || 0);
+    const pieceRate = Number(item?.pieceRate ?? item?.factoryProduct?.workerPieceRate ?? 0);
     const workerPay = Number(item?.earnedAmount ?? (qty * pieceRate));
 
     const fp = item?.factoryProduct || {};
