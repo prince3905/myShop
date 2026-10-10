@@ -139,6 +139,8 @@ export class FactoryVerificationComponent implements OnInit {
     this.loading = true;
     this.staffDailyWorkService.getDailyWorks({
       ...this.filters,
+      dateFrom: this.formatDate(this.filters.dateFrom),
+      dateTo: this.formatDate(this.filters.dateTo),
       verificationStatus: this.filters.verificationStatus || "",
     }).subscribe({
       next: (response) => {
@@ -448,5 +450,19 @@ export class FactoryVerificationComponent implements OnInit {
 
   isSameShopPush(row: any): boolean {
     return `${row?.sourceShop?._id || ""}` !== "" && `${row?.sourceShop?._id || ""}` === `${row?.targetShop?._id || ""}`;
+  }
+
+  private formatDate(date: any): string {
+    if (!date) return "";
+    if (typeof date === "string") {
+      const trimmed = date.trim();
+      if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
+    }
+    const d = new Date(date);
+    if (isNaN(d.getTime())) return "";
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
   }
 }

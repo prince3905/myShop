@@ -6,29 +6,40 @@ const Staff = require("../models/Staff");
 const STAFF_ONLY_FILTER = (req) => `${req.user?.role || ""}` === "STAFF";
 const MANAGER_AND_ABOVE = ["SUPER_ADMIN", "ADMIN", "MANAGER"];
 
-const startOfDay = (date) => {
-  const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
-  return d;
+const toDateString = (raw) => {
+  if (!raw) return null;
+  if (typeof raw === "string") {
+    const trimmed = raw.trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
+  }
+  const d = new Date(raw);
+  if (Number.isNaN(d.getTime())) return null;
+  // IST offset is +5:30 (5.5 hours)
+  const istDate = new Date(d.getTime() + 5.5 * 60 * 60 * 1000);
+  return istDate.toISOString().slice(0, 10);
 };
 
-const endOfDay = (date) => {
-  const d = new Date(date);
-  d.setHours(23, 59, 59, 999);
-  return d;
+const startOfDay = (raw) => {
+  const dateStr = toDateString(raw);
+  return dateStr ? new Date(`${dateStr}T00:00:00.000Z`) : null;
+};
+
+const endOfDay = (raw) => {
+  const dateStr = toDateString(raw);
+  return dateStr ? new Date(`${dateStr}T23:59:59.999Z`) : null;
 };
 
 const normalizeDate = (raw) => {
-  const d = raw ? new Date(raw) : new Date();
-  return Number.isNaN(d.getTime()) ? null : d;
+  const dateStr = toDateString(raw) || toDateString(new Date());
+  return dateStr ? new Date(`${dateStr}T00:00:00.000Z`) : new Date();
 };
 
 const normalizeOptionalDate = (raw) => {
   if (raw === undefined || raw === null || `${raw}`.trim() === "") {
     return null;
   }
-  const d = new Date(raw);
-  return Number.isNaN(d.getTime()) ? null : d;
+  const dateStr = toDateString(raw);
+  return dateStr ? new Date(`${dateStr}T00:00:00.000Z`) : null;
 };
 
 const resolveAccessibleStaffIds = async (req) => {
@@ -127,12 +138,12 @@ exports.getStaffPayments = async (req, res) => {
       filter.paymentMethod = `${paymentMethod}`.trim().toUpperCase();
     }
 
-    const from = normalizeOptionalDate(dateFrom);
-    const to = normalizeOptionalDate(dateTo);
+    const from = startOfDay(dateFrom);
+    const to = endOfDay(dateTo);
     if (from || to) {
       filter.entryDate = {};
-      if (from) filter.entryDate.$gte = startOfDay(from);
-      if (to) filter.entryDate.$lte = endOfDay(to);
+      if (from) filter.entryDate.$gte = from;
+      if (to) filter.entryDate.$lte = to;
     }
 
     let staffNameIds = null;

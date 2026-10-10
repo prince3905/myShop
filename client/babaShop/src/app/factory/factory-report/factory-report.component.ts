@@ -58,8 +58,13 @@ export class FactoryReportComponent implements OnInit {
   loadReport(): void {
     this.loading = true;
 
+    const cleanFilters = {
+      ...this.filters,
+      dateFrom: this.formatDate(this.filters.dateFrom),
+      dateTo: this.formatDate(this.filters.dateTo),
+    };
     forkJoin({
-      dailyWorksResponse: this.staffDailyWorkService.getDailyWorks(this.filters),
+      dailyWorksResponse: this.staffDailyWorkService.getDailyWorks(cleanFilters),
       materialsResponse: this.rawMaterialService.getMaterials({ search: this.filters.search }),
     }).subscribe({
       next: ({ dailyWorksResponse, materialsResponse }) => {
@@ -294,5 +299,19 @@ export class FactoryReportComponent implements OnInit {
         };
       })
       .filter((row: any) => !!row);
+  }
+
+  private formatDate(date: any): string {
+    if (!date) return "";
+    if (typeof date === "string") {
+      const trimmed = date.trim();
+      if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
+    }
+    const d = new Date(date);
+    if (isNaN(d.getTime())) return "";
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
   }
 }

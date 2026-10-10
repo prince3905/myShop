@@ -129,8 +129,14 @@ export class StaffPaymentsComponent implements OnInit {
     this.loadingSummary = true;
     this.loadingPayments = true;
 
+    const cleanFilters = {
+      ...this.filters,
+      dateFrom: this.formatDate(this.filters.dateFrom),
+      dateTo: this.formatDate(this.filters.dateTo),
+    };
+
     forkJoin({
-      paymentsResponse: this.staffPaymentService.getPayments(this.filters),
+      paymentsResponse: this.staffPaymentService.getPayments(cleanFilters),
       dailyWorksResponse: this.staffDailyWorkService.getDailyWorks({}),
     }).subscribe({
       next: ({ paymentsResponse, dailyWorksResponse }) => {
@@ -186,9 +192,13 @@ export class StaffPaymentsComponent implements OnInit {
     }
 
     this.savingPayment = true;
+    const payload = {
+      ...this.paymentForm,
+      entryDate: this.formatDate(this.paymentForm.entryDate),
+    };
     const request$ = this.editingPaymentId
-      ? this.staffPaymentService.updatePayment(this.editingPaymentId, this.paymentForm)
-      : this.staffPaymentService.createPayment(this.paymentForm);
+      ? this.staffPaymentService.updatePayment(this.editingPaymentId, payload)
+      : this.staffPaymentService.createPayment(payload);
 
     request$.subscribe({
       next: (response) => {
@@ -325,8 +335,18 @@ export class StaffPaymentsComponent implements OnInit {
     this.paymentForm.amount = this.suggestedAmount > 0 ? this.suggestedAmount : null;
   }
 
-  private formatDate(date: Date): string {
-    return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+  private formatDate(date: any): string {
+    if (!date) return "";
+    if (typeof date === "string") {
+      const trimmed = date.trim();
+      if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
+    }
+    const d = new Date(date);
+    if (isNaN(d.getTime())) return "";
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
   }
 
   private showError(message: string): void {

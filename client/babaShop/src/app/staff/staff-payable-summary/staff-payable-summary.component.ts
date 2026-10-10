@@ -73,10 +73,15 @@ export class StaffPayableSummaryComponent implements OnInit {
 
   loadReport(): void {
     this.loading = true;
+    const cleanFilters = {
+      ...this.filters,
+      dateFrom: this.formatDate(this.filters.dateFrom),
+      dateTo: this.formatDate(this.filters.dateTo),
+    };
     forkJoin({
       staffResponse: this.staffService.getStaffOptions({ search: this.filters.search }),
-      dailyWorkResponse: this.staffDailyWorkService.getDailyWorks(this.filters),
-      paymentResponse: this.staffPaymentService.getPayments(this.filters),
+      dailyWorkResponse: this.staffDailyWorkService.getDailyWorks(cleanFilters),
+      paymentResponse: this.staffPaymentService.getPayments(cleanFilters),
     }).subscribe({
       next: ({ staffResponse, dailyWorkResponse, paymentResponse }) => {
         const staffs = staffResponse?.staffs || [];
@@ -214,7 +219,17 @@ export class StaffPayableSummaryComponent implements OnInit {
     return `${item?.staffId || "row"}-${index}`;
   }
 
-  private formatDate(date: Date): string {
-    return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+  private formatDate(date: any): string {
+    if (!date) return "";
+    if (typeof date === "string") {
+      const trimmed = date.trim();
+      if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
+    }
+    const d = new Date(date);
+    if (isNaN(d.getTime())) return "";
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
   }
 }

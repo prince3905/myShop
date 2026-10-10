@@ -252,7 +252,12 @@ export class StaffDailyWorkComponent implements OnInit {
   loadDailyWorks(updateAll: boolean = true): void {
     this.loadingSummary = true;
     this.loadingDailyWorks = true;
-    this.staffDailyWorkService.getDailyWorks(this.filters).subscribe({
+    const cleanFilters = {
+      ...this.filters,
+      dateFrom: this.formatDate(this.filters.dateFrom),
+      dateTo: this.formatDate(this.filters.dateTo),
+    };
+    this.staffDailyWorkService.getDailyWorks(cleanFilters).subscribe({
       next: (response) => {
         this.dailyWorks = response?.dailyWorks || [];
         if (updateAll || !this.allDailyWorks.length) {
@@ -382,6 +387,7 @@ export class StaffDailyWorkComponent implements OnInit {
     this.savingDailyWork = true;
     const payload = {
       ...this.dailyWorkForm,
+      entryDate: this.formatDate(this.dailyWorkForm.entryDate),
       earnedAmount: this.earnedAmountPreview,
       pieceRate: this.editingDailyWorkId
         ? Number(this.dailyWorkForm.pieceRate ?? this.selectedFactoryProduct?.workerPieceRate ?? 0)
@@ -787,7 +793,7 @@ export class StaffDailyWorkComponent implements OnInit {
     const payload = {
       khorakiAmount: Number(this.quickEditForm.khorakiAmount || 0),
       attendanceStatus: this.quickEditForm.attendanceStatus,
-      entryDate: this.quickEditForm.entryDate,
+      entryDate: this.formatDate(this.quickEditForm.entryDate),
       factoryProduct: this.quickEditForm.factoryProduct || null,
       note: this.quickEditForm.note,
     };
@@ -842,8 +848,18 @@ export class StaffDailyWorkComponent implements OnInit {
     return `${item?._id || item?.label || "row"}-${index}`;
   }
 
-  private formatDate(date: Date): string {
-    return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+  private formatDate(date: any): string {
+    if (!date) return "";
+    if (typeof date === "string") {
+      const trimmed = date.trim();
+      if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
+    }
+    const d = new Date(date);
+    if (isNaN(d.getTime())) return "";
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
   }
 
   private showError(message: string): void {
