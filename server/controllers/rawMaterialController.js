@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const logger = require("../utils/logger");
 const RawMaterial = require("../models/RawMaterial");
 const RawMaterialPurchase = require("../models/RawMaterialPurchase");
