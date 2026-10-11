@@ -343,20 +343,57 @@ exports.getRawMaterialHistory = async (req, res) => {
       return res.status(400).json({ success: false, message: "Please select a shop first" });
     }
 
-    const material = await RawMaterial.findOne({
-      _id: req.params.id,
-      shop: req.shopId,
-      isDeleted: { $ne: true },
-    }).lean();
+    const isAll = `${req.params.id || ""}`.trim().toUpperCase() === "ALL";
 
-    if (!material) {
-      return res.status(404).json({ success: false, message: "Raw material not found" });
+    let material = null;
+    let materialFilter = null;
+    const allMaterialsMap = new Map();
+
+    if (isAll) {
+      const allMaterials = await RawMaterial.find({
+        shop: req.shopId,
+        isDeleted: { $ne: true },
+      }).lean();
+
+      allMaterials.forEach((m) => allMaterialsMap.set(String(m._id), m));
+      const allIds = allMaterials.map((m) => m._id);
+
+      const totalBalance = allMaterials.reduce((sum, m) => sum + Number(m.currentBalanceQty || 0), 0);
+      const totalOpening = allMaterials.reduce((sum, m) => sum + Number(m.openingQty || 0), 0);
+
+      material = {
+        _id: "ALL",
+        name: "Sabhi Chadra / All Materials (सभी सामान)",
+        code: "ALL",
+        unitLabel: "PCS",
+        currentBalanceQty: totalBalance,
+        openingQty: totalOpening,
+        currentRate: 0,
+      };
+      materialFilter = { $in: allIds };
+    } else {
+      if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+        return res.status(400).json({ success: false, message: "Invalid raw material ID" });
+      }
+
+      material = await RawMaterial.findOne({
+        _id: req.params.id,
+        shop: req.shopId,
+        isDeleted: { $ne: true },
+      }).lean();
+
+      if (!material) {
+        return res.status(404).json({ success: false, message: "Raw material not found" });
+      }
+
+      allMaterialsMap.set(String(material._id), material);
+      materialFilter = material._id;
     }
 
     const [purchases, dailyWorks] = await Promise.all([
       RawMaterialPurchase.find({
         ...buildMovementMatch(req),
-        "items.rawMaterial": material._id,
+        "items.rawMaterial": materialFilter,
       })
         .sort({ purchaseDate: -1, createdAt: -1 })
         .populate("distributor", "name phone shopName")
@@ -380,22 +417,34 @@ exports.getRawMaterialHistory = async (req, res) => {
     const history = [];
     for (const purchase of purchases || []) {
       for (const item of purchase?.items || []) {
-        if (`${item?.rawMaterial || ""}` !== `${material._id}`) {
-          continue;
+        const itemMatId = `${item?.rawMaterial || ""}`;
+        if (isAll) {
+          if (!allMaterialsMap.has(itemMatId)) {
+            continue;
+          }
+        } else {
+          if (itemMatId !== `${material._id}`) {
+            continue;
+          }
         }
+        const refMat = allMaterialsMap.get(itemMatId) || material;
+
         history.push({
           purchaseId: purchase._id,
           invoiceNo: purchase.invoiceNo || "",
           purchaseDate: purchase.purchaseDate,
           distributor: purchase.distributor || null,
           status: purchase.status,
+          materialId: refMat._id,
+          materialName: refMat.name || "",
+          materialCode: refMat.code || "",
           orderedQty: Number(item?.orderedQty || 0),
           receivedQty: Number(item?.receivedQty || 0),
           sizeLabel: item?.sizeLabel || "",
           colorLabel: item?.colorLabel || "",
           rate: Number(item?.rate || 0),
           totalAmount: Number(item?.totalAmount || 0),
-          unitLabel: item?.unitLabel || material.unitLabel || "PCS",
+          unitLabel: item?.unitLabel || refMat.unitLabel || "PCS",
           note: item?.note || purchase?.note || "",
           createdBy: purchase.createdBy || null,
           approvedAt: purchase.approvedAt || null,
@@ -412,9 +461,17 @@ exports.getRawMaterialHistory = async (req, res) => {
       }
 
       for (const line of row?.factoryProduct?.standardMaterialLines || []) {
-        if (`${line?.rawMaterial || ""}` !== `${material._id}`) {
-          continue;
+        const lineMatId = `${line?.rawMaterial || ""}`;
+        if (isAll) {
+          if (!allMaterialsMap.has(lineMatId)) {
+            continue;
+          }
+        } else {
+          if (lineMatId !== `${material._id}`) {
+            continue;
+          }
         }
+        const refMat = allMaterialsMap.get(lineMatId) || material;
 
         const usedQty = Number(line?.qtyPerUnit || 0) * unitsCompleted;
         if (usedQty <= 0) {
@@ -424,10 +481,13 @@ exports.getRawMaterialHistory = async (req, res) => {
         usageHistory.push({
           entryDate: row.entryDate,
           staff: row.staff || null,
+          materialId: refMat._id,
+          materialName: refMat.name || "",
+          materialCode: refMat.code || "",
           factoryProductName: row.factoryProductName || row?.factoryProduct?.name || "",
           unitsCompleted,
           usedQty,
-          unitLabel: line?.unitLabel || material.unitLabel || "PCS",
+          unitLabel: line?.unitLabel || refMat.unitLabel || "PCS",
           rate: Number(line?.rate || 0),
           totalValue: usedQty * Number(line?.rate || 0),
           wasteQty:
@@ -485,7 +545,34 @@ exports.getRawMaterialHistory = async (req, res) => {
     const openingQty = Number(material.openingQty || 0);
 
     // 1. Initial Opening Stock (if defined)
-    if (openingQty > 0) {
+    if (isAll) {
+      for (const m of allMaterialsMap.values()) {
+        const oQty = Number(m.openingQty || 0);
+        if (oQty > 0) {
+          ledgerEvents.push({
+            date: m.createdAt,
+            type: "OPENING",
+            source: "OPENING",
+            refNo: `OPENING-${m.code || "STOCK"}`,
+            partyOrWorker: "Opening Balance",
+            description: `Initial stock: ${m.name}`,
+            materialId: m._id,
+            materialName: m.name || "",
+            materialCode: m.code || "",
+            productName: "",
+            unitsProduced: 0,
+            qtyIn: oQty,
+            qtyOut: 0,
+            rate: Number(m.currentRate || 0),
+            totalAmount: oQty * Number(m.currentRate || 0),
+            wasteQty: 0,
+            unitLabel: m.unitLabel || "PCS",
+            timestamp: new Date(m.createdAt).getTime(),
+            sortOrder: 0,
+          });
+        }
+      }
+    } else if (openingQty > 0) {
       ledgerEvents.push({
         date: material.createdAt,
         type: "OPENING",
@@ -493,6 +580,9 @@ exports.getRawMaterialHistory = async (req, res) => {
         refNo: "OPENING-STOCK",
         partyOrWorker: "Opening Balance",
         description: "Initial physical stock balance recorded",
+        materialId: material._id,
+        materialName: material.name || "",
+        materialCode: material.code || "",
         productName: "",
         unitsProduced: 0,
         qtyIn: openingQty,
@@ -515,7 +605,10 @@ exports.getRawMaterialHistory = async (req, res) => {
         source: "PURCHASE",
         refNo: row.invoiceNo || "-",
         partyOrWorker: row.distributor?.name || "Supplier",
-        description: `Purchased via Invoice #${row.invoiceNo || "-"}`,
+        description: isAll ? `${row.materialName} — Invoice #${row.invoiceNo || "-"}` : `Purchased via Invoice #${row.invoiceNo || "-"}`,
+        materialId: row.materialId,
+        materialName: row.materialName,
+        materialCode: row.materialCode,
         productName: "",
         unitsProduced: 0,
         qtyIn: Number(row.receivedQty || 0),
@@ -537,7 +630,10 @@ exports.getRawMaterialHistory = async (req, res) => {
         source: "PRODUCTION",
         refNo: row.factoryProductName || "Factory Work",
         partyOrWorker: row.staff?.name || "Worker",
-        description: `Used in ${row.unitsCompleted} Pcs ${row.factoryProductName || "Item"}`,
+        description: isAll ? `${row.materialName} — Used in ${row.unitsCompleted} Pcs ${row.factoryProductName || "Item"}` : `Used in ${row.unitsCompleted} Pcs ${row.factoryProductName || "Item"}`,
+        materialId: row.materialId,
+        materialName: row.materialName,
+        materialCode: row.materialCode,
         productName: row.factoryProductName || "",
         unitsProduced: Number(row.unitsCompleted || 0),
         qtyIn: 0,
@@ -570,7 +666,9 @@ exports.getRawMaterialHistory = async (req, res) => {
     const totalInward = Number((summary.totalReceivedQty + openingQty).toFixed(2));
     const totalOutward = Number(usageSummary.totalUsedQty.toFixed(2));
     const effectiveRate = Number(material.currentRate || summary.lastRate || averageRate || 0);
-    const stockValue = Number((currentBalance * effectiveRate).toFixed(2));
+    const stockValue = isAll
+      ? Number(Array.from(allMaterialsMap.values()).reduce((sum, m) => sum + (Number(m.currentBalanceQty || 0) * Number(m.currentRate || 0)), 0).toFixed(2))
+      : Number((currentBalance * effectiveRate).toFixed(2));
 
     return res.json({
       success: true,

@@ -449,6 +449,10 @@ export class RawMaterialRegisterComponent implements OnInit {
     return tata40 ? tata40._id : this.materials[0]._id;
   }
 
+  get totalAllMaterialsStock(): number {
+    return (this.materials || []).reduce((sum: number, m: any) => sum + Number(m.currentBalanceQty || 0), 0);
+  }
+
   openPassbookForMaterial(material: any): void {
     if (!material?._id) return;
     this.switchTab("PASSBOOK", material._id);

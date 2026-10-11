@@ -497,6 +497,10 @@
             <label class="pcc-field-label">Select Sheet / Chadra (सामान चुनें)</label>
             <mat-form-field appearance="outline" class="full-width pcc-mat-field">
               <mat-select [(ngModel)]="passbookMaterialId" (selectionChange)="onPassbookMaterialChange()" [disabled]="loadingPassbook">
+                <mat-option value="ALL">
+                  <strong style="color: #2563eb;">🌟 Sabhi Chadra / All Sheets (सभी सामान)</strong>
+                  <span class="pcc-opt-bal" *ngIf="totalAllMaterialsStock > 0"> (Total Stock: {{ totalAllMaterialsStock | number: '1.0-1' }} PCS)</span>
+                </mat-option>
                 <mat-option *ngFor="let m of materials" [value]="m._id">
                   <strong>{{ m.name }}</strong>
                   <span class="pcc-opt-meta" *ngIf="m.code || m.sizeLabel"> — {{ m.code }} {{ m.sizeLabel }}</span>
@@ -688,6 +692,11 @@
                   <div class="cell-desc-title">
                     <mat-icon class="inline-desc-icon">{{ row.type === 'INWARD' ? 'receipt' : 'build' }}</mat-icon>
                     <span>{{ row.description }}</span>
+                  </div>
+                  <div class="cell-desc-meta" *ngIf="passbookMaterialId === 'ALL' && row.materialName">
+                    <span style="display: inline-block; padding: 2px 8px; font-size: 11px; font-weight: 600; border-radius: 4px; background: #e0e7ff; color: #3730a3; margin-top: 3px;">
+                      📄 {{ row.materialName }}
+                    </span>
                   </div>
                   <div class="cell-desc-meta" *ngIf="row.refNo && row.refNo !== '-'">
                     Ref: #{{ row.refNo }}
