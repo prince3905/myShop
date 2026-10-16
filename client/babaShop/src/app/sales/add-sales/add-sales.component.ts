@@ -198,7 +198,8 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
   loadQuickAddItems(): void {
     this.variationService.getVariations({ isQuickAdd: true }).subscribe({
       next: (res: any) => {
-        this.quickAddItems = res?.data || res || [];
+        const raw = res?.data || res || [];
+        this.quickAddItems = this.sortVariationsInStockAlphabetical(raw);
       },
       error: () => {
         this.quickAddItems = [];
@@ -365,7 +366,15 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
   selectSuggestion(suggestion: any): void {
     const productName = `${suggestion?.name || suggestion?.label || suggestion || ""}`.trim();
     this.itemName = productName;
-    this.selectedItemModels = Array.isArray(suggestion?.models) ? suggestion.models : [];
+    const rawModels = Array.isArray(suggestion?.models) ? suggestion.models : [];
+    this.selectedItemModels = [...rawModels].sort((a: any, b: any) => {
+      const stockA = (a.variations || []).reduce((s: number, v: any) => s + Number(v.quantity || 0), 0);
+      const stockB = (b.variations || []).reduce((s: number, v: any) => s + Number(v.quantity || 0), 0);
+      const hasA = stockA > 0 ? 1 : 0;
+      const hasB = stockB > 0 ? 1 : 0;
+      if (hasA !== hasB) return hasB - hasA;
+      return `${a.name || a.model || ""}`.localeCompare(`${b.name || b.model || ""}`);
+    });
     this.selectedModel = "";
     this.selectedVariation = "";
     this.selectedModelVariations = [];
@@ -520,7 +529,8 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
       return modelName === this.selectedModel || modelId === this.selectedModel;
     });
     if (selectedModelObject) {
-      this.selectedModelVariations = Array.isArray(selectedModelObject.variations) ? selectedModelObject.variations : [];
+      const rawVars = Array.isArray(selectedModelObject.variations) ? selectedModelObject.variations : [];
+      this.selectedModelVariations = this.sortVariationsInStockAlphabetical(rawVars);
       this.model = `${selectedModelObject?.model || selectedModelObject?.name || this.selectedModel}`;
       if (this.selectedModelVariations.length === 1) {
         const onlyVariation = this.selectedModelVariations[0];
@@ -1746,7 +1756,8 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
       )
       .subscribe({
         next: (response: any) => {
-          this.suggestions = Array.isArray(response?.data) ? response.data : [];
+          const list = Array.isArray(response?.data) ? response.data : [];
+          this.suggestions = this.sortSuggestionsInStockAlphabetical(list);
           this.activeSuggestionIndex = this.suggestions.length ? 0 : -1;
           this.itemSearchLoading = false;
         },
@@ -1782,5 +1793,37 @@ export class AddSalesComponent implements OnInit, AfterViewInit, OnDestroy {
           this.cus_full_suggestions = [];
         },
       });
+  }
+
+  private sortVariationsInStockAlphabetical(list: any[]): any[] {
+    return [...(list || [])].sort((a: any, b: any) => {
+      const qtyA = Number(a?.quantity ?? a?.stock ?? 0);
+      const qtyB = Number(b?.quantity ?? b?.stock ?? 0);
+      const hasA = qtyA > 0 ? 1 : 0;
+      const hasB = qtyB > 0 ? 1 : 0;
+      if (hasA !== hasB) return hasB - hasA;
+      const nameA = `${a?.sku || a?.orderNumber || a?.size || a?.name || ""}`.trim().toLowerCase();
+      const nameB = `${b?.sku || b?.orderNumber || b?.size || b?.name || ""}`.trim().toLowerCase();
+      return nameA.localeCompare(nameB);
+    });
+  }
+
+  private sortSuggestionsInStockAlphabetical(list: any[]): any[] {
+    return [...(list || [])].sort((a: any, b: any) => {
+      const stockA = (a?.models || []).reduce(
+        (acc: number, m: any) => acc + (m.variations || []).reduce((s: number, v: any) => s + Number(v.quantity || 0), 0),
+        0
+      );
+      const stockB = (b?.models || []).reduce(
+        (acc: number, m: any) => acc + (m.variations || []).reduce((s: number, v: any) => s + Number(v.quantity || 0), 0),
+        0
+      );
+      const hasA = stockA > 0 ? 1 : 0;
+      const hasB = stockB > 0 ? 1 : 0;
+      if (hasA !== hasB) return hasB - hasA;
+      const nameA = `${a?.name || a?.label || ""}`.trim().toLowerCase();
+      const nameB = `${b?.name || b?.label || ""}`.trim().toLowerCase();
+      return nameA.localeCompare(nameB);
+    });
   }
 }

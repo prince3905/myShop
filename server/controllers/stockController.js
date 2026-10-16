@@ -209,6 +209,20 @@ exports.getStockReport = async (req, res) => {
       };
     });
 
+    // Default sorting: In-stock (> 0) items first, then Alphabetical (A-Z) by Product Name / SKU
+    rowsWithAvailable.sort((a, b) => {
+      const qtyA = Number(a.quantity || a.availableQuantity || 0);
+      const qtyB = Number(b.quantity || b.availableQuantity || 0);
+      const hasA = qtyA > 0 ? 1 : 0;
+      const hasB = qtyB > 0 ? 1 : 0;
+      if (hasA !== hasB) return hasB - hasA; // >0 comes first
+      const nameA = `${a.product?.name || a.sku || ""}`.trim().toLowerCase();
+      const nameB = `${b.product?.name || b.sku || ""}`.trim().toLowerCase();
+      const cmp = nameA.localeCompare(nameB);
+      if (cmp !== 0) return cmp;
+      return `${a.sku || ""}`.localeCompare(`${b.sku || ""}`);
+    });
+
     const aggregateMatch = { ...query };
     if (
       aggregateMatch.shop &&
@@ -478,6 +492,24 @@ exports.transferStockBetweenShops = async (req, res) => {
         message: "A stock transfer for this product is currently processing. Please wait a moment.",
       });
     }
+
+    // 10-second Duplicate Cooldown Protection (prevents rapid double-clicks from deducting twice)
+    const recentDuplicateTx = await StockTransaction.findOne({
+      shop: fromShopId,
+      referenceId: targetShopId,
+      variation: sourceVariation._id,
+      quantity: qty,
+      type: "OUT",
+      referenceType: "TRANSFER",
+      createdAt: { $gte: new Date(Date.now() - 10000) },
+    });
+    if (recentDuplicateTx) {
+      return res.status(429).json({
+        success: false,
+        message: "Duplicate transfer detected within 10 seconds. Please wait before submitting again.",
+      });
+    }
+
     activeTransferLocks.add(lockKey);
 
     const [sourceShop, targetShop] = await Promise.all([
@@ -707,6 +739,79 @@ exports.startReconciliation = async (req, res) => {
       monthKey,
     }).populate("createdBy submittedBy approvedBy", "email role");
     if (existing) {
+      if (existing.status === "DRAFT") {
+        const stockRows = await Stock.find({ shop: req.shopId })
+          .populate("product", "name")
+          .populate("model", "name")
+          .populate("variation", "sku")
+          .sort({ sku: 1 });
+
+        const stockMap = new Map();
+        stockRows.forEach((r) => {
+          const varId = (r.variation?._id || r.variation)?.toString();
+          if (varId) stockMap.set(varId, r);
+        });
+
+        const existingVarIds = new Set();
+        existing.lines = (existing.lines || []).map((line) => {
+          const varId = line.variation?.toString();
+          existingVarIds.add(varId);
+          const liveStock = stockMap.get(varId);
+          const currentSystemQty = liveStock ? Number(liveStock.quantity || 0) : 0;
+          // If the line was untouched (countedQty equal to old systemQty or no note), update countedQty too so variance stays 0
+          if (!line.note && (Number(line.countedQty || 0) === Number(line.systemQty || 0) || Number(line.countedQty || 0) === 0)) {
+            line.countedQty = currentSystemQty;
+          }
+          line.systemQty = currentSystemQty;
+          line.varianceQty = Number(line.countedQty || 0) - currentSystemQty;
+          return line;
+        });
+
+        // Add any newly created products/variations missing from draft
+        stockRows.forEach((row) => {
+          const varId = (row.variation?._id || row.variation)?.toString();
+          if (varId && !existingVarIds.has(varId)) {
+            const systemQty = Number(row.quantity || 0);
+            existing.lines.push({
+              variation: row.variation?._id || row.variation,
+              product: row.product?._id || row.product,
+              model: row.model?._id || row.model,
+              sku: row.sku || row?.variation?.sku || "-",
+              productName: row?.product?.name || "",
+              modelName: row?.model?.name || "",
+              systemQty,
+              countedQty: systemQty,
+              varianceQty: 0,
+              note: "",
+            });
+          }
+        });
+
+        existing.lines.sort((a, b) => {
+          const qtyA = Number(a.systemQty || 0);
+          const qtyB = Number(b.systemQty || 0);
+          const hasA = qtyA > 0 ? 1 : 0;
+          const hasB = qtyB > 0 ? 1 : 0;
+          if (hasA !== hasB) return hasB - hasA;
+          const nameA = `${a.productName || a.sku || ""}`.trim().toLowerCase();
+          const nameB = `${b.productName || b.sku || ""}`.trim().toLowerCase();
+          const cmp = nameA.localeCompare(nameB);
+          if (cmp !== 0) return cmp;
+          return `${a.sku || ""}`.localeCompare(`${b.sku || ""}`);
+        });
+
+        existing.summary = buildSummary(existing.lines);
+        existing.markModified("lines");
+        existing.markModified("summary");
+        await existing.save();
+
+        return res.status(200).json({
+          success: true,
+          message: "Reconciliation draft refreshed with live stock",
+          data: existing,
+        });
+      }
+
       return res.status(200).json({
         success: true,
         message: "Reconciliation already exists",
@@ -717,8 +822,7 @@ exports.startReconciliation = async (req, res) => {
     const stockRows = await Stock.find({ shop: req.shopId })
       .populate("product", "name")
       .populate("model", "name")
-      .populate("variation", "sku")
-      .sort({ sku: 1 });
+      .populate("variation", "sku");
 
     const lines = stockRows.map((row) => {
       const systemQty = Number(row?.quantity || 0);
@@ -734,6 +838,19 @@ exports.startReconciliation = async (req, res) => {
         varianceQty: 0,
         note: "",
       };
+    });
+
+    lines.sort((a, b) => {
+      const qtyA = Number(a.systemQty || 0);
+      const qtyB = Number(b.systemQty || 0);
+      const hasA = qtyA > 0 ? 1 : 0;
+      const hasB = qtyB > 0 ? 1 : 0;
+      if (hasA !== hasB) return hasB - hasA;
+      const nameA = `${a.productName || a.sku || ""}`.trim().toLowerCase();
+      const nameB = `${b.productName || b.sku || ""}`.trim().toLowerCase();
+      const cmp = nameA.localeCompare(nameB);
+      if (cmp !== 0) return cmp;
+      return `${a.sku || ""}`.localeCompare(`${b.sku || ""}`);
     });
 
     const reconciliation = await StockReconciliation.create({

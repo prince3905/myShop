@@ -90,7 +90,15 @@ export class AddDetailsComponent implements OnInit {
   loadAllShopVariations() {
     this.variationService.getVariations({ limit: 1000 }).subscribe({
       next: (res: any) => {
-        this.allShopVariations = Array.isArray(res?.data) ? res.data : [];
+        const fetched = Array.isArray(res?.data) ? res.data : [];
+        this.allShopVariations = fetched.sort((a: any, b: any) => {
+          const qA = Number(a?.quantity || 0);
+          const qB = Number(b?.quantity || 0);
+          const hasA = qA > 0 ? 1 : 0;
+          const hasB = qB > 0 ? 1 : 0;
+          if (hasA !== hasB) return hasB - hasA;
+          return `${a?.sku || ""}`.localeCompare(`${b?.sku || ""}`);
+        });
       },
       error: () => {},
     });
@@ -148,6 +156,14 @@ export class AddDetailsComponent implements OnInit {
     this.variationService.getVariations(params).subscribe({
       next: (res: any) => {
         const fetched = Array.isArray(res?.data) ? res.data : [];
+        fetched.sort((a: any, b: any) => {
+          const qA = Number(a?.quantity || 0);
+          const qB = Number(b?.quantity || 0);
+          const hasA = qA > 0 ? 1 : 0;
+          const hasB = qB > 0 ? 1 : 0;
+          if (hasA !== hasB) return hasB - hasA;
+          return `${a?.sku || ""}`.localeCompare(`${b?.sku || ""}`);
+        });
         if (updateAll || !this.allVariations.length) {
           this.allVariations = [...fetched];
         }

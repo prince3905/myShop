@@ -100,7 +100,26 @@ const groupVariationsByModel = (variations = [], req = null) => {
     });
   }
 
-  return Array.from(grouped.values());
+  const result = Array.from(grouped.values());
+
+  // Sort variations inside each model: in-stock (>0) first, then Alphabetical A-Z
+  for (const m of result) {
+    m.variations.sort((a, b) => {
+      const qtyA = Number(a?.quantity || 0);
+      const qtyB = Number(b?.quantity || 0);
+      const hasA = qtyA > 0 ? 1 : 0;
+      const hasB = qtyB > 0 ? 1 : 0;
+      if (hasA !== hasB) return hasB - hasA;
+      const labelA = `${a?.size || a?.orderNumber || a?.sku || ""}`.trim().toLowerCase();
+      const labelB = `${b?.size || b?.orderNumber || b?.sku || ""}`.trim().toLowerCase();
+      return labelA.localeCompare(labelB);
+    });
+  }
+
+  // Sort models alphabetically A-Z
+  result.sort((a, b) => `${a.name || ""}`.localeCompare(`${b.name || ""}`));
+
+  return result;
 };
 
 const mapProductForPosSearch = (productDoc, matchedBy = [], req = null) => ({
@@ -366,11 +385,8 @@ exports.getProducts = async (req, res) => {
       ? Number(skip || 0)
       : Math.max(0, (Number(page || 1) - 1) * resolvedLimit);
 
-    const totalItems = await Product.countDocuments(query);
-
-    let productQuery = Product.find(query)
+    const products = await Product.find(query)
       .select("name icon brand category createdAt")
-      .sort(sort)
       .populate("brand", "name")
       .populate("category", "name icon")
       .populate({
@@ -383,24 +399,46 @@ exports.getProducts = async (req, res) => {
       })
       .lean({ virtuals: true });
 
-    if (resolvedLimit) {
-      productQuery = productQuery.limit(resolvedLimit);
-    }
+    const totalItems = products.length;
 
-    if (resolvedSkip) {
-      productQuery = productQuery.skip(resolvedSkip);
-    }
+    const safeProducts = products.map((product) => {
+      const sanitized = sanitizeProductPricing(product, req);
+      if (Array.isArray(sanitized?.variations)) {
+        sanitized.variations.sort((a, b) => {
+          const qtyA = Number(a?.quantity || 0);
+          const qtyB = Number(b?.quantity || 0);
+          const hasA = qtyA > 0 ? 1 : 0;
+          const hasB = qtyB > 0 ? 1 : 0;
+          if (hasA !== hasB) return hasB - hasA;
+          const labelA = `${a?.sku || a?.attributes?.size || ""}`.trim().toLowerCase();
+          const labelB = `${b?.sku || b?.attributes?.size || ""}`.trim().toLowerCase();
+          return labelA.localeCompare(labelB);
+        });
+      }
+      return sanitized;
+    });
 
-    const products = await productQuery;
-    const safeProducts = products.map((product) => sanitizeProductPricing(product, req));
+    // Sort products: products with stock > 0 first, then Alphabetical A-Z by name. 0 stock products at the end, also Alphabetical A-Z.
+    safeProducts.sort((a, b) => {
+      const stockA = (a.variations || []).reduce((sum, v) => sum + Number(v.quantity || 0), 0);
+      const stockB = (b.variations || []).reduce((sum, v) => sum + Number(v.quantity || 0), 0);
+      const hasA = stockA > 0 ? 1 : 0;
+      const hasB = stockB > 0 ? 1 : 0;
+      if (hasA !== hasB) return hasB - hasA;
+      return `${a.name || ""}`.trim().localeCompare(`${b.name || ""}`.trim(), undefined, { sensitivity: "base" });
+    });
+
+    const paginatedProducts = resolvedLimit
+      ? safeProducts.slice(resolvedSkip, resolvedSkip + resolvedLimit)
+      : safeProducts;
 
     res.json({
       success: true,
-      count: safeProducts.length,
+      count: paginatedProducts.length,
       totalItems,
       page: Number(page || 1),
       perPage: resolvedLimit || totalItems,
-      data: safeProducts,
+      data: paginatedProducts,
     });
   } catch (error) {
     res.status(500).json({
@@ -531,6 +569,21 @@ exports.searchProductsForPos = async (req, res) => {
     }
 
     const rows = products.map((product) => mapProductForPosSearch(product, [], req));
+
+    rows.sort((a, b) => {
+      const stockA = (a.models || []).reduce(
+        (acc, m) => acc + (m.variations || []).reduce((s, v) => s + Number(v.quantity || 0), 0),
+        0
+      );
+      const stockB = (b.models || []).reduce(
+        (acc, m) => acc + (m.variations || []).reduce((s, v) => s + Number(v.quantity || 0), 0),
+        0
+      );
+      const hasA = stockA > 0 ? 1 : 0;
+      const hasB = stockB > 0 ? 1 : 0;
+      if (hasA !== hasB) return hasB - hasA;
+      return `${a.name || ""}`.localeCompare(`${b.name || ""}`);
+    });
 
     return res.json({
       success: true,

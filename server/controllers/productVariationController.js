@@ -178,23 +178,36 @@ exports.getVariations = async (req, res) => {
     if (isActive === "false") filter.isActive = false;
     if (isQuickAdd === "true") filter.isQuickAdd = true;
 
-    const [variations, total] = await Promise.all([
-      ProductVariation.find(filter)
-        .select("product model sku barcode attributes quantity costPrice sellingPrice isActive isQuickAdd createdAt")
-        .populate("product", "name")
-        .populate("model", "name")
-        .sort(sort)
-        .skip(Number(skip) || 0)
-        .limit(Math.min(200, Number(limit) || 100))
-        .lean(),
-      ProductVariation.countDocuments(filter),
-    ]);
+    const allVariations = await ProductVariation.find(filter)
+      .select("product model sku barcode attributes quantity costPrice sellingPrice isActive isQuickAdd createdAt")
+      .populate("product", "name")
+      .populate("model", "name")
+      .lean();
+
+    const total = allVariations.length;
+    const sanitized = allVariations.map((variation) => sanitizeVariationPricing(variation, req));
+    sanitized.sort((a, b) => {
+      const qtyA = Number(a?.quantity || 0);
+      const qtyB = Number(b?.quantity || 0);
+      const hasA = qtyA > 0 ? 1 : 0;
+      const hasB = qtyB > 0 ? 1 : 0;
+      if (hasA !== hasB) return hasB - hasA;
+      const nameA = `${a?.product?.name || a?.sku || ""}`.trim().toLowerCase();
+      const nameB = `${b?.product?.name || b?.sku || ""}`.trim().toLowerCase();
+      const cmp = nameA.localeCompare(nameB, undefined, { sensitivity: "base" });
+      if (cmp !== 0) return cmp;
+      return `${a?.sku || ""}`.localeCompare(`${b?.sku || ""}`, undefined, { sensitivity: "base" });
+    });
+
+    const resolvedSkip = Number(skip) || 0;
+    const resolvedLimit = Math.min(200, Number(limit) || 100);
+    const paginated = sanitized.slice(resolvedSkip, resolvedSkip + resolvedLimit);
 
     res.json({
       success: true,
-      count: variations.length,
+      count: paginated.length,
       total,
-      data: variations.map((variation) => sanitizeVariationPricing(variation, req))
+      data: paginated
     });
   } catch (error) {
     res.status(500).json({

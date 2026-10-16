@@ -2267,10 +2267,62 @@ exports.updateSale = async (req, res) => {
       return res.status(400).json({ success: false, message: "items[] is required" });
     }
 
-    logger.info("Existing sale:", existingSale.invoiceNo);
+    // Automatically reconcile stock when sale items are modified / removed / added
+    const oldItemsMap = new Map();
+    (existingSale.items || []).forEach((it) => {
+      const vId = `${it.variationId || it._id || ""}`;
+      oldItemsMap.set(vId, (oldItemsMap.get(vId) || 0) + Number(it.quantity || 0));
+    });
 
-    // NOTE: Edit does NOT touch stock - only delete should restore stock
-    // Stock was already deducted when sale was created originally
+    const newItemsMap = new Map();
+    (items || []).forEach((it) => {
+      const vId = `${it.variationId || it._id || ""}`;
+      newItemsMap.set(vId, (newItemsMap.get(vId) || 0) + Number(it.quantity || 0));
+    });
+
+    const allVarIds = new Set([...oldItemsMap.keys(), ...newItemsMap.keys()]);
+    for (const vId of allVarIds) {
+      if (!mongoose.Types.ObjectId.isValid(vId)) continue;
+      const oldQty = oldItemsMap.get(vId) || 0;
+      const newQty = newItemsMap.get(vId) || 0;
+      const diff = newQty - oldQty;
+      if (diff === 0) continue;
+
+      const variation = await ProductVariation.findById(vId);
+      if (!variation) continue;
+
+      if (diff > 0) {
+        // More items sold in edit -> Deduct stock
+        await applyStockTransaction({
+          shop: req.shopId,
+          product: variation.product,
+          model: variation.model,
+          variation: variation._id,
+          sku: variation.sku,
+          type: "OUT",
+          quantity: diff,
+          referenceType: "SALE",
+          referenceId: existingSale._id,
+          note: `Sale edited (items increased): ${existingSale.invoiceNo}`,
+          createdBy: req.user?._id,
+        });
+      } else {
+        // Items removed or quantity reduced in edit -> Restore stock
+        await applyStockTransaction({
+          shop: req.shopId,
+          product: variation.product,
+          model: variation.model,
+          variation: variation._id,
+          sku: variation.sku,
+          type: "IN",
+          quantity: Math.abs(diff),
+          referenceType: "SALE",
+          referenceId: existingSale._id,
+          note: `Sale edited (items removed/reduced, stock restored): ${existingSale.invoiceNo}`,
+          createdBy: req.user?._id,
+        });
+      }
+    }
 
     // Calculate totals - use sellingPrice for actual amount customer paid
     const itemTotal = items.reduce(

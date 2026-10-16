@@ -123,9 +123,26 @@ export class ItemsListComponent implements OnInit {
         this.items.forEach((item: any) => {
           item.totalStock =
             item.variations?.reduce(
-              (sum: number, v: any) => sum + (v.quantity ? v.quantity : 0),
+              (sum: number, v: any) => sum + (v.quantity ? Number(v.quantity) : 0),
               0,
             ) || 0;
+          if (Array.isArray(item.variations)) {
+            item.variations.sort((va: any, vb: any) => {
+              const qA = Number(va?.quantity || 0);
+              const qB = Number(vb?.quantity || 0);
+              const hasA = qA > 0 ? 1 : 0;
+              const hasB = qB > 0 ? 1 : 0;
+              if (hasA !== hasB) return hasB - hasA;
+              return `${va?.sku || ""}`.localeCompare(`${vb?.sku || ""}`);
+            });
+          }
+        });
+
+        this.items.sort((a: any, b: any) => {
+          const hasA = Number(a?.totalStock || 0) > 0 ? 1 : 0;
+          const hasB = Number(b?.totalStock || 0) > 0 ? 1 : 0;
+          if (hasA !== hasB) return hasB - hasA;
+          return `${a?.name || ""}`.localeCompare(`${b?.name || ""}`);
         });
 
         this.totalItems = Number(res?.totalItems || this.items.length);

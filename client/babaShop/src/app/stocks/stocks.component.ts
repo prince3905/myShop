@@ -198,12 +198,27 @@ export class StocksComponent implements OnInit, OnDestroy {
   get filteredReconciliationLines(): any[] {
     const lines = Array.isArray(this.reconciliation?.lines) ? this.reconciliation.lines : [];
     const term = `${this.reconciliationSearch || ""}`.trim().toLowerCase();
-    if (!term) return lines;
-    return lines.filter((line: any) => {
-      const sku = `${line?.sku || ""}`.toLowerCase();
-      const productName = `${line?.productName || ""}`.toLowerCase();
-      const modelName = `${line?.modelName || ""}`.toLowerCase();
-      return sku.includes(term) || productName.includes(term) || modelName.includes(term);
+    const result = !term
+      ? [...lines]
+      : lines.filter((line: any) => {
+          const sku = `${line?.sku || ""}`.toLowerCase();
+          const productName = `${line?.productName || ""}`.toLowerCase();
+          const modelName = `${line?.modelName || ""}`.toLowerCase();
+          return sku.includes(term) || productName.includes(term) || modelName.includes(term);
+        });
+
+    // In-stock (>0) first, then Alphabetical (A-Z) by Product Name / SKU
+    return result.sort((a: any, b: any) => {
+      const qtyA = Number(a?.systemQty || 0);
+      const qtyB = Number(b?.systemQty || 0);
+      const hasA = qtyA > 0 ? 1 : 0;
+      const hasB = qtyB > 0 ? 1 : 0;
+      if (hasA !== hasB) return hasB - hasA;
+      const nameA = `${a?.productName || a?.sku || ""}`.trim().toLowerCase();
+      const nameB = `${b?.productName || b?.sku || ""}`.trim().toLowerCase();
+      const cmp = nameA.localeCompare(nameB);
+      if (cmp !== 0) return cmp;
+      return `${a?.sku || ""}`.localeCompare(`${b?.sku || ""}`);
     });
   }
 
@@ -373,6 +388,21 @@ export class StocksComponent implements OnInit, OnDestroy {
   allRows: any[] = [];
   private searchDebounceTimer: any = null;
 
+  private sortInStockAlphabetical(list: any[]): any[] {
+    return (list || []).sort((a: any, b: any) => {
+      const qtyA = Number(a?.quantity ?? a?.availableQuantity ?? a?.systemQty ?? 0);
+      const qtyB = Number(b?.quantity ?? b?.availableQuantity ?? b?.systemQty ?? 0);
+      const hasA = qtyA > 0 ? 1 : 0;
+      const hasB = qtyB > 0 ? 1 : 0;
+      if (hasA !== hasB) return hasB - hasA;
+      const nameA = `${a?.product?.name || a?.productName || a?.sku || ""}`.trim().toLowerCase();
+      const nameB = `${b?.product?.name || b?.productName || b?.sku || ""}`.trim().toLowerCase();
+      const cmp = nameA.localeCompare(nameB);
+      if (cmp !== 0) return cmp;
+      return `${a?.sku || ""}`.localeCompare(`${b?.sku || ""}`);
+    });
+  }
+
   loadStocks(updateAll: boolean = true): void {
     this.loading = true;
 
@@ -388,10 +418,11 @@ export class StocksComponent implements OnInit, OnDestroy {
     this.stocksService.getStocks(params).subscribe({
       next: (res: any) => {
         const fetchedRows = Array.isArray(res?.stockReport) ? res.stockReport : [];
+        const sorted = this.sortInStockAlphabetical(fetchedRows);
         if (updateAll || !this.allRows.length) {
-          this.allRows = [...fetchedRows];
+          this.allRows = [...sorted];
         }
-        this.rows = fetchedRows;
+        this.rows = sorted;
         this.totalItems = Number(res?.total || 0);
         this.summary = {
           totalQuantity: Number(res?.summary?.totalQuantity || 0),
@@ -414,9 +445,9 @@ export class StocksComponent implements OnInit, OnDestroy {
     const q = (this.search || "").trim().toLowerCase();
     if (this.allRows && this.allRows.length > 0) {
       if (!q) {
-        this.rows = [...this.allRows];
+        this.rows = this.sortInStockAlphabetical([...this.allRows]);
       } else {
-        this.rows = this.allRows.filter((r: any) => {
+        const filtered = this.allRows.filter((r: any) => {
           const sku = (r.sku || "").toLowerCase();
           const pName = (r.productName || "").toLowerCase();
           const mName = (r.modelName || "").toLowerCase();
@@ -424,6 +455,7 @@ export class StocksComponent implements OnInit, OnDestroy {
           const size = (r.attributes?.size || "").toLowerCase();
           return sku.includes(q) || pName.includes(q) || mName.includes(q) || color.includes(q) || size.includes(q);
         });
+        this.rows = this.sortInStockAlphabetical(filtered);
       }
     }
 
@@ -507,9 +539,10 @@ export class StocksComponent implements OnInit, OnDestroy {
     this.productService.getAllProducts(currentShopId ? { shop: currentShopId } : {}).subscribe({
       next: (res: any) => {
         const raw = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
-        this.products = currentShopId
+        this.products = (currentShopId
           ? raw.filter((p: any) => !p.shop || `${p.shop?._id || p.shop}` === `${currentShopId}`)
-          : raw;
+          : raw
+        ).sort((a: any, b: any) => `${a.name || ""}`.trim().localeCompare(`${b.name || ""}`.trim()));
       },
       error: () => {
         this.products = [];
@@ -549,17 +582,18 @@ export class StocksComponent implements OnInit, OnDestroy {
         name: v?.model?.name || "Model",
       });
     });
-    this.adjustModelOptions = Array.from(map.values());
+    this.adjustModelOptions = Array.from(map.values()).sort((a, b) => `${a.name || ""}`.localeCompare(`${b.name || ""}`));
   }
 
   onAdjustModelChange(): void {
     this.adjustForm.variation = null;
     const product = this.products.find((p: any) => `${p?._id}` === `${this.adjustForm.product}`);
 
-    this.adjustVariationOptions = (product?.variations || []).filter((v: any) => {
+    const filtered = (product?.variations || []).filter((v: any) => {
       const modelId = `${v?.model?._id || v?.model || ""}`;
       return modelId === `${this.adjustForm.model}`;
     });
+    this.adjustVariationOptions = this.sortInStockAlphabetical(filtered);
   }
 
   submitAdjustment(): void {
@@ -641,17 +675,18 @@ export class StocksComponent implements OnInit, OnDestroy {
         name: v?.model?.name || "Model",
       });
     });
-    this.transferModelOptions = Array.from(map.values());
+    this.transferModelOptions = Array.from(map.values()).sort((a, b) => `${a.name || ""}`.localeCompare(`${b.name || ""}`));
   }
 
   onTransferModelChange(): void {
     this.transferForm.variation = null;
     const product = this.products.find((p: any) => `${p?._id}` === `${this.transferForm.product}`);
 
-    this.transferVariationOptions = (product?.variations || []).filter((v: any) => {
+    const filtered = (product?.variations || []).filter((v: any) => {
       const modelId = `${v?.model?._id || v?.model || ""}`;
       return modelId === `${this.transferForm.model}`;
     });
+    this.transferVariationOptions = this.sortInStockAlphabetical(filtered);
   }
 
   submitStockTransfer(): void {
