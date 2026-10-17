@@ -403,14 +403,59 @@ export class StocksComponent implements OnInit, OnDestroy {
     });
   }
 
+  activeCardFilter: "out_of_stock" | "low_stock" | "damaged" | "reserved" | null = null;
+
+  toggleCardFilter(filterType: "out_of_stock" | "low_stock" | "damaged" | "reserved" | "all"): void {
+    if (filterType === "all") {
+      this.activeCardFilter = null;
+      this.lowStockOnly = false;
+      this.page = 1;
+      this.loadStocks(true);
+      this.scrollToTable();
+      return;
+    }
+
+    if (this.activeCardFilter === filterType) {
+      // Toggle off if already active
+      this.activeCardFilter = null;
+      this.lowStockOnly = false;
+    } else {
+      this.activeCardFilter = filterType;
+      this.lowStockOnly = filterType === "low_stock";
+    }
+
+    this.page = 1;
+    this.loadStocks(true);
+    this.scrollToTable();
+  }
+
+  scrollToTable(): void {
+    setTimeout(() => {
+      const tableElem = document.getElementById("stock-main-table-card");
+      if (tableElem) {
+        const yOffset = -75;
+        const y = tableElem.getBoundingClientRect().top + window.pageYOffset + yOffset;
+        window.scrollTo({ top: y, behavior: "smooth" });
+      }
+    }, 120);
+  }
+
   loadStocks(updateAll: boolean = true): void {
     this.loading = true;
+
+    const isLowStock = this.lowStockOnly || (this.activeCardFilter === "low_stock");
+    const isOutOfStock = this.activeCardFilter === "out_of_stock";
+    const isDamaged = this.activeCardFilter === "damaged";
+    const isReserved = this.activeCardFilter === "reserved";
 
     const params: any = {
       page: this.page,
       limit: this.pageSize,
       search: this.search?.trim() || "",
-      lowStock: this.lowStockOnly,
+      lowStock: isLowStock,
+      outOfStock: isOutOfStock,
+      damagedOnly: isDamaged,
+      reservedOnly: isReserved,
       sortBy: this.sortBy,
       order: this.order,
     };
@@ -430,6 +475,9 @@ export class StocksComponent implements OnInit, OnDestroy {
           totalDamaged: Number(res?.summary?.totalDamaged || 0),
           totalCostValue: Number(res?.summary?.totalCostValue || 0),
           lowStockCount: Number(res?.summary?.lowStockCount || 0),
+          outOfStockCount: Number(res?.summary?.outOfStockCount || 0),
+          damagedCount: Number(res?.summary?.damagedCount || 0),
+          reservedCount: Number(res?.summary?.reservedCount || 0),
         };
         this.loading = false;
       },
@@ -475,6 +523,7 @@ export class StocksComponent implements OnInit, OnDestroy {
   onClear(): void {
     this.search = "";
     this.lowStockOnly = false;
+    this.activeCardFilter = null;
     this.sortBy = "updatedAt";
     this.order = "desc";
     this.page = 1;
@@ -1130,6 +1179,11 @@ export class StocksComponent implements OnInit, OnDestroy {
   }
 
   getOutOfStockCount(): number {
-    return this.rows.filter(row => (row?.quantity || 0) === 0).length;
+    if (this.summary?.outOfStockCount !== undefined) {
+      return Number(this.summary.outOfStockCount);
+    }
+    return (this.allRows && this.allRows.length > 0 ? this.allRows : this.rows).filter(
+      (row) => (row?.quantity || 0) === 0
+    ).length;
   }
 }

@@ -11,25 +11,54 @@
 
     <!-- ── KPI Cards ── -->
     <div class="summary-kpi-row">
-      <div class="kpi-card">
+      <div
+        class="kpi-card interactive-kpi"
+        [class.active-card]="activeCardFilter === null"
+        (click)="toggleCardFilter('all')"
+        matTooltip="क्लिक करें: सारे स्टॉक रिकॉर्ड्स नीचे देखें (Auto-scroll)"
+        matTooltipPosition="above">
         <div class="kpi-icon"><mat-icon>inventory</mat-icon></div>
         <div class="kpi-body">
           <div class="kpi-label">Total Records</div>
           <div class="kpi-value">{{ totalItems }}</div>
+          <div class="kpi-hint">
+            <mat-icon style="font-size: 13px; width: 13px; height: 13px;">touch_app</mat-icon>
+            सारे देखें
+          </div>
         </div>
       </div>
-      <div class="kpi-card low-stock">
+
+      <div
+        class="kpi-card low-stock interactive-kpi"
+        [class.active-card]="activeCardFilter === 'low_stock'"
+        (click)="toggleCardFilter('low_stock')"
+        matTooltip="क्लिक करें: कम स्टॉक (Reorder Level से नीचे) वाले आइटम नीचे देखें (Auto-scroll)"
+        matTooltipPosition="above">
         <div class="kpi-icon"><mat-icon>warning</mat-icon></div>
         <div class="kpi-body">
           <div class="kpi-label">Low Stock</div>
           <div class="kpi-value">{{ getLowStockCount() }}</div>
+          <div class="kpi-hint">
+            <mat-icon style="font-size: 13px; width: 13px; height: 13px;">touch_app</mat-icon>
+            कम स्टॉक फ़िल्टर
+          </div>
         </div>
       </div>
-      <div class="kpi-card out-stock">
+
+      <div
+        class="kpi-card out-stock interactive-kpi"
+        [class.active-card]="activeCardFilter === 'out_of_stock'"
+        (click)="toggleCardFilter('out_of_stock')"
+        [matTooltip]="'क्लिक करें: आउट ऑफ स्टॉक (0 स्टॉक) वाले ' + getOutOfStockCount() + ' आइटम नीचे देखें (Auto-scroll)'"
+        matTooltipPosition="above">
         <div class="kpi-icon"><mat-icon>block</mat-icon></div>
         <div class="kpi-body">
           <div class="kpi-label">Out of Stock</div>
           <div class="kpi-value">{{ getOutOfStockCount() }}</div>
+          <div class="kpi-hint">
+            <mat-icon style="font-size: 13px; width: 13px; height: 13px;">touch_app</mat-icon>
+            0 स्टॉक फ़िल्टर
+          </div>
         </div>
       </div>
     </div>
@@ -92,19 +121,38 @@
     </div>
 
     <div class="stock-summary-grid" *ngIf="!loading">
-      <div class="summary-card">
+      <div
+        class="summary-card interactive-summary"
+        (click)="toggleCardFilter('all')"
+        matTooltip="क्लिक करें: सारा लाइव माल नीचे देखें"
+        matTooltipPosition="above">
         <div class="label">Total Qty</div>
         <div class="value">{{ summary.totalQuantity }}</div>
       </div>
-      <div class="summary-card">
+      <div
+        class="summary-card interactive-summary"
+        [class.active-summary]="activeCardFilter === 'reserved'"
+        (click)="toggleCardFilter('reserved')"
+        matTooltip="क्लिक करें: रिज़र्व / होल्ड किया हुआ माल नीचे देखें"
+        matTooltipPosition="above">
         <div class="label">Reserved Qty</div>
         <div class="value">{{ summary.totalReserved }}</div>
       </div>
-      <div class="summary-card">
+      <div
+        class="summary-card interactive-summary"
+        [class.active-summary]="activeCardFilter === 'damaged'"
+        (click)="toggleCardFilter('damaged')"
+        matTooltip="क्लिक करें: डैमेज / टूटा हुआ माल नीचे देखें"
+        matTooltipPosition="above">
         <div class="label">Damaged Qty</div>
         <div class="value">{{ summary.totalDamaged }}</div>
       </div>
-      <div class="summary-card">
+      <div
+        class="summary-card interactive-summary"
+        [class.active-summary]="activeCardFilter === 'low_stock'"
+        (click)="toggleCardFilter('low_stock')"
+        matTooltip="क्लिक करें: कम स्टॉक वाले SKU नीचे देखें"
+        matTooltipPosition="above">
         <div class="label">Low Stock SKUs</div>
         <div class="value">{{ summary.lowStockCount }}</div>
       </div>
@@ -266,7 +314,27 @@
       <mat-spinner color="primary" diameter="40"></mat-spinner>
     </div>
 
-    <div class="card" *ngIf="!loading">
+    <!-- Active Card Filter Banner -->
+    <div class="active-filter-alert" *ngIf="activeCardFilter">
+      <div class="filter-alert-content">
+        <mat-icon>filter_alt</mat-icon>
+        <span class="filter-alert-text">
+          सक्रिय फ़िल्टर: 
+          <strong>
+            {{ activeCardFilter === 'out_of_stock' ? 'Out of Stock (0 स्टॉक वाले आइटम)' : 
+               activeCardFilter === 'low_stock' ? 'Low Stock (कम स्टॉक वाले आइटम)' :
+               activeCardFilter === 'damaged' ? 'Damaged Stock (डैमेज माल)' : 
+               activeCardFilter === 'reserved' ? 'Reserved Stock (रिज़र्व माल)' : '' }}
+          </strong>
+          &nbsp;—&nbsp; कुल <strong>{{ totalItems }}</strong> रिकॉर्ड्स
+        </span>
+      </div>
+      <button mat-button class="clear-alert-btn" (click)="toggleCardFilter('all')">
+        <mat-icon>close</mat-icon> फ़िल्टर हटाएं (Show All)
+      </button>
+    </div>
+
+    <div class="card" id="stock-main-table-card" *ngIf="!loading">
       <div class="card-body table-wrap">
         <div class="table-responsive">
           <table class="table stock-table">

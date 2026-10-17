@@ -115,6 +115,9 @@ exports.getStockReport = async (req, res) => {
       limit = 20,
       search = "",
       lowStock = "false",
+      outOfStock = "false",
+      damagedOnly = "false",
+      reservedOnly = "false",
       variation,
       sortBy = "updatedAt",
       order = "desc",
@@ -179,6 +182,15 @@ exports.getStockReport = async (req, res) => {
 
     if (String(lowStock) === "true") {
       query.$expr = { $lte: ["$quantity", "$reorderLevel"] };
+    }
+    if (String(outOfStock) === "true") {
+      query.quantity = { $lte: 0 };
+    }
+    if (String(damagedOnly) === "true") {
+      query.damagedQuantity = { $gt: 0 };
+    }
+    if (String(reservedOnly) === "true") {
+      query.reservedQuantity = { $gt: 0 };
     }
 
     const [rows, total] = await Promise.all([
@@ -245,6 +257,21 @@ exports.getStockReport = async (req, res) => {
               $cond: [{ $lte: ["$quantity", "$reorderLevel"] }, 1, 0],
             },
           },
+          outOfStockCount: {
+            $sum: {
+              $cond: [{ $lte: ["$quantity", 0] }, 1, 0],
+            },
+          },
+          damagedCount: {
+            $sum: {
+              $cond: [{ $gt: ["$damagedQuantity", 0] }, 1, 0],
+            },
+          },
+          reservedCount: {
+            $sum: {
+              $cond: [{ $gt: ["$reservedQuantity", 0] }, 1, 0],
+            },
+          },
         },
       },
     ]);
@@ -264,6 +291,9 @@ exports.getStockReport = async (req, res) => {
         totalReserved: Number(summary.totalReserved || 0),
         totalDamaged: Number(summary.totalDamaged || 0),
         lowStockCount: Number(summary.lowStockCount || 0),
+        outOfStockCount: Number(summary.outOfStockCount || 0),
+        damagedCount: Number(summary.damagedCount || 0),
+        reservedCount: Number(summary.reservedCount || 0),
         ...(canViewSensitivePricing(req)
           ? { totalCostValue: Number(summary.totalCostValue || 0) }
           : {}),

@@ -73,22 +73,67 @@
       </div>
 
       <div class="list-panel">
-        <div class="summary-kpi-row">
-          <div class="kpi-card">
+        <div class="summary-kpi-row" style="grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));">
+          <div
+            class="kpi-card interactive-kpi"
+            [class.active-card]="!activeStockFilter || activeStockFilter === 'all'"
+            (click)="filterByStockState('all')"
+            matTooltip="क्लिक करें: सारे प्रोडक्ट्स नीचे देखें (Auto-scroll)"
+            matTooltipPosition="above">
             <div class="kpi-icon"><mat-icon>inventory_2</mat-icon></div>
             <div class="kpi-body">
               <div class="kpi-label">All Products</div>
               <div class="kpi-value">{{ summaryCounts.products }}</div>
+              <div class="kpi-hint">
+                <mat-icon style="font-size: 13px; width: 13px; height: 13px;">touch_app</mat-icon>
+                सारे देखें
+              </div>
             </div>
           </div>
-          <div class="kpi-card">
+
+          <div
+            class="kpi-card in-stock-kpi interactive-kpi"
+            [class.active-card]="activeStockFilter === 'in_stock'"
+            (click)="filterByStockState('in_stock')"
+            matTooltip="क्लिक करें: उपलब्ध स्टॉक (Stock > 0) वाले प्रोडक्ट्स नीचे देखें (Auto-scroll)"
+            matTooltipPosition="above">
+            <div class="kpi-icon in-stock-icon"><mat-icon>check_circle</mat-icon></div>
+            <div class="kpi-body">
+              <div class="kpi-label">In Stock</div>
+              <div class="kpi-value">{{ summaryCounts.inStock || 0 }}</div>
+              <div class="kpi-hint">
+                <mat-icon style="font-size: 13px; width: 13px; height: 13px;">touch_app</mat-icon>
+                उपलब्ध माल
+              </div>
+            </div>
+          </div>
+
+          <div
+            class="kpi-card out-stock-kpi interactive-kpi"
+            [class.active-card]="activeStockFilter === 'out_of_stock'"
+            (click)="filterByStockState('out_of_stock')"
+            matTooltip="क्लिक करें: आउट ऑफ स्टॉक (0 स्टॉक) वाले प्रोडक्ट्स नीचे देखें (Auto-scroll)"
+            matTooltipPosition="above">
+            <div class="kpi-icon out-stock-icon"><mat-icon>block</mat-icon></div>
+            <div class="kpi-body">
+              <div class="kpi-label">Out of Stock</div>
+              <div class="kpi-value">{{ summaryCounts.outOfStock || 0 }}</div>
+              <div class="kpi-hint">
+                <mat-icon style="font-size: 13px; width: 13px; height: 13px;">touch_app</mat-icon>
+                0 स्टॉक
+              </div>
+            </div>
+          </div>
+
+          <div class="kpi-card" matTooltip="कुल रजिस्टर्ड कैटेगरीज" matTooltipPosition="above">
             <div class="kpi-icon"><mat-icon>category</mat-icon></div>
             <div class="kpi-body">
               <div class="kpi-label">Categories</div>
               <div class="kpi-value">{{ summaryCounts.categories }}</div>
             </div>
           </div>
-          <div class="kpi-card">
+
+          <div class="kpi-card" matTooltip="कुल रजिस्टर्ड ब्रांड्स" matTooltipPosition="above">
             <div class="kpi-icon"><mat-icon>branding_watermark</mat-icon></div>
             <div class="kpi-body">
               <div class="kpi-label">Brands</div>
@@ -106,7 +151,24 @@
           <p>No products found</p>
         </div>
 
-        <div class="product-table" *ngIf="!loading && paginatedItems.length > 0">
+        <!-- Active Filter Banner -->
+        <div class="active-filter-alert" *ngIf="activeStockFilter && activeStockFilter !== 'all'">
+          <div class="filter-alert-content">
+            <mat-icon>filter_alt</mat-icon>
+            <span class="filter-alert-text">
+              सक्रिय फ़िल्टर: 
+              <strong>
+                {{ activeStockFilter === 'in_stock' ? 'केवल इन-स्टॉक (उपलब्ध माल) वाले प्रोडक्ट्स' : 'केवल 0 स्टॉक (Out of Stock) वाले प्रोडक्ट्स' }}
+              </strong>
+              &nbsp;—&nbsp; कुल <strong>{{ paginatedItems.length }}</strong> प्रोडक्ट्स
+            </span>
+          </div>
+          <button mat-button class="clear-alert-btn" (click)="filterByStockState('all')">
+            <mat-icon>close</mat-icon> फ़िल्टर हटाएं (Show All)
+          </button>
+        </div>
+
+        <div class="product-table" id="product-main-table" *ngIf="!loading && paginatedItems.length > 0">
           <div class="table-header">
             <span>Name</span>
             <span>Brand</span>

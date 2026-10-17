@@ -34,10 +34,13 @@ export class ItemsListComponent implements OnInit {
   searchInput: string;
   searchInputSubject = new Subject<string>();
   loading: boolean = true;
+  activeStockFilter: "all" | "in_stock" | "out_of_stock" | null = null;
   summaryCounts = {
     products: 0,
     categories: 0,
     brands: 0,
+    inStock: 0,
+    outOfStock: 0,
   };
 
   productId: string;
@@ -146,7 +149,10 @@ export class ItemsListComponent implements OnInit {
         });
 
         this.totalItems = Number(res?.totalItems || this.items.length);
-        this.paginatedItems = [...this.items];
+        const sourceList = this.allItems.length ? this.allItems : this.items;
+        this.summaryCounts.inStock = sourceList.filter((it: any) => Number(it.totalStock || 0) > 0).length;
+        this.summaryCounts.outOfStock = sourceList.filter((it: any) => Number(it.totalStock || 0) <= 0).length;
+        this.applyActiveStockFilter();
         if (this.paginator) {
           this.paginator.pageIndex = page - 1;
         }
@@ -164,6 +170,39 @@ export class ItemsListComponent implements OnInit {
 
   ngAfterViewInit(): void {
     if (!this.paginator) return;
+  }
+
+  filterByStockState(state: "all" | "in_stock" | "out_of_stock"): void {
+    if (state === "all" || this.activeStockFilter === state) {
+      this.activeStockFilter = null;
+    } else {
+      this.activeStockFilter = state;
+    }
+    this.applyActiveStockFilter();
+    this.scrollToProducts();
+  }
+
+  applyActiveStockFilter(): void {
+    if (!this.activeStockFilter || this.activeStockFilter === "all") {
+      this.paginatedItems = [...this.items];
+      return;
+    }
+    if (this.activeStockFilter === "in_stock") {
+      this.paginatedItems = this.items.filter((it: any) => Number(it.totalStock || 0) > 0);
+    } else if (this.activeStockFilter === "out_of_stock") {
+      this.paginatedItems = this.items.filter((it: any) => Number(it.totalStock || 0) <= 0);
+    }
+  }
+
+  scrollToProducts(): void {
+    setTimeout(() => {
+      const el = document.getElementById("product-main-table");
+      if (el) {
+        const yOffset = -75;
+        const y = el.getBoundingClientRect().top + window.pageYOffset + yOffset;
+        window.scrollTo({ top: y, behavior: "smooth" });
+      }
+    }, 100);
   }
 
   getQueryParams(page = (this.paginator?.pageIndex || 0) + 1, perPage = this.pageSize): any {

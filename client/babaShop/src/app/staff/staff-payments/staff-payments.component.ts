@@ -408,4 +408,45 @@ export class StaffPaymentsComponent implements OnInit {
 
     return map;
   }
+
+  toggleStaffPaymentFilter(type: "ADVANCE" | "PAYMENT" | "TODAY" | "ALL"): void {
+    if (type === "ALL") {
+      this.filters.entryType = "";
+      this.filters.dateFrom = "";
+      this.filters.dateTo = "";
+    } else if (type === "TODAY") {
+      const today = new Date().toISOString().slice(0, 10);
+      if (this.filters.dateFrom === today && this.filters.dateTo === today) {
+        this.filters.dateFrom = "";
+        this.filters.dateTo = "";
+      } else {
+        this.filters.dateFrom = today;
+        this.filters.dateTo = today;
+      }
+    } else if (this.filters.entryType === type) {
+      this.filters.entryType = "";
+    } else {
+      this.filters.entryType = type;
+    }
+
+    this.mobileSection = "LIST";
+    this.loadPayments();
+    this.scrollToEntries();
+  }
+
+  isTodayFilterActive(): boolean {
+    const today = new Date().toISOString().slice(0, 10);
+    return this.filters.dateFrom === today && this.filters.dateTo === today;
+  }
+
+  scrollToEntries(): void {
+    setTimeout(() => {
+      const el = document.getElementById("staff-payment-list-panel");
+      if (el) {
+        const yOffset = -75;
+        const y = el.getBoundingClientRect().top + window.pageYOffset + yOffset;
+        window.scrollTo({ top: y, behavior: "smooth" });
+      }
+    }, 100);
+  }
 }

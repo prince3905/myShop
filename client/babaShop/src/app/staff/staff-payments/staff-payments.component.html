@@ -11,36 +11,75 @@
 
     <!-- ── Summary KPI Cards ── -->
     <div class="summary-kpi-row">
-      <div class="kpi-card advance">
+      <div
+        class="kpi-card advance interactive-kpi"
+        [class.active-card]="filters.entryType === 'ADVANCE'"
+        (click)="toggleStaffPaymentFilter('ADVANCE')"
+        matTooltip="क्लिक करें: सारे एडवांस भुगतानों की लिस्ट नीचे देखें (Auto-scroll)"
+        matTooltipPosition="above">
         <div class="kpi-icon"><mat-icon>call_received</mat-icon></div>
         <div class="kpi-body">
           <div class="kpi-label">Total Advance</div>
           <div class="kpi-value">₹{{ summary.totalAdvance || 0 | number: '1.0-0' }}</div>
           <div class="kpi-meta">money given to staff</div>
+          <div class="kpi-hint">
+            <mat-icon style="font-size: 13px; width: 13px; height: 13px;">touch_app</mat-icon>
+            एडवांस फ़िल्टर
+          </div>
         </div>
       </div>
-      <div class="kpi-card payment">
+
+      <div
+        class="kpi-card payment interactive-kpi"
+        [class.active-card]="filters.entryType === 'PAYMENT'"
+        (click)="toggleStaffPaymentFilter('PAYMENT')"
+        matTooltip="क्लिक करें: सारे वेतन भुगतानों की लिस्ट नीचे देखें (Auto-scroll)"
+        matTooltipPosition="above">
         <div class="kpi-icon"><mat-icon>payments</mat-icon></div>
         <div class="kpi-body">
           <div class="kpi-label">Total Payment</div>
           <div class="kpi-value">₹{{ summary.totalPayment || 0 | number: '1.0-0' }}</div>
           <div class="kpi-meta">wage settlements</div>
+          <div class="kpi-hint">
+            <mat-icon style="font-size: 13px; width: 13px; height: 13px;">touch_app</mat-icon>
+            वेतन भुगतान फ़िल्टर
+          </div>
         </div>
       </div>
-      <div class="kpi-card entries">
+
+      <div
+        class="kpi-card entries interactive-kpi"
+        [class.active-card]="!filters.entryType && !filters.dateFrom"
+        (click)="toggleStaffPaymentFilter('ALL')"
+        matTooltip="क्लिक करें: सारे लेन-देन नीचे देखें (Auto-scroll)"
+        matTooltipPosition="above">
         <div class="kpi-icon"><mat-icon>assignment</mat-icon></div>
         <div class="kpi-body">
           <div class="kpi-label">Total Entries</div>
           <div class="kpi-value">{{ totalEntriesCount }}</div>
           <div class="kpi-meta">advance & payment</div>
+          <div class="kpi-hint">
+            <mat-icon style="font-size: 13px; width: 13px; height: 13px;">touch_app</mat-icon>
+            सारे देखें
+          </div>
         </div>
       </div>
-      <div class="kpi-card today">
+
+      <div
+        class="kpi-card today interactive-kpi"
+        [class.active-card]="isTodayFilterActive()"
+        (click)="toggleStaffPaymentFilter('TODAY')"
+        matTooltip="क्लिक करें: आज के सभी लेन-देन नीचे देखें (Auto-scroll)"
+        matTooltipPosition="above">
         <div class="kpi-icon"><mat-icon>today</mat-icon></div>
         <div class="kpi-body">
           <div class="kpi-label">Today Entries</div>
           <div class="kpi-value">{{ summary.todayEntries || 0 }}</div>
           <div class="kpi-meta">today's transactions</div>
+          <div class="kpi-hint">
+            <mat-icon style="font-size: 13px; width: 13px; height: 13px;">touch_app</mat-icon>
+            आज की एंट्रीज
+          </div>
         </div>
       </div>
     </div>
@@ -177,7 +216,26 @@
       </div>
 
       <!-- ── Right: Payment Entries List ── -->
-      <div class="list-panel" [class.mobile-hidden]="mobileSection !== 'LIST'">
+      <div class="list-panel" id="staff-payment-list-panel" [class.mobile-hidden]="mobileSection !== 'LIST'">
+        <!-- Active Filter Alert -->
+        <div class="active-filter-alert" *ngIf="filters.entryType || isTodayFilterActive()">
+          <div class="filter-alert-content">
+            <mat-icon>filter_alt</mat-icon>
+            <span class="filter-alert-text">
+              सक्रिय फ़िल्टर: 
+              <strong>
+                {{ filters.entryType === 'ADVANCE' ? 'केवल Advance एंट्रीज' : 
+                   filters.entryType === 'PAYMENT' ? 'केवल Payment (वेतन) एंट्रीज' : 
+                   isTodayFilterActive() ? 'केवल आज (Today) की एंट्रीज' : '' }}
+              </strong>
+              &nbsp;—&nbsp; कुल <strong>{{ payments.length }}</strong> रिकॉर्ड्स
+            </span>
+          </div>
+          <button mat-button class="clear-alert-btn" (click)="toggleStaffPaymentFilter('ALL')">
+            <mat-icon>close</mat-icon> फ़िल्टर हटाएं (Show All)
+          </button>
+        </div>
+
         <div class="list-panel-header">
           <div class="panel-title">Recent Entries</div>
           <div class="filter-bar">
